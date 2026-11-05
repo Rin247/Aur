@@ -1,5 +1,5 @@
 # AGENTS.md — Aur
-> First boot: read `Bible/HANDOVER.md` and `Bible/WANTED.md`; keep both lean - drop verified items (git is the history).
+> First boot: read `HANDOVER.md` and `WANTED.md`; keep both lean - drop verified items (git is the history).
 
 > Repository guidance is maintained in [Bible/Operations/Agent Guide.md](Bible/Operations/Agent%20Guide.md). Read it before making changes.
 
