@@ -564,7 +564,15 @@ ctest --test-dir build\Release -C Release -R TopologyTests --output-on-failure
 
 Still blocked / not verified:
 
-Fixed (2026-11-05): the 23 `studio/MapEditorPanel.cpp` errors were resolved (`mapBounds` made public; entity iteration via `as_array()`/`operator[]`) and `Aur Studio` now links in Release; committed as `1ed95c3`. The remaining P3.0 open item is only the live editor seam/GPU-vs-fallback visual verification.
+### P3.0 live-editor seam evidence (2026-11-05)
+
+Scope completed: the live World editor visual checks from the acceptance checklist.
+
+- Build command/result: Release tree rebuilt 2026-11-05 with `Aur Studio` linked (commit `1ed95c3`); Qt runtime deployed with windeployqt into `build/Release` (it was absent from the direct-cmake tree; first launch exited `0xC0000135`).
+- Backend: D3D12 QRhi path (`AUR_RHI_BACKEND` unset defaults to d3d12 in `studio/RhiBackend.cpp`; a failed RHI init qFatals, and the app rendered). Not the fallback painter.
+- Evidence: fit view and a ~306% cursor-centered wheel zoom over the wrap region of the 256×128 `continents` starter world — terrain continuity across the X seam with no black strip or discontinuity; markers repeat per wrapped copy as designed. Saved at `Bible/Operations/evidence/p3_0_world_fit_d3d12.png` and `p3_0_world_seam_306pct_d3d12.png`.
+- Not yet captured: an edge-column side-by-side at 400%, seam-crossing paint/undo inside a live window, and GPU-vs-fallback parity (fallback requires forcing a render-failure path, which qFatals by policy — treat parity as design-blocked, not skipped).
+- Limitation: `AIO.bat compile windows Release` builds the Debug tree because `aio_win_tree` picks the newest CMakeCache under `build\` — direct cmake is the correct Release path until that resolver is fixed.
 - The complete Release `EngineTests` (all functions incl. the 2560×1280 forge case) passed on 2026-11-04: 1/1 CTest, 26.89 s. It ran after the focused `TopologyTests` pass and covers the same binary.
 - Repeated full-suite runs in this session are slow but healthy; a Debug run was interrupted after it kept growing above ~800 MB during the same 2560×1280 forge case, so the documented 6.0+ GiB peak in `Bible/Operations/Handover.md` remains the best memory measurement.
 - Runtime exit traversal, chunk streaming, pathfinding, axial-tilt climate, and seasonal declination remain out of scope as previously recorded.
