@@ -564,7 +564,7 @@ ctest --test-dir build\Release -C Release -R TopologyTests --output-on-failure
 
 Still blocked / not verified:
 
-- `build.bat release` still fails on the 23 pre-existing `studio/MapEditorPanel.cpp` errors (same set recorded above: `aur::Json` has no `begin/end/push_back/at`, const `as_array()` is read-only for entity mutation, and `MapCanvasWidget::mapBounds()` is private). That prevents linking `Aur Studio`, so no live editor screenshot, GPU/fallback parity check, or shader seam capture was produced. The topology/runtime tests above do not depend on that file.
+Fixed (2026-11-05): the 23 `studio/MapEditorPanel.cpp` errors were resolved (`mapBounds` made public; entity iteration via `as_array()`/`operator[]`) and `Aur Studio` now links in Release; committed as `1ed95c3`. The remaining P3.0 open item is only the live editor seam/GPU-vs-fallback visual verification.
 - The complete Release `EngineTests` (all functions incl. the 2560×1280 forge case) passed on 2026-11-04: 1/1 CTest, 26.89 s. It ran after the focused `TopologyTests` pass and covers the same binary.
 - Repeated full-suite runs in this session are slow but healthy; a Debug run was interrupted after it kept growing above ~800 MB during the same 2560×1280 forge case, so the documented 6.0+ GiB peak in `Bible/Operations/Handover.md` remains the best memory measurement.
 - Runtime exit traversal, chunk streaming, pathfinding, axial-tilt climate, and seasonal declination remain out of scope as previously recorded.
