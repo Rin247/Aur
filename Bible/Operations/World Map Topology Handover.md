@@ -531,3 +531,40 @@ applicable acceptance checklist is evidenced and the operations handover is
 updated.
 The next authorized implementation target after that gate is P3.1 only if the
 user approves it.
+
+
+## Root build-artifact cleanup (2026-11-03)
+
+- Removed root `regen_world.obj`, `regen_sylvi_ages.obj`, and `regen_hero.obj`. Inspection showed these were MSVC COFF object files (not Wavefront OBJ assets), and no source or project references them; `.gitignore` already excludes `*.obj`.
+- Tidied the active root CMake setup: minimum CMake requirement now agrees with the presets (3.21), C++ extensions are disabled, obsolete global AUTOGEN toggles are replaced with Qt's standard project setup, and the required Qt 6.12 version is explicit. Removed the duplicated machine-local Qt prefix from both presets; the existing configured build cache retains the valid installed Qt path.
+- Existing project targets, shader compilation, and per-preset build output locations are preserved. `cmake --preset Release` configured successfully. Qt's existing private-module warning and unavailable optional Vulkan headers were reported at configure time; neither prevented generation.
+- Environment note: invoking the clean-first build directly from the agent PowerShell session fails because its MSVC environment lacks standard include paths and Qt's shader compiler cannot find `fxc`. A partially recovered Release build linked Studio, game, MCP, and tests successfully on 2026-11-03, and CTest was run separately, but no authoritative final CTest result was captured. A later clean-first rebuild could not clean `aur_tests.exe` because the test process was still running; therefore a clean build and final green test gate remain unverified. Close any running test process and rerun the documented build/test commands in a properly initialized VS environment.
+
+- Follow-up verification: after the stale concurrent test invocations exited, the final `build/Release/aur_tests.exe` run completed with all 10 tests passing (0 failed), captured in the temporary files under `build/Release/`. `cmake --build build/Release --parallel 8` also reported no work to do; however, a fresh clean-first rebuild was not completed due to the earlier concurrent process locking the test executable.
+
+## P3.0 boundary regressions (2026-11-04)
+
+Scope completed: the owner-boundary gaps still listed in the P3.0 plan, without changing topology behavior.
+
+Files changed:
+
+- `tests/test_topology_boundaries.cpp` (new): fully formed ordinary-map paint rejection at negative X while the same map wraps once `worldgen.topology` is present; generated-world Y rejection at `-1` and `H`; invalid width `0` rejected by `wrapX` through the public paint path; climate sampling at both X edges of a 10-wide generated map (negative X wraps to the last column, past `W` wraps to column 0); short/malformed biome rows fall back to the map climate instead of indexing out of bounds; bounded maps clamp instead of wrapping; camera X is unbounded/repeating and camera Y is clamped at both poles for a generated map.
+- `CMakeLists.txt`: adds the new test source and a focused CTest entry `TopologyTests` (`aur_tests --topology`). The focused mode exists because the full suite's 2560×1280 generator case needs roughly 1 GB and tens of seconds; it is additive and `EngineTests` still runs every function.
+- `tests/main.cpp`: adds the `--topology` focused mode and registers the two new test functions. No production engine or editor file changed.
+
+Build/test commands and results (2026-11-04, developer PowerShell):
+
+```powershell
+cmake --preset Release -S . -B build\Release
+cmake --build build\Release --target aur_tests --parallel 8
+ctest --test-dir build\Release -C Release -R TopologyTests --output-on-failure
+```
+
+`aur_tests` built and linked in Release; `TopologyTests` passed 1/1 CTest (5/5 functions, 0.08 s). This run was made with the VS 2026 `vcvarsall.bat x64` initialized in the same process; invoking the agent shell without that initialization fails to compile (`iostream` not found) and `vcvarsall` also emits a harmless `vswhere.exe` message. `cmake --preset Release` requires that initialized environment.
+
+Still blocked / not verified:
+
+- `build.bat release` still fails on the 23 pre-existing `studio/MapEditorPanel.cpp` errors (same set recorded above: `aur::Json` has no `begin/end/push_back/at`, const `as_array()` is read-only for entity mutation, and `MapCanvasWidget::mapBounds()` is private). That prevents linking `Aur Studio`, so no live editor screenshot, GPU/fallback parity check, or shader seam capture was produced. The topology/runtime tests above do not depend on that file.
+- The complete Release `EngineTests` (all functions incl. the 2560×1280 forge case) passed on 2026-11-04: 1/1 CTest, 26.89 s. It ran after the focused `TopologyTests` pass and covers the same binary.
+- Repeated full-suite runs in this session are slow but healthy; a Debug run was interrupted after it kept growing above ~800 MB during the same 2560×1280 forge case, so the documented 6.0+ GiB peak in `Bible/Operations/Handover.md` remains the best memory measurement.
+- Runtime exit traversal, chunk streaming, pathfinding, axial-tilt climate, and seasonal declination remain out of scope as previously recorded.

@@ -1,0 +1,134 @@
+{
+ "alpine_highlands": {
+  "base_tile": 4,
+  "climate": "arctic",
+  "color": "#96a6a8",
+  "decay": 10,
+  "description": "High peaks, rocky passes, and thin-air plateaus.",
+  "name": "Alpine Highlands",
+  "tileset": "world",
+  "vegetation": 65,
+  "water_level": 50
+ },
+ "ancient_ruins": {
+  "base_tile": 5,
+  "climate": "temperate",
+  "color": "#a58b73",
+  "decay": 10,
+  "description": "Lost roads, overgrown monuments, and buried cities.",
+  "name": "Ancient Ruins",
+  "tileset": "world",
+  "vegetation": 65,
+  "water_level": 50
+ },
+ "coast_and_islands": {
+  "base_tile": 6,
+  "climate": "temperate",
+  "color": "#56a2ad",
+  "decay": 10,
+  "description": "Shorelines, reefs, and island chains.",
+  "name": "Coast & Islands",
+  "tileset": "world",
+  "vegetation": 65,
+  "water_level": 50
+ },
+ "crystal_reaches": {
+  "base_tile": 5,
+  "climate": "temperate",
+  "color": "#9a84c5",
+  "decay": 10,
+  "description": "Arcane mineral fields and luminous caverns.",
+  "name": "Crystal Reaches",
+  "tileset": "world",
+  "vegetation": 65,
+  "water_level": 50
+ },
+ "desert_wastes": {
+  "base_tile": 6,
+  "climate": "arid",
+  "color": "#d5ad68",
+  "decay": 10,
+  "description": "Dunes, dry basins, and sun-baked badlands.",
+  "name": "Desert Wastes",
+  "tileset": "world",
+  "vegetation": 65,
+  "water_level": 50
+ },
+ "frostfall_tundra": {
+  "base_tile": 4,
+  "climate": "arctic",
+  "color": "#b8cbd2",
+  "decay": 10,
+  "description": "Snowfields, frozen lakes, and northern wastes.",
+  "name": "Frostfall Tundra",
+  "tileset": "world",
+  "vegetation": 65,
+  "water_level": 50
+ },
+ "mistfen_marsh": {
+  "base_tile": 3,
+  "climate": "temperate",
+  "color": "#5b8b78",
+  "decay": 10,
+  "description": "Wetlands, reed beds, and fog-bound fens.",
+  "name": "Mistfen Marsh",
+  "tileset": "world",
+  "vegetation": 65,
+  "water_level": 50
+ },
+ "old_growth_forest": {
+  "base_tile": 3,
+  "climate": "temperate",
+  "color": "#3b8054",
+  "decay": 10,
+  "description": "Dense woodland and ancient forests.",
+  "name": "Old-growth Forest",
+  "tileset": "world",
+  "vegetation": 65,
+  "water_level": 50
+ },
+ "sky_isles": {
+  "base_tile": 4,
+  "climate": "temperate",
+  "color": "#88b6d2",
+  "decay": 10,
+  "description": "Floating landmasses and high-altitude sanctuaries.",
+  "name": "Sky Isles",
+  "tileset": "world",
+  "vegetation": 65,
+  "water_level": 50
+ },
+ "tropical_jungle": {
+  "base_tile": 3,
+  "climate": "temperate",
+  "color": "#4c9a58",
+  "decay": 10,
+  "description": "Warm rainforests, vines, and overgrown ruins.",
+  "name": "Tropical Jungle",
+  "tileset": "world",
+  "vegetation": 65,
+  "water_level": 50
+ },
+ "verdant_plains": {
+  "base_tile": 0,
+  "climate": "temperate",
+  "color": "#75b96b",
+  "decay": 10,
+  "description": "Open grasslands, farms, and rolling meadows.",
+  "name": "Verdant Plains",
+  "tileset": "world",
+  "vegetation": 65,
+  "water_level": 50
+ },
+ "volcanic_badlands": {
+  "base_tile": 4,
+  "climate": "arid",
+  "color": "#bb6654",
+  "decay": 10,
+  "description": "Ash plains, lava country, and scorched stone.",
+  "name": "Volcanic Badlands",
+  "tileset": "world",
+  "vegetation": 65,
+  "water_level": 50
+ }
+}

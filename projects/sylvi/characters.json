@@ -1,0 +1,424 @@
+{
+ "baker": {
+  "colors": {
+   "accent": "#e8e8e8",
+   "bottom": "#7a4a2a",
+   "hair": "#c9c9d6",
+   "top": "#e8dcc0",
+   "trim": "#c9a46a"
+  },
+  "name": "Bertha",
+  "parts": {
+   "accessory": [
+    "headband"
+   ],
+   "bottom": "skirt",
+   "ears": "round",
+   "hair": "choppy",
+   "top": "tunic",
+   "weapon": "none"
+  }
+ },
+ "bandit": {
+  "colors": {
+   "accent": "#c93b3b",
+   "bottom": "#3a2a2a",
+   "hair": "#2e2a3a",
+   "metal": "#b8c0cc",
+   "top": "#6a2a2a"
+  },
+  "name": "Bandit",
+  "parts": {
+   "accessory": [
+    "headband"
+   ],
+   "bottom": "pants",
+   "ears": "round",
+   "hair": "choppy",
+   "top": "tunic",
+   "weapon": "sword"
+  }
+ },
+ "bandit_archer": {
+  "colors": {
+   "accent": "#c93b3b",
+   "bottom": "#3a2a2a",
+   "hair": "#5a3a20",
+   "top": "#4a5a3a"
+  },
+  "name": "Brigand Archer",
+  "parts": {
+   "accessory": [
+    "scarf"
+   ],
+   "bottom": "pants",
+   "ears": "round",
+   "hair": "choppy",
+   "top": "tunic",
+   "weapon": "none"
+  }
+ },
+ "bandit_boss": {
+  "colors": {
+   "accent": "#c93b3b",
+   "bottom": "#2a2a3a",
+   "hair": "#2a2030",
+   "metal": "#b8c0cc",
+   "skin": "#c98a62",
+   "top": "#3a3a4a",
+   "trim": "#c93b3b"
+  },
+  "name": "Brigand Chief",
+  "parts": {
+   "accessory": [
+    "scarf"
+   ],
+   "bottom": "pants",
+   "ears": "round",
+   "hair": "long",
+   "top": "tunic",
+   "weapon": "staff"
+  }
+ },
+ "bram": {
+  "colors": {
+   "accent": "#b8423a",
+   "bottom": "#4a4a5a",
+   "eye": "#2f6fd0",
+   "hair": "#5a3a20",
+   "metal": "#cfd8e6",
+   "shoe": "#3a2a1a",
+   "skin": "#e8b58a",
+   "top": "#8a8a96",
+   "trim": "#c9a23a"
+  },
+  "name": "Bram",
+  "parts": {
+   "accessory": [],
+   "bottom": "pants",
+   "ears": "round",
+   "hair": "choppy",
+   "top": "tunic",
+   "weapon": "sword"
+  }
+ },
+ "child": {
+  "colors": {
+   "bottom": "#7a4a2a",
+   "hair": "#e8d36a",
+   "skin": "#f6d2b0",
+   "top": "#3a6fc9"
+  },
+  "name": "Pip",
+  "parts": {
+   "accessory": [],
+   "bottom": "shorts",
+   "ears": "round",
+   "hair": "choppy",
+   "top": "tunic",
+   "weapon": "none"
+  }
+ },
+ "drunk": {
+  "colors": {
+   "bottom": "#4a4a5a",
+   "hair": "#c9c9d6",
+   "skin": "#e8b58a",
+   "top": "#7a5a3a"
+  },
+  "name": "Old Tomas",
+  "parts": {
+   "accessory": [],
+   "bottom": "pants",
+   "ears": "round",
+   "hair": "choppy",
+   "top": "tunic",
+   "weapon": "none"
+  }
+ },
+ "elder": {
+  "colors": {
+   "accent": "#c9a23a",
+   "bottom": "#3a3a6a",
+   "hair": "#e8e8f0",
+   "skin": "#e8b58a",
+   "top": "#4a5ac9",
+   "trim": "#f2c94c"
+  },
+  "name": "Elder Orin",
+  "parts": {
+   "accessory": [],
+   "bottom": "pants",
+   "ears": "round",
+   "hair": "long",
+   "top": "robe",
+   "weapon": "staff"
+  }
+ },
+ "guard": {
+  "colors": {
+   "accent": "#3a6fc9",
+   "bottom": "#4a4a5a",
+   "hair": "#5a3a20",
+   "top": "#8a8aa0",
+   "trim": "#c9a23a"
+  },
+  "name": "Guard",
+  "parts": {
+   "accessory": [],
+   "bottom": "pants",
+   "ears": "round",
+   "hair": "choppy",
+   "top": "tunic",
+   "weapon": "staff"
+  }
+ },
+ "hero": {
+  "age_group": "adult",
+  "gender": "female",
+  "graphic": "hero",
+  "name": "Sylvi",
+  "presentation": "feminine",
+  "spec": {
+   "age_group": "adult",
+   "colors": {
+    "accent": "#a57835",
+    "bottom": "#5a3420",
+    "eye": "#284c3c",
+    "hair": "#d9692f",
+    "metal": "#cfd8e6",
+    "skin": "#f6d2b0",
+    "top": "#3fa34d",
+    "trim": "#f2c94c"
+   },
+   "gender": "female",
+   "name": "Sylvi",
+   "parts": {
+    "accessory": [
+     "circlet",
+     "scarf"
+    ],
+    "age_group": "adult",
+    "bottom": "pants",
+    "ears": "elf",
+    "hair_style": "long",
+    "presentation": "feminine",
+    "role": "traveler",
+    "weapon": "sword"
+   }
+  }
+ },
+ "innkeeper": {
+  "colors": {
+   "bottom": "#5a3a7a",
+   "hair": "#8a5a3a",
+   "top": "#b8423a",
+   "trim": "#e8dcc0"
+  },
+  "name": "Marta",
+  "parts": {
+   "accessory": [],
+   "bottom": "skirt",
+   "ears": "round",
+   "hair": "choppy",
+   "top": "tunic",
+   "weapon": "none"
+  }
+ },
+ "mira": {
+  "colors": {
+   "accent": "#d8c080",
+   "bottom": "#6a4a2a",
+   "eye": "#2f8f5a",
+   "hair": "#3a7a4a",
+   "skin": "#f1c9b5",
+   "top": "#5a8a4a",
+   "trim": "#d8c080"
+  },
+  "name": "Mira",
+  "parts": {
+   "accessory": [
+    "headband"
+   ],
+   "bottom": "shorts",
+   "ears": "elf",
+   "hair": "long",
+   "top": "tunic",
+   "weapon": "none"
+  }
+ },
+ "smith": {
+  "colors": {
+   "bottom": "#3a3a4a",
+   "hair": "#2e2a3a",
+   "skin": "#c98a62",
+   "top": "#7a4e2a",
+   "trim": "#8a8a96"
+  },
+  "name": "Gundar",
+  "parts": {
+   "accessory": [],
+   "bottom": "pants",
+   "ears": "round",
+   "hair": "choppy",
+   "top": "tunic",
+   "weapon": "none"
+  }
+ },
+ "sylvi": {
+  "colors": {
+   "accent": "#c93b3b",
+   "bottom": "#7a4a2a",
+   "eye": "#2f8f5a",
+   "hair": "#d9692f",
+   "metal": "#cfd8e6",
+   "shoe": "#5a3420",
+   "skin": "#f6d2b0",
+   "top": "#3fa34d",
+   "trim": "#f2c94c"
+  },
+  "name": "Sylvi",
+  "parts": {
+   "accessory": [
+    "circlet",
+    "scarf"
+   ],
+   "bottom": "shorts",
+   "ears": "elf",
+   "hair": "choppy",
+   "top": "tunic",
+   "weapon": "sword"
+  }
+ },
+ "sylvi_child": {
+  "age_group": "child",
+  "gender": "female",
+  "graphic": "sylvi_child",
+  "name": "Sylvi (Child)",
+  "presentation": "feminine",
+  "spec": {
+   "age_group": "child",
+   "colors": {
+    "accent": "#a57835",
+    "bottom": "#5a3420",
+    "eye": "#284c3c",
+    "hair": "#d9692f",
+    "metal": "#cfd8e6",
+    "skin": "#f6d2b0",
+    "top": "#3fa34d",
+    "trim": "#f2c94c"
+   },
+   "gender": "female",
+   "name": "Sylvi",
+   "parts": {
+    "accessory": [
+     "circlet",
+     "scarf"
+    ],
+    "age_group": "child",
+    "bottom": "pants",
+    "ears": "elf",
+    "hair_style": "long",
+    "presentation": "feminine",
+    "role": "traveler",
+    "weapon": "sword"
+   }
+  }
+ },
+ "sylvi_teen": {
+  "age_group": "teen",
+  "gender": "female",
+  "graphic": "sylvi_teen",
+  "name": "Sylvi (Teen)",
+  "presentation": "feminine",
+  "spec": {
+   "age_group": "teen",
+   "colors": {
+    "accent": "#a57835",
+    "bottom": "#5a3420",
+    "eye": "#284c3c",
+    "hair": "#d9692f",
+    "metal": "#cfd8e6",
+    "skin": "#f6d2b0",
+    "top": "#3fa34d",
+    "trim": "#f2c94c"
+   },
+   "gender": "female",
+   "name": "Sylvi",
+   "parts": {
+    "accessory": [
+     "circlet",
+     "scarf"
+    ],
+    "age_group": "teen",
+    "bottom": "pants",
+    "ears": "elf",
+    "hair_style": "long",
+    "presentation": "feminine",
+    "role": "traveler",
+    "weapon": "sword"
+   }
+  }
+ },
+ "traveler": {
+  "colors": {
+   "accent": "#c93b3b",
+   "bottom": "#3a3a4a",
+   "hair": "#7a3a9a",
+   "top": "#c9a23a"
+  },
+  "name": "Traveler",
+  "parts": {
+   "accessory": [
+    "scarf"
+   ],
+   "bottom": "pants",
+   "ears": "elf",
+   "hair": "choppy",
+   "top": "tunic",
+   "weapon": "none"
+  }
+ },
+ "villager": {
+  "colors": {
+   "accent": "#b8423a",
+   "bottom": "#5a3a7a",
+   "eye": "#5a3a20",
+   "hair": "#e8d36a",
+   "skin": "#8d5a3b",
+   "top": "#c9a23a"
+  },
+  "name": "Villager",
+  "parts": {
+   "accessory": [
+    "headband"
+   ],
+   "bottom": "skirt",
+   "ears": "round",
+   "hair": "long",
+   "top": "tunic",
+   "weapon": "none"
+  }
+ },
+ "wisp": {
+  "colors": {
+   "accent": "#ffffff",
+   "bottom": "#9ac8f0",
+   "eye": "#5a9ae0",
+   "hair": "#bfe8ff",
+   "shoe": "#9ac8f0",
+   "skin": "#e8f8ff",
+   "top": "#bfe8ff",
+   "trim": "#ffffff"
+  },
+  "name": "Wisp",
+  "parts": {
+   "accessory": [],
+   "bottom": "skirt",
+   "ears": "elf",
+   "hair": "long",
+   "top": "robe",
+   "weapon": "none"
+  }
+ }
+}

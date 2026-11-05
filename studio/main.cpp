@@ -1,0 +1,90 @@
+#include <QApplication>
+#include <QDir>
+#include <QFileInfo>
+#include "MainWindow.hpp"
+#include "RhiBackend.hpp"
+
+int main(int argc, char* argv[]) {
+    aur::editor::configureRhiBackendBeforeApplication();
+    QApplication app(argc, argv);
+    app.setApplicationName("Aur Studio");
+    app.setApplicationDisplayName("Aur Studio");
+    app.setOrganizationName("Aur");
+    app.setStyleSheet(R"(
+        QWidget {
+            background-color: #151a22;
+            color: #e8e1cf;
+            selection-background-color: #b9853f;
+            selection-color: #10141a;
+        }
+        QMainWindow, QDialog, QMenu, QMenuBar, QStatusBar {
+            background-color: #11161e;
+        }
+        QLabel#StudioTitle {
+            color: #e8edf2; font-size: 13px; font-weight: 700;
+            padding: 2px 6px;
+        }
+        QMenuBar { border-bottom: 1px solid #39414b; }
+        QMenuBar::item { padding: 6px 10px; }
+        QMenuBar::item:selected, QMenu::item:selected { background: #39434c; }
+        QMenu { border: 1px solid #515a64; }
+        QToolBar { background: #1b222c; border: 0; border-bottom: 1px solid #39414b; spacing: 6px; }
+        QTabWidget::pane { border: 1px solid #39414b; background: #151a22; }
+        QTabBar::tab {
+            background: #202832; color: #c8c0ae; padding: 8px 13px;
+            border: 1px solid #39414b; border-bottom: 0; margin-right: 2px;
+        }
+        QTabBar::tab:selected { background: #34434a; color: #f2c879; }
+        QTabBar::tab:hover:!selected { background: #2a343e; }
+        QPushButton, QToolButton {
+            background: #29333c; color: #f0e9d8; border: 1px solid #4b5660;
+            border-radius: 4px; padding: 5px 10px;
+        }
+        QPushButton:hover, QToolButton:hover { background: #3b4a50; border-color: #d3a75d; }
+        QPushButton:pressed, QToolButton:pressed { background: #806334; }
+        QPushButton:disabled { color: #737b83; background: #20262d; border-color: #353c43; }
+        QLineEdit, QTextEdit, QPlainTextEdit, QSpinBox, QDoubleSpinBox, QComboBox {
+            background: #10151c; color: #eee7d8; border: 1px solid #45505a;
+            border-radius: 3px; padding: 4px 6px; selection-background-color: #b9853f;
+        }
+        QComboBox QAbstractItemView, QListWidget, QTreeWidget, QTableWidget {
+            background: #11171f; alternate-background-color: #19212a;
+            color: #e8e1cf; border: 1px solid #39444e;
+        }
+        QListWidget::item, QTreeWidget::item { padding: 4px; }
+        QListWidget::item:selected, QTreeWidget::item:selected, QTableWidget::item:selected {
+            background: #725b36; color: #fff3d4;
+        }
+        QHeaderView::section { background: #252f39; color: #e7d6b3; padding: 5px; border: 0; }
+        QGroupBox { border: 1px solid #3c4650; border-radius: 4px; margin-top: 10px; padding-top: 7px; }
+        QGroupBox::title { color: #dfbd79; subcontrol-origin: margin; left: 8px; padding: 0 4px; }
+        QSplitter::handle { background: #303943; }
+        QScrollBar:vertical, QScrollBar:horizontal { background: #141a21; border: 0; }
+        QScrollBar::handle:vertical, QScrollBar::handle:horizontal {
+            background: #47545d; min-height: 24px; min-width: 24px; border-radius: 4px;
+        }
+        QScrollBar::handle:hover { background: #728078; }
+        QScrollBar::add-line, QScrollBar::sub-line { width: 0; height: 0; }
+        QToolTip { background: #252f39; color: #fff3d4; border: 1px solid #d3a75d; padding: 4px; }
+    )");
+    QString project_path;
+    if (argc > 1) {
+        project_path = QString::fromLocal8Bit(argv[1]);
+    } else {
+        const QString working_directory_project =
+            QDir::current().filePath("projects/sylvi/project.json");
+        const QString executable_directory_project =
+            QDir(QCoreApplication::applicationDirPath())
+                .filePath("../../projects/sylvi/project.json");
+        if (QFileInfo::exists(working_directory_project)) {
+            project_path = QFileInfo(working_directory_project).absolutePath();
+        } else if (QFileInfo::exists(executable_directory_project)) {
+            project_path = QFileInfo(executable_directory_project).absolutePath();
+        } else {
+            project_path = QDir::current().filePath("projects/sylvi");
+        }
+    }
+    aur::MainWindow window(project_path.toStdString());
+    window.showMaximized();
+    return app.exec();
+}

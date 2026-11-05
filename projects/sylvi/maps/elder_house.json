@@ -1,0 +1,197 @@
+{
+ "climate": "temperate",
+ "entities": [
+  {
+   "color": [255, 200, 130],
+   "intensity": 0.5,
+   "radius": 60,
+   "type": "light",
+   "x": 6,
+   "y": 3
+  },
+  {
+   "dir": "up",
+   "id": "door",
+   "type": "spawn",
+   "x": 5,
+   "y": 7
+  },
+  {
+   "char": "elder",
+   "dir": "down",
+   "event": [
+    {
+     "cmd": "if",
+     "cond": {
+      "switch": "shard_returned"
+     },
+     "else": [
+      {
+       "cmd": "if",
+       "cond": {
+        "item": "moon_shard"
+       },
+       "else": [
+        {
+         "cmd": "if",
+         "cond": {
+          "switch": "quest_started"
+         },
+         "else": [
+          {
+           "cmd": "say",
+           "face": "elder",
+           "text": "Sylvi, my dear princess. A pillar of moonlight fell into Moss Cavern, east of here.",
+           "who": "Elder Orin"
+          },
+          {
+           "cmd": "say",
+           "face": "elder",
+           "text": "Bring me the Moon Shard. Take this candy. Don't let the guards catch you sneaking out.",
+           "who": "Elder Orin"
+          },
+          {
+           "cmd": "give_item",
+           "item": "candy",
+           "qty": 2
+          },
+          {
+           "cmd": "set_switch",
+           "name": "quest_started",
+           "value": true
+          }
+         ],
+         "then": [
+          {
+           "cmd": "say",
+           "face": "elder",
+           "text": "The Moon Shard rests deep in Moss Cavern. Beware the Slime King.",
+           "who": "Elder Orin"
+          }
+         ]
+        }
+       ],
+       "then": [
+        {
+         "cmd": "say",
+         "face": "elder",
+         "text": "The Moon Shard! You found it!",
+         "who": "Elder Orin"
+        },
+        {
+         "cmd": "take_item",
+         "item": "moon_shard"
+        },
+        {
+         "amount": 100,
+         "cmd": "give_gold"
+        },
+        {
+         "cmd": "say",
+         "face": "elder",
+         "text": "But bandits now bar Crimson Pass. Bram and Mira have offered their blades.",
+         "who": "Elder Orin"
+        },
+        {
+         "actor": "bram",
+         "cmd": "join"
+        },
+        {
+         "actor": "mira",
+         "cmd": "join"
+        },
+        {
+         "cmd": "battle",
+         "map": "crimson_pass",
+         "on_win": [
+          {
+           "cmd": "say",
+           "face": "elder",
+           "text": "The pass is clear! You three make a fine company. Eldervale thanks you.",
+           "who": "Elder Orin"
+          },
+          {
+           "cmd": "set_switch",
+           "name": "shard_returned",
+           "value": true
+          }
+         ]
+        }
+       ]
+      }
+     ],
+     "then": [
+      {
+       "cmd": "say",
+       "face": "elder",
+       "text": "Peace has returned, {name}. Rest well; it is {period} in {season}.",
+       "who": "Elder Orin"
+      }
+     ]
+    }
+   ],
+   "id": "elder",
+   "name": "Elder Orin",
+   "type": "npc",
+   "x": 5,
+   "y": 3
+  },
+  {
+   "effect": "fade",
+   "h": 1,
+   "target": {
+    "map": "eldervale",
+    "spawn": "elder_door"
+   },
+   "type": "exit",
+   "w": 2,
+   "x": 5,
+   "y": 8
+  }
+ ],
+ "h": 9,
+ "id": "elder_house",
+ "kind": "interior",
+ "layers": {
+  "above": [
+   [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+   [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+   [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+   [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+   [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+   [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+   [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+   [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1],
+   [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
+  ],
+  "ground": [
+   [101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101],
+   [101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101],
+   [101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101],
+   [101, 101, 101, 102, 102, 102, 102, 102, 102, 101, 101, 101],
+   [101, 101, 101, 102, 102, 102, 102, 102, 102, 101, 101, 101],
+   [101, 101, 101, 102, 102, 102, 102, 102, 102, 101, 101, 101],
+   [101, 101, 101, 102, 102, 102, 102, 102, 102, 101, 101, 101],
+   [101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101, 101],
+   [101, 101, 101, 101, 101, 102, 102, 101, 101, 101, 101, 101]
+  ],
+  "objects": [
+   [106, 106, 106, 106, 106, 106, 106, 106, 106, 106, 106, 106],
+   [107, 107, 105, 105, 107, 107, 107, 107, 105, 105, 107, 107],
+   [107, 104, -1, -1, -1, -1, -1, -1, -1, -1, -1, 107],
+   [107, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 107],
+   [107, -1, -1, -1, -1, -1, 103, -1, -1, -1, -1, 107],
+   [107, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 107],
+   [107, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 107],
+   [107, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 107],
+   [107, 107, 107, 107, 107, -1, -1, 107, 107, 107, 107, 107]
+  ]
+ },
+ "mode": "action",
+ "music": "inn",
+ "name": "Elder Orin's House",
+ "outdoor": false,
+ "style": "snes",
+ "tileset": "terra",
+ "w": 12
+}

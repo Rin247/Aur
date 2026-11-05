@@ -18,16 +18,16 @@
 
 ## Architecture
 
-- **Active product:** Native C++20 engine (`mana_engine` static library, zero Qt dependencies) + Qt 6.12 Widgets studio (`aur_studio`) and game runtime (`mana_game`).
+- **Active product:** Native C++20 engine (`aur_engine` static library, zero Qt dependencies) + Qt 6.12 Widgets studio (`aur_studio`) and game runtime (`aur_game`).
 - Godot references in older design documents are legacy context only; Godot is not part of the current implementation plan. Continue the existing C++/Qt product.
 
 ## Key Components
 
-- **Engine (`engine/mana/`)**: JSON parser, indexed graphics (BGR555, palettes, translucent shadows), project IO, seeded character/creature/effect/tile generators, Earth-like world generation, biome data, autotiling, game clock, weather system, scripting interpreter, field exploration, and stdio MCP tools.
+- **Engine (`engine/aur/`, `aur` namespace)**: JSON parser, indexed graphics (BGR555, palettes, translucent shadows), project IO, seeded character/creature/effect/tile generators, spherical procedural world generation, biome data, autotiling, game clock, weather system, scripting interpreter, field exploration, and stdio MCP tools.
 - **Studio (`studio/`)**: Qt 6.12 Widgets UI (`MainWindow`) with a shared SNES-inspired theme, Map Editor, Pixel Editor with frame/animation preview and zoom, directional Sprite Editor, Tileset Editor, Seeded Asset Forge, Database Panel with editable race records, Event Panel, project-backed Music Studio, zoomable/pannable World Map editor with location/exit authoring, and JSON-backed World & Time Settings.
 - **MCP (`aur_mcp`)**: Local stdio server for agent-driven map/biome editing, seeded asset generation, tile/palette editing, and indexed graphics/character/creature edits. See the [MCP server guide](MCP%20Server.md).
 - **Former Python scratchpad**: Its experimental implementation has been retired; it was a testbed, not a required feature-parity target. The active Studio and engine are the C++/Qt rewrite. Historical notes and screenshots remain under `reference/`.
-- **Tests (`tests/`)**: Headless CTest suite (`mana_tests`) covering JSON, autotiling, seeded generators, world-generation controls, biomes, and MCP protocol/project edits.
+- **Tests (`tests/`)**: Headless CTest suite (`aur_tests`) covering JSON, autotiling, seeded generators, world-generation controls, biomes, and MCP protocol/project edits.
 - **Design Bibles**: Focused documents are organized under `Bible/World/`, `Bible/Game Design/`, `Bible/Systems/`, `Bible/Characters/`, `Bible/Time and Puzzles/`, and `Bible/Production/`. The preserved conversation archive is the user's designated source of truth; historical documents are in `Bible/Archive/`.
 
 ## Verified
@@ -40,4 +40,4 @@
 - Music Studio edits project-backed songs, tracks, and piano-roll notes, creates arrangements from Quick Compose presets, and plays looping stereo synthesized previews.
 - Music Studio includes an Ableton-style Session Grid for track/scene clips and launch previews, with the Piano Roll retained as a distinct note-editing view.
 - World Map location and exit markers can be placed by clicking the map, selected from the canvas or list, edited, deleted, and restored through canvas undo/redo.
-- Earth-like world generation starts with a random editable seed and automatically names each result from its seed, using numbered copies when reusing one.
+- World generation offers seeded continent, archipelago, supercontinent, and fractured topologies; the World Map editor renders generated elevation and biome data as a shaded HD surface.

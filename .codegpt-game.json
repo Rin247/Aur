@@ -1,0 +1,17 @@
+{
+  "name": "Aur Studio",
+  "engine": "generic",
+  "launch": {
+    "cmd": "build/Release/Aur Studio.exe",
+    "args": ["projects/sylvi"]
+  },
+  "log": {
+    "stdout": true,
+    "paths": ["build/Release/*.log"]
+  },
+  "window": "Aur Studio",
+  "sourceRoots": ["engine/aur", "studio", "tests"],
+  "vars": {
+    "AUR_RHI_BACKEND": "d3d12"
+  }
+}

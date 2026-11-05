@@ -19,6 +19,7 @@ When sources conflict, use this precedence:
 - [MVP roadmap](Operations/Roadmap.md) — outstanding work and priorities.
 - [Project overview](Operations/Project%20Overview.md) — product, architecture, and verified features.
 - [Agent guide](Operations/Agent%20Guide.md) — repository constraints and working practices.
+- [World map topology handover](Operations/World%20Map%20Topology%20Handover.md) — P3.0 scope, current state, acceptance tests, and gated follow-on roadmap.
 - [MCP server](Operations/MCP%20Server.md) — local agent integration and project data.
 
 ## Design and production

@@ -1,0 +1,88 @@
+{
+ "calendar": {
+  "days_per_season": 28,
+  "hours_per_day": 24,
+  "phase_hours": [6, 12, 18],
+  "real_day_minutes": 48,
+  "seasons": [
+   "spring",
+   "summer",
+   "autumn",
+   "winter"
+  ],
+  "start_hour": 7.5
+ },
+ "clock_scale": 0.5,
+ "current_era": "middle_stability",
+ "eras": {
+  "dark_age": {
+   "aesthetic": "War-torn fortifications beneath ash skies.",
+   "conflict": "The Vorashi surge and the Sylvani Aetheric Implosion.",
+   "name": "The Dark Age"
+  },
+  "industrial_weave": {
+   "aesthetic": "Steampunk machinery fused with magic and runic technology.",
+   "conflict": "Technology, tradition, and competing powers.",
+   "name": "The Industrial Weave"
+  },
+  "middle_stability": {
+   "aesthetic": "Classic fantasy, established trade routes, and normalized magic.",
+   "conflict": "Political intrigue and Solani expansion.",
+   "name": "The Middle Stability"
+  },
+  "primordial_dawn": {
+   "aesthetic": "Overgrown sci-fi ruins, Seed Ship wreckage, and the first discoveries of magic.",
+   "conflict": "Survival; humans and native peoples meet.",
+   "name": "The Primordial Dawn"
+  },
+  "severed_age": {
+   "aesthetic": "Mana-dead neon arcologies and biopunk technology.",
+   "conflict": "Corporate extraction, identity, and social inequality.",
+   "name": "The Severed Age"
+  }
+ },
+ "party": [
+  "sylvi"
+ ],
+ "start": {
+  "map": "eldervale",
+  "spawn": "start"
+ },
+ "start_gold": 50,
+ "start_hour": 7.5,
+ "start_items": {
+  "candy": 2
+ },
+ "title": "Sylvi and the Moon Shard",
+ "weather": {
+  "interval_hours": 3,
+  "profiles": {
+   "arctic": {
+    "clear": 20,
+    "cloudy": 25,
+    "snow": 50,
+    "storm": 5
+   },
+   "arid": {
+    "clear": 75,
+    "cloudy": 20,
+    "rain": 5
+   },
+   "none": {
+    "clear": 100
+   },
+   "temperate": {
+    "clear": 40,
+    "cloudy": 30,
+    "rain": 25,
+    "storm": 5
+   },
+   "tropical": {
+    "clear": 25,
+    "cloudy": 25,
+    "rain": 35,
+    "storm": 15
+   }
+  }
+ }
+}
