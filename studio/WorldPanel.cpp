@@ -2339,6 +2339,7 @@ WorldPanel::WorldPanel(Project* p, QWidget* parent)
     connect(redoShortcut, &QShortcut::activated, mapCanvas, &WorldMapCanvasWidget::redo);
 
     auto* footer = new QLabel("Wheel: zoom · Ctrl+wheel: snap 1/2/4/8/16× · middle-drag: pan · "
+                              "Keys 1-7: tool · Ctrl+Z/Y: undo/redo · "
                               "Raise/Lower height or paint biome · Add Location/Exit, then click · "
                               "Fit: show the whole world · Save with Ctrl+S.", this);
     footer->setStyleSheet("color: #8d98a3;");
@@ -2349,6 +2350,15 @@ WorldPanel::WorldPanel(Project* p, QWidget* parent)
     });
     connect(toolCombo, &QComboBox::currentIndexChanged, this,
             [this](int index) { mapCanvas->setTool(index); });
+    for (int key = 1; key <= 7; ++key) {
+        QShortcut* shortcut = new QShortcut(QKeySequence(Qt::Key_0 + key), this);
+        shortcut->setContext(Qt::WidgetWithChildrenShortcut);
+        connect(shortcut, &QShortcut::activated, this, [this, key]() {
+            toolCombo->setCurrentIndex(key - 1);
+        });
+    }
+    toolCombo->setToolTip("Tool (keys 1-7: Inspect, Paint terrain, Paint biome, "
+                          "Place location, Place exit, Raise height, Lower height)");
     connect(brushSizeSpin, &QSpinBox::valueChanged, mapCanvas,
             &WorldMapCanvasWidget::setBrushSize);
     connect(tileCategoryCombo, &QComboBox::currentIndexChanged, this,
