@@ -46,3 +46,19 @@ Implementation files go in `src/`, headers in `include/`, tests in `tests/`. No 
 > `WANTED.md`/`HANDOVER.md` cap closed items: when a new item closes, verify the previous closed one, then remove it, so the files stay tidy and never grow forever.
 
 > `WANTED.md` is a living document, not a frozen record; update it as work progresses.
+
+## Tests (estate rule)
+
+Tests are updated in the same change as the code they cover. A stale test that still asserts old behaviour is a defect, not a cleanup item: it can survive a fix and silently revert it, and it makes live code and the suite disagree. When code changes, update or delete the tests that exercise it in the same pass.
+
+## Commands and scripts (estate rule)
+
+Any script, shell/PowerShell command, or CLI invocation (e.g. `pip install xyz`) must be given in a fenced markdown code block so it can be copied verbatim. A script pasted as prose or rendered like a picture is bad UX and is not acceptable. Word the surrounding text so the command stands alone and is easy to copy.
+
+## In-app CLI (estate rule)
+
+Command-line tools and scripts that ship alongside a project must be built into the app itself rather than living as separate standalone executables/scripts. A separate CLI is a second entry point that drifts from the app; fold its capability into the app (or its own module) so there is one thing to build, ship and maintain.
+
+## Skeleton vs stub (estate rule)
+
+A meaningful skeleton is a hand-off surface, not a boast about completeness. Each module must have a distinct responsibility, a usable interface, build wiring, and either a real operation or a tested honest unsupported result. Empty files or generic stubs used to inflate file counts are a defect. Enforce in review and in the gate.

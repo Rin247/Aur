@@ -144,11 +144,12 @@ void MapCanvasWidget::paintTile(const QPoint& tile) {
         if (selected_entity_index < 0 || selected_entity_index >= static_cast<int>(kinds.size())) return;
         const char* kind = kinds[static_cast<size_t>(selected_entity_index)];
         if (selected_entity_index == 2 || selected_entity_index == 3) {
-            const auto selected = std::find_if(entities.begin(), entities.end(), [kind](const Json& entity) {
+            auto& entity_list = entities.as_array();
+            const auto selected = std::find_if(entity_list.begin(), entity_list.end(), [kind](const Json& entity) {
                 return entity.contains("type") && entity["type"].is_string() &&
                        entity["type"].as_string() == kind;
             });
-            if (selected == entities.end()) return;
+            if (selected == entity_list.end()) return;
             undo_layers.emplace_back(-1, entities);
             (*selected)["x"] = tile.x();
             (*selected)["y"] = tile.y();
@@ -157,19 +158,20 @@ void MapCanvasWidget::paintTile(const QPoint& tile) {
             update();
             return;
         }
-        auto existing = std::find_if(entities.begin(), entities.end(), [kind](const Json& entity) {
+        auto& entity_list = entities.as_array();
+        auto existing = std::find_if(entity_list.begin(), entity_list.end(), [kind](const Json& entity) {
             return entity.contains("type") && entity["type"].is_string() &&
                    entity["type"].as_string() == kind;
         });
         undo_layers.emplace_back(-1, entities);
-        if (existing != entities.end()) {
+        if (existing != entity_list.end()) {
             (*existing)["x"] = tile.x();
             (*existing)["y"] = tile.y();
         } else {
             Json entity = JsonObject{{"id", kind}, {"type", kind},
                                     {"x", tile.x()}, {"y", tile.y()}};
             if (std::string(kind) == "spawn") entity["dir"] = "down";
-            entities.push_back(std::move(entity));
+            entities.as_array().push_back(std::move(entity));
         }
 
         if (undo_layers.size() > 100) undo_layers.erase(undo_layers.begin());
@@ -662,8 +664,8 @@ MapEditorPanel::MapEditorPanel(Project* p, QWidget* parent)
         if (found == map["entities"].as_array().end()) return;
         const QRectF bounds = canvas->mapBounds();
         const QPointF center = bounds.topLeft() + QPointF(
-            (found->at("x").as_int() + 0.5) * bounds.width() / map["w"].as_int(),
-            (found->at("y").as_int() + 0.5) * bounds.height() / map["h"].as_int());
+            (found->operator[]("x").as_int() + 0.5) * bounds.width() / map["w"].as_int(),
+            (found->operator[]("y").as_int() + 0.5) * bounds.height() / map["h"].as_int());
         canvas->centerOn(center);
     });
 

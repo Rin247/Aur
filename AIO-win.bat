@@ -131,6 +131,7 @@ if errorlevel 1 (
     echo [aio] build failed
     exit /b 1
 )
+if "%AIO_CMAKE_QT%"=="1" "%QT_DIR%\bin\windeployqt.exe" --no-translations --compiler-runtime "%BDIR%\%AIO_APP%.exe"
 if "%AIO_QT_DEPLOY%"=="1" call :aio_win_package
 exit /b 0
 

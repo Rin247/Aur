@@ -39,11 +39,15 @@ class MapCanvasWidget : public QWidget {
     QPointF pan_start_offset;
     bool panning = false;
     void constrainCamera();
+
+public:
+    QRectF mapBounds() const;
+
+private:
     std::vector<std::pair<int, Json>> undo_layers;
     std::vector<std::pair<int, Json>> redo_layers;
     bool stroke_active = false;
 
-    QRectF mapBounds() const;
     QPoint tileAt(const QPointF& position) const;
     QImage tileImage(const std::string& tileset_id, int tile_index);
     void paintTile(const QPoint& tile);
