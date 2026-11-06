@@ -20,9 +20,7 @@
 #include <QDialog>
 #include <QDialogButtonBox>
 #include <QFile>
-#include <QtConcurrent/QtConcurrentRun>
 #include <QFormLayout>
-#include <QFutureWatcher>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QLineEdit>
@@ -1063,6 +1061,18 @@ WorldPanel::WorldPanel(Project* p, QWidget* parent)
     splitter->setStretchFactor(1, 1);
     splitter->setSizes({235, 760});
     layout->addWidget(splitter, 1);
+    generation_job = new world::WorldGenerationJob(this, this);
+    connect(generation_job, &world::WorldGenerationJob::generationFinished, this,
+            [this](const QString& map_id, const Json& map) {
+        const std::string id = map_id.toStdString();
+        if (project) project->maps[id] = map;
+        current_map = id;
+        refreshGraph();
+    });
+    connect(generation_job, &world::WorldGenerationJob::generationFailed, this,
+            [this](const QString& message) {
+        QMessageBox::warning(this, "World generation failed", message);
+    });
     connect(undoButton, &QPushButton::clicked, mapCanvas, &WorldMapCanvasWidget::undo);
     connect(redoButton, &QPushButton::clicked, mapCanvas, &WorldMapCanvasWidget::redo);
     auto* undoShortcut = new QShortcut(QKeySequence::Undo, this);
@@ -1296,54 +1306,18 @@ WorldPanel::WorldPanel(Project* p, QWidget* parent)
             name = base_name + " (" + std::to_string(copy_number) + ")";
             ++copy_number;
         }
-        const int requested_width = width->value();
-        const int requested_height = height->value();
-        const std::string requested_topology = topology->currentData().toString().toStdString();
-        const int requested_water = water->value();
-        const int requested_vegetation = vegetation->value();
-        const int requested_decay = decay->value();
-        const int requested_tilt = axialTilt->value();
-        const Project* const source_project = project;
-        const std::uint64_t request = ++generationRequest;
-        if (generationCancelled) generationCancelled->store(true);
-        generationCancelled = std::make_shared<std::atomic_bool>(false);
-        const auto cancelled = generationCancelled;
-        auto* watcher = new QFutureWatcher<Json>(this);
-        generationProgress = new QProgressDialog(
-            QStringLiteral("Generating spherical world\u2026"), "Cancel", 0, 0, this);
-        generationProgress->setWindowTitle("Generate world");
-        generationProgress->setWindowModality(Qt::WindowModal);
-        generationProgress->setMinimumDuration(0);
-        generationProgress->setAutoClose(false);
-        generationProgress->setAutoReset(false);
-        connect(generationProgress, &QProgressDialog::canceled, this, [cancelled]() {
-            cancelled->store(true);
-        });
-        connect(watcher, &QFutureWatcher<Json>::finished, this,
-                [this, watcher, cancelled, request, source_project, id, name]() {
-            generationProgress->hide();
-            if (request == generationRequest && project == source_project && !cancelled->load()) {
-                try {
-                    project->maps[id] = watcher->result();
-                    current_map = id;
-                    refreshGraph();
-                } catch (const std::exception& error) {
-                    QMessageBox::warning(this, "World generation failed",
-                                         QString::fromStdString(error.what()));
-                }
-            }
-            watcher->deleteLater();
-            generationProgress->deleteLater();
-            generationProgress = nullptr;
-        });
-        watcher->setFuture(QtConcurrent::run(
-            [id, name, requested_width, requested_height, seed_value, requested_topology,
-             requested_water, requested_vegetation, requested_decay, requested_tilt,
-             cancelled]() {
-                return generate_world_map(id, name, requested_width, requested_height,
-                    seed_value, requested_topology, requested_water, requested_vegetation,
-                    requested_decay, requested_tilt, cancelled.get());
-            }));
+        world::WorldGenerationParams params;
+        params.map_id = id;
+        params.map_name = name;
+        params.width = width->value();
+        params.height = height->value();
+        params.seed = seed_value;
+        params.topology = topology->currentData().toString().toStdString();
+        params.water = water->value();
+        params.vegetation = vegetation->value();
+        params.decay = decay->value();
+        params.axial_tilt = axialTilt->value();
+        generation_job->start(std::move(params), project);
     });
 
     refreshGraph();

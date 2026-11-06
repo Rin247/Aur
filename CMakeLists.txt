@@ -62,6 +62,7 @@ add_executable(aur_studio
     studio/world/WorldMarkerOverlays.cpp
     studio/world/WorldCommandHistory.cpp
     studio/world/WorldStrokeState.cpp
+    studio/world/WorldGenerationJob.cpp
     studio/WorldModel.cpp
     studio/WorldModel.hpp
     studio/RhiBackend.cpp

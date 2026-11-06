@@ -18,6 +18,7 @@
 #include "aur/project.hpp"
 #include "world/TerrainRhiWidget.hpp"
 #include "world/WorldCommandHistory.hpp"
+#include "world/WorldGenerationJob.hpp"
 #include "world/WorldMapTools.hpp"
 #include "world/WorldStrokeState.hpp"
 
@@ -153,9 +154,7 @@ class WorldPanel : public QWidget {
     QPushButton* newBiomeButton = nullptr;
     QPushButton* generateWorldButton = nullptr;
     QTimeEdit* timeOfDayEdit = nullptr;
-    QProgressDialog* generationProgress = nullptr;
-    std::shared_ptr<std::atomic_bool> generationCancelled;
-    std::uint64_t generationRequest = 0;
+    world::WorldGenerationJob* generation_job = nullptr;
     QPushButton* addLocationButton = nullptr;
     QPushButton* addExitButton = nullptr;
     QPushButton* editNodeButton = nullptr;
