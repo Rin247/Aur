@@ -35,3 +35,5 @@
 - Fast worldgen confirmation from the owner: new seeded worlds generate near-instantly — no regression from the seams introduced so far.
 
 - Step 6a (commit `a3a2a12`): camera math (zoom clamp, bounds, wrap-aware pan constrain, tile hit-testing, fit) now lives in `studio/world/WorldCamera.hpp` as pure functions over a `WorldCameraSpec`; the canvas builds the spec from `MapView` plus widget viewport. Behavior unchanged; build and tests green. Next: project-level command history (step 6b), then the press/drag/release tool interface (6c).
+
+- World editor text mojibake fixed (`0b7506b`): UTF-8 multibyte chars (×, ·, …, °, →) in `WorldPanel.cpp`/`WorldMarkerOverlays.cpp` string literals were corrupted in source; replaced with `\uXXXX` escapes inside `QStringLiteral`. Rule going forward: any non-ASCII character in Aur C++ source string literals must be written as a `\u` escape, never as a raw multibyte character.
