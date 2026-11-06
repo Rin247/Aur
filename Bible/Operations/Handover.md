@@ -5,17 +5,14 @@
 > Active direction: continue the existing C++20 + Qt 6.12 Studio/engine. Godot mentions in older design bibles are legacy context, not a planned port or current implementation target.
 > Game codenames: **Dawn** (turn-based), **Day** (tactical/grid), and **Dusk** (real-time action) are the three planned games. **Night** is an unplanned possible fourth game; do not treat it as current scope. Codenames are provisional.
 
-## Current State (Part 1 PoC)
+## Current status
+Aur is the C++20 / Qt 6.12 product: `aur_engine`, `aur_studio`, `aur_game`, `aur_mcp`, and `aur_tests`. Release links all targets; the old `MapEditorPanel.cpp` compile errors are fixed. Verified 2026-11-06: Release `EngineTests` and `TopologyTests` passed 1/1 each; `AIO.bat compile windows Release` selected `build\\Release`, deployed Qt, and exited 0. P3.0 live seam evidence and remaining acceptance are in [World Map Topology Handover](World%20Map%20Topology%20Handover.md).
+- **Engine:** `engine/aur/` builds the Qt-free `aur_engine`; active modules include field movement, tactics skeleton, music state, asset generators, and spherical world generation. See `Project Overview.md` for feature inventory.
 
-- **Build System**: `build.bat [release|debug] [build|run|game]` configures/builds through CMake presets with Ninja, `--parallel 8`, then deploys Qt runtime dependencies and `Qt6Multimedia.dll`. It can optionally launch Studio or the game from the selected output directory; no separate run script is needed.
-- **Targets**: `aur_engine` (static lib, std-only), `aur_studio` (Qt 6.12 Widgets IDE), `aur_game` (runtime), `aur_mcp` (stdio MCP server), `aur_tests` (CTest).
-- **Tests**: Release `EngineTests` passed on 2026-11-04 (1/1 CTest, 26.89 s) and the focused Release `TopologyTests` passed 1/1 CTest (5 functions) on the same day. The focused suite adds fully formed bounded-map rejection, generated-world Y rejection, climate sampling at both X edges, malformed biome-row fallback, and camera policy coverage. This still does not complete P3.0: the full `make` / `build.bat release` cannot link `Aur Studio` because of 23 pre-existing `studio/MapEditorPanel.cpp` errors, so live editor seam and GPU/fallback visuals remain unverified. See [World Map Topology Handover](World%20Map%20Topology%20Handover.md) for the phase-specific checklist.
-- **Engine modules**: the public engine lives in `engine/aur/` under the `aur` namespace and builds as `aur_engine`. `field.hpp` includes normalized eight-way movement and directional-frame selection; `tactics.hpp` remains a grid/unit/selection skeleton; `music.hpp` is playback-state/queue. `forge.cpp` provides deterministic seeded NPC, creature/pet, effect, and tile generation plus native indexed-pixel clothing and prop drawing. `worldgen.cpp` creates seeded spherical worlds with multiple topology presets and saved elevation, moisture, and temperature fields.
-- **Game launch**: `Game::update` loads the configured start map into a `FieldScene` on first tick. Named map spawn records now set the player's position and facing; explicit travel coordinates retain pixel positioning. `Game::travel()` switches maps.
-- **Playtest rendering**: Runtime scenes receive update ticks; the Qt renderer draws actual project tileset pixels in a 640×360 logical view, 2× presented at 1280×720. Field tiles are 32×32 logical pixels, framing about 20×11 tiles. The Sylvi world and terra source tilesets now contain 32×32 indexed art; cave and any other legacy tilesets remain 16×16 and are upscaled at runtime.
+- **Runtime scale:** 640×360 logical view at 2× output; 32×32 field cells. The 2D-HD diorama-to-zone coordinate contract is documented in `Project Overview.md`.
 - **Studio UI**: Starts maximized to the screen work area (16:10 on the target display) with a frameless Qt title/menu bar, Qt minimize/maximize/close controls, and a 1280×720 minimum. The World editor includes 12 editable JRPG biome presets, biome painting, seeded spherical world generation (continents, archipelago, supercontinent, fractured) up to 2560×1280 tiles (new-map default, capped at 3,276,800 cells), and an elevation-shaded HD surface with distance-aware beaches, surf, underwater shelves, smooth deep-ocean shading, polar ice, connected drainage-fed rivers, inland lakes, forest, and clustered mountain detail plus terrain overrides. Generated worlds use elevation/climate/biome/hydrology layers rather than legacy tile grids; terrain and biome painting work directly on those layers. The filtered terrain palette can add an original 21-tile starter set: nine general terrain/elevation materials plus dedicated terrain starters for all 12 project biomes, then brush selected tiles over any elevation/depth. The map canvas previews temperature/equator/poles and illustrative wind/current overlays; its weather selector previews project climate profiles or forced clear, cloudy, rain, snow, storm, and fog, while local time updates terrain lighting direction, day/night color, and weather animation. Weather/time are editor previews, not map-persisted settings. Generated worlds start without placeholder spawn/location markers; add authored locations as needed. River, lake, beach, mountain-range, hill, and cave brushes author terrain directly. The renderer supports this bounded map size; larger worlds need compact layer storage and viewport/chunk rendering. The current JSON layer model is memory-intensive at the maximum size: Release `aur_tests.exe` peaked at 6,280 MiB working set (6,359 MiB private bytes) while exercising the 2560×1280 generator case; the complete suite took 27.83 seconds, so that is not an isolated generation-time measurement. Actual Studio generation and D3D12 rendering at 2560×1280 were verified on Intel UHD Graphics: the UI returned to idle in 97.57 seconds, peaking at 7,031 MiB working set (7,133 MiB private bytes). The map was visually checked at 19%, 100%, and 400% zoom. This wall time includes UI refresh and a five-second idle tail; GPU frame time and FPS remain unmeasured. New generated maps use automatic seed-based IDs/names (numbered for duplicates), with a random seed on dialog open and a Randomize control, so seed experiments do not require manual renaming. Tactical maps show terrain, units, and collision like Fire Emblem / Advance Wars. Pixel Editor includes frame selection, animation preview, 720p-minimum adaptive zoom, and up to 64× manual zoom; Sprite Editor focuses on direction/pose/frame editing.
-- **Studio visual system**: A shared dark, warm-metal, teal-accent theme now applies consistently across tabs. World Map uses source-tile-aware zoom (100% default), terrain thumbnail previews, cursor-centered wheel zoom, middle-drag pan, off-screen tile culling, Fit, and project-backed location/exit placement, editing, deletion, and undo/redo.
-- **World surface polish**: World-map weather is clipped to map bounds; clouds and animated rain/snow use deterministic spatial variation instead of extending into the canvas or repeating in a rigid grid. Forests use procedural, hashed canopy shading in the GPU renderer and fewer, larger translucent clusters in the fallback renderer. The final canopy pass was visually checked at 400% on D3D12; Rain, Snow, and Fog were visually checked at 400%, with clear-weather lighting checked at 12:00 and 20:00. Release build and `EngineTests` pass. GPU frame time and FPS remain unmeasured.
+- **World Map:** source-tile-aware zoom, cursor-centered wheel zoom, middle-drag pan, culling, fit, and project-backed location/exit editing are implemented.
+
 - **Music Studio**: Songs, tracks, notes, scenes, and clips are project-backed. Session Grid provides track rows, scene columns, clip creation/removal, scene launch preview, and scene management; the Piano Roll remains a separate tab for note editing. A searchable, named 128-patch GM program selector writes standard program numbers, with a dedicated channel-10 drum-track workflow. Standard MIDI Type 0/1 import/export retains channel, bank, program, common controllers, and SysEx. On Windows, WinMM MIDI input/output can connect hardware devices, record incoming notes into the selected track, and route preview playback to external GM/GS devices. Built-in GM-family, six-operator FM-style, and retro PSG previews are original oscillator synthesis—not sampled SoundFont playback or a GS soundbank player. SoundFont/sample playback, VST hosting, and BRR/SPC playback are not implemented.
 - **Editor basics**: File menu supports Open Project (`Ctrl+O`), Save (`Ctrl+S`), and Reload from Disk. Opening another project prompts to save only when the project data differs from its last saved/opened snapshot. Map paint strokes and Sprite/Pixel frame edits have bounded local undo/redo; Sprite/Pixel support same-dimension full-frame copy/cut/paste. Transparent sprite previews now use a light checkerboard. This is a first pass, not project-wide history yet.
 - **Character generation**: The Character Forge supports the complete race and supernatural category roster, seeded race-aware appearances, gender identity (`female`, `male`, `non-binary`, `unspecified`), visual presentation (`feminine`, `masculine`, `androgynous`), and main-character/NPC/follower roles. Creature and pet generation is in the same workflow. Alignment is authored separately from creed/morality and corruption. See [Character Creator and Species Visuals](../Production/Character%20Creator%20and%20Species%20Visuals.md).
@@ -42,54 +39,23 @@
 ctest --test-dir build\Release --output-on-failure
 ```
 
-## Open Work (see [MVP roadmap](Roadmap.md))
-
-- **World-map wrap gate:** P3.0 cylindrical topology remains in progress, not accepted. Release `EngineTests` passed on 2026-11-03, including all-four-topology predicate regressions, but runtime/editor seam visuals, shader repeat/clamp behavior, and GPU/fallback parity are not yet verified. See [World Map Topology Handover](World%20Map%20Topology%20Handover.md). Do not start WorldSim/hydrology until the P3.0 acceptance evidence is complete and the next phase is approved.
-- Add automatic external-change notifications; current MCP integration refreshes through the guarded **Reload Agent Changes** action.
-- Add project-backed authoring workflows to the remaining Studio editors; world-map locations and exits now support placement, selection, editing, deletion, and undo/redo.
-- Implement era-specific map layers and timegate transition behavior; the current era authoring/cheat controls prepare and test state data but do not yet alter map art or geometry.
-- Grow generator templates and add region-level vegetation/water/decay editing for hand-authored maps.
-- Extend the active C++ project's 32×32 world/terra art approach to remaining tilesets, then replace procedural foundations with authored higher-detail world, terrain, and character art. The retired Python game remains reference-only; its tiles are not reused.
-- Keep playable overworlds as distinct 80×80–128×128-tile regions instead of treating the 256×128 world-select map as one traversable field; introduce chunking if region sizes grow substantially.
-- Grow Music Studio with licensed SoundFont/sample playback, VST hosting, BRR/SPC playback, and production audio controls.
-- Extend undo/redo beyond canvas edits; add map/world selection and region clipboard, full entity authoring/inspection, pan/zoom, and project dirty-state/autosave recovery.
-- Improve the procedural asset pipeline further; current seeded pixel sprites are more legible but are not a substitute for production-quality authored HD-2D assets.
-- No maintained golden-image baseline is currently available for headless rendering regression tests.
-- Externalize UI strings into an en-US resource (no hardcoding).
-- Extend the current 16-color indexed art format if the asset workflow needs richer palettes; 1280×720 is only the game presentation target.
-
-## What to verify next
-
-Latest verification (2026-11-06): fixed the 23 `MapEditorPanel.cpp` compile errors; Release Aur Studio links. Release `EngineTests` and focused `TopologyTests` both pass 1/1. Follow-up changes: World tool hotkeys 1–7; Map Editor tool state wired for paint/erase/entity placement with hotkeys 1–4; Pixel and Sprite brush hotkeys 1–5 / 1–3; AIO Windows tree selection prefers the requested config cache and targets `aur_studio`; Qt deployment targets `Aur Studio.exe`. `AIO.bat compile windows Release` configured and selected `build\Release`, reported `ninja: no work to do`, deployed Qt dependencies, exit 0. Owner-confirmed direction: crisp, detailed 2D-HD art, scaled world diorama transitioning to full-scale field zones over shared grid coordinates; tactical combat references XCOM, Wasteland 3, Jagged Alliance 3, Desperados 3 and Baldur’s Gate 3, not Fire Emblem’s presentation. P3.0 fit/306% and 400% seam evidence is captured; live seam-crossing paint/undo restored exactly by pixel diff. Remaining: dedicated edge-column side-by-side at 400%, Map/Pixel hotkeys not visually smoke-tested, and no GPU/fallback parity claim (RHI init failure qFatals by policy). Temporary scripts removed. WANTED #50 audit: root has no `work/` or `imagegen/`; tests are consolidated in `tests/`; 45 Bible markdown files are organized into focused modules/Operations/Archive, no stray root docs found.
-
-## Build entry point split (2026-11-04)
-
-`AIO.bat` is now the command and menu, and it calls two standalone parts:
-`AIO-win.bat` and `AIO-linux.bat`. There is no Android part: Aur is
-Windows/Linux only. Generated by `tools\split_aio.py`; `build.bat` still works
-unchanged.
-
-**Verified 2026-11-04:**
-
-- `AIO.bat compile` — reached ninja and reported `no work to do` against an
-  up-to-date `build\Release` tree.
-- `AIO.bat test` — 1/1 `EngineTests` passed (6.74 s, Debug tree).
-- `AIO.bat run` — launched `build\Release\Aur Studio.exe`, PID 8304, responding,
-with a main window; killed by PID.
-- `AIO.bat run` on Release — the only binary is `build\Debug\Aur Studio.exe`
-  (2 Nov), so a Release `run` does not exist until the source defect below is
-  fixed. The Release link did not complete.
-- `AIO.bat build` — reaches the compiler and **fails on pre-existing source**:
-  23 errors in `studio/MapEditorPanel.cpp` against `aur::Json`
-  (`l-value specifies const object`, `no member named push_back/at`,
-  `mapBounds` is private). Not an AIO defect and not touched.
-
-`build.bat` remains the dispatcher's fallback for this project.
+## Current open work
+1. **P3.0 topology:** one dedicated 400% edge-column comparison remains; do not start P3.1 until the gate is complete and separately approved. See [World Map Topology Handover](World%20Map%20Topology%20Handover.md).
+2. **WANTED #1:** toolbar resize/professional sweep and functional context menus.
+3. **WANTED #50:** finish the remaining documentation/root tidy audit before closing it.
+4. **Editors:** Map/Pixel shortcuts need a live smoke test; project-wide undo/redo, region selection/clipboard, complete entity authoring, and dirty-state/autosave recovery remain open.
+5. **Roadmap:** MCP external-change notifications, era-specific layers/timegates, authored art, audio playback features, and headless golden-image tests. See `Roadmap.md`.
 
 
-## Gated Track A — Asset Pipeline (audit gate A0; 2026-11-03)
 
-**Scope:** SNES-authentic improvements across the five existing asset tabs (Tileset, Sprite, Pixel, Map, Forge), separate from P3 topology and M Music. This entry records an audit only; no implementation behavior was changed. Constraints/design language: 8×8 tiles, 16-color indexed/sub-palettes, tile-map attributes (index + palette + priority + H/V flip), sprite H-flip, palette-swap recolors, and seeded generation. Keep features bounded and expose/automate these conventions rather than expanding into unlimited modern layers.
+
+
+## Build entry points
+`AIO.bat` dispatches to `AIO-win.bat` and `AIO-linux.bat`; `build.bat` remains available. The Windows dispatcher selects the requested configuration tree and builds `aur_studio` for Qt deployment; Release selection was verified 2026-11-06.
+
+
+## Asset-pipeline audit (A0; implementation not authorized)
+This source-inspection audit records unresolved editor gaps; recheck current code before acting. A0 is not authorization for implementation.
 
 ### One-page asset graph
 ```text
@@ -140,64 +106,35 @@ Audit complete; no behavior changes made. A0 exit evidence: the three left-pane 
 **Additional build-entry note:** verified that root `AIO.bat` also handles configure/build/run (`build`, `debug`, `test`, `run`). Its test action runs CTest against Debug; this audit did not execute either build path.
 
 
-## Consolidated Track Brief Update (2026-11-03)
+## Open work
+- P3.0 topology: one dedicated 400% edge-column comparison remains before the phase gate closes. Do not start P3.1 without completing and approving the gate. See [World Map Topology Handover](World%20Map%20Topology%20Handover.md).
+- WANTED #1: toolbar resize/professional sweep and functional context menus.
+- WANTED #50: project tidy audit; tests are consolidated and inspected tree has no `work/` or `imagegen/` payloads. Complete the remaining Operations/root audit before closing it.
+- Map/Pixel keyboard shortcuts are implemented but not live-smoke-tested. Project-wide undo/redo, map region selection/clipboard, complete entity authoring, and dirty-state/autosave recovery remain open.
+- Other roadmap work: MCP external-change notifications, era-specific layers/timegates, authored art, audio playback features, and headless golden-image tests. See `Roadmap.md`.
 
-Owner clarification supersedes prior draft assumptions. P3 topology, M music, and A art pipeline are three independent gates; never bundle deliverables. This session followed STEP 0: `git status --short` was captured first; all named source files were read in full; prior A0 findings were rechecked rather than assumed. No implementation files or project data were modified.
+A0 below is source-inspection only, not implementation authorization. Recheck its findings against current code before acting.
 
-### STEP 0 / revalidation
-- `TilesetEditorPanel.cpp`: no longer missing/empty (55 lines). `refreshTilesets()` clears `tileList` and only fills the tileset combo; the blank list is confirmed to be a UI wiring gap. It contains unconnected SOLID/WATER/SLOW/HURT/ENCOUNTER/BRIDGE checkboxes under the misleading “SNES Tile Attributes” label. Data-model confirmation comes from project code/schema: gameplay `flags` are per tile, tiles have indexed rows + `pal`, and tilesets have palettes. Map cells have no palette/priority/H/V flip struct in the inspected model/editor path. The earlier “empty file” premise was stale; still, A2 implementation needs broader schema round-trip evidence.
-- `PixelEditorPanel.cpp`: no longer missing/empty (841 lines). Brush numbering is confirmed: Pixel modes 0=8×8 tile, 1=pixel, 2=16×16 stamp, 3=picker, 4=eraser; Sprite UI options map to 1/0/4. Graphic frames are indexed row strings in `graphics[*].frames`; animations contain frame references, FPS and loop. UI reads inline graphic palettes; there is no explicit sub-palette view/swap or frame strip/per-frame delay. Pixel rows are `.`/hex indices; render path treats index 0 as transparent. Do not state the A3 “prior magic-int mapping” as unverified anymore; replace with a named enum and assert when implementing.
-- `world_topology.hpp`: now read in full; no trailing whitespace inside any predicate literal is present. `wraps_world_x` compares exact topology IDs, rejecting missing/non-string/unsupported values. The claimed “sole defect is unseen header trailing spaces” does **not** reproduce in current file state. The current predicate implementation has six comparisons with four supported values; tests cover these supported topologies and missing/non-string/unsupported cases.
-- `WorldModel.cpp`: now read in full; model uses `wraps_world_x(map)` and actual `width_` for X normalization, without a competing topology predicate.
-- Git status showed the same broad pre-existing dirty/untracked project tree; no cleanup/reset/staging was performed. Source-only changes remained absent at the end of this audit.
+### A0 follow-up findings
+The source audit found unbound Tileset Editor list/flag controls, inline rather than shared palettes, integer tile IDs without per-cell render attributes, split Pixel/Sprite editor history, and no versioned Forge recipe provenance. The collision overlay already reads tile flags and must not be duplicated; event command/validation UI and Map Inspector event fields were mock or unbound in the inspected source. Recheck each finding against current code before implementation. A0 is not implementation authorization.
 
-### A0 asset graph corrections / map-runtime render search
-- Preserve the already recorded one-page graph and per-tab audit, subject to these corrections: Map’s flag overlay already exists, renders SOLID/WATER/HURT/SLOW/ENCOUNTER using `Project::tile_flags`, and must not be rebuilt. The left paint palette has three tile entries plus four entity entries (not four total). The renderer switch recognizes eight entity kinds: spawn/exit/npc/chest/sign/trigger/light/enemy. They are duplicated, with no common registry, and the paint palette omits sign/trigger/light/enemy.
-- Grep/read of `studio/GameView.cpp` found an index-to-color switch (`tile_color`: 0 grass, 1 path, 2 water, 3 bush) used only as fallback when `make_tileset_tile()` fails or returns a null image. The normal runtime path already uses `make_tileset_tile(*project, tileset, index)`, the same tile graphic helper as editor preview. Record the fallback table as a divergence risk/defect; A1 should establish whether any maps reach it and remove/route the fallback through authored tileset graphics only with tests.
-- Map camera parity is not present in current `MapEditorPanel`: it fits entire map into `mapBounds()` with no wheel zoom/pan; WorldPanel has zoom, pan, fit-to-view, and camera constraints. Reuse/check WorldPanel interaction behavior before proposing an A1 implementation; do not alter WorldPanel in the P3 gate.
-- A1 cost estimate remains **not finalized**: STEP 0 revalidated enough source to correct the one-page audit, but no implementation plan/breakdown was requested or performed. Existing `Project` store and `make_tileset_tile`/`invalidate`/Forge writes are additive integration points; do not rebuild a bus.
-
-### P3 predicate status and gate
-- In the re-read current files, existing `tests/test_world_model.cpp` already asserts true for all four topology identifiers and false for absent worldgen/absent topology, non-string topology, and unsupported topology. It verifies `worldX` using width 4, not a hard-coded starter width. The empty-worldgen case covers missing topology; add an explicit ordinary bounded-map fixture only if the P3 gate wants to make that case more readable, rather than duplicating semantics.
-- Because the current predicate contains no trailing-literal spaces, no topology change was made. Current working tree marks the listed engine/tests/WorldPanel/WorldModel paths untracked, so `git diff` cannot establish their provenance; preserve them.
-- WorldPanel’s wrapping draw/camera/stroke path was only source-inspected; no rendering or camera changes made. A fresh Release build via `build.bat release`, the requested filtered `ctest -R EngineTests`, and fit/zoom backend parity screenshots were **not run** in this audit. P3 remains open; establish the VS build environment and capture evidence at its own gate. The owner has characterized endless X repetition as intended, not a defect.
-
-### M track direction / initial audit pointers (not implementation authorization)
-
-- Locked pivot: Bitwig is upstream composition/sound design. Aur is an adaptive stem arranger plus handwritten learning cores, not a VST host/Ableton clone. No SF2/GM-bank loader or plugin hosting. Imported MIDI uses Aur’s handwritten sketch voices; authentic GM/GS uses the existing hardware MIDI Out.
-- Source grep/read confirms `engine/aur/midi.cpp` parses the file’s `division` and passes it to `midi_tick_to_step`, but a fixed `ticks_per_step = 480/4` constant is used by export. Thus the stated “import division-assignment site” was not found as an obvious error; exact MIDI roundtrip/import preservation and event coverage remain unverified. Do not change without tracing parser-to-grid semantics and fixtures.
-- `MusicPanel::playPreview()` currently synthesizes the whole song into PCM, writes a temporary WAV, and plays it with the Qt media player; there is no streaming `QAudioSink` mixer. The imported song stores PPQN and an initial tempo/time-signature, but `parse_track` converts note-on/off to steps immediately; full per-event tempo/program/control automation maps are not evident in this representation. No plugin hosting/SF2 implementation was inspected or added.
-- The requested authoritative tick timeline, CC64/CC1/pitch-bend fidelity, realtime mixer/tweening, bounded core curriculum, and ergonomic changes remain separate M-gated phases. Their detailed acceptance is not complete; no M implementation was performed.
-- Use the Audio Bible’s confirmed adaptive mechanics as design authority. Do not invent a phase clock: project `current_era`, `phase_hours`, calendar/eras/weather are already authored/validated by World Settings. Any modernization outside bounded SNES and adaptive-audio conventions must be logged as an explicit design-change proposal, not silently implemented.
-
-**Stop point:** no P3 code/evidence gate was completed; no M phase started; A0 is an audit only, and A1–A4 remain gated. Do not bundle them.
+## Focused handovers
+P3.0 evidence and remaining acceptance are in [World Map Topology Handover](World%20Map%20Topology%20Handover.md). A0 findings are source-inspection notes, not implementation authorization; recheck active code before acting. Audio work remains in the roadmap and focused design documents.
 
 
-### Supplementary asset, topology, and audio audit notes (2026-11-03)
-- Actual Sylvi world dimensions are 256×128 with worldgen topology `continents`; this is the live starter fixture, not a hard-coded width in topology helpers. The requested regression phrase “ordinary bounded maps” is broader than the existing test set: tests explicitly check no worldgen and empty worldgen metadata, but a fully formed ordinary map fixture without `worldgen` is not named as such. Add that explicit fixture assertion if needed at the P3 implementation gate.
-- Correction to the A0 summary above: Map `paintEvent()` enters the collision overlay only when `current_layer == 3` and both ground and objects layers exist. It draws ground/object tile flags; the overlay is present and must not be rebuilt. Whether requiring both layers is a defect needs a focused regression against valid map schemas before changing it.
-- Event UI gap is confirmed: EventPanel currently displays IDs from `project->events` alongside mock command rows and a hard-coded “valid” response. Map Editor has hard-coded `Facing Dir` and `Event ID` line edits and never binds them to entities.
-- Animation records preserve frame order, FPS and loop in the observed editor/generator paths; no per-frame delay field surfaced. The sprite base+flip optimization proposed by the owner is explicitly a mirror-paint editing aid while retaining eight stored direction frames; do not migrate schema.
-- Music import uses header division in tick-to-step conversion. It reads initial tempo and time signature, but converts note events to 16th steps; a fixed 120 ticks/step constant exists in the exporter. The exact import division bug described by the user is not confirmed at this parse site. `playPreview()` definitely bakes PCM to a temporary WAV, with no QAudioSink. Further M behavior awaits its own approved phase.
-
-- **A0 audit corrections:** Map’s collision overlay checks for both ground and objects; do not change that condition absent schema evidence. No A1 cost estimate or implementation recommendation is finalized.
 
 
-**A0 evidence addendum (2026-11-03):** Pixel Editor’s generic animation preview iterates `anims[animation_id].frames` in JSON order (PixelEditorPanel.cpp around 455–469, 492–507); no `std::set` reordering occurs there. Sprite Editor builds its candidate frame list in clip order and uses a set only to suppress duplicates (around 785–805). Withdraw the prior note claiming generic animation clip order is reordered. Per-frame delays remain absent in the inspected playback paths.
 
 
-## A1 Map editor implementation status (2026-11-03)
-
-- Started only A1, per the owner’s ordered-track instruction. Added Map canvas zoom controls/wheel zoom, fit-to-view, middle-button pan, viewport culling, and actual-tileset-size scaling. Extended the paint palette to list the eight renderer entity types and wired selecting/painting entity kinds; selection centers on an existing matching type. The collision overlay code remains the existing Map canvas path, with defensive handling for absent ground/objects layer arrays.
-- This track is incomplete and unverified: entity edit undo/history integration is currently unsafe (entity snapshots use the layer-history stack), entity selection UI/edit semantics need follow-up, and no successful build/tests/UI check has been run yet. Do not begin M until these are corrected, tested, visually checked, and committed.
-- `build.bat` has reappeared. It initializes `vcvarsall.bat` and performs CMake configure/build, but its deployment line uses `%QT_DIR%` without setting/defaulting it; test/run actions exist in `AIO.bat`. Use the repository entry point after fixing/confirming its, rather than assuming direct CMake uses a prepared MSVC environment.
 
 
-## Estate update check (2026-11-03)
 
-- Reviewed the other active repository, `C:\Projects\Aur`, before touching implementation. Its latest commits add MIDI PPQN/piano-roll range work and P3.0 cylindrical-topology groundwork. The current Aur handover explicitly gates P3.1 on the P3.0 acceptance evidence and user approval; do not import Aur files into Prometheus or bundle its work into this project.
-- Aur's tracked edits and numerous untracked files are pre-existing working-tree state. No staging, cleanup, reset, build, or edits were performed there.
-- Prometheus `_handoff/` is a cross-project safety bundle, not an instruction to merge every file: current `PrometheusImageGenBridge.cpp`, `ImageGenSurface.qml`, `MediaViewport.qml`, and bridge header compare byte-identical with active source; `PrometheusCMakeLists.txt` and `stage_media_aio-wip.py` do not match their active counterparts. The `*-wip` files are historical alternatives, not safe replacements. Preserve this bundle pending owner clarification; no source changes were made.
-- The separate `_handoff/WANTED.md` still has open rows 27 (investigate bundle provenance/merge) and 21–37, including row 26's native syntax engine request. Do not mark the provenance ask closed based on identical current copies alone: the remaining differing artifacts need provenance and relevance established before any merge or deletion.
-- The update includes broad unstaged migrations/deletions and staged syntax/grammar plus build-script changes. In particular the current `build.bat` is an 18-line wrapper that calls a Visual Studio 18 installation path; its fallback CMake path expects the retired `desktop/CMakePresets.json` and makes no tree-sitter, cache-clean, or deploy steps. `desktop/CMakeLists.txt` also drops explicit render-test timeout assignments. These are material build regressions/risk signals; they were not changed or tested during this read-only triage.
-- `PrometheusSyntaxEngine` still has only its existing optional tree-sitter dynamic loading and regex fallback in the inspected source; the native tokenizer requested in the staged `WANTED.md` plan has not been implemented here. No build, test, launch, or image-generation run was performed.
+
+
+
+
+
+
+
+## A1 Map Editor follow-up
+Map Editor camera/palette/entity work was previously started. Recheck current code and tests before further changes; do not rely on stale session notes.
