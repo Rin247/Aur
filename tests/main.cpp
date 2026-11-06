@@ -12,6 +12,7 @@ void test_topology_field_climate_and_camera();
 void test_midi_import_export();
 void test_world_model_rect_edits();
 void test_world_model_wrap_edits();
+void test_world_surface_checksum();
 
 int main(int argc, char** argv) {
     // Allow a focused topology run without the memory-heavy full generator sweep.
@@ -24,6 +25,7 @@ int main(int argc, char** argv) {
         RUN_TEST(test_topology_paint_boundaries);
         RUN_TEST(test_topology_field_climate_and_camera);
         RUN_TEST(test_world_model_wrap_edits);
+        RUN_TEST(test_world_surface_checksum);
         std::cout << "\nResults: " << g_tests_passed << " passed, "
                   << g_tests_failed << " failed.\n";
         return g_tests_failed > 0 ? 1 : 0;
@@ -40,6 +42,7 @@ int main(int argc, char** argv) {
     RUN_TEST(test_midi_import_export);
     RUN_TEST(test_world_model_rect_edits);
     RUN_TEST(test_world_model_wrap_edits);
+    RUN_TEST(test_world_surface_checksum);
 
     std::cout << "\nResults: " << g_tests_passed << " passed, " << g_tests_failed << " failed.\n";
     return g_tests_failed > 0 ? 1 : 0;

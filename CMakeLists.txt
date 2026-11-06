@@ -53,6 +53,8 @@ add_executable(aur_studio
     studio/ForgePanel.cpp
     studio/MusicPanel.cpp
     studio/WorldPanel.cpp
+    studio/world/HdSurface.cpp
+    studio/world/WorldMapHelpers.cpp
     studio/WorldModel.cpp
     studio/WorldModel.hpp
     studio/RhiBackend.cpp
@@ -93,9 +95,12 @@ add_executable(aur_tests
     tests/test_topology_boundaries.cpp
     tests/test_midi.cpp
     tests/test_world_model.cpp
+    tests/test_world_surface.cpp
+    studio/world/HdSurface.cpp
+    studio/world/WorldMapHelpers.cpp
     studio/WorldModel.cpp
 )
 target_include_directories(aur_tests PRIVATE studio)
-target_link_libraries(aur_tests PRIVATE aur_engine)
+target_link_libraries(aur_tests PRIVATE aur_engine Qt6::Gui)
 add_test(NAME EngineTests COMMAND aur_tests)
 add_test(NAME TopologyTests COMMAND aur_tests --topology)

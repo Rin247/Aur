@@ -28,5 +28,5 @@ For each numbered step: record touched-file sizes; make only moves/extractions o
 ## Progress
 - [x] Audit, persistent plan, and baseline build/test verification completed.
 - [x] Header dependency cleanup committed as `a535da2`.
-- [ ] Step 1 complete: surface renderer extraction and checksum test remain outstanding; header-only cleanup does not close this step.
+- [x] Step 1: extracted the HD surface renderer to `studio/world/HdSurface.{hpp,cpp}`, kept its default full-map pixels intact, added the optional region crop API and seeded RGB32 checksum test (`7986464436153998528`), and verified Release build plus both CTest tests.
 - [ ] Steps 2–7 remain outstanding. Update this checklist only when a step's build/test gate passes and its code commit exists.

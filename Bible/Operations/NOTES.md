@@ -18,3 +18,5 @@
 - The persistent plan is `Bible/Operations/WorldPanel Refactor Plan.md`; the first implementation checkpoint is header/include hygiene. The required `buildHdSurface` checksum still needs a testable Qt image-builder seam before completing step 1.
 
 - Added Aur request #51 to `WANTED.md` to keep the full WorldPanel refactor visible; its durable sequence and honest completion checklist are in `Bible/Operations/WorldPanel Refactor Plan.md`. Header cleanup is committed, but the checksum/surface extraction and steps 2–7 remain open; do not close the request until acceptance is tested.
+
+- WorldPanel step 1 moved the complete HD surface pixel-generation body to `studio/world/HdSurface.cpp`; the public operation accepts map, project and region, returns a cropped image only for a non-null region, and preserves the prior full-map output for a null region. A 32×16 seeded generated world yields stable RGB32 FNV-1a checksum `7986464436153998528`. Both full Release build and both CTest targets passed.
