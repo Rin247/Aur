@@ -19,6 +19,7 @@
 #include "world/TerrainRhiWidget.hpp"
 #include "world/WorldCommandHistory.hpp"
 #include "world/WorldMapTools.hpp"
+#include "world/WorldStrokeState.hpp"
 
 namespace world_alias = aur::world;
 using WorldOverlay = world_alias::WorldOverlay;
@@ -58,15 +59,12 @@ class WorldMapCanvasWidget : public QWidget {
     QImage surface_cache;
     std::string surface_cache_map;
     editor::WorldCommandHistory history;
-    std::vector<editor::WorldModel::RectSnapshot> stroke_model_rects;
-    std::set<int> stroke_captured_cells;
+    world::WorldStrokeState stroke;
     std::unique_ptr<editor::WorldModel> world_model;
     std::string world_model_map;
     std::uint64_t world_model_generation = 0;
     TerrainRhiWidget* terrain_renderer = nullptr;
     WorldMapOverlayWidget* overlay_widget = nullptr;
-    bool stroke_active = false;
-    QPoint stroke_last_tile{-1, -1};
     int brush_size = 1;
     qreal zoom_factor = 1.0;
     QPointF pan_offset;

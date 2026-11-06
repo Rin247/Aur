@@ -1,5 +1,6 @@
 #include "mini_test.hpp"
 #include "world/WorldCommandHistory.hpp"
+#include "world/WorldStrokeState.hpp"
 
 void test_command_history_roundtrip()
 {
@@ -67,4 +68,26 @@ void test_command_history_limit()
         ++depth;
     }
     ASSERT(depth == 100);
+}
+
+void test_stroke_line_tiles()
+{
+    using aur::world::stroke_line_tiles;
+
+    const std::vector<QPoint> empty = stroke_line_tiles({3, 4}, {3, 4}, 0);
+    ASSERT(empty.empty());
+
+    const std::vector<QPoint> plain = stroke_line_tiles({0, 0}, {3, 3}, 0);
+    ASSERT(plain.size() == 3);
+    ASSERT(plain.front() == QPoint(1, 1));
+    ASSERT(plain.back() == QPoint(3, 3));
+
+    const std::vector<QPoint> wrapped = stroke_line_tiles(QPoint(9, 0), QPoint(1, 0), 10);
+    ASSERT(wrapped.size() == 2);
+    ASSERT(wrapped.front() == QPoint(10, 0));
+    ASSERT(wrapped.back() == QPoint(11, 0));
+
+    const std::vector<QPoint> vertical = stroke_line_tiles({5, 2}, {5, 5}, 0);
+    ASSERT(vertical.size() == 3);
+    ASSERT(vertical.back() == QPoint(5, 5));
 }

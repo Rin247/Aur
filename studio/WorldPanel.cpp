@@ -326,8 +326,8 @@ void WorldMapCanvasWidget::paintTile(const QPoint& tile) {
         constexpr int heightStep = 20;
         for (const QPoint& position : stamp) {
             const int index = position.y() * world_model->width() + position.x();
-            if (stroke_active && stroke_captured_cells.insert(index).second) {
-                stroke_model_rects.push_back(world_model->captureRect(
+            if (stroke.active && stroke.captured_cells.insert(index).second) {
+                stroke.model_rects.push_back(world_model->captureRect(
                     editor::WorldModel::Layer::Height, {position.x(), position.y(), 1, 1}));
             }
             const std::uint16_t oldHeight =
@@ -411,8 +411,8 @@ void WorldMapCanvasWidget::paintTile(const QPoint& tile) {
         }
         for (const QPoint& position : stamp) {
             const int index = position.y() * world_model->width() + position.x();
-            if (stroke_active && stroke_captured_cells.insert(index).second) {
-                stroke_model_rects.push_back(world_model->captureRect(
+            if (stroke.active && stroke.captured_cells.insert(index).second) {
+                stroke.model_rects.push_back(world_model->captureRect(
                     editor::WorldModel::Layer::Biome, {position.x(), position.y(), 1, 1}));
             }
             const std::array<std::uint8_t, 1> value{*biomeId};
@@ -754,9 +754,7 @@ void WorldMapCanvasWidget::mousePressEvent(QMouseEvent* event) {
         return;
     }
     if (event->button() == Qt::LeftButton) {
-        stroke_active = false;
-        stroke_model_rects.clear();
-        stroke_captured_cells.clear();
+        stroke.end();
         const QPoint tile = tileAt(event->position());
         if (world::is_entity_placement(selected_tool) &&
             tile.x() >= 0 && tile.y() >= 0) {
@@ -798,8 +796,7 @@ void WorldMapCanvasWidget::mousePressEvent(QMouseEvent* event) {
         }
         if ((world::is_paint_tool(selected_tool) || modelStroke) &&
             project && project->maps.contains(current_map) && tile.x() >= 0 && tile.y() >= 0) {
-            stroke_active = true;
-            stroke_last_tile = tile;
+            stroke.begin(tile);
         }
         paintTile(tile);
     }
@@ -817,37 +814,25 @@ void WorldMapCanvasWidget::mouseMoveEvent(QMouseEvent* event) {
         hover_tile = tile;
         refreshCanvas();
     }
-    if (stroke_active && event->buttons().testFlag(Qt::LeftButton) &&
-        tile.x() >= 0 && tile.y() >= 0 && tile != stroke_last_tile) {
-        const QPoint start = stroke_last_tile;
+    if (stroke.active && event->buttons().testFlag(Qt::LeftButton) &&
+        tile.x() >= 0 && tile.y() >= 0 && tile != stroke.last_tile) {
         const bool wraps_x = project && project->maps.contains(current_map) &&
             aur::wraps_world_x(project->maps.at(current_map));
-        const int width = wraps_x
+        const int wrap_width = wraps_x
             ? project->maps.at(current_map)["w"].as_int() : 0;
-        const int delta_x = wraps_x
-            ? aur::wrapped_delta_x(aur::wrapX(start.x(), width),
-                                   aur::wrapX(tile.x(), width), width)
-            : tile.x() - start.x();
-        const int steps = std::max(std::abs(delta_x),
-                                   std::abs(tile.y() - start.y()));
-        for (int step = 1; step <= steps; ++step) {
-            const double fraction = static_cast<double>(step) / steps;
-            paintTile(QPoint(qRound(start.x() + delta_x * fraction),
-                             qRound(start.y() + (tile.y() - start.y()) * fraction)));
+        for (const QPoint& point : world::stroke_line_tiles(stroke.last_tile, tile, wrap_width)) {
+            paintTile(point);
         }
-        stroke_last_tile = tile;
+        stroke.last_tile = tile;
     }
 }
 
 void WorldMapCanvasWidget::mouseReleaseEvent(QMouseEvent* event) {
     if (event->button() == Qt::LeftButton) {
-        if (!stroke_model_rects.empty()) {
-            history.record_rects(std::move(stroke_model_rects));
+        if (!stroke.model_rects.empty()) {
+            history.record_rects(std::move(stroke.model_rects));
         }
-        stroke_model_rects.clear();
-        stroke_captured_cells.clear();
-        stroke_active = false;
-        stroke_last_tile = {-1, -1};
+        stroke.end();
     }
     if (event->button() == Qt::MiddleButton) {
         panning = false;

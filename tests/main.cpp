@@ -16,6 +16,8 @@ void test_world_surface_checksum();
 void test_map_view_layers();
 void test_command_history_roundtrip();
 void test_command_history_limit();
+void test_stroke_line_tiles();
+void test_stroke_line_tiles();
 
 int main(int argc, char** argv) {
     // Allow a focused topology run without the memory-heavy full generator sweep.
@@ -51,6 +53,7 @@ int main(int argc, char** argv) {
     RUN_TEST(test_map_view_layers);
     RUN_TEST(test_command_history_roundtrip);
     RUN_TEST(test_command_history_limit);
+    RUN_TEST(test_stroke_line_tiles);
 
     std::cout << "\nResults: " << g_tests_passed << " passed, " << g_tests_failed << " failed.\n";
     return g_tests_failed > 0 ? 1 : 0;
