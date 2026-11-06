@@ -20,12 +20,12 @@ class MainWindow : public QMainWindow {
     std::string saved_signature;
     QTabWidget* tabs = nullptr;
     GameView* gameView = nullptr;
-    QPushButton* playBtn = nullptr;
-    QPushButton* pauseBtn = nullptr;
-    QPushButton* stopBtn = nullptr;
-    QPushButton* saveBtn = nullptr;
-    QPushButton* reloadBtn = nullptr;
     QLabel* chromeTitle = nullptr;
+    QAction* saveAction = nullptr;
+    QAction* reloadAction = nullptr;
+    QAction* playAction = nullptr;
+    QAction* pauseAction = nullptr;
+    QAction* stopAction = nullptr;
 
     void refreshProjectPanels();
     std::string projectSignature() const;

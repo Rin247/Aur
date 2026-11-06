@@ -104,6 +104,7 @@ public:
     void setContoursEnabled(bool enabled);
     void setTimeOfDay(int hour, int minute);
     void setZoom(qreal zoom);
+    qreal zoomFactor() const noexcept { return zoom_factor; }
     void fitToView();
     void recordEntityEdit();
     void undo();

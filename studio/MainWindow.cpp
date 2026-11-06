@@ -10,6 +10,8 @@
 #include "WorldSettingsPanel.hpp"
 #include <QLabel>
 #include <QShortcut>
+#include <QMenu>
+#include <QIcon>
 #include <QKeySequence>
 #include <QMessageBox>
 #include <QFileDialog>
@@ -20,6 +22,7 @@
 #include <QStatusBar>
 #include <QToolButton>
 #include <QVBoxLayout>
+#include <functional>
 #include <QWindow>
 #include <QEvent>
 
@@ -146,34 +149,63 @@ MainWindow::MainWindow(const std::string& project_path, QWidget* parent)
     QAction* openAction = fileMenu->addAction("&Open Project…");
     openAction->setShortcut(QKeySequence::Open);
     connect(openAction, &QAction::triggered, this, &MainWindow::openProject);
-    QAction* saveAction = fileMenu->addAction("&Save Project");
+    saveAction = fileMenu->addAction("&Save Project");
     saveAction->setShortcut(QKeySequence::Save);
     connect(saveAction, &QAction::triggered, this, &MainWindow::saveProject);
     fileMenu->addSeparator();
-    QAction* reloadAction = fileMenu->addAction("&Reload from Disk");
+    reloadAction = fileMenu->addAction("&Reload from Disk");
     connect(reloadAction, &QAction::triggered, this, &MainWindow::reloadProject);
-    // Playtest & Save Toolbar
-    QToolBar* toolbar = addToolBar("Playtest");
+    auto* toolbar = new QToolBar("Project", this);
+    toolbar->setObjectName("ProjectToolbar");
     toolbar->setMovable(false);
+    toolbar->setFloatable(false);
+    toolbar->setAllowedAreas(Qt::TopToolBarArea | Qt::BottomToolBarArea);
+    toolbar->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+    toolbar->setIconSize(QSize(16, 16));
+    addToolBar(Qt::TopToolBarArea, toolbar);
 
-    saveBtn = new QPushButton("💾 Save Project (Ctrl+S)", this);
-    saveBtn->setStyleSheet("background-color: #1976d2; color: white; font-weight: bold; padding: 4px 12px;");
-    toolbar->addWidget(saveBtn);
-
-    reloadBtn = new QPushButton("Reload Agent Changes", this);
-    toolbar->addWidget(reloadBtn);
-
+    auto addToolbarAction = [this, toolbar](const QString& text, const QString& shortText,
+                                             const QString& tip, const QIcon& icon,
+                                             const std::function<void()>& callback) {
+        QAction* action = toolbar->addAction(icon, text);
+        action->setText(text);
+        action->setIconText(shortText);
+        action->setToolTip(tip);
+        connect(action, &QAction::triggered, this, callback);
+        return action;
+    };
+    QAction* saveToolbarAction = addToolbarAction("Save Project", "Save", "Save project (Ctrl+S)",
+                     style()->standardIcon(QStyle::SP_DialogSaveButton),
+                     [this]() { saveProject(); });
+    connect(saveToolbarAction, &QAction::triggered, saveAction, [this]() {
+        saveAction->trigger();
+    });
+    QAction* reloadToolbarAction = addToolbarAction("Reload Agent Changes", "Reload", "Reload agent changes from disk",
+                     style()->standardIcon(QStyle::SP_BrowserReload),
+                     [this]() { reloadProject(); });
+    connect(reloadToolbarAction, &QAction::triggered, reloadAction, [this]() {
+        reloadAction->trigger();
+    });
     toolbar->addSeparator();
+    addToolbarAction("Play Project", "Play", "Play project (F5)",
+                     style()->standardIcon(QStyle::SP_MediaPlay),
+                     [this]() { playProject(); });
+    addToolbarAction("Pause", "Pause", "Pause project",
+                     style()->standardIcon(QStyle::SP_MediaPause),
+                     [this]() { pauseProject(); });
+    addToolbarAction("Stop", "Stop", "Stop project",
+                     style()->standardIcon(QStyle::SP_MediaStop),
+                     [this]() { stopProject(); });
+    toolbar->setStyleSheet(
+        "QToolBar#ProjectToolbar { spacing: 4px; padding: 4px; }"
+        "QToolBar#ProjectToolbar QToolButton { padding: 4px 8px; }" );
+    auto* compactToolbarShortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Alt | Qt::Key_T), this);
+    connect(compactToolbarShortcut, &QShortcut::activated, this, [toolbar]() {
+        toolbar->setToolButtonStyle(toolbar->toolButtonStyle() == Qt::ToolButtonTextBesideIcon
+            ? Qt::ToolButtonIconOnly : Qt::ToolButtonTextBesideIcon);
+    });
+    toolbar->setToolTip("Ctrl+Alt+T toggles compact toolbar buttons");
 
-    playBtn = new QPushButton("▶ Play Project (F5)", this);
-    playBtn->setStyleSheet("background-color: #2e7d32; color: white; font-weight: bold; padding: 4px 12px;");
-    toolbar->addWidget(playBtn);
-
-    pauseBtn = new QPushButton("⏸ Pause", this);
-    toolbar->addWidget(pauseBtn);
-
-    stopBtn = new QPushButton("⏹ Stop", this);
-    toolbar->addWidget(stopBtn);
     // Main Tabbed Editor Workspace
     tabs = new QTabWidget(this);
     gameView = new GameView(project_path, this);
@@ -189,14 +221,50 @@ MainWindow::MainWindow(const std::string& project_path, QWidget* parent)
     tabs->addTab(new WorldPanel(&project, this), "World");
     tabs->addTab(new WorldSettingsPanel(&project, this), "World & Time Settings");
 
+    auto installEditorMenu = [this](QWidget* canvas, const std::function<void()>& undo,
+                                      const std::function<void()>& redo,
+                                      const std::function<void()>& zoomIn,
+                                      const std::function<void()>& zoomOut,
+                                      const std::function<void()>& fit) {
+        auto* menu = new QMenu(canvas);
+        QAction* undoAction = menu->addAction("Undo");
+        QAction* redoAction = menu->addAction("Redo");
+        menu->addSeparator();
+        QAction* zoomInAction = menu->addAction("Zoom In");
+        QAction* zoomOutAction = menu->addAction("Zoom Out");
+        QAction* fitAction = menu->addAction("Fit to View");
+        connect(undoAction, &QAction::triggered, canvas, undo);
+        connect(redoAction, &QAction::triggered, canvas, redo);
+        connect(zoomInAction, &QAction::triggered, canvas, zoomIn);
+        connect(zoomOutAction, &QAction::triggered, canvas, zoomOut);
+        connect(fitAction, &QAction::triggered, canvas, fit);
+        canvas->setContextMenuPolicy(Qt::CustomContextMenu);
+        connect(canvas, &QWidget::customContextMenuRequested, this,
+                [canvas, menu](const QPoint& point) { menu->popup(canvas->mapToGlobal(point)); });
+    };
+    for (int index = 0; index < tabs->count(); ++index) {
+        QWidget* page = tabs->widget(index);
+        if (auto* mapCanvas = page->findChild<MapCanvasWidget*>()) {
+            installEditorMenu(mapCanvas,
+                [mapCanvas]() { mapCanvas->undo(); },
+                [mapCanvas]() { mapCanvas->redo(); },
+                [mapCanvas]() { mapCanvas->zoomIn(); },
+                [mapCanvas]() { mapCanvas->zoomOut(); },
+                [mapCanvas]() { mapCanvas->fitToView(); });
+        }
+        if (auto* worldCanvas = page->findChild<WorldMapCanvasWidget*>()) {
+            installEditorMenu(worldCanvas,
+                [worldCanvas]() { worldCanvas->undo(); },
+                [worldCanvas]() { worldCanvas->redo(); },
+                [worldCanvas]() { worldCanvas->setZoom(worldCanvas->zoomFactor() * 1.25); },
+                [worldCanvas]() { worldCanvas->setZoom(worldCanvas->zoomFactor() / 1.25); },
+                [worldCanvas]() { worldCanvas->fitToView(); });
+        }
+    }
+
     setCentralWidget(tabs);
 
-    connect(saveBtn, &QPushButton::clicked, this, &MainWindow::saveProject);
-    connect(reloadBtn, &QPushButton::clicked, this, &MainWindow::reloadProject);
-    connect(playBtn, &QPushButton::clicked, this, &MainWindow::playProject);
-    connect(pauseBtn, &QPushButton::clicked, this, &MainWindow::pauseProject);
-    connect(stopBtn, &QPushButton::clicked, this, &MainWindow::stopProject);
-    // Keyboard Shortcuts (F5 Play, Ctrl+S Save)
+    // Keyboard Shortcuts (F5 Play; Ctrl+S is the File-menu action)
     QShortcut* f5Shortcut = new QShortcut(QKeySequence(Qt::Key_F5), this);
     connect(f5Shortcut, &QShortcut::activated, this, &MainWindow::playProject);
 

@@ -41,7 +41,7 @@ ctest --test-dir build\Release --output-on-failure
 
 ## Current open work
 1. **P3.0 topology:** one dedicated 400% edge-column comparison remains; do not start P3.1 until the gate is complete and separately approved. See [World Map Topology Handover](World%20Map%20Topology%20Handover.md).
-2. **WANTED #1:** toolbar resize/professional sweep and functional context menus.
+2. **WANTED #1:** adaptive main toolbar and Map/World canvas context menus are implemented; still need a right-click smoke test on each canvas and review the rest of the editor chrome.
 3. **WANTED #50:** finish the remaining documentation/root tidy audit before closing it.
 4. **Editors:** Map/Pixel shortcuts need a live smoke test; project-wide undo/redo, region selection/clipboard, complete entity authoring, and dirty-state/autosave recovery remain open.
 5. **Roadmap:** MCP external-change notifications, era-specific layers/timegates, authored art, audio playback features, and headless golden-image tests. See `Roadmap.md`.
@@ -51,7 +51,7 @@ ctest --test-dir build\Release --output-on-failure
 
 
 ## Build entry points
-`AIO.bat` dispatches to `AIO-win.bat` and `AIO-linux.bat`; `build.bat` remains available. The Windows dispatcher selects the requested configuration tree and builds `aur_studio` for Qt deployment; Release selection was verified 2026-11-06.
+`AIO.bat` dispatches to `AIO-win.bat` and `AIO-linux.bat`; `build.bat` remains available. The Windows dispatcher selects the requested configuration tree and builds `aur_studio` for Qt deployment. Release tree selection was verified 2026-11-06; toolbar/context-menu changes rebuilt and passed Release CTest on 2026-11-06.
 
 
 ## Asset-pipeline audit (A0; implementation not authorized)
