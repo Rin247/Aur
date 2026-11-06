@@ -4,6 +4,7 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <atomic>
 
 namespace aur {
 
@@ -142,6 +143,7 @@ void paint_biome(Project& project, const std::string& map_id, int x, int y, cons
 Json generate_world_map(const std::string& map_id, const std::string& name,
                         int width, int height, int seed, const std::string& topology = "continents",
                         int water_level = 50, int vegetation = 60, int decay = 10,
-                        int axial_tilt = 0);
+                        int axial_tilt = 0,
+                        const std::atomic_bool* cancelled = nullptr);
 
 } // namespace aur

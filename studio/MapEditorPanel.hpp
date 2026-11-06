@@ -20,6 +20,7 @@
 #include <map>
 #include <vector>
 #include "aur/project.hpp"
+#include "aur/render.hpp"
 
 namespace aur {
 

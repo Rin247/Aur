@@ -48,8 +48,8 @@ void MapCanvasWidget::fitToView() {
     const int map_width = map["w"].as_int();
     const int map_height = map["h"].as_int();
     if (map_width <= 0 || map_height <= 0) return;
-    const qreal fit = std::min((width() - 44.0) / map_width,
-                               (height() - 44.0) / map_height);
+    const qreal fit = std::min((width() - 44.0) / (map_width * field_tile_size),
+                               (height() - 44.0) / (map_height * field_tile_size));
     zoom_factor = std::clamp(fit, 0.05, 16.0);
     pan_offset = {};
     constrainCamera();
@@ -106,11 +106,7 @@ QRectF MapCanvasWidget::mapBounds() const {
     const int map_width = map["w"].as_int();
     const int map_height = map["h"].as_int();
     if (map_width <= 0 || map_height <= 0) return {};
-    const auto tileset = project->tilesets.find(map["tileset"].as_string());
-    const int tile_size = tileset != project->tilesets.end() && tileset->second.contains("tile")
-        ? std::clamp(tileset->second["tile"].as_int(), 1, 64) : 16;
-
-    const qreal cell = std::max<qreal>(1.0, tile_size * zoom_factor);
+    const qreal cell = std::max<qreal>(1.0, field_tile_size * zoom_factor);
     const QSizeF size(map_width * cell, map_height * cell);
     return QRectF((width() - size.width()) / 2.0 + pan_offset.x(),
                   (height() - size.height()) / 2.0 + pan_offset.y(),

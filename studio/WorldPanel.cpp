@@ -11,6 +11,7 @@
 #include <QDialog>
 #include <QDialogButtonBox>
 #include <QFile>
+#include <QtConcurrent/QtConcurrentRun>
 #include <QFormLayout>
 #include <QLineEdit>
 #include <QMessageBox>
@@ -2497,15 +2498,15 @@ WorldPanel::WorldPanel(Project* p, QWidget* parent)
         form.addRow("World topology:", topology);
         auto* width = new QSpinBox(&dialog);
         width->setRange(24, 2560);
-        width->setValue(2560);
+        width->setValue(256);
         auto* height = new QSpinBox(&dialog);
         height->setRange(16, 1280);
-        height->setValue(1280);
+        height->setValue(128);
         form.addRow("Width (tiles):", width);
         form.addRow("Height (tiles):", height);
         auto* resolutionHint = new QLabel(
-            "Default is 2560 × 1280 tiles. Large worlds use several GB of editor memory; "
-            "generation is capped at 3,276,800 terrain cells.",
+            "Default is 256 × 128 tiles (the Sylvi diorama scale). Larger maps remain available "
+            "up to 2560 × 1280, but can use several GB of editor memory.",
             &dialog);
         resolutionHint->setWordWrap(true);
         form.addRow(resolutionHint);
@@ -2559,15 +2560,54 @@ WorldPanel::WorldPanel(Project* p, QWidget* parent)
             name = base_name + " (" + std::to_string(copy_number) + ")";
             ++copy_number;
         }
-        try {
-            project->maps[id] = generate_world_map(id, name, width->value(), height->value(),
-                seed_value, topology->currentData().toString().toStdString(),
-                water->value(), vegetation->value(), decay->value(), axialTilt->value());
-            current_map = id;
-            refreshGraph();
-        } catch (const std::exception& error) {
-            QMessageBox::warning(this, "World generation failed", QString::fromStdString(error.what()));
-        }
+        const int requested_width = width->value();
+        const int requested_height = height->value();
+        const std::string requested_topology = topology->currentData().toString().toStdString();
+        const int requested_water = water->value();
+        const int requested_vegetation = vegetation->value();
+        const int requested_decay = decay->value();
+        const int requested_tilt = axialTilt->value();
+        const Project* const source_project = project;
+        const std::uint64_t request = ++generationRequest;
+        if (generationCancelled) generationCancelled->store(true);
+        generationCancelled = std::make_shared<std::atomic_bool>(false);
+        const auto cancelled = generationCancelled;
+        auto* watcher = new QFutureWatcher<Json>(this);
+        generationProgress = new QProgressDialog(
+            "Generating spherical world…", "Cancel", 0, 0, this);
+        generationProgress->setWindowTitle("Generate world");
+        generationProgress->setWindowModality(Qt::WindowModal);
+        generationProgress->setMinimumDuration(0);
+        generationProgress->setAutoClose(false);
+        generationProgress->setAutoReset(false);
+        connect(generationProgress, &QProgressDialog::canceled, this, [cancelled]() {
+            cancelled->store(true);
+        });
+        connect(watcher, &QFutureWatcher<Json>::finished, this,
+                [this, watcher, cancelled, request, source_project, id, name]() {
+            generationProgress->hide();
+            if (request == generationRequest && project == source_project && !cancelled->load()) {
+                try {
+                    project->maps[id] = watcher->result();
+                    current_map = id;
+                    refreshGraph();
+                } catch (const std::exception& error) {
+                    QMessageBox::warning(this, "World generation failed",
+                                         QString::fromStdString(error.what()));
+                }
+            }
+            watcher->deleteLater();
+            generationProgress->deleteLater();
+            generationProgress = nullptr;
+        });
+        watcher->setFuture(QtConcurrent::run(
+            [id, name, requested_width, requested_height, seed_value, requested_topology,
+             requested_water, requested_vegetation, requested_decay, requested_tilt,
+             cancelled]() {
+                return generate_world_map(id, name, requested_width, requested_height,
+                    seed_value, requested_topology, requested_water, requested_vegetation,
+                    requested_decay, requested_tilt, cancelled.get());
+            }));
     });
 
     refreshGraph();

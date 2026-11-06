@@ -16,6 +16,10 @@
 #include <QSpinBox>
 #include <QTimer>
 #include <QTimeEdit>
+#include <QProgressDialog>
+#include <QFutureWatcher>
+#include <atomic>
+#include <memory>
 #include "WorldModel.hpp"
 #include <memory>
 #include <set>
@@ -147,6 +151,9 @@ class WorldPanel : public QWidget {
     QPushButton* newBiomeButton = nullptr;
     QPushButton* generateWorldButton = nullptr;
     QTimeEdit* timeOfDayEdit = nullptr;
+    QProgressDialog* generationProgress = nullptr;
+    std::shared_ptr<std::atomic_bool> generationCancelled;
+    std::uint64_t generationRequest = 0;
     QPushButton* addLocationButton = nullptr;
     QPushButton* addExitButton = nullptr;
     QPushButton* editNodeButton = nullptr;

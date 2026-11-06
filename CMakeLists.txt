@@ -10,7 +10,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
 
-find_package(Qt6 6.12 REQUIRED COMPONENTS Widgets Multimedia ShaderTools GuiPrivate)
+find_package(Qt6 6.12 REQUIRED COMPONENTS Widgets Multimedia ShaderTools GuiPrivate Concurrent)
 qt_standard_project_setup(REQUIRES 6.12)
 
 # Engine static library (zero Qt dependency, std only)
@@ -63,7 +63,7 @@ add_executable(aur_studio
     studio/WorldSettingsPanel.cpp
 )
 target_include_directories(aur_studio PRIVATE . studio)
-target_link_libraries(aur_studio PRIVATE aur_engine Qt6::Widgets Qt6::Multimedia Qt6::GuiPrivate)
+target_link_libraries(aur_studio PRIVATE aur_engine Qt6::Widgets Qt6::Multimedia Qt6::GuiPrivate Qt6::Concurrent)
 qt_add_shaders(aur_studio aur_studio_sculpt_shaders
     PREFIX "/aur/shaders"
     BASE studio/shaders

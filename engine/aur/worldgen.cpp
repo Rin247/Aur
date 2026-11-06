@@ -12,6 +12,12 @@
 namespace aur {
 namespace {
 
+void throw_if_cancelled(const std::atomic_bool* cancelled) {
+    if (cancelled && cancelled->load(std::memory_order_relaxed)) {
+        throw std::runtime_error("World generation cancelled");
+    }
+}
+
 constexpr double pi = 3.14159265358979323846;
 
 struct Vec3 {
@@ -84,7 +90,9 @@ std::vector<int> generate_hydrology(
     int width, int height, int sea_level, uint32_t seed,
     const std::vector<std::vector<int>>& elevation,
     const std::vector<std::vector<int>>& moisture,
-    const std::vector<std::vector<bool>>& land) {
+    const std::vector<std::vector<bool>>& land,
+    const std::atomic_bool* cancelled) {
+    throw_if_cancelled(cancelled);
     const int cell_count = width * height;
     std::vector<int> water(static_cast<size_t>(cell_count), 0);
     const auto index_at = [width](int x, int y) { return y * width + x; };
@@ -97,6 +105,7 @@ std::vector<int> generate_hydrology(
 
     int lake_count = 0;
     for (int y = 1; y < height - 1; ++y) {
+        if ((y & 15) == 0) throw_if_cancelled(cancelled);
         for (int x = 0; x < width; ++x) {
             if (!land[static_cast<size_t>(y)][static_cast<size_t>(x)] ||
                 elevation[static_cast<size_t>(y)][static_cast<size_t>(x)] <= sea_level + 35 ||
@@ -124,6 +133,7 @@ std::vector<int> generate_hydrology(
             ++basin_stamp;
             visit_stamp[static_cast<size_t>(start)] = basin_stamp;
             while (!pending.empty() && basin.size() <= 96) {
+                if ((basin.size() & 31u) == 0) throw_if_cancelled(cancelled);
                 const int current = pending.back();
                 pending.pop_back();
                 basin.push_back(current);
@@ -153,6 +163,7 @@ std::vector<int> generate_hydrology(
     if (lake_count < desired_lakes) {
         std::vector<int> lowland_candidates;
         for (int y = 2; y < height - 2; ++y) {
+            if ((y & 15) == 0) throw_if_cancelled(cancelled);
             for (int x = 0; x < width; ++x) {
                 const int center = elevation[static_cast<size_t>(y)][static_cast<size_t>(x)];
                 if (!land[static_cast<size_t>(y)][static_cast<size_t>(x)] ||
@@ -181,6 +192,7 @@ std::vector<int> generate_hydrology(
                 }
             }
         }
+        throw_if_cancelled(cancelled);
         std::sort(lowland_candidates.begin(), lowland_candidates.end(),
                   [&elevation, &width, seed](int a, int b) {
             const int ax = a % width;
@@ -197,6 +209,7 @@ std::vector<int> generate_hydrology(
         std::vector<int> lake_centers;
         int created_lakes = lake_count;
         for (const int center : lowland_candidates) {
+            if ((created_lakes & 63) == 0) throw_if_cancelled(cancelled);
             if (created_lakes >= desired_lakes) break;
             const int x = center % width;
             const int y = center / width;
@@ -232,6 +245,7 @@ std::vector<int> generate_hydrology(
     std::vector<int> order;
     order.reserve(static_cast<size_t>(cell_count));
     for (int y = 0; y < height; ++y) {
+        if ((y & 15) == 0) throw_if_cancelled(cancelled);
         for (int x = 0; x < width; ++x) {
             if (land[static_cast<size_t>(y)][static_cast<size_t>(x)]) {
                 order.push_back(index_at(x, y));
@@ -249,6 +263,7 @@ std::vector<int> generate_hydrology(
 
     std::vector<int> receiver(static_cast<size_t>(cell_count), -1);
     for (const int cell : order) {
+        if ((cell & 0x3fff) == 0) throw_if_cancelled(cancelled);
         if (water[static_cast<size_t>(cell)] == 2) continue;
         const int x = cell % width;
         const int y = cell / width;
@@ -272,12 +287,14 @@ std::vector<int> generate_hydrology(
 
     std::vector<double> accumulation(static_cast<size_t>(cell_count), 0.0);
     for (const int cell : order) {
+        if ((cell & 0x3fff) == 0) throw_if_cancelled(cancelled);
         const int x = cell % width;
         const int y = cell / width;
         accumulation[static_cast<size_t>(cell)] =
             1.0 + moisture[static_cast<size_t>(y)][static_cast<size_t>(x)] / 50.0;
     }
     for (const int cell : order) {
+        if ((cell & 0x3fff) == 0) throw_if_cancelled(cancelled);
         const int downstream = receiver[static_cast<size_t>(cell)];
         if (downstream >= 0) {
             accumulation[static_cast<size_t>(downstream)] +=
@@ -287,6 +304,7 @@ std::vector<int> generate_hydrology(
 
     const double river_threshold = std::max(12.0, cell_count / 900.0);
     for (const int cell : order) {
+        if ((cell & 0x3fff) == 0) throw_if_cancelled(cancelled);
         if (water[static_cast<size_t>(cell)] != 0 ||
             accumulation[static_cast<size_t>(cell)] < river_threshold) continue;
         water[static_cast<size_t>(cell)] = 1;
@@ -298,7 +316,9 @@ std::vector<int> generate_hydrology(
 
 Json generate_world_map(const std::string& map_id, const std::string& name,
                         int width, int height, int seed, const std::string& topology,
-                        int water_level, int vegetation, int decay, int axial_tilt) {
+                        int water_level, int vegetation, int decay, int axial_tilt,
+                        const std::atomic_bool* cancelled) {
+    throw_if_cancelled(cancelled);
     constexpr std::uint64_t maximum_world_cells = 2560ull * 1280;
     const std::uint64_t world_cells = width > 0 && height > 0
         ? static_cast<std::uint64_t>(width) * static_cast<std::uint64_t>(height) : 0;
@@ -354,6 +374,7 @@ Json generate_world_map(const std::string& map_id, const std::string& name,
         static_cast<size_t>(height), std::vector<int>(static_cast<size_t>(width), -1));
 
     for (int y = 0; y < height; ++y) {
+        if ((y & 7) == 0) throw_if_cancelled(cancelled);
         const double latitude = pi * (0.5 - static_cast<double>(y) /
             std::max(1, height - 1));
         const double cos_latitude = std::cos(latitude);
@@ -402,7 +423,7 @@ Json generate_world_map(const std::string& map_id, const std::string& name,
     }
 
     const std::vector<int> hydrology = generate_hydrology(
-        width, height, sea_level, base_seed, elevation, moisture, land);
+        width, height, sea_level, base_seed, elevation, moisture, land, cancelled);
     JsonArray biome_rows;
     JsonArray temperature_rows;
     JsonArray elevation_rows;
@@ -410,6 +431,7 @@ Json generate_world_map(const std::string& map_id, const std::string& name,
     JsonArray water_rows;
     JsonArray override_rows;
     for (int y = 0; y < height; ++y) {
+        if ((y & 7) == 0) throw_if_cancelled(cancelled);
         JsonArray biome_row;
         JsonArray temperature_row;
         JsonArray elevation_row;
@@ -479,6 +501,7 @@ Json generate_world_map(const std::string& map_id, const std::string& name,
     map["layers"]["water"] = std::move(water_rows);
     map["layers"]["terrain_overrides"] = std::move(override_rows);
 
+    throw_if_cancelled(cancelled);
     map["entities"] = JsonArray{};
     return map;
 }
