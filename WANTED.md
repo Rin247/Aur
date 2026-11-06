@@ -4,7 +4,7 @@
 
 ## Active plans
 
-(none yet)
+- `Bible/notes/worldsim-p31.md` — P3.1 deterministic WorldSim core; phase P0 in progress (owner approved taking the lead on 2026-11-06).
 
 ## Open
 

@@ -42,7 +42,7 @@ ctest --test-dir build\Release --output-on-failure
 ## Current open work
 1. **Editors:** Map/Pixel shortcuts need a live smoke test; project-wide undo/redo, region selection/clipboard, complete entity authoring, and dirty-state/autosave recovery remain open.
 2. **Roadmap:** MCP external-change notifications, era-specific layers/timegates, authored art, audio playback features, and headless golden-image tests. See `Roadmap.md`.
-3. **P3.1 WorldSim** is next in the topology dependency chain but requires owner approval to start; the P3.0 gate is complete (see [World Map Topology Handover](World%20Map%20Topology%20Handover.md)).
+3. **P3.1 WorldSim in progress** (owner-approved): plan at `Bible/notes/worldsim-p31.md`; P0 golden-net phase underway. P3.0 gate evidence: [World Map Topology Handover](World%20Map%20Topology%20Handover.md).
 
 
 
