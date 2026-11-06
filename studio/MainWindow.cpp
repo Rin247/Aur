@@ -211,6 +211,7 @@ MainWindow::MainWindow(const std::string& project_path, QWidget* parent)
     gameView = new GameView(project_path, this);
     tabs->addTab(gameView, "▶ Playtest View");
     tabs->addTab(new MapEditorPanel(&project, this), "Map Editor");
+    tabs->addTab(new WorldPanel(&project, this), "World");
     tabs->addTab(new PixelEditorPanel(&project, this), "Pixel Editor");
     tabs->addTab(new SpriteEditorPanel(&project, this), "Sprite Editor");
     tabs->addTab(new TilesetEditorPanel(&project, this), "Tileset Editor");
@@ -218,7 +219,6 @@ MainWindow::MainWindow(const std::string& project_path, QWidget* parent)
     tabs->addTab(new DatabasePanel(&project, this), "Database");
     tabs->addTab(new EventPanel(&project, this), "Event Scripting");
     tabs->addTab(new MusicPanel(&project, this), "Music Studio");
-    tabs->addTab(new WorldPanel(&project, this), "World");
     tabs->addTab(new WorldSettingsPanel(&project, this), "World & Time Settings");
 
     auto installEditorMenu = [this](QWidget* canvas, const std::function<void()>& undo,
