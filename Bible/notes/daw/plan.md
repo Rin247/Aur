@@ -1,6 +1,6 @@
 # DAW: plan
 
-Status: P0 in progress (clamp fix test first).
+Status: P0 complete; P1 extraction next.
 
 Master plan for the Music Studio DAW initiative, seeded from the owner-supplied
 gameplan and corrected by a source audit on 2026-11-06. One note file per major
@@ -96,10 +96,19 @@ scenes[{name, clips}]`.
       current synth (deterministic PCM hash) — `tests/test_synth_golden.cpp`
       pins FNV-1a hashes for the Gm/FM/PSG voices (8 kHz, 30 s, fixed fixture
       song) plus replay determinism.
-- [ ] MIDI import/export round-trip tests for currently supported fields.
-- [ ] Fix the clamp in its own commit with tests; keep `synthesize_preview`
+- [x] MIDI import/export round-trip tests for currently supported fields —
+      already covered by `tests/test_midi.cpp` (PPQN 96/384/480/960, tempo,
+      T.S., bank/program, volume/pan, drum channel, SysEx, re-import); the
+      clamp regression adds the beyond-546 step round-trip.
+- [x] Fix the clamp in its own commit with tests; keep `synthesize_preview`
       and track keys readable.
       Acceptance: green suite including the new tests; `daw-p0` tag.
+
+P0 closed 2026-11-06: suite 28/28 green, tags `daw-p0.1` + `daw-p0.2`.
+Note found during clamp work: the preview step→frame mapping renders a note
+later than `step * sample_rate * 60/(bpm*4)` implies (factor-of-2 observed);
+regression test is mapping-independent on purpose. Revisit when the real-time
+engine (P2) defines the timing contract.
 
 ### P1 Extraction, no behaviour change
 
