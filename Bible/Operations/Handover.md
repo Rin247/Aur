@@ -41,10 +41,11 @@ ctest --test-dir build\Release --output-on-failure
 
 ## Current open work
 1. **P3.0 topology:** one dedicated 400% edge-column comparison remains; do not start P3.1 until the gate is complete and separately approved. See [World Map Topology Handover](World%20Map%20Topology%20Handover.md).
-2. **WANTED #1:** adaptive main toolbar and Map/World canvas context menus are implemented; still need a right-click smoke test on each canvas and review the rest of the editor chrome.
-3. **WANTED #50:** finish the remaining documentation/root tidy audit before closing it.
-4. **Editors:** Map/Pixel shortcuts need a live smoke test; project-wide undo/redo, region selection/clipboard, complete entity authoring, and dirty-state/autosave recovery remain open.
-5. **Roadmap:** MCP external-change notifications, era-specific layers/timegates, authored art, audio playback features, and headless golden-image tests. See `Roadmap.md`.
+2. **WANTED #50:** finish the remaining documentation/root tidy audit before closing it.
+3. **Editors:** Map/Pixel shortcuts need a live smoke test; project-wide undo/redo, region selection/clipboard, complete entity authoring, and dirty-state/autosave recovery remain open.
+4. **Roadmap:** MCP external-change notifications, era-specific layers/timegates, authored art, audio playback features, and headless golden-image tests. See `Roadmap.md`.
+
+WANTED #1 is closed: you confirmed right-click context menus work and that toolbar reflow is unnecessary for your screen-only target. The compact-toggle toolbar remains available.
 
 
 
