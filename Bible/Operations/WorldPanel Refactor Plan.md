@@ -31,5 +31,6 @@ For each numbered step: record touched-file sizes; make only moves/extractions o
 - [x] Step 1: extracted the HD surface renderer to `studio/world/HdSurface.{hpp,cpp}`, kept its default full-map pixels intact, added the optional region crop API and seeded RGB32 checksum test (`7986464436153998528`), and verified Release build plus both CTest tests.
 - [x] Step 2: canvas/panel tool state and placement dispatch now use `WorldTool`; the combo is populated from its ordered name table. Release build and tests passed; code commit: `8c63a85`.
 - [x] Adjacent World tab request: moved World immediately after Map Editor; Release build passed; code commit: `8ed26ab`.
-- [ ] Step 3 implementation is in the working tree: extracted helper calls, expanded `MapView`, added accessor tests, and migrated camera dimensions/tileset/wrap access. Build and CTest passed; commit is pending.
-- [ ] Steps 4–7 remain outstanding. Update this checklist only when a step's build/test gate passes and its code commit exists.
+- [x] Step 3 implementation committed (`69cd233`): helpers integrated, `MapView::elevationAt`/`biomeAt` accessors with tests, camera reads through MapView.
+- [x] Step 4 committed (`636b69f`): `TerrainRhiWidget` moved to `studio/world/`; renderer no longer friends the canvas — it pulls an immutable `TerrainView` snapshot (model, map id, generation, project, bounds, viewport size, zoom, hour, daynight, contours) via a provider callback. `WorldPanel.cpp` is 2,266 lines. Build and both CTest targets passed.
+- [ ] Steps 5–7 remain outstanding. Update this checklist only when a step's build/test gate passes and its code commit exists.
