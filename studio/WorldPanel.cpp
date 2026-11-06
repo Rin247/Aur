@@ -5,6 +5,7 @@
 #include "world/WorldMapHelpers.hpp"
 #include "world/MapView.hpp"
 #include "world/TerrainRhiWidget.hpp"
+#include "world/WorldWeatherOverlay.hpp"
 #include "aur/autotile.hpp"
 #include "aur/clock.hpp"
 #include "aur/forge.hpp"
@@ -658,11 +659,17 @@ void WorldMapCanvasWidget::paintCanvas(QPainter& painter) {
         }
     }
 
-    if (!hd_surface && map["layers"].contains("biomes") &&
-        map["layers"]["biomes"].is_array()) {
-        const auto& biome_rows = map["layers"]["biomes"].as_array();
-        for (int y = first_y; y < last_y && y < static_cast<int>(biome_rows.size()); ++y) {
-            const Json& row = biome_rows[static_cast<size_t>(y)];
+    const JsonArray* biome_rows = map["layers"].contains("biomes") &&
+        map["layers"]["biomes"].is_array()
+        ? &map["layers"]["biomes"].as_array() : nullptr;
+    const JsonArray* temperature_rows = map["layers"].contains("temperature") &&
+        map["layers"]["temperature"].is_array()
+        ? &map["layers"]["temperature"].as_array() : nullptr;
+
+    if (!hd_surface && biome_rows) {
+        const auto& rows = *biome_rows;
+        for (int y = first_y; y < last_y && y < static_cast<int>(rows.size()); ++y) {
+            const Json& row = rows[static_cast<size_t>(y)];
             if (!row.is_array()) continue;
             for (int x = first_x; x < last_x; ++x) {
                 const int source_x = wraps_x ? aur::wrapX(x, map_width) : x;
@@ -679,13 +686,12 @@ void WorldMapCanvasWidget::paintCanvas(QPainter& painter) {
         }
     }
 
-    if (temperature_overlay && map["layers"].contains("temperature") &&
-        map["layers"]["temperature"].is_array()) {
-        const auto& temperature_rows = map["layers"]["temperature"].as_array();
+    if (temperature_overlay && temperature_rows) {
+        const auto& rows = *temperature_rows;
         const QColor cold("#548ed8");
         const QColor hot("#ee7652");
-        for (int y = first_y; y < last_y && y < static_cast<int>(temperature_rows.size()); ++y) {
-            const Json& row = temperature_rows[static_cast<size_t>(y)];
+        for (int y = first_y; y < last_y && y < static_cast<int>(rows.size()); ++y) {
+            const Json& row = rows[static_cast<size_t>(y)];
             if (!row.is_array()) continue;
             for (int x = first_x; x < last_x; ++x) {
                 const int source_x = wraps_x ? aur::wrapX(x, map_width) : x;
@@ -866,187 +872,12 @@ void WorldMapCanvasWidget::paintCanvas(QPainter& painter) {
     }
 
     if (weather_overlay && cell > 0) {
-        const int stride = std::max(8, static_cast<int>(std::round(72.0 / std::max(1.0, cell))));
-        const QRectF weather_bounds = wraps_x
-            ? QRectF(0.0, bounds.top(), width(), bounds.height()) : bounds;
-        const JsonArray* temperature_rows = map["layers"].contains("temperature") &&
-            map["layers"]["temperature"].is_array()
-            ? &map["layers"]["temperature"].as_array() : nullptr;
-        painter.save();
-        painter.setClipRect(weather_bounds.intersected(QRectF(rect())), Qt::IntersectClip);
-        if (preview_weather == "cloudy") {
-            painter.fillRect(weather_bounds, QColor(53, 65, 75, 28));
-        } else if (preview_weather == "rain") {
-            painter.fillRect(weather_bounds, QColor(50, 87, 108, 34));
-        } else if (preview_weather == "snow") {
-            painter.fillRect(weather_bounds, QColor(203, 222, 234, 38));
-        } else if (preview_weather == "storm") {
-            painter.fillRect(weather_bounds, QColor(24, 34, 47, 76));
-        } else if (preview_weather == "fog") {
-            painter.fillRect(weather_bounds, QColor(199, 215, 223, 72));
-        }
-        if (preview_weather == "storm" && simulation_timer.isActive() &&
-            simulation_phase % 90 < 3) {
-            painter.fillRect(weather_bounds, QColor(220, 232, 240, 68));
-        }
-        const int first_weather_copy = wraps_x
-            ? static_cast<int>(std::floor(static_cast<double>(first_x) / map_width)) : 0;
-        const int last_weather_copy = wraps_x
-            ? static_cast<int>(std::ceil(static_cast<double>(last_x) / map_width)) : 1;
-        for (int y = stride / 2; y < map_height; y += stride) {
-            for (int copy = first_weather_copy; copy < last_weather_copy; ++copy) {
-            for (int local_x = stride / 2; local_x < map_width; local_x += stride) {
-                const int world_x = copy * map_width + local_x;
-                if (world_x < first_x || world_x >= last_x) continue;
-                const int x = wraps_x ? aur::wrapX(world_x, map_width) : world_x;
-                if (preview_weather == "clear" || preview_weather == "fog") continue;
-                const uint32_t simulation_step = static_cast<uint32_t>(
-                    simulation_timer.isActive() ? simulation_phase / 100 : 0);
-                const uint32_t hash = static_cast<uint32_t>(worldgen_seed) ^
-                    static_cast<uint32_t>(x) * 73856093u ^
-                    static_cast<uint32_t>(y) * 19349663u ^
-                    simulation_step * 83492791u ^
-                    static_cast<uint32_t>(std::floor(preview_hour / 3.0)) * 2654435761u;
-                const uint32_t mixed = (hash ^ (hash >> 13)) * 1274126177u;
-                const uint32_t weather_roll = mixed ^ (mixed >> 16);
-                const bool ocean = is_ocean_at(x, y);
-                std::string climate;
-                const JsonArray* biome_rows = map["layers"].contains("biomes") &&
-                    map["layers"]["biomes"].is_array()
-                    ? &map["layers"]["biomes"].as_array() : nullptr;
-                if (biome_rows && y < static_cast<int>(biome_rows->size()) &&
-                    (*biome_rows)[static_cast<size_t>(y)].is_array() &&
-                    x < static_cast<int>((*biome_rows)[static_cast<size_t>(y)].as_array().size())) {
-                    const std::string biome_id = (*biome_rows)[static_cast<size_t>(y)]
-                        [static_cast<size_t>(x)].as_string();
-                    const auto biome = project->biomes.find(biome_id);
-                    if (biome != project->biomes.end() && biome->second["climate"].is_string()) {
-                        climate = biome->second["climate"].as_string();
-                    }
-                }
-                int temperature_value = 50;
-                if (temperature_rows && y < static_cast<int>(temperature_rows->size()) &&
-                    (*temperature_rows)[static_cast<size_t>(y)].is_array() &&
-                    x < static_cast<int>((*temperature_rows)[static_cast<size_t>(y)].as_array().size())) {
-                    temperature_value = (*temperature_rows)[static_cast<size_t>(y)]
-                        [static_cast<size_t>(x)].as_int();
-                }
-                const std::string weather = preview_weather == "climate"
-                    ? world::climate_weather(project, climate, weather_roll) : preview_weather;
-                if (weather == "clear") continue;
-                const uint32_t position_hash = static_cast<uint32_t>(worldgen_seed) ^
-                    static_cast<uint32_t>(x) * 73856093u ^
-                    static_cast<uint32_t>(y) * 19349663u;
-                const uint32_t position_mixed =
-                    (position_hash ^ (position_hash >> 13)) * 1274126177u;
-                const uint32_t position_roll = position_mixed ^ (position_mixed >> 16);
-                const uint32_t coverage = weather == "storm" ? 92u
-                    : weather == "cloudy" ? 86u : 72u;
-                if (position_roll % 100u >= coverage) continue;
-                const bool snow = weather == "snow" ||
-                    ((weather == "rain" || weather == "storm") &&
-                     (climate == "arctic" ||
-                      (temperature_value >= 0 && temperature_value < 30)));
-                const bool precipitation =
-                    weather == "rain" || weather == "snow" || weather == "storm";
-                const qreal jitter_scale = stride * cell * 0.28;
-                const qreal jitter_x =
-                    (static_cast<qreal>(position_roll & 0xffffu) / 65535.0 - 0.5) *
-                    jitter_scale;
-                const qreal jitter_y =
-                    (static_cast<qreal>(position_roll >> 16) / 65535.0 - 0.5) *
-                    jitter_scale;
-                const QPointF center(bounds.left() + (world_x + 0.5) * cell + jitter_x,
-                                     bounds.top() + (y + 0.5) * cell + jitter_y);
-                const qreal size_scale = 0.78 +
-                    static_cast<qreal>((position_roll >> 8) & 0xffu) / 255.0 * 0.42;
-                const qreal size = std::clamp(cell * 1.8 * size_scale, 12.0, 30.0);
-                const qreal drift = simulation_timer.isActive()
-                    ? std::sin((simulation_phase + x * 5 + y * 3) * 0.04) * size * 0.25 : 0.0;
-                const QPointF cloud_center = center + QPointF(drift, 0.0);
-                QColor cloud_color = weather == "storm" ? QColor("#53616c")
-                    : snow ? QColor("#cfe5ef") : QColor("#d3d9d5");
-                cloud_color.setAlpha(145 + static_cast<int>((position_roll >> 24) % 90u));
-                QColor cloud_outline = weather == "storm" ? QColor("#26323c")
-                                                           : QColor("#263746");
-                cloud_outline.setAlpha(145 + static_cast<int>((position_roll >> 24) % 90u));
-                painter.setPen(QPen(cloud_outline,
-                                    std::max<qreal>(1.0, cell * 0.06)));
-                painter.setBrush(cloud_color);
-                painter.drawEllipse(QRectF(cloud_center.x() - size * 0.28,
-                    cloud_center.y() - size * 0.02, size * 0.42, size * 0.32));
-                painter.drawEllipse(QRectF(cloud_center.x() - size * 0.08,
-                    cloud_center.y() - size * 0.20, size * 0.48, size * 0.50));
-                painter.drawEllipse(QRectF(cloud_center.x() + size * 0.16,
-                    cloud_center.y() - size * 0.02, size * 0.40, size * 0.32));
-                if (precipitation && preview_weather == "climate") {
-                    painter.setPen(QPen(snow ? QColor("#effaff") : QColor("#6dc5e6"),
-                                        std::max<qreal>(1.0, cell * 0.07), Qt::SolidLine,
-                                        Qt::RoundCap));
-                    const qreal phase = simulation_timer.isActive()
-                        ? std::fmod(simulation_phase * 0.45 + x * 3 + y, size) : size * 0.45;
-                    for (int drop = -1; drop <= 1; ++drop) {
-                        const qreal drop_x = cloud_center.x() + drop * size * 0.25;
-                        const qreal drop_y = cloud_center.y() + size * 0.22 + phase * 0.15;
-                        painter.drawLine(QPointF(drop_x, drop_y),
-                                         QPointF(drop_x - size * 0.08, drop_y + size * 0.24));
-                    }
-                }
-                }
-            }
-        }
-        if (preview_weather == "rain" || preview_weather == "snow" ||
-            preview_weather == "storm") {
-            const QRectF visible_bounds = weather_bounds.intersected(QRectF(rect()));
-            constexpr int spacing = 40;
-            const int phase = simulation_timer.isActive()
-                ? simulation_phase % spacing : spacing / 2;
-            const bool snow = preview_weather == "snow";
-            painter.setPen(QPen(
-                snow ? QColor(239, 249, 255, 210)
-                     : preview_weather == "storm" ? QColor(92, 175, 216, 190)
-                                                  : QColor(105, 187, 224, 175),
-                snow ? 1.0 : 1.3, Qt::SolidLine, Qt::RoundCap));
-            const qreal start_y = visible_bounds.top() +
-                std::fmod(phase + spacing, spacing);
-            for (qreal y = start_y; y < visible_bounds.bottom(); y += spacing) {
-                const int row = static_cast<int>(
-                    std::floor((y - visible_bounds.top()) / spacing));
-                const qreal row_offset = (row & 1) != 0 ? spacing * 0.5 : 0.0;
-                for (qreal x = visible_bounds.left() + row_offset;
-                     x < visible_bounds.right(); x += spacing) {
-                    const int column = static_cast<int>(std::floor(
-                        (x - visible_bounds.left() - row_offset) / spacing));
-                    const uint32_t particle_hash = static_cast<uint32_t>(worldgen_seed) ^
-                        static_cast<uint32_t>(row) * 73856093u ^
-                        static_cast<uint32_t>(column) * 19349663u;
-                    const uint32_t particle_mixed =
-                        (particle_hash ^ (particle_hash >> 13)) * 1274126177u;
-                    const uint32_t particle_roll = particle_mixed ^ (particle_mixed >> 16);
-                    const qreal jitter_x =
-                        (static_cast<qreal>(particle_roll & 0xffu) / 255.0 - 0.5) *
-                        spacing * 0.5;
-                    const qreal jitter_y =
-                        (static_cast<qreal>((particle_roll >> 8) & 0xffu) / 255.0 - 0.5) *
-                        spacing * 0.35;
-                    const qreal particle_x = x + jitter_x;
-                    const qreal particle_y = y + jitter_y;
-                    if (snow) {
-                        const qreal drift = std::sin(
-                            (simulation_phase + static_cast<int>(particle_x * 3 + particle_y)) *
-                            0.025) * 3.0;
-                        painter.drawLine(QPointF(particle_x + drift - 2.0, particle_y),
-                                         QPointF(particle_x + drift + 2.0, particle_y));
-                        painter.drawLine(QPointF(particle_x + drift, particle_y - 2.0),
-                                         QPointF(particle_x + drift, particle_y + 2.0));
-                    } else {
-                        painter.drawLine(QPointF(particle_x, particle_y),
-                                         QPointF(particle_x - 4.0, particle_y + 10.0));
-                    }
-                }
-            }
-        }
-        painter.restore();
+        world::WeatherOverlayContext weather_ctx{painter, project,
+            temperature_rows, biome_rows, bounds, QRectF(rect()), cell,
+            map_width, map_height, first_x, last_x, wraps_x, worldgen_seed,
+            simulation_phase, simulation_timer.isActive(), preview_hour,
+            preview_weather, is_ocean_at};
+        world::draw_weather_overlay(weather_ctx);
     }
 
     if (daynight_overlay && (!world_model || editor::isHeadlessRhi())) {
@@ -2251,3 +2082,4 @@ void WorldPanel::deleteWorldEntity() {
 }
 
 } // namespace aur
+
