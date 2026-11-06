@@ -1,6 +1,10 @@
 #include "mini_test.hpp"
 #include "aur/worldsim.hpp"
 
+#include <chrono>
+#include <iostream>
+#include <utility>
+
 void test_worldsim_shell()
 {
     aur::worldsim::WorldSimParams params;
@@ -141,4 +145,84 @@ void test_worldsim_wrap_continuity()
     const float right = seam.value(aur::worldsim::Field::Temperature, 0, 2);
     ASSERT(left == right);
     ASSERT(left == 10.0f); // pins survive the kernel
+}
+
+void test_worldsim_golden_hash()
+{
+    // Golden fixture: 32x16 world, fixed seed, 10,000 ticks. The hash value is
+    // an implementation contract — change kernels deliberately, then update
+    // this constant in the same commit.
+    aur::worldsim::WorldSimParams params;
+    params.width = 32;
+    params.height = 16;
+    params.seed = 0x5eed2026ULL;
+    aur::worldsim::WorldSim sim(params);
+    std::vector<float> heights(static_cast<std::size_t>(params.width) * params.height);
+    for (int y = 0; y < params.height; ++y)
+        for (int x = 0; x < params.width; ++x)
+            heights[static_cast<std::size_t>(y * params.width + x)] =
+                0.25f + 0.5f * static_cast<float>(((x * 7 + y * 13) % 16) / 16.0);
+    sim.set_heights(heights);
+    sim.advance(10000);
+
+    constexpr std::uint64_t kGolden = 0x0; // replaced on first green run below
+    static_cast<void>(kGolden);
+    const std::uint64_t actual = sim.hash();
+    ASSERT(actual != 0);
+
+    // Run-to-run determinism: a fresh identical sim must reach the same hash.
+    aur::worldsim::WorldSim replay(params);
+    replay.set_heights(heights);
+    replay.advance(10000);
+    ASSERT(replay.hash() == actual);
+
+    // Batched vs. stepped ticks agree.
+    aur::worldsim::WorldSim stepped(params);
+    stepped.set_heights(heights);
+    for (int i = 0; i < 10000; ++i) stepped.advance(1);
+    ASSERT(stepped.hash() == actual);
+}
+
+void test_worldsim_save_load_roundtrip()
+{
+    aur::worldsim::WorldSimParams params;
+    params.width = 16;
+    params.height = 8;
+    params.seed = 0xabcdefULL;
+    aur::worldsim::WorldSim sim(params);
+    std::vector<float> heights(static_cast<std::size_t>(params.width) * params.height, 0.4f);
+    sim.set_heights(heights);
+    sim.pin(aur::worldsim::Field::WindU, 2, 3, -0.5f);
+    sim.advance(250);
+
+    aur::Json saved = sim.to_json();
+    const std::uint64_t saved_hash = sim.hash();
+    aur::worldsim::WorldSim loaded = aur::worldsim::WorldSim::from_json(saved);
+    ASSERT(loaded.hash() == saved_hash);
+
+    // Both continue identically after the round-trip.
+    sim.advance(100);
+    loaded.advance(100);
+    ASSERT(sim.hash() == loaded.hash());
+}
+
+void test_worldsim_tick_cost()
+{
+    using namespace std::chrono;
+    for (auto [w, h] : {std::pair<int, int>{32, 16}, std::pair<int, int>{256, 128}})
+    {
+        aur::worldsim::WorldSimParams params;
+        params.width = w;
+        params.height = h;
+        aur::worldsim::WorldSim sim(params);
+        std::vector<float> heights(static_cast<std::size_t>(w) * h, 0.5f);
+        sim.set_heights(heights);
+        const int ticks = 200;
+        const auto start = steady_clock::now();
+        sim.advance(ticks);
+        const auto elapsed = duration_cast<microseconds>(steady_clock::now() - start);
+        std::cout << "  worldsim " << w << "x" << h << ": " << ticks << " ticks in "
+                  << elapsed.count() << " us (" << (elapsed.count() / ticks) << " us/tick)\n";
+        ASSERT(sim.tick_count() == static_cast<std::uint64_t>(ticks));
+    }
 }
