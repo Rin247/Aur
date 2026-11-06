@@ -58,6 +58,7 @@ add_executable(aur_studio
     studio/world/MapView.cpp
     studio/world/TerrainRhiWidget.cpp
     studio/world/WorldWeatherOverlay.cpp
+    studio/world/WorldClimateOverlays.cpp
     studio/WorldModel.cpp
     studio/WorldModel.hpp
     studio/RhiBackend.cpp

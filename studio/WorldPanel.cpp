@@ -6,6 +6,7 @@
 #include "world/MapView.hpp"
 #include "world/TerrainRhiWidget.hpp"
 #include "world/WorldWeatherOverlay.hpp"
+#include "world/WorldClimateOverlays.hpp"
 #include "aur/autotile.hpp"
 #include "aur/clock.hpp"
 #include "aur/forge.hpp"
@@ -687,82 +688,18 @@ void WorldMapCanvasWidget::paintCanvas(QPainter& painter) {
     }
 
     if (temperature_overlay && temperature_rows) {
-        const auto& rows = *temperature_rows;
-        const QColor cold("#548ed8");
-        const QColor hot("#ee7652");
-        for (int y = first_y; y < last_y && y < static_cast<int>(rows.size()); ++y) {
-            const Json& row = rows[static_cast<size_t>(y)];
-            if (!row.is_array()) continue;
-            for (int x = first_x; x < last_x; ++x) {
-                const int source_x = wraps_x ? aur::wrapX(x, map_width) : x;
-                if (source_x < 0 || source_x >= static_cast<int>(row.as_array().size())) continue;
-                const int value = row[static_cast<size_t>(source_x)].as_int();
-                if (value < 0) continue;
-                const qreal mix = std::clamp(value / 100.0, 0.0, 1.0);
-                QColor color(
-                    qRound(cold.red() + (hot.red() - cold.red()) * mix),
-                    qRound(cold.green() + (hot.green() - cold.green()) * mix),
-                    qRound(cold.blue() + (hot.blue() - cold.blue()) * mix), 92);
-                painter.fillRect(QRectF(bounds.left() + x * cell, bounds.top() + y * cell,
-                                        cell, cell), color);
-            }
-        }
+        world::TemperatureOverlayContext temperature_ctx{painter, project, temperature_rows,
+            bounds, cell, map_width, first_x, last_x, first_y, last_y, wraps_x};
+        world::draw_temperature_overlay(temperature_ctx);
+    }
 
-        painter.save();
-        painter.setPen(QPen(QColor("#f6e5ad"), std::max<qreal>(1.5, cell * 0.07),
-                            Qt::DashLine));
-        const qreal marker_radius = std::clamp(cell * 0.32, 4.0, 9.0);
-        if (wraps_x) {
-            painter.setClipRect(QRectF(0.0, bounds.top(), width(), bounds.height()),
-                                Qt::IntersectClip);
-            const qreal equator_y = bounds.top() + bounds.height() * 0.5;
-            painter.drawLine(QPointF(0.0, equator_y), QPointF(width(), equator_y));
-            painter.setPen(QPen(QColor("#172432"), 1.5));
-            painter.setBrush(QColor("#70b8ff"));
-            painter.drawEllipse(QPointF(12.0, bounds.top() + marker_radius),
-                                marker_radius, marker_radius);
-            painter.setBrush(QColor("#ff9a67"));
-            painter.drawEllipse(QPointF(12.0, bounds.bottom() - marker_radius),
-                                marker_radius, marker_radius);
-            painter.setPen(QColor("#f6f2e8"));
-            painter.drawText(QPointF(24.0, bounds.top() + marker_radius + 4), "N");
-            painter.drawText(QPointF(24.0, bounds.bottom() - marker_radius + 4), "S");
-        } else {
-            const int angle_degrees = map.contains("worldgen") &&
-                map["worldgen"].contains("axial_tilt")
-                ? map["worldgen"]["axial_tilt"].as_int() : 0;
-            const qreal angle = angle_degrees * 3.14159265358979323846 / 180.0;
-            const QPointF center = bounds.center();
-            const qreal direction_x = std::cos(angle);
-            const qreal direction_y = -std::sin(angle);
-            const qreal normal_x = std::sin(angle);
-            const qreal normal_y = std::cos(angle);
-            const qreal half_width = bounds.width() * 0.5;
-            const qreal half_height = bounds.height() * 0.5;
-            const qreal equator_extent = std::min(
-                std::abs(direction_x) < 1e-6 ? std::numeric_limits<qreal>::max()
-                                             : half_width / std::abs(direction_x),
-                std::abs(direction_y) < 1e-6 ? std::numeric_limits<qreal>::max()
-                                             : half_height / std::abs(direction_y));
-            const qreal pole_extent = std::min(
-                std::abs(normal_x) < 1e-6 ? std::numeric_limits<qreal>::max()
-                                          : half_width / std::abs(normal_x),
-                std::abs(normal_y) < 1e-6 ? std::numeric_limits<qreal>::max()
-                                          : half_height / std::abs(normal_y));
-            painter.drawLine(center - QPointF(direction_x, direction_y) * equator_extent,
-                             center + QPointF(direction_x, direction_y) * equator_extent);
-            const QPointF north = center - QPointF(normal_x, normal_y) * pole_extent;
-            const QPointF south = center + QPointF(normal_x, normal_y) * pole_extent;
-            painter.setPen(QPen(QColor("#172432"), 1.5));
-            painter.setBrush(QColor("#70b8ff"));
-            painter.drawEllipse(north, marker_radius, marker_radius);
-            painter.setBrush(QColor("#ff9a67"));
-            painter.drawEllipse(south, marker_radius, marker_radius);
-            painter.setPen(QColor("#f6f2e8"));
-            painter.drawText(north + QPointF(marker_radius + 3, 4), "N");
-            painter.drawText(south + QPointF(marker_radius + 3, 4), "S");
-        }
-        painter.restore();
+    if (wind_overlay || currents_overlay) {
+        world::ClimateAxesContext axes_ctx{painter, project, &map, bounds, QRectF(rect()), cell, wraps_x};
+        world::draw_climate_axes(axes_ctx);
+
+        world::FlowOverlayContext flow_ctx{painter, project, &map, bounds, cell, map_width, map_height,
+            first_x, last_x, first_y, last_y, wraps_x, currents_overlay};
+        world::draw_flow_overlay(flow_ctx);
     }
 
     const int worldgen_seed = map.contains("worldgen") &&
@@ -781,94 +718,13 @@ void WorldMapCanvasWidget::paintCanvas(QPainter& painter) {
     const qreal north_y = wraps_x ? 1.0 : axis_cosine;
 
     if ((wind_overlay || currents_overlay) && cell > 0) {
-        const int stride = std::max(1, static_cast<int>(std::round(28.0 / std::max(1.0, cell))));
-        const auto draw_flow = [&](int x, int y, bool current) {
-            const int source_x = wraps_x ? aur::wrapX(x, map_width) : x;
-            const double nx = (source_x + 0.5) / map_width * 2.0 - 1.0;
-            const double ny = (y + 0.5) / map_height * 2.0 - 1.0;
-            const double latitude = wraps_x ? ny
-                : (nx * axis_sine + ny * axis_cosine) / latitude_scale;
-            double vx = 0.0;
-            double vy = 0.0;
-            if (current) {
-                if (wraps_x) {
-                    const double longitude = 2.0 * 3.14159265358979323846 *
-                        (source_x + 0.5) / map_width;
-                    const double gyre = std::sin(latitude * 3.14159265358979323846);
-                    vx = std::cos(longitude) * gyre;
-                    vy = -std::sin(longitude) * gyre * 0.35;
-                } else {
-                    const double center_x =
-                        (x / static_cast<double>(map_width) < 0.5) ? 0.28 : 0.72;
-                    const double center_y = latitude >= 0.0 ? 0.34 : 0.66;
-                    const double dx = x / static_cast<double>(map_width) - center_x;
-                    const double dy = y / static_cast<double>(map_height) - center_y;
-                    const double spin = latitude >= 0.0 ? 1.0 : -1.0;
-                    vx = -dy * spin;
-                    vy = dx * spin;
-                }
-            } else {
-                const double abs_latitude = std::abs(latitude);
-                const double zonal = abs_latitude < 0.28 || abs_latitude > 0.68 ? -1.0 : 1.0;
-                const double meridional = latitude == 0.0 ? 0.0 : -std::copysign(0.24, latitude);
-                vx = east_x * zonal + north_x * meridional;
-                vy = east_y * zonal + north_y * meridional;
-            }
-            const double magnitude = std::hypot(vx, vy);
-            if (magnitude < 0.001) return;
-            vx /= magnitude;
-            vy /= magnitude;
-            const QPointF center(bounds.left() + (x + 0.5) * cell,
-                                 bounds.top() + (y + 0.5) * cell);
-            const qreal length = std::clamp(cell * 0.65, 5.0, 15.0);
-            const QPointF start = center - QPointF(vx, vy) * (length * 0.5);
-            const QPointF end = center + QPointF(vx, vy) * (length * 0.5);
-            const QColor flow_color = current ? QColor("#67d4e4") : QColor("#fff0b0");
-            painter.setPen(QPen(flow_color, std::clamp(cell * 0.09, 1.0, 2.0),
-                                Qt::SolidLine, Qt::RoundCap));
-            painter.drawLine(start, end);
-            const QPointF side(-vy, vx);
-            painter.drawLine(end, end - QPointF(vx, vy) * length * 0.32 + side * length * 0.22);
-            painter.drawLine(end, end - QPointF(vx, vy) * length * 0.32 - side * length * 0.22);
-            if (simulation_timer.isActive()) {
-                const int phase = (simulation_phase + source_x * 7 + y * 13) % 80;
-                const qreal travel = phase / 79.0 - 0.5;
-                const QPointF particle = center + QPointF(vx, vy) * (travel * length);
-                painter.setPen(Qt::NoPen);
-                painter.setBrush(flow_color.lighter(145));
-                painter.drawEllipse(particle, std::clamp(cell * 0.12, 1.2, 2.6),
-                                    std::clamp(cell * 0.12, 1.2, 2.6));
-            }
-        };
-        painter.save();
-        const int first_flow_copy = wraps_x
-            ? static_cast<int>(std::floor(static_cast<double>(first_x) / map_width)) : 0;
-        const int last_flow_copy = wraps_x
-            ? static_cast<int>(std::ceil(static_cast<double>(last_x) / map_width)) : 1;
-        if (wind_overlay) {
-            for (int y = stride / 2; y < map_height; y += stride) {
-                for (int copy = first_flow_copy; copy < last_flow_copy; ++copy) {
-                    for (int x = stride / 2; x < map_width; x += stride) {
-                        const int world_x = copy * map_width + x;
-                        if (world_x >= first_x && world_x < last_x) draw_flow(world_x, y, false);
-                    }
-                }
-            }
-        }
-        if (currents_overlay) {
-            for (int y = stride / 2; y < map_height; y += stride) {
-                for (int copy = first_flow_copy; copy < last_flow_copy; ++copy) {
-                    for (int x = stride / 2; x < map_width; x += stride) {
-                        const int world_x = copy * map_width + x;
-                        if (world_x >= first_x && world_x < last_x &&
-                            is_ocean_at(world_x, y)) {
-                            draw_flow(world_x, y, true);
-                        }
-                    }
-                }
-            }
-        }
-        painter.restore();
+        world::ClimateAxesContext axes_ctx{painter, project, &map, bounds, QRectF(rect()), cell, wraps_x};
+        world::draw_climate_axes(axes_ctx);
+
+        world::FlowOverlayContext flow_ctx{painter, project, &map, bounds, cell, map_width, map_height,
+            first_x, last_x, first_y, last_y, wraps_x, currents_overlay,
+            simulation_phase, simulation_timer.isActive(), is_ocean_at};
+        world::draw_flow_overlay(flow_ctx);
     }
 
     if (weather_overlay && cell > 0) {
@@ -881,14 +737,8 @@ void WorldMapCanvasWidget::paintCanvas(QPainter& painter) {
     }
 
     if (daynight_overlay && (!world_model || editor::isHeadlessRhi())) {
-        GameClock lighting = project_clock(project);
-        lighting.set_time(preview_hour);
-        const auto [rgb, darkness] = lighting.ambient();
-        QColor tint(std::get<0>(rgb), std::get<1>(rgb), std::get<2>(rgb));
-        tint.setAlphaF(std::clamp(darkness, 0.0, 1.0));
-        const QRectF lighting_bounds = wraps_x
-            ? QRectF(0.0, bounds.top(), width(), bounds.height()) : bounds;
-        painter.fillRect(lighting_bounds, tint);
+        world::DayNightContext daynight_ctx{painter, project, bounds, QRectF(rect()), wraps_x, preview_hour};
+        world::draw_daynight_fallback(daynight_ctx);
     }
 
     if (map.contains("entities") && map["entities"].is_array()) {
@@ -2082,4 +1932,7 @@ void WorldPanel::deleteWorldEntity() {
 }
 
 } // namespace aur
+
+
+
 
