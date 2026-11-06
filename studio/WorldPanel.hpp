@@ -16,6 +16,7 @@
 #include <vector>
 #include "WorldModel.hpp"
 #include "aur/project.hpp"
+#include "world/WorldMapTools.hpp"
 
 class QComboBox;
 class QLabel;
@@ -33,6 +34,8 @@ class QEvent;
 
 namespace aur {
 
+using WorldTool = world::WorldTool;
+
 class TerrainRhiWidget;
 class WorldMapOverlayWidget;
 
@@ -43,7 +46,7 @@ class WorldMapCanvasWidget : public QWidget {
     Project* project = nullptr;
     std::string current_map;
     std::string selected_biome;
-    int selected_tool = 0;
+    WorldTool selected_tool = WorldTool::Inspect;
     int selected_tile = 0;
     int selected_node = -1;
     QPoint hover_tile{-1, -1};
@@ -98,7 +101,7 @@ public:
     ~WorldMapCanvasWidget() override;
     void setProject(Project* p);
     void setMap(const std::string& map_id);
-    void setTool(int tool_index);
+    void setTool(WorldTool tool);
     void setSelectedTile(int tile_index);
     void setBrushSize(int size);
     void setSelectedBiome(const std::string& biome_id);
@@ -130,7 +133,7 @@ protected:
 
 signals:
     void zoomChanged(qreal zoom);
-    void entityPlacementRequested(QPoint tile, int tool);
+    void entityPlacementRequested(QPoint tile, aur::WorldTool tool);
     void entitySelected(int entity_index);
     void entitiesChanged();
     void timeOfDayChanged(int hour, int minute);
@@ -175,7 +178,7 @@ private:
     void filterTerrainTiles();
     void addStarterTerrainTiles();
     void createBiome();
-    void createWorldEntity(const QPoint& tile, int type);
+    void createWorldEntity(const QPoint& tile, WorldTool tool);
     void editWorldEntity();
     void deleteWorldEntity();
 };

@@ -547,9 +547,9 @@ void WorldMapCanvasWidget::refreshCanvas() {
     QWidget::update();
 }
 
-void WorldMapCanvasWidget::setTool(int tool_index) {
-    selected_tool = tool_index;
-    setCursor(selected_tool > 0 ? Qt::CrossCursor : Qt::ArrowCursor);
+void WorldMapCanvasWidget::setTool(WorldTool tool) {
+    selected_tool = tool;
+    setCursor(selected_tool != WorldTool::Inspect ? Qt::CrossCursor : Qt::ArrowCursor);
 }
 
 void WorldMapCanvasWidget::setSelectedTile(int tile_index) {
@@ -713,8 +713,8 @@ QImage WorldMapCanvasWidget::buildHdSurface(const Json& map) const {
 }
 
 void WorldMapCanvasWidget::paintTile(const QPoint& tile) {
-    if ((selected_tool != 1 && selected_tool != 2 &&
-         selected_tool != 5 && selected_tool != 6) || !project || tile.y() < 0 ||
+    if (!world::is_paint_tool(selected_tool) && !world::is_height_tool(selected_tool)) return;
+    if (!project || tile.y() < 0 ||
         !project->maps.contains(current_map)) return;
 
     Json& map = project->maps[current_map];
@@ -740,7 +740,7 @@ void WorldMapCanvasWidget::paintTile(const QPoint& tile) {
             if (stamp_indices.insert(index).second) stamp.emplace_back(x, y);
         }
     }
-    if (selected_tool == 5 || selected_tool == 6) {
+    if (world::is_height_tool(selected_tool)) {
         ensureWorldModel();
         if (!world_model) return;
         constexpr int heightStep = 20;
@@ -752,7 +752,7 @@ void WorldMapCanvasWidget::paintTile(const QPoint& tile) {
             }
             const std::uint16_t oldHeight =
                 world_model->heights()[static_cast<std::size_t>(index)];
-            const int delta = selected_tool == 5 ? heightStep : -heightStep;
+            const int delta = selected_tool == WorldTool::RaiseHeight ? heightStep : -heightStep;
             const std::uint16_t newHeight = static_cast<std::uint16_t>(
                 std::clamp(static_cast<int>(oldHeight) + delta, 0, 65535));
             const std::array<std::uint16_t, 1> value{newHeight};
@@ -764,7 +764,7 @@ void WorldMapCanvasWidget::paintTile(const QPoint& tile) {
         return;
     }
 
-    if (selected_tool == 1) {
+    if (selected_tool == WorldTool::PaintTerrain) {
         if (!hdSurface && !map["layers"].contains("ground")) return;
         if (hdSurface) {
             const int map_width = map["w"].as_int();
@@ -847,7 +847,7 @@ void WorldMapCanvasWidget::paintTile(const QPoint& tile) {
             }
         } catch (const std::exception& error) {
             QMessageBox::warning(this, "Biome paint failed", QString::fromStdString(error.what()));
-            setTool(0);
+            setTool(WorldTool::Inspect);
             return;
         }
     }
@@ -1553,13 +1553,13 @@ void WorldMapCanvasWidget::mousePressEvent(QMouseEvent* event) {
         stroke_model_rects.clear();
         stroke_captured_cells.clear();
         const QPoint tile = tileAt(event->position());
-        if ((selected_tool == 3 || selected_tool == 4) &&
+        if (world::is_entity_placement(selected_tool) &&
             tile.x() >= 0 && tile.y() >= 0) {
             emit entityPlacementRequested(tile, selected_tool);
             event->accept();
             return;
         }
-        if (selected_tool == 0 && project && project->maps.contains(current_map) &&
+        if (selected_tool == WorldTool::Inspect && project && project->maps.contains(current_map) &&
             tile.x() >= 0 && tile.y() >= 0) {
             const Json& map = project->maps.at(current_map);
             if (!map.contains("entities") || !map["entities"].is_array()) {
@@ -1583,16 +1583,17 @@ void WorldMapCanvasWidget::mousePressEvent(QMouseEvent* event) {
             }
             emit entitySelected(nearest);
         }
-        const bool modelStroke = selected_tool == 5 || selected_tool == 6 ||
-            (selected_tool == 2 && project && project->maps.contains(current_map) &&
+        const bool modelStroke = world::is_height_tool(selected_tool) ||
+            (selected_tool == WorldTool::PaintBiome && project && project->maps.contains(current_map) &&
              has_hd_surface(project->maps.at(current_map)));
-        if ((selected_tool == 1 || (selected_tool == 2 && !modelStroke)) && project &&
+        if ((selected_tool == WorldTool::PaintTerrain ||
+             (selected_tool == WorldTool::PaintBiome && !modelStroke)) && project &&
             project->maps.contains(current_map) && tile.x() >= 0 && tile.y() >= 0) {
             undo_actions.push_back({false, project->maps[current_map]["layers"]});
             if (undo_actions.size() > 100) undo_actions.erase(undo_actions.begin());
             redo_actions.clear();
         }
-        if ((selected_tool == 1 || selected_tool == 2 || modelStroke) &&
+        if ((world::is_paint_tool(selected_tool) || modelStroke) &&
             project && project->maps.contains(current_map) && tile.x() >= 0 && tile.y() >= 0) {
             stroke_active = true;
             stroke_last_tile = tile;
@@ -1651,7 +1652,7 @@ void WorldMapCanvasWidget::mouseReleaseEvent(QMouseEvent* event) {
     }
     if (event->button() == Qt::MiddleButton) {
         panning = false;
-        setCursor(selected_tool > 0 ? Qt::CrossCursor : Qt::ArrowCursor);
+        setCursor(selected_tool != WorldTool::Inspect ? Qt::CrossCursor : Qt::ArrowCursor);
     }
     QWidget::mouseReleaseEvent(event);
 }
@@ -1726,8 +1727,9 @@ WorldPanel::WorldPanel(Project* p, QWidget* parent)
     header->addSpacing(12);
     header->addWidget(new QLabel("Tool:", this));
     toolCombo = new QComboBox(this);
-    toolCombo->addItems({"Inspect", "Paint terrain", "Paint biome",
-                         "Place location", "Place exit", "Raise height", "Lower height"});
+    for (const std::string_view name : world::kWorldToolNames) {
+        toolCombo->addItem(QString::fromUtf8(name.data(), static_cast<qsizetype>(name.size())));
+    }
     header->addWidget(toolCombo);
     auto* undoButton = new QPushButton("Undo", this);
     auto* redoButton = new QPushButton("Redo", this);
@@ -1897,7 +1899,10 @@ WorldPanel::WorldPanel(Project* p, QWidget* parent)
         if (index >= 0) selectMap(mapCombo->itemData(index).toString().toStdString());
     });
     connect(toolCombo, &QComboBox::currentIndexChanged, this,
-            [this](int index) { mapCanvas->setTool(index); });
+            [this](int index) {
+                const int bounded = std::clamp(index, 0, world::kWorldToolCount - 1);
+                mapCanvas->setTool(static_cast<WorldTool>(bounded));
+            });
     for (int key = 1; key <= 7; ++key) {
         QShortcut* shortcut = new QShortcut(QKeySequence(Qt::Key_0 + key), this);
         shortcut->setContext(Qt::WidgetWithChildrenShortcut);
@@ -2009,7 +2014,7 @@ WorldPanel::WorldPanel(Project* p, QWidget* parent)
     connect(mapCanvas, &WorldMapCanvasWidget::entitiesChanged, this,
             [this]() { refreshMapContents(); });
     connect(mapCanvas, &WorldMapCanvasWidget::entityPlacementRequested, this,
-            [this](const QPoint& tile, int tool) { createWorldEntity(tile, tool); });
+            [this](const QPoint& tile, WorldTool tool) { createWorldEntity(tile, tool); });
     connect(addLocationButton, &QPushButton::clicked, this, [this]() {
         toolCombo->setCurrentIndex(3);
     });
@@ -2447,9 +2452,9 @@ void WorldPanel::createBiome() {
     refreshMapContents();
 }
 
-void WorldPanel::createWorldEntity(const QPoint& tile, int type) {
+void WorldPanel::createWorldEntity(const QPoint& tile, WorldTool tool) {
     if (!project || current_map.empty() || !project->maps.contains(current_map) ||
-        (type != 3 && type != 4)) return;
+        !world::is_entity_placement(tool)) return;
     Json& map = project->maps[current_map];
     if (tile.x() < 0 || tile.y() < 0 || tile.x() >= map["w"].as_int() ||
         tile.y() >= map["h"].as_int()) return;
@@ -2458,7 +2463,7 @@ void WorldPanel::createWorldEntity(const QPoint& tile, int type) {
         ? map["entities"].as_array() : no_entities;
     int added_index = -1;
 
-    if (type == 3) {
+    if (tool == WorldTool::PlaceLocation) {
         bool accepted = false;
         const QString entered_id = QInputDialog::getText(
             this, "Add world location", "Location ID:", QLineEdit::Normal,
