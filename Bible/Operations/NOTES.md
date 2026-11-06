@@ -33,3 +33,5 @@
 
 - Step 5 complete (commit `fdb05f1`): all overlays now render through extracted modules — `WorldWeatherOverlay`, `WorldClimateOverlays`, and `WorldMarkerOverlays` (entity markers, hover highlight, zoom label). `paintCanvas` is an ordered overlay pipeline; draw order and the day/night CPU fallback are unchanged. WorldPanel.cpp is 1,877 lines (from 3,100). Build and both CTest targets green.
 - Fast worldgen confirmation from the owner: new seeded worlds generate near-instantly — no regression from the seams introduced so far.
+
+- Step 6a (commit `a3a2a12`): camera math (zoom clamp, bounds, wrap-aware pan constrain, tile hit-testing, fit) now lives in `studio/world/WorldCamera.hpp` as pure functions over a `WorldCameraSpec`; the canvas builds the spec from `MapView` plus widget viewport. Behavior unchanged; build and tests green. Next: project-level command history (step 6b), then the press/drag/release tool interface (6c).
