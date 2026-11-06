@@ -20,6 +20,9 @@ void test_stroke_line_tiles();
 void test_worldsim_shell();
 void test_worldsim_pins_and_values();
 void test_worldsim_json_roundtrip();
+void test_worldsim_kernel_determinism();
+void test_worldsim_pin_immutable_through_kernels();
+void test_worldsim_wrap_continuity();
 
 int main(int argc, char** argv) {
     // Allow a focused run without the memory-heavy full generator sweep.
@@ -33,6 +36,9 @@ int main(int argc, char** argv) {
         RUN_TEST(test_worldsim_shell);
         RUN_TEST(test_worldsim_pins_and_values);
         RUN_TEST(test_worldsim_json_roundtrip);
+        RUN_TEST(test_worldsim_kernel_determinism);
+        RUN_TEST(test_worldsim_pin_immutable_through_kernels);
+        RUN_TEST(test_worldsim_wrap_continuity);
         std::cout << "\nResults: " << g_tests_passed << " passed, "
                   << g_tests_failed << " failed.\n";
         return g_tests_failed > 0 ? 1 : 0;
@@ -70,6 +76,9 @@ int main(int argc, char** argv) {
     RUN_TEST(test_worldsim_shell);
     RUN_TEST(test_worldsim_pins_and_values);
     RUN_TEST(test_worldsim_json_roundtrip);
+    RUN_TEST(test_worldsim_kernel_determinism);
+    RUN_TEST(test_worldsim_pin_immutable_through_kernels);
+    RUN_TEST(test_worldsim_wrap_continuity);
 
     std::cout << "\nResults: " << g_tests_passed << " passed, " << g_tests_failed << " failed.\n";
     return g_tests_failed > 0 ? 1 : 0;

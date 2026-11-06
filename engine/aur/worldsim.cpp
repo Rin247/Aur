@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <initializer_list>
 
 namespace aur::worldsim
 {
@@ -39,12 +40,173 @@ namespace aur::worldsim
         const std::size_t cells =
             static_cast<std::size_t>(params_.width) * static_cast<std::size_t>(params_.height);
         fields_.assign(kFieldCount, std::vector<float>(cells, 0.0f));
+        next_.assign(kFieldCount, std::vector<float>(cells, 0.0f));
         pins_.assign(kFieldCount, std::vector<bool>(cells, false));
+    }
+
+    int WorldSim::index(int x, int y) const noexcept
+    {
+        return y * params_.width + x;
+    }
+
+    float WorldSim::noise(Field field, int x, int y) const
+    {
+        const std::uint64_t cell =
+            (static_cast<std::uint64_t>(static_cast<unsigned>(y)) << 32) |
+            static_cast<std::uint32_t>(x);
+        return static_cast<float>(mix64(cell ^ params_.seed ^
+                                        (0x9e3779b97f4a7c15ULL * static_cast<std::uint64_t>(field))) >>
+                                  11) * (1.0f / 9007199254740992.0f);
+    }
+
+    void WorldSim::set_heights(const std::vector<float> &heights)
+    {
+        const std::size_t cells =
+            static_cast<std::size_t>(params_.width) * static_cast<std::size_t>(params_.height);
+        if (heights.size() != cells) return;
+        fields_[static_cast<int>(Field::Temperature)] = heights;
+        configured_ = true;
     }
 
     void WorldSim::advance(int ticks)
     {
-        tick_count_ += static_cast<std::uint64_t>(std::max(0, ticks));
+        for (int t = 0; t < std::max(0, ticks); ++t) step();
+    }
+
+    void WorldSim::step()
+    {
+        const int w = params_.width;
+        const int h = params_.height;
+
+        auto read = [this, w, h](Field field, int x, int y) -> float {
+            const int i = index(aur::wrapX(x, w), y);
+            return fields_[static_cast<int>(field)][static_cast<std::size_t>(i)];
+        };
+
+        // Pass 1: diffusion fields (temperature, moisture) — 3x3 wrap-aware mean.
+        for (Field field : {Field::Temperature, Field::Moisture})
+        {
+            const auto &source = fields_[static_cast<int>(field)];
+            auto &target = next_[static_cast<int>(field)];
+            for (int y = 0; y < h; ++y)
+            {
+                for (int x = 0; x < w; ++x)
+                {
+                    const int i = index(x, y);
+                    const std::size_t si = static_cast<std::size_t>(i);
+                    if (pins_[static_cast<int>(field)][si])
+                    {
+                        target[si] = source[si];
+                        continue;
+                    }
+                    double mix = 0.0;
+                    for (int dy = -1; dy <= 1; ++dy)
+                    {
+                        const int ny = y + dy;
+                        if (ny < 0 || ny >= h) continue;
+                        for (int dx = -1; dx <= 1; ++dx)
+                            mix += source[static_cast<std::size_t>(index(aur::wrapX(x + dx, w), ny))];
+                    }
+                    const double blended = mix / 9.0;
+                    target[si] = static_cast<float>(source[si] +
+                                                    (blended - source[si]) * params_.diffusion_rate);
+                }
+            }
+        }
+
+        // Pass 2: wind advection of cloud coverage, then cloud growth/decay.
+        const auto &cloud = fields_[static_cast<int>(Field::Cloud)];
+        const auto &moisture = fields_[static_cast<int>(Field::Moisture)];
+        {
+            auto &target = next_[static_cast<int>(Field::Cloud)];
+            for (int y = 0; y < h; ++y)
+            {
+                for (int x = 0; x < w; ++x)
+                {
+                    const int i = index(x, y);
+                    const std::size_t si = static_cast<std::size_t>(i);
+                    if (pins_[static_cast<int>(Field::Cloud)][si])
+                    {
+                        target[si] = cloud[si];
+                        continue;
+                    }
+                    const double u = read(Field::WindU, x, y);
+                    const double v = read(Field::WindV, x, y);
+                    const double sx = aur::wrapX(
+                        x - static_cast<int>(u * params_.wind_step * 16.0), w);
+                    const int sy = y - static_cast<int>(v * params_.wind_step * 16.0);
+                    const double upstream = sy >= 0 && sy < h
+                        ? cloud[static_cast<std::size_t>(index(static_cast<int>(sx), sy))]
+                        : 0.0;
+                    double c = upstream + (moisture[si] - 0.5) * params_.cloud_growth -
+                               params_.cloud_decay;
+                    target[si] = static_cast<float>(std::clamp(c, 0.0, 1.0));
+                }
+            }
+        }
+
+        // Pass 3: precipitation and snow from the *new* cloud field.
+        const auto &temperature = fields_[static_cast<int>(Field::Temperature)];
+        const auto &new_cloud = next_[static_cast<int>(Field::Cloud)];
+        {
+            auto &next_rain = next_[static_cast<int>(Field::Rain)];
+            auto &next_snow = next_[static_cast<int>(Field::Snowpack)];
+            const auto &old_snow = fields_[static_cast<int>(Field::Snowpack)];
+            for (int y = 0; y < h; ++y)
+            {
+                for (int x = 0; x < w; ++x)
+                {
+                    const int i = index(x, y);
+                    const std::size_t si = static_cast<std::size_t>(i);
+                    const double wet = new_cloud[si];
+                    const double temp = temperature[si];
+                    const double frozen = temp < params_.snow_threshold;
+                    const double fall = wet * params_.rain_rate;
+
+                    if (pins_[static_cast<int>(Field::Rain)][si])
+                        next_rain[si] = fields_[static_cast<int>(Field::Rain)][si];
+                    else
+                        next_rain[si] = static_cast<float>(frozen ? 0.0 : fall);
+
+                    if (pins_[static_cast<int>(Field::Snowpack)][si])
+                        next_snow[si] = old_snow[si];
+                    else
+                        next_snow[si] = static_cast<float>(
+                            frozen ? old_snow[si] + fall
+                                   : std::max(0.0, old_snow[si] - params_.snow_melt));
+                }
+            }
+        }
+
+        // Wind fields relax toward a latitude-driven base flow (no external input).
+        for (int field_index : {static_cast<int>(Field::WindU), static_cast<int>(Field::WindV)})
+        {
+            const auto &source = fields_[static_cast<std::size_t>(field_index)];
+            auto &target = next_[static_cast<std::size_t>(field_index)];
+            const Field field = static_cast<Field>(field_index);
+            const double sign = field == Field::WindU ? 1.0 : -1.0;
+            for (int y = 0; y < h; ++y)
+            {
+                const double latitude = (h > 1 ? static_cast<double>(y) / (h - 1) : 0.5) * 2.0 - 1.0;
+                const double base = sign * (1.0 - std::abs(latitude)) *
+                                    (field == Field::WindU ? 0.5 : 0.25);
+                for (int x = 0; x < w; ++x)
+                {
+                    const int i = index(x, y);
+                    const std::size_t si = static_cast<std::size_t>(i);
+                    if (pins_[static_cast<int>(field)][si])
+                    {
+                        target[si] = source[si];
+                        continue;
+                    }
+                    target[si] = static_cast<float>(source[si] +
+                                                    (base - source[si]) * params_.wind_step);
+                }
+            }
+        }
+
+        fields_.swap(next_);
+        ++tick_count_;
     }
 
     void WorldSim::pin(Field field, int x, int y, float value)
@@ -74,10 +236,9 @@ namespace aur::worldsim
 
     float WorldSim::value(Field field, int x, int y) const
     {
-        const int index = y * params_.width + x;
-        if (index < 0 || index >= static_cast<int>(fields_[static_cast<int>(field)].size()))
-            return 0.0f;
-        return fields_[static_cast<int>(field)][static_cast<std::size_t>(index)];
+        const int wx = aur::wrapX(x, params_.width);
+        if (y < 0 || y >= params_.height) return 0.0f;
+        return fields_[static_cast<int>(field)][static_cast<std::size_t>(index(wx, y))];
     }
 
     std::uint64_t WorldSim::hash() const
