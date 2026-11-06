@@ -987,7 +987,7 @@ WorldPanel::WorldPanel(Project* p, QWidget* parent)
     header->addWidget(new QLabel("Time:", this));
     header->addWidget(timeOfDayEdit);
     header->addStretch(1);
-    generateWorldButton = new QPushButton("Generate new worldâ€¦", this);
+    generateWorldButton = new QPushButton(QStringLiteral("Generate new world\u2026"), this);
     header->addWidget(generateWorldButton);
     mapInfo = new QLabel(this);
     mapInfo->setStyleSheet("color: #aeb8c2;");
@@ -1006,7 +1006,7 @@ WorldPanel::WorldPanel(Project* p, QWidget* parent)
     biomeList = new QListWidget(sidebar);
     biomeList->setMaximumHeight(190);
     sidebar_layout->addWidget(biomeList);
-    newBiomeButton = new QPushButton("Create biomeâ€¦", sidebar);
+    newBiomeButton = new QPushButton(QStringLiteral("Create biome\u2026"), sidebar);
     sidebar_layout->addWidget(newBiomeButton);
 
     auto* terrain_title = new QLabel("TERRAIN", sidebar);
@@ -1087,10 +1087,10 @@ WorldPanel::WorldPanel(Project* p, QWidget* parent)
     redoShortcut->setContext(Qt::WidgetWithChildrenShortcut);
     connect(redoShortcut, &QShortcut::activated, mapCanvas, &WorldMapCanvasWidget::redo);
 
-    auto* footer = new QLabel("Wheel: zoom Â· Ctrl+wheel: snap 1/2/4/8/16Ã— Â· middle-drag: pan Â· "
-                              "Keys 1-7: tool Â· Ctrl+Z/Y: undo/redo Â· "
-                              "Raise/Lower height or paint biome Â· Add Location/Exit, then click Â· "
-                              "Fit: show the whole world Â· Save with Ctrl+S.", this);
+    auto* footer = new QLabel(QStringLiteral("Wheel: zoom \u00b7 Ctrl+wheel: snap 1/2/4/8/16\u00d7 \u00b7 middle-drag: pan \u00b7 "
+                              "Keys 1-7: tool \u00b7 Ctrl+Z/Y: undo/redo \u00b7 "
+                              "Raise/Lower height or paint biome \u00b7 Add Location/Exit, then click \u00b7 "
+                              "Fit: show the whole world \u00b7 Save with Ctrl+S."), this);
     footer->setStyleSheet("color: #8d98a3;");
     layout->addWidget(footer);
 
@@ -1256,8 +1256,8 @@ WorldPanel::WorldPanel(Project* p, QWidget* parent)
         form.addRow("Width (tiles):", width);
         form.addRow("Height (tiles):", height);
         auto* resolutionHint = new QLabel(
-            "Default is 256 Ã— 128 tiles (the Sylvi diorama scale). Larger maps remain available "
-            "up to 2560 Ã— 1280, but can use several GB of editor memory.",
+            "Default is 256 \u00d7 128 tiles (the Sylvi diorama scale). Larger maps remain available "
+            "up to 2560 \u00d7 1280, but can use several GB of editor memory.",
             &dialog);
         resolutionHint->setWordWrap(true);
         form.addRow(resolutionHint);
@@ -1290,8 +1290,8 @@ WorldPanel::WorldPanel(Project* p, QWidget* parent)
         auto* axialTilt = new QSpinBox(&dialog);
         axialTilt->setRange(0, 359);
         axialTilt->setValue(0);
-        axialTilt->setSuffix("Â°");
-        axialTilt->setToolTip("0Â° places the equator horizontally; this rotates the equator and pole axis on the map.");
+        axialTilt->setSuffix(QStringLiteral("\u00b0"));
+        axialTilt->setToolTip(QStringLiteral("0\u00b0 places the equator horizontally; this rotates the equator and pole axis on the map."));
         form.addRow("Axial tilt / equator angle:", axialTilt);
         QDialogButtonBox buttons(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
         form.addRow(&buttons);
@@ -1325,7 +1325,7 @@ WorldPanel::WorldPanel(Project* p, QWidget* parent)
         const auto cancelled = generationCancelled;
         auto* watcher = new QFutureWatcher<Json>(this);
         generationProgress = new QProgressDialog(
-            "Generating spherical worldâ€¦", "Cancel", 0, 0, this);
+            QStringLiteral("Generating spherical world\u2026"), "Cancel", 0, 0, this);
         generationProgress->setWindowTitle("Generate world");
         generationProgress->setWindowModality(Qt::WindowModal);
         generationProgress->setMinimumDuration(0);
@@ -1426,12 +1426,12 @@ void WorldPanel::refreshMapContents() {
 
     const Json& map = project->maps.at(current_map);
     const std::string tileset_id = map["tileset"].as_string();
-    QString info = QString("%1 Ã— %2 Â· %3")
+    QString info = QString(QStringLiteral("%1 \u00d7 %2 \u00b7 %3"))
         .arg(map["w"].as_int()).arg(map["h"].as_int())
         .arg(QString::fromStdString(tileset_id));
     if (map.contains("worldgen") && map["worldgen"].contains("style") &&
         map["worldgen"]["style"].as_string() == "hd2d") {
-        info += QString(" Â· HD Â· %1").arg(QString::fromStdString(
+        info += QString(QStringLiteral(" \u00b7 HD \u00b7 %1")).arg(QString::fromStdString(
             map["worldgen"]["topology"].as_string()));
     }
     mapInfo->setText(info);
@@ -1485,13 +1485,13 @@ void WorldPanel::refreshMapContents() {
             if (type != "location" && type != "exit") continue;
             std::string label = type == "exit" ? "Exit" : "Location";
             if (entity.contains("target") && entity["target"].contains("map")) {
-                label += " â†’ " + entity["target"]["map"].as_string();
+                label += " \u2192 " + entity["target"]["map"].as_string();
                 if (entity["target"].contains("spawn") && entity["target"]["spawn"].is_string() &&
                     !entity["target"]["spawn"].as_string().empty()) {
                     label += " / " + entity["target"]["spawn"].as_string();
                 }
             } else if (entity.contains("id")) {
-                label += " Â· " + entity["id"].as_string();
+                label += " \u00b7 " + entity["id"].as_string();
             }
             label += "  (" + std::to_string(entity["x"].as_int()) + ", " +
                      std::to_string(entity["y"].as_int()) + ")";
@@ -1582,14 +1582,14 @@ void WorldPanel::createBiome() {
     for (size_t index = 0; index < tiles.size(); ++index) {
         const std::string name = tiles[index].contains("name")
             ? tiles[index]["name"].as_string() : "Tile " + std::to_string(index);
-        baseTileCombo.addItem(QString("%1 Â· %2").arg(index).arg(QString::fromStdString(name)),
+        baseTileCombo.addItem(QString(QStringLiteral("%1 \u00b7 %2")).arg(index).arg(QString::fromStdString(name)),
                               static_cast<int>(index));
     }
     if (tilePalette->currentRow() >= 0) baseTileCombo.setCurrentIndex(tilePalette->currentRow());
     form.addRow("Base terrain:", &baseTileCombo);
 
     auto* colorEdit = new QLineEdit("#75b96b", &dialog);
-    auto* colorButton = new QPushButton("Chooseâ€¦", &dialog);
+    auto* colorButton = new QPushButton(QStringLiteral("Choose\u2026"), &dialog);
     auto* colorRow = new QHBoxLayout();
     colorRow->addWidget(colorEdit);
     colorRow->addWidget(colorButton);

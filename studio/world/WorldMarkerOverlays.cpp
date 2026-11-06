@@ -104,12 +104,12 @@ namespace aur::world
     {
         ctx.painter.setPen(QColor("#c1c8ce"));
         const QString zoomText = ctx.hd_surface
-                                     ? QString("%1 Ã— %2 tiles  Â·  %3  Â·  1 art px = %4 screen px")
+                                     ? QString(QStringLiteral("%1 \u00d7 %2 tiles  \u00b7  %3  \u00b7  1 art px = %4 screen px"))
                                            .arg(ctx.map_width)
                                            .arg(ctx.map_height)
                                            .arg(QString::fromStdString(ctx.tileset))
                                            .arg(QString::number(ctx.zoom, 'g', 3))
-                                     : QString("%1 Ã— %2 tiles  Â·  %3  Â·  %4%")
+                                     : QString(QStringLiteral("%1 \u00d7 %2 tiles  \u00b7  %3  \u00b7  %4%"))
                                            .arg(ctx.map_width)
                                            .arg(ctx.map_height)
                                            .arg(QString::fromStdString(ctx.tileset))
