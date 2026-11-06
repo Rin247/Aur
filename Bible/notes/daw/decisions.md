@@ -42,3 +42,18 @@ Settled with evidence before code; each entry dated. Amend rather than argue.
 - **2026-11-06 — tests:** `test_midi.cpp` already exercises import/export;
   P0 extends it. No music test file exists yet; `test_worldsim.cpp` is the
   pattern for the new focused mode if needed.
+- **2026-11-06 — P0 closed.** Suite 28/28; tags `daw-p0.1` (clamp fix +
+  regression) and `daw-p0.2` (golden PCM hashes Gm `cb85984999374d93`,
+  FM `593f65526dc8c07b`, PSG `e956398a8d885a99` at 8 kHz/30 s fixture).
+- **2026-11-06 — preview step→seconds mapping quirk.** A note at step 600
+  (tempo 120) renders at ~frame 1,200,000 at 8 kHz (≈150 s), i.e. 0.25 s/step,
+  not the 0.125 s/step the naive `60/(bpm*4)` formula implies. The regression
+  test is deliberately mapping-independent; P2 must define the real timing
+  contract and reconcile the formula.
+- **2026-11-06 — unrelated working-tree churn stashed.** A brace-restyle of
+  `studio/world/*` files (WorldCommandHistory, WorldEntityDialogs,
+  WorldGenerationJob, WorldStrokeState, WorldPanel.hpp) sat uncommitted in the
+  tree with no task; stashed as `daw-p0 churn-residue` (drop or re-apply
+  deliberately).
+- **2026-11-06 — owner-reported UI issues logged in WANTED.md:** map editor
+  first-boot zoom; World Time Settings merged into the World editor.
