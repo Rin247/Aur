@@ -24,7 +24,7 @@ The supplied gameplan is mostly accurate. Corrections and additions:
 1. **`MusicEngine` is dead code.** It exists only in `engine/aur/music.hpp`
    (22 lines) and nothing in the repo includes it or calls it — not
    `game.cpp`, not `field.hpp`, not Studio. The gameplan's "runtime must keep
-   playing songs by id" describes an *aspiration*, not a current contract.
+   playing songs by id" describes an _aspiration_, not a current contract.
    There is no P11 call-site contract to preserve; P11 defines one fresh.
 2. **Map→song reference exists as data but is unread.** `project.cpp:299`
    writes `m["music"] = nullptr` on every new map, and
@@ -36,7 +36,7 @@ The supplied gameplan is mostly accurate. Corrections and additions:
    `65535/120` = 546 and length to 512; `synth.cpp:219-221` clamps total song
    length to 4096 steps. `midi.cpp:395` clamps export step to
    `65535/ticks_per_step` = 546 (120 ticks/step at 480 PPQ). So: preview
-   clamps at 546 steps *and* 4096 total steps; export clamps at 546 steps.
+   clamps at 546 steps _and_ 4096 total steps; export clamps at 546 steps.
    The UI's 128-bar (2048-step) range is inside the synth's 4096 cap, so the
    real user-visible bug is bar ~34+ truncation in both preview and export.
 4. **The v1 song format carries two song-level keys the gameplan's contract
@@ -58,9 +58,9 @@ under the estate sizing rule (~1,000-line soft cap, +25% overhead).
 1. `projects/<id>/music/*.json` loading stays (v1 reader kept); new format is
    v2 with migration + backup on first save.
 2. Existing v1 keys stay readable: `name, tempo, bars, beats, loop_bar,
-   preview_synth, gs, reverb, tracks[{name, channel, program, bank, volume,
-   pan, reverb, chorus, drum, notes[[step,pitch,length,velocity]]}],
-   scenes[{name, clips}]`.
+preview_synth, gs, reverb, tracks[{name, channel, program, bank, volume,
+pan, reverb, chorus, drum, notes[[step,pitch,length,velocity]]}],
+scenes[{name, clips}]`.
 3. New engine lives in `engine/aur/audio/`, Qt-free; Studio and game link it.
 4. Audio-callback safety: no locks, allocation, logging, or Qt in the callback;
    lock-free command queue in, immutable snapshots out, meters via atomics.
@@ -87,51 +87,61 @@ under the estate sizing rule (~1,000-line soft cap, +25% overhead).
 ## Phases
 
 ### P0 Safety net — in progress
-- [ ] Failing test for the 546-step clamp (song with a note at step 1000,
-      preview and export both truncate today).
+
+- [x] Failing test for the 546-step clamp (song with a note at step 1000,
+      preview and export both truncate today) — pinned as a regression test at
+      step 600 in `tests/test_song_clamp.cpp`; buffer length + first-sound
+      position + MIDI round-trip, mapping-independent.
 - [ ] Golden render-hash tests over a fixture set of v1 songs through the
       current synth (deterministic PCM hash).
 - [ ] MIDI import/export round-trip tests for currently supported fields.
 - [ ] Fix the clamp in its own commit with tests; keep `synthesize_preview`
       and track keys readable.
-Acceptance: green suite including the new tests; `daw-p0` tag.
+      Acceptance: green suite including the new tests; `daw-p0` tag.
 
 ### P1 Extraction, no behaviour change
+
 - [ ] Move `synth`, `midi`, song model into `engine/aur/audio/` namespaces.
 - [ ] Split `MusicPanel` into TransportBar, MidiDevicePanel, MidiRecorder,
       SessionView, TrackPanel, GeneratorPanel + thin host; measure sizes.
 - [ ] `MusicEngine` stays as-is (unused) until P11.
-Acceptance: build + tests green, no behaviour change, sizes recorded.
+      Acceptance: build + tests green, no behaviour change, sizes recorded.
 
 ### P2 Real-time engine
+
 Sequencer + mixer + audio output behind `IInstrument`; replace WAV +
 `QMediaPlayer`; MIDI out from the same clock; offline render on a worker
 thread through the same code. Acceptance: soak without underruns, measured
 latency recorded, offline/live hash equality.
 
 ### P3 Song v2 + undo
+
 Tick time base, tempo/time-signature maps, markers, loop points, first-class
 clips/slots/scenes/arrangement, automation lanes, per-note properties; v1
 migration with backup; typed commands on the shared undo stack; no 128-bar/
 4096-step caps.
 
 ### P4 MIDI fidelity
+
 Lossless import (ticks, tempo/T.S. maps, CC, pitch bend, aftertouch→automation,
 SysEx, markers), export for arrangement/clip/tracks, device layer with
 timestamps + SysEx input, MIDI record with count-in; round-trip tests.
 
 ### P5 Piano roll
+
 Custom model-view, stable note ids, multi-select/marquee, move/resize/
 duplicate, copy/paste, snap incl. triplets, quantise, velocity + automation
 lanes, scale highlight, full pitch range, zoom, playhead, audition — all
 undoable.
 
 ### P6 Session and arrangement
+
 Painted clip grid with launch quantisation, queued/playing states, scene
 launch/stop, record into slot, clip edit in piano roll; arrangement timeline
 with placements, loop brace, markers, tempo/T.S. lanes.
 
 ### P7a GM/GS instrument
+
 SoundFont sampler core (interpolation, envelopes, filter, loops, velocity
 layers, modulator subset), 16-part GS model (bank select, drum kits, CC
 1/7/10/11/64/91/93/94, RPN/NRPN, GS SysEx reset), per-part effect sends;
@@ -139,26 +149,31 @@ bundled redistributable SoundFont with licence recorded; GM-lite fallback with
 a visible message.
 
 ### P8 Effects
+
 `IEffect` framework (parameters, automation, tempo sync, bypass), built-ins
 (delay, reverb, chorus, flanger, phaser, EQ, filter, compressor, limiter,
 distortion/bitcrusher, tremolo, widener, SNES echo FIR), send buses, master
 chain, meters, CPU budget; deterministic offline parity tests.
 
 ### P7b FM and PSG
+
 DX7-style 6-op (32 algorithms, `.syx` import), YM2612-style 4-op + DAC,
 SN76489 PSG, real-parameter patch editors.
 
 ### P7c SPC-style sampler
+
 BRR encode/decode, sample import with loop points, ADSR/GAIN, 8-voice limit,
 echo FIR emulation, hardware-profile warnings. SPC file export and sound
 driver are out of scope (research note only).
 
 ### P9 MIDI effects + step sequencer
+
 Arpeggiator (up/down/up-down/random/chord/as-played, rate incl. triplets, gate,
 octave, swing, hold), chord/scale/random/velocity/length effects; 128-step
 clip type compiling to events.
 
 ### P10 Generator
+
 Seeded scratchpad generators (drums, bass, chords, arps, motifs, fills) from
 style profiles (Overworld, Battle, Village, Dungeon, Boss, Town, Title,
 Victory) and hardware profiles; parameters seed/key/mode/tempo/bars/density/
@@ -167,12 +182,14 @@ only, never a full arrangement; deterministic + musical-constraint tests;
 in-app panel + MCP tool; replaces `generateQuickSong`.
 
 ### P11 Game integration and export
+
 Runtime `MusicEngine` becomes a façade over the engine (play by id, loop
 points, transitions, layers); wire the unread `map["music"]` lookup; WAV/OGG/
 stems with loop-aware tails; instrument/sample packaging; MIDI export of any
 clip or arrangement.
 
 ### P12 Plugin decision + cleanup
+
 CLAP/VST3 wrapping + hosting recommendation doc; stale docs into `Bible/`;
 size limits met; plan trimmed.
 

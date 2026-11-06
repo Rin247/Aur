@@ -392,7 +392,7 @@ std::vector<uint8_t> export_standard_midi(const Json& song) {
             int order = 10;
             for (const Json& note : track["notes"].as_array()) {
                 if (!note.is_array() || note.as_array().size() < 3) continue;
-                const int step = std::clamp(note[0].as_int(), 0, 65535 / ticks_per_step);
+                const int step = std::max(note[0].as_int(), 0);
                 const int pitch = std::clamp(note[1].as_int(), 0, 127);
                 const int length = std::clamp(note[2].as_int(), 1, 65535 / ticks_per_step);
                 const int velocity = note.as_array().size() >= 4

@@ -216,9 +216,9 @@ StereoPcm synthesize_preview(const Json& song, PreviewSynth synth,
 
     const int bpm = song.contains("tempo") && song["tempo"].is_number()
         ? std::clamp(song["tempo"].as_int(), 30, 240) : 120;
-    int last_step = std::clamp(
-        song.contains("bars") && song["bars"].is_number()
-            ? song["bars"].as_int() * 16 : 128, 16, 4096);
+    int last_step = song.contains("bars") && song["bars"].is_number()
+        ? std::max(song["bars"].as_int() * 16, 16)
+        : 128;
     std::vector<NoteVoice> voices;
     for (const Json& track : song["tracks"].as_array()) {
         if (!track.contains("notes") || !track["notes"].is_array()) continue;
@@ -232,7 +232,7 @@ StereoPcm synthesize_preview(const Json& song, PreviewSynth synth,
                            track["drum"].as_bool());
         for (const Json& note : track["notes"].as_array()) {
             if (!note.is_array() || note.as_array().size() < 3) continue;
-            const int step = std::clamp(note[0].as_int(), 0, 65535 / 120);
+            const int step = std::max(note[0].as_int(), 0);
             const int pitch = std::clamp(note[1].as_int(), 0, 127);
             const int length = std::clamp(note[2].as_int(), 1, 512);
             const int velocity = note.as_array().size() >= 4
