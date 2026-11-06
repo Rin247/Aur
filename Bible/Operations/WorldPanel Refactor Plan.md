@@ -33,4 +33,6 @@ For each numbered step: record touched-file sizes; make only moves/extractions o
 - [x] Adjacent World tab request: moved World immediately after Map Editor; Release build passed; code commit: `8ed26ab`.
 - [x] Step 3 implementation committed (`69cd233`): helpers integrated, `MapView::elevationAt`/`biomeAt` accessors with tests, camera reads through MapView.
 - [x] Step 4 committed (`636b69f`): `TerrainRhiWidget` moved to `studio/world/`; renderer no longer friends the canvas — it pulls an immutable `TerrainView` snapshot (model, map id, generation, project, bounds, viewport size, zoom, hour, daynight, contours) via a provider callback. `WorldPanel.cpp` is 2,266 lines. Build and both CTest targets passed.
-- [ ] Steps 5–7 remain outstanding. Update this checklist only when a step's build/test gate passes and its code commit exists.
+- [x] Step 5a committed: `WorldOverlay` enum plus one `setOverlay(WorldOverlay, bool)` replacing the five separate setters; overlay actions dispatch through lambdas. Weather extraction commit `78a14f8` moved rendering to `studio/world/WorldWeatherOverlay.{hpp,cpp}` behind `WeatherOverlayContext` (rows, bounds, seed, tick, weather, ocean predicate). Draw order preserved; day/night CPU fallback unchanged. WorldPanel.cpp is 2,085 lines. Build and both CTest targets green.
+- [ ] Step 5b outstanding: temperature, wind/current, day/night, entity and hover overlays still render inline in `paintCanvas`.
+- [ ] Steps 6–7 remain outstanding. Update this checklist only when a step's build/test gate passes and its code commit exists.
