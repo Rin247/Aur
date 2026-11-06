@@ -1,0 +1,128 @@
+#pragma once
+#include "aur/json.hpp"
+#include "aur/project.hpp"
+#include "world/TerrainRhiWidget.hpp"
+#include "world/WorldCommandHistory.hpp"
+#include "world/WorldMapTools.hpp"
+#include "world/WorldStrokeState.hpp"
+
+#include <QImage>
+#include <QPoint>
+#include <QPointF>
+#include <QRectF>
+#include <QTimer>
+#include <QWidget>
+
+#include <cstdint>
+#include <map>
+#include <memory>
+#include <string>
+#include <utility>
+
+class QComboBox;
+class QMouseEvent;
+class QWheelEvent;
+class QPaintEvent;
+class QResizeEvent;
+class QEvent;
+
+namespace aur
+{
+
+    using world::WorldTool;
+    using world::WorldOverlay;
+
+    class WorldMapOverlayWidget;
+
+    class WorldMapCanvasWidget : public QWidget
+    {
+        Q_OBJECT
+
+        Project *project = nullptr;
+        std::string current_map;
+        std::string selected_biome;
+        WorldTool selected_tool = WorldTool::Inspect;
+        int selected_tile = 0;
+        int selected_node = -1;
+        QPoint hover_tile{-1, -1};
+        std::map<std::pair<std::string, int>, QImage> tile_cache;
+        QImage surface_cache;
+        std::string surface_cache_map;
+        editor::WorldCommandHistory history;
+        world::WorldStrokeState stroke;
+        std::unique_ptr<editor::WorldModel> world_model;
+        std::string world_model_map;
+        std::uint64_t world_model_generation = 0;
+        TerrainRhiWidget *terrain_renderer = nullptr;
+        WorldMapOverlayWidget *overlay_widget = nullptr;
+        int brush_size = 1;
+        qreal zoom_factor = 1.0;
+        QPointF pan_offset;
+        QPointF pan_start_position;
+        QPointF pan_start_offset;
+        bool panning = false;
+        bool temperature_overlay = false;
+        bool wind_overlay = false;
+        bool currents_overlay = false;
+        bool weather_overlay = false;
+        bool daynight_overlay = true;
+        bool contours_enabled = true;
+        int simulation_phase = 0;
+        double preview_hour = 8.0;
+        std::string preview_weather = "climate";
+        QTimer simulation_timer;
+
+        QRectF mapBounds() const;
+        QPoint tileAt(const QPointF &position) const;
+        void constrainWorldCamera();
+        QImage tileImage(const std::string &tileset_id, int tile_index);
+        TerrainView terrainView() const;
+        void paintTile(const QPoint &tile);
+
+    public:
+        void paintCanvas(QPainter &painter);
+
+    private:
+        void ensureWorldModel();
+        void refreshCanvas();
+
+    public:
+        explicit WorldMapCanvasWidget(QWidget *parent = nullptr);
+        ~WorldMapCanvasWidget() override;
+        void setProject(Project *p);
+        void setMap(const std::string &map_id);
+        void setTool(WorldTool tool);
+        void setSelectedTile(int tile_index);
+        void setBrushSize(int size);
+        void setSelectedBiome(const std::string &biome_id);
+        void setSelectedNode(int node_index);
+        void setOverlay(WorldOverlay overlay, bool enabled);
+        void setWeatherType(const std::string &weather);
+        void setSimulationRunning(bool enabled);
+        void setContoursEnabled(bool enabled);
+        void setTimeOfDay(int hour, int minute);
+        void setZoom(qreal zoom);
+        qreal zoomFactor() const noexcept { return zoom_factor; }
+        void fitToView();
+        void recordEntityEdit();
+        void undo();
+        void redo();
+
+    protected:
+        void paintEvent(QPaintEvent *event) override;
+        void resizeEvent(QResizeEvent *event) override;
+        void mousePressEvent(QMouseEvent *event) override;
+        void mouseMoveEvent(QMouseEvent *event) override;
+        void mouseReleaseEvent(QMouseEvent *event) override;
+        void wheelEvent(QWheelEvent *event) override;
+        void leaveEvent(QEvent *event) override;
+
+    signals:
+        void zoomChanged(qreal zoom);
+        void entityPlacementRequested(QPoint tile, aur::WorldTool tool);
+        void entitySelected(int entity_index);
+        void entitiesChanged();
+        void timeOfDayChanged(int hour, int minute);
+    };
+
+} // namespace aur

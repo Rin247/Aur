@@ -64,6 +64,7 @@ add_executable(aur_studio
     studio/world/WorldStrokeState.cpp
     studio/world/WorldGenerationJob.cpp
     studio/world/WorldEntityDialogs.cpp
+    studio/world/WorldMapCanvas.cpp
     studio/WorldModel.cpp
     studio/WorldModel.hpp
     studio/RhiBackend.cpp
