@@ -40,9 +40,9 @@ ctest --test-dir build\Release --output-on-failure
 ```
 
 ## Current open work
-1. **P3.0 topology:** one dedicated 400% edge-column comparison remains; do not start P3.1 until the gate is complete and separately approved. See [World Map Topology Handover](World%20Map%20Topology%20Handover.md).
-2. **Editors:** Map/Pixel shortcuts need a live smoke test; project-wide undo/redo, region selection/clipboard, complete entity authoring, and dirty-state/autosave recovery remain open.
-3. **Roadmap:** MCP external-change notifications, era-specific layers/timegates, authored art, audio playback features, and headless golden-image tests. See `Roadmap.md`.
+1. **Editors:** Map/Pixel shortcuts need a live smoke test; project-wide undo/redo, region selection/clipboard, complete entity authoring, and dirty-state/autosave recovery remain open.
+2. **Roadmap:** MCP external-change notifications, era-specific layers/timegates, authored art, audio playback features, and headless golden-image tests. See `Roadmap.md`.
+3. **P3.1 WorldSim** is next in the topology dependency chain but requires owner approval to start; the P3.0 gate is complete (see [World Map Topology Handover](World%20Map%20Topology%20Handover.md)).
 
 
 
@@ -105,7 +105,7 @@ Audit complete; no behavior changes made. A0 exit evidence: the three left-pane 
 
 
 ## Open work
-- P3.0 topology: one dedicated 400% edge-column comparison remains before the phase gate closes. Do not start P3.1 without completing and approving the gate. See [World Map Topology Handover](World%20Map%20Topology%20Handover.md).
+- P3.0 topology gate is complete (final 400% edge-column evidence captured 2026-11-06, `Bible/Operations/evidence/p3-seam-400pct.png`). P3.1 WorldSim is the next phase and requires owner approval before starting. See [World Map Topology Handover](World%20Map%20Topology%20Handover.md).
 - Map/Pixel keyboard shortcuts are implemented but not live-smoke-tested. Project-wide undo/redo, map region selection/clipboard, complete entity authoring, and dirty-state/autosave recovery remain open.
 - Other roadmap work: MCP external-change notifications, era-specific layers/timegates, authored art, audio playback features, and headless golden-image tests. See `Roadmap.md`.
 
