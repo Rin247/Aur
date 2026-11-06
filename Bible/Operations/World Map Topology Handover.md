@@ -563,8 +563,6 @@ ctest --test-dir build\Release -C Release -R TopologyTests --output-on-failure
 
 `aur_tests` built and linked in Release; `TopologyTests` passed 1/1 CTest (5/5 functions, 0.08 s). This run was made with the VS 2026 `vcvarsall.bat x64` initialized in the same process; invoking the agent shell without that initialization fails to compile (`iostream` not found) and `vcvarsall` also emits a harmless `vswhere.exe` message. `cmake --preset Release` requires that initialized environment.
 
-Still blocked / not verified:
-
 ### P3.0 live-editor seam evidence (2026-11-05)
 
 Scope completed: the live World editor visual checks from the acceptance checklist.
@@ -574,6 +572,6 @@ Scope completed: the live World editor visual checks from the acceptance checkli
 - Evidence: fit view and a ~306% cursor-centered wheel zoom over the wrap region of the 256×128 `continents` starter world — terrain continuity across the X seam with no black strip or discontinuity; markers repeat per wrapped copy as designed. Saved at `Bible/Operations/evidence/p3_0_world_fit_d3d12.png` and `p3_0_world_seam_306pct_d3d12.png`.
 - Seam-crossing paint + undo (2026-11-05, live window): the Paint biome tool was selected via hotkey `3`; a mouse drag from inside the canvas across the left edge at 400% zoom painted a stroke whose pixel-diff bbox spanned the seam. Ctrl+Z restored the canvas to the exact pre-stroke state (0 px diff). Evidence frames were diffed from `game-sessions/default/`; temporary `build/` scripts were removed.
 - Remaining P3.0 visual item: a dedicated edge-column side-by-side at 400%. GPU-vs-fallback parity cannot be exercised by forcing render initialization failure because the production policy `qFatal`s; no fallback parity claim is made.
-- AIO config-selection defect was fixed in `AIO-win.bat`: `aio_win_tree` prefers the requested `build\<CONFIG>` cache before flat/fallback caches. `AIO.bat compile windows Release` verified the requested Release tree and reported `ninja: no work to do`; Qt deployment completed.
+- AIO config-selection defect was fixed in `AIO-win.bat`: `aio_win_tree` prefers the requested `build/<CONFIG>` cache before flat/fallback caches. `AIO.bat compile windows Release` verified the requested Release tree and reported `ninja: no work to do`; Qt deployment completed.
 - The complete Release `EngineTests` (all functions incl. the 2560×1280 forge case) passed on 2026-11-05 after the keyboard/AIO changes: 1/1 CTest, 31.42 s. Focused `TopologyTests` also passed 1/1 on the same Release tree (5 functions).
 - Runtime exit traversal, chunk streaming, pathfinding, axial-tilt climate, and seasonal declination remain out of scope as previously recorded.
