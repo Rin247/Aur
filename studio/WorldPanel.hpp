@@ -19,6 +19,10 @@
 #include "world/TerrainRhiWidget.hpp"
 #include "world/WorldMapTools.hpp"
 
+namespace world_alias = aur::world;
+using WorldOverlay = world_alias::WorldOverlay;
+using WorldTool = world_alias::WorldTool;
+
 class QComboBox;
 class QLabel;
 class QListWidget;
@@ -107,13 +111,9 @@ public:
     void setBrushSize(int size);
     void setSelectedBiome(const std::string& biome_id);
     void setSelectedNode(int node_index);
-    void setTemperatureOverlay(bool enabled);
-    void setWindOverlay(bool enabled);
-    void setCurrentsOverlay(bool enabled);
-    void setWeatherOverlay(bool enabled);
+    void setOverlay(WorldOverlay overlay, bool enabled);
     void setWeatherType(const std::string& weather);
     void setSimulationRunning(bool enabled);
-    void setDayNightOverlay(bool enabled);
     void setContoursEnabled(bool enabled);
     void setTimeOfDay(int hour, int minute);
     void setZoom(qreal zoom);

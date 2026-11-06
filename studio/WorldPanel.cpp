@@ -178,23 +178,15 @@ void WorldMapCanvasWidget::setSelectedNode(int node_index) {
     refreshCanvas();
 }
 
-void WorldMapCanvasWidget::setTemperatureOverlay(bool enabled) {
-    temperature_overlay = enabled;
-    refreshCanvas();
-}
-
-void WorldMapCanvasWidget::setWindOverlay(bool enabled) {
-    wind_overlay = enabled;
-    refreshCanvas();
-}
-
-void WorldMapCanvasWidget::setCurrentsOverlay(bool enabled) {
-    currents_overlay = enabled;
-    refreshCanvas();
-}
-
-void WorldMapCanvasWidget::setWeatherOverlay(bool enabled) {
-    weather_overlay = enabled;
+void WorldMapCanvasWidget::setOverlay(WorldOverlay overlay, bool enabled) {
+    switch (overlay) {
+        case WorldOverlay::Temperature: temperature_overlay = enabled; break;
+        case WorldOverlay::Wind: wind_overlay = enabled; break;
+        case WorldOverlay::Currents: currents_overlay = enabled; break;
+        case WorldOverlay::Weather: weather_overlay = enabled; break;
+        case WorldOverlay::DayNight: daynight_overlay = enabled; break;
+        case WorldOverlay::None: break;
+    }
     refreshCanvas();
 }
 
@@ -206,11 +198,6 @@ void WorldMapCanvasWidget::setWeatherType(const std::string& weather) {
 void WorldMapCanvasWidget::setSimulationRunning(bool enabled) {
     if (enabled) simulation_timer.start();
     else simulation_timer.stop();
-    refreshCanvas();
-}
-
-void WorldMapCanvasWidget::setDayNightOverlay(bool enabled) {
-    daynight_overlay = enabled;
     refreshCanvas();
 }
 
@@ -1561,13 +1548,13 @@ WorldPanel::WorldPanel(Project* p, QWidget* parent)
     });
     connect(fitButton, &QPushButton::clicked, mapCanvas, &WorldMapCanvasWidget::fitToView);
     connect(temperatureAction, &QAction::toggled, mapCanvas,
-            &WorldMapCanvasWidget::setTemperatureOverlay);
+            [this](bool enabled) { mapCanvas->setOverlay(WorldOverlay::Temperature, enabled); });
     connect(windAction, &QAction::toggled, mapCanvas,
-            &WorldMapCanvasWidget::setWindOverlay);
+            [this](bool enabled) { mapCanvas->setOverlay(WorldOverlay::Wind, enabled); });
     connect(currentsAction, &QAction::toggled, mapCanvas,
-            &WorldMapCanvasWidget::setCurrentsOverlay);
+            [this](bool enabled) { mapCanvas->setOverlay(WorldOverlay::Currents, enabled); });
     connect(weatherAction, &QAction::toggled, mapCanvas,
-            &WorldMapCanvasWidget::setWeatherOverlay);
+            [this](bool enabled) { mapCanvas->setOverlay(WorldOverlay::Weather, enabled); });
     connect(weatherCombo, &QComboBox::currentIndexChanged, this,
             [this, weatherAction](int index) {
                 const std::string weather =
@@ -1578,7 +1565,7 @@ WorldPanel::WorldPanel(Project* p, QWidget* parent)
                 }
             });
     connect(dayNightAction, &QAction::toggled, mapCanvas,
-            &WorldMapCanvasWidget::setDayNightOverlay);
+            [this](bool enabled) { mapCanvas->setOverlay(WorldOverlay::DayNight, enabled); });
     connect(contoursAction, &QAction::toggled, mapCanvas,
             &WorldMapCanvasWidget::setContoursEnabled);
     connect(simulationAction, &QAction::toggled, mapCanvas,
