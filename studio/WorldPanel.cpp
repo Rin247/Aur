@@ -8,6 +8,7 @@
 #include "world/WorldWeatherOverlay.hpp"
 #include "world/WorldClimateOverlays.hpp"
 #include "world/WorldMarkerOverlays.hpp"
+#include "world/WorldCamera.hpp"
 #include "aur/autotile.hpp"
 #include "aur/clock.hpp"
 #include "aur/forge.hpp"
@@ -214,8 +215,31 @@ void WorldMapCanvasWidget::setTimeOfDay(int hour, int minute) {
     refreshCanvas();
 }
 
+namespace {
+
+studio::WorldCameraSpec cameraSpec(const Project* project, const std::string& map_id,
+                                   const QWidget* widget, qreal zoom, QPointF pan) {
+    studio::WorldCameraSpec spec;
+    const auto map_view = world::MapView::current(const_cast<Project*>(project), map_id);
+    if (!map_view) return spec;
+    spec.map_width = map_view->width();
+    spec.map_height = map_view->height();
+    spec.wraps_x = map_view->wrapsX();
+    spec.zoom = zoom;
+    spec.pan = pan;
+    spec.viewport = widget->size();
+    if (!map_view->hasHdSurface()) {
+        const auto tileset = project->tilesets.find(map_view->tileset());
+        spec.source_tile_size = tileset != project->tilesets.end() &&
+            tileset->second.contains("tile") ? tileset->second["tile"].as_int() : 16;
+    }
+    return spec;
+}
+
+} // namespace
+
 void WorldMapCanvasWidget::setZoom(qreal zoom) {
-    zoom_factor = std::clamp(zoom, 0.05, 16.0);
+    zoom_factor = studio::WorldCamera::clampZoom(zoom);
     constrainWorldCamera();
     refreshCanvas();
     emit zoomChanged(zoom_factor);
@@ -223,21 +247,9 @@ void WorldMapCanvasWidget::setZoom(qreal zoom) {
 
 void WorldMapCanvasWidget::fitToView() {
     if (!project || current_map.empty() || !project->maps.contains(current_map)) return;
-    const auto map_view = world::MapView::current(project, current_map);
-    if (!map_view) return;
-    qreal source_tile_size = 1.0;
-    if (!map_view->hasHdSurface()) {
-        const auto tileset = project->tilesets.find(map_view->tileset());
-        source_tile_size = tileset != project->tilesets.end() &&
-            tileset->second.contains("tile") ? tileset->second["tile"].as_int() : 16;
-    }
-    constexpr qreal padding = 24.0;
-    const qreal fit = std::min((width() - padding * 2) /
-                                   (map_view->width() * source_tile_size),
-                               (height() - padding * 2) /
-                                   (map_view->height() * source_tile_size));
+    const auto spec = cameraSpec(project, current_map, this, zoom_factor, pan_offset);
     pan_offset = {};
-    setZoom(fit);
+    setZoom(studio::WorldCamera::fitZoom(spec, size()));
 }
 
 void WorldMapCanvasWidget::recordEntityEdit() {
@@ -251,54 +263,22 @@ void WorldMapCanvasWidget::recordEntityEdit() {
 
 QRectF WorldMapCanvasWidget::mapBounds() const {
     if (!project || current_map.empty() || !project->maps.contains(current_map)) return {};
-
-    const auto map_view = world::MapView::current(project, current_map);
-    if (!map_view) return {};
-    const int map_width = map_view->width();
-    const int map_height = map_view->height();
-    if (map_width <= 0 || map_height <= 0) return {};
-    qreal source_tile_size = 1.0;
-    if (!map_view->hasHdSurface()) {
-        const auto tileset = project->tilesets.find(map_view->tileset());
-        source_tile_size = tileset != project->tilesets.end() &&
-            tileset->second.contains("tile") ? tileset->second["tile"].as_int() : 16;
-    }
-
-    const QSizeF size(map_width * source_tile_size * zoom_factor,
-                      map_height * source_tile_size * zoom_factor);
-    return QRectF((width() - size.width()) / 2.0 + pan_offset.x(),
-                  (height() - size.height()) / 2.0 + pan_offset.y(),
-                  size.width(), size.height());
+    const auto spec = cameraSpec(project, current_map, this, zoom_factor, pan_offset);
+    return studio::WorldCamera::mapBounds(spec, size());
 }
 
 void WorldMapCanvasWidget::constrainWorldCamera() {
     if (!project || current_map.empty() || !project->maps.contains(current_map)) return;
-    const Json& map = project->maps.at(current_map);
-    if (!aur::wraps_world_x(map)) return;
-    const QRectF bounds = mapBounds();
-    const qreal vertical_pan_limit = std::max<qreal>(0.0, (bounds.height() - height()) * 0.5);
-    pan_offset.setY(std::clamp(pan_offset.y(), -vertical_pan_limit, vertical_pan_limit));
-    if (bounds.width() > 0.0) {
-        pan_offset.setX(std::remainder(pan_offset.x(), bounds.width()));
-    }
+    const auto spec = cameraSpec(project, current_map, this, zoom_factor, pan_offset);
+    studio::WorldCameraState state{zoom_factor, pan_offset};
+    studio::WorldCamera::constrain(state, spec);
+    pan_offset = state.pan;
 }
 
 QPoint WorldMapCanvasWidget::tileAt(const QPointF& position) const {
-    const QRectF bounds = mapBounds();
-    if (!project || !project->maps.contains(current_map) ||
-        position.y() < bounds.top() || position.y() >= bounds.bottom()) return {-1, -1};
-
-    const auto map_view = world::MapView::current(project, current_map);
-    if (!map_view) return {-1, -1};
-    const int map_width = map_view->width();
-    const int map_height = map_view->height();
-    const qreal cell = bounds.width() / map_width;
-    const int tile_x = static_cast<int>(std::floor((position.x() - bounds.left()) / cell));
-    const int tile_y = static_cast<int>(std::floor((position.y() - bounds.top()) / cell));
-    if (tile_y < 0 || tile_y >= map_height) return {-1, -1};
-    if (map_view->wrapsX()) return {aur::wrapX(tile_x, map_width), tile_y};
-    if (tile_x < 0 || tile_x >= map_width) return {-1, -1};
-    return {tile_x, tile_y};
+    if (!project || !project->maps.contains(current_map)) return {-1, -1};
+    const auto spec = cameraSpec(project, current_map, this, zoom_factor, pan_offset);
+    return studio::WorldCamera::tileAt(spec, position);
 }
 
 QImage WorldMapCanvasWidget::tileImage(const std::string& tileset_id, int tile_index) {
