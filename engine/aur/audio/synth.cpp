@@ -1,4 +1,4 @@
-#include "synth.hpp"
+#include "aur/audio/synth.hpp"
 
 #include <algorithm>
 #include <cmath>

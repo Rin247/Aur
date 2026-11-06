@@ -1,5 +1,5 @@
 #include "mini_test.hpp"
-#include "aur/synth.hpp"
+#include "aur/audio/synth.hpp"
 #include "aur/json.hpp"
 
 #include <cstdint>

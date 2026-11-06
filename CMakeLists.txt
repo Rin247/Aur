@@ -24,8 +24,8 @@ add_library(aur_engine STATIC
     engine/aur/script.cpp
     engine/aur/game.cpp
     engine/aur/mcp.cpp
-    engine/aur/midi.cpp
-    engine/aur/synth.cpp
+    engine/aur/audio/midi.cpp
+    engine/aur/audio/synth.cpp
 )
 target_include_directories(aur_engine PUBLIC engine)
 

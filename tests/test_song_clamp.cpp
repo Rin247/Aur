@@ -1,6 +1,6 @@
 #include "mini_test.hpp"
-#include "aur/midi.hpp"
-#include "aur/synth.hpp"
+#include "aur/audio/midi.hpp"
+#include "aur/audio/synth.hpp"
 
 #include <cstdint>
 #include <cstddef>

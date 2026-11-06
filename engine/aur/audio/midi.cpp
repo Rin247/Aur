@@ -1,4 +1,4 @@
-#include "midi.hpp"
+#include "aur/audio/midi.hpp"
 
 #include <algorithm>
 #include <array>
