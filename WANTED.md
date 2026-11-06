@@ -2,6 +2,10 @@
 
 > This file holds **Aur's own asks**. For estate-wide decisions, see `C:\Projects\WANTED.md`.
 
+## Active plans
+
+(none yet)
+
 ## Open
 
 | # | ask | why it is not mine |
