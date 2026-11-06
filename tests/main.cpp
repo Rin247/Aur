@@ -17,14 +17,27 @@ void test_map_view_layers();
 void test_command_history_roundtrip();
 void test_command_history_limit();
 void test_stroke_line_tiles();
-void test_stroke_line_tiles();
+void test_worldsim_shell();
+void test_worldsim_pins_and_values();
+void test_worldsim_json_roundtrip();
 
 int main(int argc, char** argv) {
-    // Allow a focused topology run without the memory-heavy full generator sweep.
-    const bool focused_topology = argc > 1 && std::string(argv[1]) == "--topology";
-    std::cout << (focused_topology ? "=== Running Aur Topology Tests ===\n"
-                                   : "=== Running Aur Engine Tests ===\n");
-    if (focused_topology) {
+    // Allow a focused run without the memory-heavy full generator sweep.
+    const bool focused_mode = argc > 1 && (std::string(argv[1]) == "--topology" ||
+                                           std::string(argv[1]) == "--worldsim");
+    const bool focused_worldsim = argc > 1 && std::string(argv[1]) == "--worldsim";
+    std::cout << (focused_mode ? (focused_worldsim ? "=== Running Aur WorldSim Tests ===\n"
+                                                   : "=== Running Aur Topology Tests ===\n")
+                               : "=== Running Aur Engine Tests ===\n");
+    if (focused_worldsim) {
+        RUN_TEST(test_worldsim_shell);
+        RUN_TEST(test_worldsim_pins_and_values);
+        RUN_TEST(test_worldsim_json_roundtrip);
+        std::cout << "\nResults: " << g_tests_passed << " passed, "
+                  << g_tests_failed << " failed.\n";
+        return g_tests_failed > 0 ? 1 : 0;
+    }
+    if (!focused_worldsim && focused_mode) {
         RUN_TEST(test_autotile_basic);
         RUN_TEST(test_game_updates_field_scene);
         RUN_TEST(test_topology_paint_boundaries);
@@ -54,6 +67,9 @@ int main(int argc, char** argv) {
     RUN_TEST(test_command_history_roundtrip);
     RUN_TEST(test_command_history_limit);
     RUN_TEST(test_stroke_line_tiles);
+    RUN_TEST(test_worldsim_shell);
+    RUN_TEST(test_worldsim_pins_and_values);
+    RUN_TEST(test_worldsim_json_roundtrip);
 
     std::cout << "\nResults: " << g_tests_passed << " passed, " << g_tests_failed << " failed.\n";
     return g_tests_failed > 0 ? 1 : 0;

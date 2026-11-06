@@ -107,7 +107,9 @@ add_executable(aur_tests
     tests/test_world_model.cpp
     tests/test_world_surface.cpp
     tests/test_map_view.cpp
+    engine/aur/worldsim.cpp
     tests/test_world_command_history.cpp
+    tests/test_worldsim.cpp
     studio/world/HdSurface.cpp
     studio/world/WorldMapHelpers.cpp
     studio/world/MapView.cpp
@@ -119,3 +121,4 @@ target_include_directories(aur_tests PRIVATE studio)
 target_link_libraries(aur_tests PRIVATE aur_engine Qt6::Gui)
 add_test(NAME EngineTests COMMAND aur_tests)
 add_test(NAME TopologyTests COMMAND aur_tests --topology)
+add_test(NAME WorldSimTests COMMAND aur_tests --worldsim)
