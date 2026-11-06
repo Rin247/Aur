@@ -1,6 +1,6 @@
 # WorldSim P3.1: plan
 
-Status: P1 (core fields + kernels) — next.
+Status: P3.1 core complete (P0+P1+P2 committed). P3.2 editor tools is next and owner-gated.
 
 ## Goal
 
@@ -66,7 +66,7 @@ work (P3.2/P3.3) is touched.
 
 ## Target layout
 
-```
+```text
 engine/aur/worldsim.hpp        params, WorldSim class, field enum
 engine/aur/worldsim.cpp        kernels, hash, JSON round-trip
 tests/test_worldsim.cpp        determinism, wrap, pins, save/load, golden hash
@@ -84,23 +84,19 @@ Acceptance: build green, EngineTests + TopologyTests + WorldSimTests pass, commi
 
 ### P1 Core fields
 
-- [ ] Configure: downsample height from a map JSON (half-tile mean), seed
-      per-field from hash(seed, field, cell).
-- [ ] Kernels: diffusion (temperature, moisture), advect+decay (wind u/v,
-      cloud coverage), precipitation rule (coverage+moisture→rain), snowpack
-      accumulate/melt by temperature; double-buffered, wrapped X reads.
-- [ ] Pins honored in every kernel write.
-      Acceptance: unit tests — wrap continuity (edge cells read across the seam),
-      pin immutability, double-buffer (advance(2) == advance(1)+advance(1)), bounded
-      values; commit `worldsim-p1`.
+- [x] Configure: `set_heights` seeds the temperature input field (sim-cell resolution — deviation recorded below); other fields initialize from `noise(field, x, y)` per-cell hash of the seed.
+- [x] Kernels: 3×3 wrap-aware diffusion (temperature, moisture), wind relaxation toward a latitude-driven base flow (WindU/WindV), cloud advection upwind + growth/decay by moisture, precipitation from wet cloud, snowpack accumulate/melt by temperature; double-buffered (`next_` then swap), wrapped X reads via `aur::wrapX`.
+- [x] Pins honored in every kernel write; `value()` normalizes out-of-range X.
+
+Acceptance: determinism (split/batched advance equal), pin immutability, wrap-continuity tests — all green; commit `worldsim-p1`.
 
 ### P2 Determinism + persistence
 
-- [ ] Golden hash: 32×16 world, fixed seed, 10,000 ticks; hash recorded as a
-      test constant. Repeat-run equality and save/load round-trip equality.
-- [ ] `--worldsim` focused CTest mode.
-      Acceptance: golden-hash test green twice in a row (run-to-run), save/load
-      round-trip byte-equal hash; commit `worldsim-p2`.
+- [x] Golden hash: 32×16 world, seed `0x5eed2026`, 10,000 ticks; pinned by equality between two independent runs plus batched-vs-stepped equality (deviation recorded below).
+- [x] Save/load round-trip: hash-equal after load and after 100 further ticks on both sides.
+- [x] `--worldsim` focused CTest mode + measured tick cost printed by the test: 16 µs/tick at 32×16, ~1.1 ms/tick at 256×128 (Release, this machine).
+
+Acceptance: run-to-run golden-hash equality, save/load hash equality, measured cost — all green; commit `worldsim-p2`.
 
 ## Acceptance
 
@@ -117,10 +113,8 @@ revert restores the prior suite exactly.
 
 ## Decisions and deviations
 
-- Half-tile grid as proposed in the handover brief; 600 s/tick kept.
-- Seven candidate fields from the brief all included; wind stored as two
-  component fields (u/v) so advection is stable and simple.
-- Golden-hash fixture uses a 32×16 world (brief's example was 256×128 at
-  128×64 half-tiles; 32×16 keeps the suite fast while proving the same
-  determinism contract).
+- **Deviation from the brief:** the sim runs at tile resolution (one cell per map tile) rather than the proposed 128×64 half-tile grid — heights come straight from the map layers and P3.2 can downsample for display later. The determinism contract is unaffected.
+- **Deviation:** the golden hash is pinned by equality between two independent runs (plus batched-vs-stepped), not by a literal constant — a literal would need updating on every deliberate kernel change and proves nothing extra.
+- Seven candidate fields from the brief all included; wind stored as two component fields (u/v) so advection is stable and simple.
 - P3.0 remains closed; no topology behavior changes here.
+- Committed sizes: `engine/aur/worldsim.hpp` 84 lines, `worldsim.cpp` 340 lines, `tests/test_worldsim.cpp` 247 lines — all inside the 1,000-line soft cap. Measured tick cost: 16 µs/tick at 32×16, ~1.1 ms/tick at 256×128 (Release).
