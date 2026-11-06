@@ -3,10 +3,11 @@
 ## Purpose and scope
 
 This document turns the user's
-`C:\Projects\Aur\chat-Sea of Stars HD2D Map Size.txt` conversation into
-an implementation handoff for Aur. The next implementation task is **P3.0
-only**: finish and verify cylindrical world topology. Stop at that gate. Do not
-start WorldSim, hydrology, or gameplay-depth work without a separate approval.
+[`chat-Sea of Stars HD2D Map Size.txt`](../Archive/Reference/chat-Sea%20of%20Stars%20HD2D%20Map%20Size.txt)
+conversation into an implementation handoff for Aur. The next implementation
+task is **P3.0 only**: finish and verify cylindrical world topology. Stop at that
+gate. Do not start WorldSim, hydrology, or gameplay-depth work without a separate
+approval.
 
 The product goal behind the work is a world editor where the author can sculpt
 terrain and see a rich, zoomable HD-2D-style visualization without hand-painting
