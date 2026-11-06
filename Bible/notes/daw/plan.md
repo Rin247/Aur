@@ -92,8 +92,10 @@ scenes[{name, clips}]`.
       preview and export both truncate today) — pinned as a regression test at
       step 600 in `tests/test_song_clamp.cpp`; buffer length + first-sound
       position + MIDI round-trip, mapping-independent.
-- [ ] Golden render-hash tests over a fixture set of v1 songs through the
-      current synth (deterministic PCM hash).
+- [x] Golden render-hash tests over a fixture set of v1 songs through the
+      current synth (deterministic PCM hash) — `tests/test_synth_golden.cpp`
+      pins FNV-1a hashes for the Gm/FM/PSG voices (8 kHz, 30 s, fixed fixture
+      song) plus replay determinism.
 - [ ] MIDI import/export round-trip tests for currently supported fields.
 - [ ] Fix the clamp in its own commit with tests; keep `synthesize_preview`
       and track keys readable.

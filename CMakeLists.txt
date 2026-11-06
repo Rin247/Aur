@@ -111,6 +111,7 @@ add_executable(aur_tests
     tests/test_world_command_history.cpp
     tests/test_worldsim.cpp
     tests/test_song_clamp.cpp
+    tests/test_synth_golden.cpp
     studio/world/HdSurface.cpp
     studio/world/WorldMapHelpers.cpp
     studio/world/MapView.cpp

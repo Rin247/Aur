@@ -27,6 +27,7 @@ void test_worldsim_golden_hash();
 void test_worldsim_save_load_roundtrip();
 void test_worldsim_tick_cost();
 void test_song_clamp_regression();
+void test_synth_golden_hash();
 
 int main(int argc, char** argv) {
     // Allow a focused run without the memory-heavy full generator sweep.
@@ -90,6 +91,7 @@ int main(int argc, char** argv) {
     RUN_TEST(test_worldsim_save_load_roundtrip);
     RUN_TEST(test_worldsim_tick_cost);
     RUN_TEST(test_song_clamp_regression);
+    RUN_TEST(test_synth_golden_hash);
 
     std::cout << "\nResults: " << g_tests_passed << " passed, " << g_tests_failed << " failed.\n";
     return g_tests_failed > 0 ? 1 : 0;
