@@ -7,6 +7,7 @@
 #include "world/TerrainRhiWidget.hpp"
 #include "world/WorldWeatherOverlay.hpp"
 #include "world/WorldClimateOverlays.hpp"
+#include "world/WorldMarkerOverlays.hpp"
 #include "aur/autotile.hpp"
 #include "aur/clock.hpp"
 #include "aur/forge.hpp"
@@ -741,84 +742,20 @@ void WorldMapCanvasWidget::paintCanvas(QPainter& painter) {
         world::draw_daynight_fallback(daynight_ctx);
     }
 
-    if (map.contains("entities") && map["entities"].is_array()) {
-        const auto& entities = map["entities"].as_array();
-        for (size_t index = 0; index < entities.size(); ++index) {
-            const Json& entity = entities[index];
-            int x = entity["x"].as_int();
-            const int y = entity["y"].as_int();
-            if (y < 0 || y >= map_height || (!wraps_x && (x < 0 || x >= map_width))) continue;
-            if (wraps_x) x = aur::wrapX(x, map_width);
-            const qreal marker_x = bounds.left() + (x + 0.5) * cell;
-            const int first_marker_copy = wraps_x
-                ? static_cast<int>(std::floor((0.0 - marker_x) / bounds.width())) : 0;
-            const int last_marker_copy = wraps_x
-                ? static_cast<int>(std::ceil((width() - marker_x) / bounds.width())) : 1;
-            const bool is_exit = entity.contains("type") && entity["type"].as_string() == "exit";
-            const QColor marker = is_exit ? QColor("#d596ff") : QColor("#ffd27a");
-            const qreal radius = std::clamp(cell * 0.32, 4.0, 8.0);
-            for (int copy = first_marker_copy; copy < last_marker_copy; ++copy) {
-                const QPointF center(marker_x + copy * bounds.width(),
-                                     bounds.top() + (y + 0.5) * cell);
-                painter.setPen(QPen(index == static_cast<size_t>(selected_node)
-                                        ? Qt::white : QColor("#202329"),
-                                    index == static_cast<size_t>(selected_node) ? 2.0 : 1.0));
-                painter.setBrush(marker);
-                if (is_exit) {
-                    QPolygonF diamond;
-                    diamond << QPointF(center.x(), center.y() - radius)
-                            << QPointF(center.x() + radius, center.y())
-                            << QPointF(center.x(), center.y() + radius)
-                            << QPointF(center.x() - radius, center.y());
-                    painter.drawPolygon(diamond);
-                } else {
-                    painter.drawEllipse(center, radius, radius);
-                }
+    world::EntityMarkersContext markers_ctx{painter, project,
+        map.contains("entities") && map["entities"].is_array()
+            ? &map["entities"].as_array() : nullptr,
+        bounds, QRectF(rect()), cell, zoom_factor, map_width, map_height,
+        selected_node, wraps_x};
+    world::draw_entity_markers(markers_ctx);
 
-                QString label;
-                if (is_exit && entity.contains("target") && entity["target"].contains("map")) {
-                    label = QString::fromStdString(entity["target"]["map"].as_string());
-                } else if (entity.contains("id")) {
-                    label = QString::fromStdString(entity["id"].as_string());
-                }
-                if (!label.isEmpty() && zoom_factor >= 0.75) {
-                    const QFontMetrics metrics(painter.font());
-                    const QRect textRect = metrics.boundingRect(label).adjusted(-4, -2, 4, 2);
-                    const QPoint labelOrigin(static_cast<int>(center.x() + radius + 3),
-                                             static_cast<int>(center.y() - textRect.height() / 2));
-                    painter.fillRect(QRect(labelOrigin, textRect.size()), QColor(14, 17, 21, 210));
-                    painter.setPen(QColor("#f2f4f6"));
-                    painter.drawText(labelOrigin.x() + 4, labelOrigin.y() + metrics.ascent(), label);
-                }
-            }
-        }
-    }
+    world::HoverContext hover_ctx{painter, bounds, cell, hover_tile.x(),
+        hover_tile.y(), map_width, map_height, static_cast<qreal>(width()), wraps_x};
+    world::draw_hover_highlight(hover_ctx);
 
-    if (hover_tile.x() >= 0 && hover_tile.x() < map_width &&
-        hover_tile.y() >= 0 && hover_tile.y() < map_height) {
-        qreal hover_x = bounds.left() + hover_tile.x() * cell;
-        if (wraps_x) {
-            hover_x += std::round((width() * 0.5 - hover_x) / bounds.width()) * bounds.width();
-        }
-        const QRectF hover(hover_x,
-                           bounds.top() + hover_tile.y() * cell, cell, cell);
-        painter.setPen(QPen(QColor("#ffffff"), 1.5));
-        painter.setBrush(Qt::NoBrush);
-        painter.drawRect(hover);
-    }
-
-    painter.setPen(QColor("#c1c8ce"));
-    const QString zoomText = hd_surface
-        ? QString("%1 Ã— %2 tiles  Â·  %3  Â·  1 art px = %4 screen px")
-              .arg(map_width).arg(map_height)
-              .arg(QString::fromStdString(map["tileset"].as_string()))
-              .arg(QString::number(zoom_factor, 'g', 3))
-        : QString("%1 Ã— %2 tiles  Â·  %3  Â·  %4%")
-              .arg(map_width).arg(map_height)
-              .arg(QString::fromStdString(map["tileset"].as_string()))
-              .arg(qRound(zoom_factor * 100.0));
-    painter.drawText(QRectF(16, 12, width() - 32, 20),
-                     Qt::AlignLeft | Qt::AlignVCenter, zoomText);
+    world::ZoomLabelContext zoom_ctx{painter, hd_surface, map_width, map_height,
+        map["tileset"].as_string(), zoom_factor, static_cast<qreal>(width())};
+    world::draw_zoom_label(zoom_ctx);
 }
 
 void WorldMapCanvasWidget::mousePressEvent(QMouseEvent* event) {
@@ -1932,6 +1869,8 @@ void WorldPanel::deleteWorldEntity() {
 }
 
 } // namespace aur
+
+
 
 
 
