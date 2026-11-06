@@ -56,6 +56,7 @@ add_executable(aur_studio
     studio/world/HdSurface.cpp
     studio/world/WorldMapHelpers.cpp
     studio/world/MapView.cpp
+    studio/world/TerrainRhiWidget.cpp
     studio/WorldModel.cpp
     studio/WorldModel.hpp
     studio/RhiBackend.cpp

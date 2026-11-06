@@ -16,6 +16,7 @@
 #include <vector>
 #include "WorldModel.hpp"
 #include "aur/project.hpp"
+#include "world/TerrainRhiWidget.hpp"
 #include "world/WorldMapTools.hpp"
 
 class QComboBox;
@@ -36,13 +37,11 @@ namespace aur {
 
 using WorldTool = world::WorldTool;
 
-class TerrainRhiWidget;
 class WorldMapOverlayWidget;
 
 class WorldMapCanvasWidget : public QWidget {
     Q_OBJECT
-    friend class TerrainRhiWidget;
-    friend class WorldMapOverlayWidget;
+
     Project* project = nullptr;
     std::string current_map;
     std::string selected_biome;
@@ -90,9 +89,11 @@ class WorldMapCanvasWidget : public QWidget {
     QPoint tileAt(const QPointF& position) const;
     void constrainWorldCamera();
     QImage tileImage(const std::string& tileset_id, int tile_index);
-    QImage buildHdSurface(const Json& map) const;
+    TerrainView terrainView() const;
     void paintTile(const QPoint& tile);
+public:
     void paintCanvas(QPainter& painter);
+private:
     void ensureWorldModel();
     void refreshCanvas();
 
