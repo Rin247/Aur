@@ -1,30 +1,35 @@
 #pragma once
 
-#include <QWidget>
-#include <QListWidget>
-#include <QComboBox>
-#include <QVBoxLayout>
-#include <QHBoxLayout>
-#include <QSplitter>
-#include <QLabel>
-#include <QPainter>
-#include <QMouseEvent>
-#include <QWheelEvent>
-#include <QRectF>
 #include <QImage>
-#include <QPushButton>
-#include <QSpinBox>
+#include <QPoint>
+#include <QPointF>
+#include <QRectF>
 #include <QTimer>
-#include <QTimeEdit>
-#include <QProgressDialog>
-#include <QFutureWatcher>
+#include <QWidget>
 #include <atomic>
-#include <memory>
-#include "WorldModel.hpp"
+#include <cstdint>
+#include <map>
 #include <memory>
 #include <set>
+#include <string>
+#include <utility>
 #include <vector>
+#include "WorldModel.hpp"
 #include "aur/project.hpp"
+
+class QComboBox;
+class QLabel;
+class QListWidget;
+class QPainter;
+class QProgressDialog;
+class QPushButton;
+class QSpinBox;
+class QTimeEdit;
+class QMouseEvent;
+class QWheelEvent;
+class QPaintEvent;
+class QResizeEvent;
+class QEvent;
 
 namespace aur {
 
