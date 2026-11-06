@@ -87,12 +87,17 @@ void MapCanvasWidget::constrainCamera() {
 
 void MapCanvasWidget::setSelectedTile(int t) {
     selected_tile = t;
-    selecting_entity = false;
+    selecting_entity = active_tool == 2;
 }
 
 void MapCanvasWidget::setSelectedEntityKind(int entity_kind) {
     selected_entity_index = entity_kind;
-    selecting_entity = true;
+    selecting_entity = active_tool == 2;
+}
+
+void MapCanvasWidget::setTool(int tool_index) {
+    active_tool = std::clamp(tool_index, 0, 3);
+    selecting_entity = active_tool == 2;
 }
 
 QRectF MapCanvasWidget::mapBounds() const {
@@ -135,7 +140,27 @@ QImage MapCanvasWidget::tileImage(const std::string& tileset_id, int tile_index)
 
 void MapCanvasWidget::paintTile(const QPoint& tile) {
     if (!project || tile.x() < 0 || tile.y() < 0 || !project->maps.contains(current_map)) return;
-    if (selecting_entity) {
+    if (active_tool == 1) {
+        if (current_layer < 0 || current_layer > 2) return;
+        Json& map = project->maps[current_map];
+        const std::string layer = current_layer == 0 ? "ground" :
+                                  current_layer == 1 ? "objects" : "above";
+        if (!map.contains("layers") || !map["layers"].is_object() ||
+            !map["layers"].contains(layer) || !map["layers"][layer].is_array()) return;
+        auto& rows = map["layers"][layer].as_array();
+        if (tile.y() >= static_cast<int>(rows.size()) ||
+            !rows[static_cast<size_t>(tile.y())].is_array()) return;
+        auto& row = rows[static_cast<size_t>(tile.y())].as_array();
+        if (tile.x() >= static_cast<int>(row.size()) ||
+            row[static_cast<size_t>(tile.x())].as_int() < 0) return;
+        undo_layers.emplace_back(current_layer, map["layers"][layer]);
+        if (undo_layers.size() > 100) undo_layers.erase(undo_layers.begin());
+        row[static_cast<size_t>(tile.x())] = -1;
+        redo_layers.clear();
+        update();
+        return;
+    }
+    if (selecting_entity && active_tool == 2) {
         Json& map = project->maps[current_map];
         if (!map.contains("entities") || !map["entities"].is_array()) map["entities"] = JsonArray{};
         Json& entities = map["entities"];
@@ -534,6 +559,7 @@ MapEditorPanel::MapEditorPanel(Project* p, QWidget* parent)
     toolbar->addWidget(new QLabel("Tool:", this));
     toolCombo = new QComboBox(this);
     toolCombo->addItems({"Paint Tile", "Erase Tile", "Place Entity / Area", "Select / Move"});
+    toolCombo->setToolTip("Tool (keys 1-4)");
     toolbar->addWidget(toolCombo);
     auto* undoButton = new QPushButton("Undo", this);
     auto* redoButton = new QPushButton("Redo", this);
@@ -581,6 +607,15 @@ MapEditorPanel::MapEditorPanel(Project* p, QWidget* parent)
     canvas = new MapCanvasWidget(this);
     canvas->setProject(project);
     splitter->addWidget(canvas);
+    connect(toolCombo, &QComboBox::currentIndexChanged, canvas,
+            &MapCanvasWidget::setTool);
+    for (int key = 1; key <= 4; ++key) {
+        QShortcut* shortcut = new QShortcut(QKeySequence(Qt::Key_0 + key), this);
+        shortcut->setContext(Qt::WidgetWithChildrenShortcut);
+        connect(shortcut, &QShortcut::activated, this, [this, key]() {
+            toolCombo->setCurrentIndex(key - 1);
+        });
+    }
     connect(undoButton, &QPushButton::clicked, canvas, &MapCanvasWidget::undo);
     connect(redoButton, &QPushButton::clicked, canvas, &MapCanvasWidget::redo);
     connect(undoShortcut, &QShortcut::activated, canvas, &MapCanvasWidget::undo);

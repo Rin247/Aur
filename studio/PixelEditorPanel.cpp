@@ -376,6 +376,14 @@ PixelEditorPanel::PixelEditorPanel(Project* p, QWidget* parent)
     toolbar->addWidget(new QLabel("Brush:", this));
     brushCombo = new QComboBox(this);
     brushCombo->addItems({"8×8 Tile", "Pixel", "16×16 Stamp", "Color Picker", "Eraser"});
+    brushCombo->setToolTip("Brush (keys 1-5)");
+    for (int key = 1; key <= 5; ++key) {
+        QShortcut* shortcut = new QShortcut(QKeySequence(Qt::Key_0 + key), this);
+        shortcut->setContext(Qt::WidgetWithChildrenShortcut);
+        connect(shortcut, &QShortcut::activated, this, [this, key]() {
+            brushCombo->setCurrentIndex(key - 1);
+        });
+    }
     toolbar->addWidget(brushCombo);
     toolbar->addSpacing(12);
     toolbar->addWidget(new QLabel("Zoom:", this));
@@ -647,6 +655,7 @@ SpriteEditorPanel::SpriteEditorPanel(Project* p, QWidget* parent)
     toolbar->addWidget(new QLabel("Brush:", this));
     brushCombo = new QComboBox(this);
     brushCombo->addItems({"Pixel", "8×8 cluster", "Erase 8×8"});
+    brushCombo->setToolTip("Brush (keys 1-3)");
     toolbar->addWidget(brushCombo);
     toolbar->addWidget(new QLabel("Zoom:", this));
     zoomCombo = new QComboBox(this);
@@ -702,6 +711,13 @@ SpriteEditorPanel::SpriteEditorPanel(Project* p, QWidget* parent)
         const int modes[] = {1, 0, 4};
         canvas->setBrushMode(modes[std::clamp(index, 0, 2)]);
     });
+    for (int key = 1; key <= 3; ++key) {
+        QShortcut* shortcut = new QShortcut(QKeySequence(Qt::Key_0 + key), this);
+        shortcut->setContext(Qt::WidgetWithChildrenShortcut);
+        connect(shortcut, &QShortcut::activated, this, [this, key]() {
+            brushCombo->setCurrentIndex(key - 1);
+        });
+    }
     connect(zoomCombo, &QComboBox::currentIndexChanged, this, [this](int index) {
         canvas->setZoomScale(zoomCombo->itemData(index).toInt());
         canvasScroll->ensureVisible(canvas->width() / 2, canvas->height() / 2);

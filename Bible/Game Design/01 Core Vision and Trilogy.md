@@ -55,7 +55,7 @@ Let's go. 💚
 
 | | **Game 1: Turn-Based** | **Game 2: Tactical** | **Game 3: Real-Time** |
 |---|---|---|---|
-| **Combat Model** | Chrono Trigger spatial slots | Triangle Strategy / Fire Emblem grid | Trials of Mana / Tales of fluid action |
+| **Combat Model** | Chrono Trigger spatial slots | XCOM/Wasteland 3/Jagged Alliance 3/Desperados 3 style tactical grid, with the coherent shared-world staging and camera readability of Baldur’s Gate 3; retain the same world cell grid | Trials of Mana / Tales of fluid action |
 | **Time Mechanic** | Timegates (Stargate-style portals) | Divine Pulse rewind (FE: Three Houses) | Sands of Time rewind (Prince of Persia) |
 | **Squad Size** | 4 active (swappable) | 4 active + 2 reserve (grid-limited) | 4 active (real-time tag) |
 | **Positioning** | Snap-to-slots on shared grid | Height/facing/terrain on shared grid | Free movement within arena bounds |

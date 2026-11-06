@@ -38,6 +38,7 @@ class MapCanvasWidget : public QWidget {
     QPointF pan_start_position;
     QPointF pan_start_offset;
     bool panning = false;
+    int active_tool = 0;
     void constrainCamera();
 
 public:
@@ -58,6 +59,7 @@ public:
     void setProject(Project* p);
     void setMap(const std::string& mid);
     void setLayer(int l);
+    void setTool(int tool_index);
     void setSelectedTile(int t);
     void setSelectedEntityKind(int entity_kind);
     qreal zoomFactor() const noexcept { return zoom_factor; }
