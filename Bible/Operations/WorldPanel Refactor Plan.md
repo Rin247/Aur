@@ -1,6 +1,7 @@
 # WorldPanel Refactor Plan
 ## Audit
 - `studio/WorldPanel.cpp` is 3,100 lines and `studio/WorldPanel.hpp` is 178 lines; both are below the hard 800-line limit only for header, and the implementation is a major size offender.
+- Tracked in `WANTED.md` as Aur ask **#51** so the remaining work stays visible across handoffs; keep the plan and wanted entry until acceptance is verified.
 - The canvas, QRhi terrain renderer, overlay renderer, map generation, palette/sidebar/toolbar setup, entity dialogs, camera, paint tools, overlays, and canvas-scoped undo/redo are currently coupled in the WorldPanel implementation.
 - `studio/world/MapView.{hpp,cpp}` and `WorldMapHelpers.{hpp,cpp}` already exist in the working tree as untracked files. Reuse these seams rather than duplicating their responsibilities.
 - Existing `WorldMapHelpers.cpp` duplicates file-scope helpers still in `WorldPanel.cpp`. `engine/aur/clock.*` contains a runtime `WeatherSystem`, but no shared deterministic climate-profile selector matching the editor's preview behavior was found; preserve the editor selector until a behavior-preserving shared operation exists.
@@ -23,3 +24,9 @@ For each numbered step: record touched-file sizes; make only moves/extractions o
 - Behavior and generated surface pixels remain unchanged; seeded surface checksum and existing suite pass.
 - New modules each own real moved code, have build wiring, and no friend access is needed for extracted collaborators.
 - `WorldPanel.cpp` is below 800 lines, project builds, tests pass, and Bible notes explain the resulting boundaries.
+
+## Progress
+- [x] Audit, persistent plan, and baseline build/test verification completed.
+- [x] Header dependency cleanup committed as `a535da2`.
+- [ ] Step 1 complete: surface renderer extraction and checksum test remain outstanding; header-only cleanup does not close this step.
+- [ ] Steps 2–7 remain outstanding. Update this checklist only when a step's build/test gate passes and its code commit exists.

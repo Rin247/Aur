@@ -16,3 +16,5 @@
 - Existing `studio/world/MapView.*` / `WorldMapHelpers.*` files were already untracked at task start, so keep them out of unrelated commits while integrating them intentionally in the refactor.
 - Runtime `WeatherSystem` is not a direct replacement for the editor's deterministic `climate_weather(project, climate, roll)` preview selection; preserve the editor behavior unless a matching shared selector is added and tested.
 - The persistent plan is `Bible/Operations/WorldPanel Refactor Plan.md`; the first implementation checkpoint is header/include hygiene. The required `buildHdSurface` checksum still needs a testable Qt image-builder seam before completing step 1.
+
+- Added Aur request #51 to `WANTED.md` to keep the full WorldPanel refactor visible; its durable sequence and honest completion checklist are in `Bible/Operations/WorldPanel Refactor Plan.md`. Header cleanup is committed, but the checksum/surface extraction and steps 2–7 remain open; do not close the request until acceptance is tested.
