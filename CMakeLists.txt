@@ -63,6 +63,7 @@ add_executable(aur_studio
     studio/world/WorldCommandHistory.cpp
     studio/world/WorldStrokeState.cpp
     studio/world/WorldGenerationJob.cpp
+    studio/world/WorldEntityDialogs.cpp
     studio/WorldModel.cpp
     studio/WorldModel.hpp
     studio/RhiBackend.cpp

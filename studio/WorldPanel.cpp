@@ -9,6 +9,7 @@
 #include "world/WorldClimateOverlays.hpp"
 #include "world/WorldMarkerOverlays.hpp"
 #include "world/WorldCamera.hpp"
+#include "world/WorldEntityDialogs.hpp"
 #include "aur/autotile.hpp"
 #include "aur/clock.hpp"
 #include "aur/forge.hpp"
@@ -1648,38 +1649,13 @@ void WorldPanel::createWorldEntity(const QPoint& tile, WorldTool tool) {
         }));
         added_index = static_cast<int>(entities.size()) - 1;
     } else {
-        QDialog dialog(this);
-        dialog.setWindowTitle("Add world exit");
-        QFormLayout form(&dialog);
-        QComboBox targetMap(&dialog);
-        for (const auto& [map_id, target] : project->maps) {
-            const std::string name = target.contains("name") && target["name"].is_string()
-                ? target["name"].as_string() : map_id;
-            targetMap.addItem(QString::fromStdString(name), QString::fromStdString(map_id));
-        }
-        if (targetMap.count() == 0) {
-            QMessageBox::warning(this, "Add world exit", "The project has no target maps.");
-            return;
-        }
-        form.addRow("Destination map:", &targetMap);
-        QLineEdit targetSpawn(&dialog);
-        targetSpawn.setPlaceholderText("Optional spawn ID");
-        form.addRow("Destination spawn:", &targetSpawn);
-        QDialogButtonBox buttons(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
-        form.addRow(&buttons);
-        connect(&buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
-        connect(&buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
-        if (dialog.exec() != QDialog::Accepted) return;
-
-        JsonObject target{{"map", targetMap.currentData().toString().toStdString()}};
-        const std::string spawn = targetSpawn.text().trimmed().toStdString();
-        if (!spawn.empty()) target["spawn"] = spawn;
+        const std::optional<world::WorldExitTarget> target =
+            world::run_add_exit_dialog(this, *project);
+        if (!target) return;
         mapCanvas->recordEntityEdit();
         JsonArray& entities = map["entities"].as_array();
-        entities.emplace_back(Json(JsonObject{
-            {"effect", "fade"}, {"h", 1}, {"target", Json(target)},
-            {"type", "exit"}, {"w", 1}, {"x", tile.x()}, {"y", tile.y()}
-        }));
+        entities.emplace_back(world::make_exit_entity(
+            tile.x(), tile.y(), target->map, target->spawn));
         added_index = static_cast<int>(entities.size()) - 1;
     }
 
@@ -1704,55 +1680,13 @@ void WorldPanel::editWorldEntity() {
     const std::string type = entity.contains("type") ? entity["type"].as_string() : "location";
     if (type != "location" && type != "exit") return;
 
-    QDialog dialog(this);
-    dialog.setWindowTitle(type == "exit" ? "Edit world exit" : "Edit world location");
-    QFormLayout form(&dialog);
-    QLineEdit idEdit(&dialog);
-    if (entity.contains("id") && entity["id"].is_string()) {
-        idEdit.setText(QString::fromStdString(entity["id"].as_string()));
-    }
-    QSpinBox x(&dialog);
-    QSpinBox y(&dialog);
-    x.setRange(0, map["w"].as_int() - 1);
-    y.setRange(0, map["h"].as_int() - 1);
-    x.setValue(entity["x"].as_int());
-    y.setValue(entity["y"].as_int());
+    const int map_width = map["w"].as_int();
+    const int map_height = map["h"].as_int();
     if (type == "location") {
-        form.addRow("Location ID:", &idEdit);
-    }
-    form.addRow("X (tiles):", &x);
-    form.addRow("Y (tiles):", &y);
-
-    QComboBox targetMap(&dialog);
-    QLineEdit targetSpawn(&dialog);
-    if (type == "exit") {
-        for (const auto& [map_id, target] : project->maps) {
-            const std::string name = target.contains("name") && target["name"].is_string()
-                ? target["name"].as_string() : map_id;
-            targetMap.addItem(QString::fromStdString(name), QString::fromStdString(map_id));
-        }
-        if (entity.contains("target") && entity["target"].contains("map")) {
-            const int target_index = targetMap.findData(
-                QString::fromStdString(entity["target"]["map"].as_string()));
-            if (target_index >= 0) targetMap.setCurrentIndex(target_index);
-        }
-        if (entity.contains("target") && entity["target"].contains("spawn") &&
-            entity["target"]["spawn"].is_string()) {
-            targetSpawn.setText(QString::fromStdString(entity["target"]["spawn"].as_string()));
-        }
-        targetSpawn.setPlaceholderText("Optional spawn ID");
-        form.addRow("Destination map:", &targetMap);
-        form.addRow("Destination spawn:", &targetSpawn);
-    }
-    QDialogButtonBox buttons(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
-    form.addRow(&buttons);
-    connect(&buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
-    connect(&buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
-    if (dialog.exec() != QDialog::Accepted) return;
-
-    std::string id;
-    if (type == "location") {
-        id = world::make_biome_id(idEdit.text().trimmed().toStdString());
+        const std::optional<world::WorldLocationEdits> edits =
+            world::run_edit_location_dialog(this, map_width, map_height, entity);
+        if (!edits) return;
+        const std::string id = world::make_biome_id(edits->id_text.toStdString());
         if (id.empty()) {
             QMessageBox::warning(this, "Edit world location",
                                  "Enter a location ID containing at least one letter or number.");
@@ -1767,20 +1701,24 @@ void WorldPanel::editWorldEntity() {
                 return;
             }
         }
-    } else if (targetMap.count() == 0) {
-        QMessageBox::warning(this, "Edit world exit", "The project has no target maps.");
-        return;
-    }
-
-    mapCanvas->recordEntityEdit();
-    if (type == "location") {
+        mapCanvas->recordEntityEdit();
         entity["id"] = id;
+        entity["x"] = edits->x;
+        entity["y"] = edits->y;
     } else {
-        entity["target"]["map"] = targetMap.currentData().toString().toStdString();
-        entity["target"]["spawn"] = targetSpawn.text().trimmed().toStdString();
+        const std::optional<world::WorldExitEdits> edits =
+            world::run_edit_exit_dialog(this, *project, map_width, map_height, entity);
+        if (!edits) return;
+        if (edits->target_map.empty()) {
+            QMessageBox::warning(this, "Edit world exit", "The project has no target maps.");
+            return;
+        }
+        mapCanvas->recordEntityEdit();
+        entity["target"]["map"] = edits->target_map;
+        entity["target"]["spawn"] = edits->target_spawn;
+        entity["x"] = edits->x;
+        entity["y"] = edits->y;
     }
-    entity["x"] = x.value();
-    entity["y"] = y.value();
     refreshMapContents();
     for (int row = 0; row < nodeList->count(); ++row) {
         if (nodeList->item(row)->data(Qt::UserRole).toInt() == entity_index) {
