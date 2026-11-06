@@ -60,6 +60,7 @@ add_executable(aur_studio
     studio/world/WorldWeatherOverlay.cpp
     studio/world/WorldClimateOverlays.cpp
     studio/world/WorldMarkerOverlays.cpp
+    studio/world/WorldCommandHistory.cpp
     studio/WorldModel.cpp
     studio/WorldModel.hpp
     studio/RhiBackend.cpp
@@ -102,9 +103,11 @@ add_executable(aur_tests
     tests/test_world_model.cpp
     tests/test_world_surface.cpp
     tests/test_map_view.cpp
+    tests/test_world_command_history.cpp
     studio/world/HdSurface.cpp
     studio/world/WorldMapHelpers.cpp
     studio/world/MapView.cpp
+    studio/world/WorldCommandHistory.cpp
     studio/WorldModel.cpp
 )
 target_include_directories(aur_tests PRIVATE studio)

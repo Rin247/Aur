@@ -17,6 +17,7 @@
 #include "WorldModel.hpp"
 #include "aur/project.hpp"
 #include "world/TerrainRhiWidget.hpp"
+#include "world/WorldCommandHistory.hpp"
 #include "world/WorldMapTools.hpp"
 
 namespace world_alias = aur::world;
@@ -56,13 +57,7 @@ class WorldMapCanvasWidget : public QWidget {
     std::map<std::pair<std::string, int>, QImage> tile_cache;
     QImage surface_cache;
     std::string surface_cache_map;
-    struct UndoAction {
-        bool entities = false;
-        Json state;
-        std::vector<editor::WorldModel::RectSnapshot> model_rects;
-    };
-    std::vector<UndoAction> undo_actions;
-    std::vector<UndoAction> redo_actions;
+    editor::WorldCommandHistory history;
     std::vector<editor::WorldModel::RectSnapshot> stroke_model_rects;
     std::set<int> stroke_captured_cells;
     std::unique_ptr<editor::WorldModel> world_model;

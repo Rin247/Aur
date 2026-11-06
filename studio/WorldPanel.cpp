@@ -108,8 +108,7 @@ WorldMapCanvasWidget::~WorldMapCanvasWidget() = default;
 
 void WorldMapCanvasWidget::setProject(Project* p) {
     project = p;
-    undo_actions.clear();
-    redo_actions.clear();
+    history.clear();
     tile_cache.clear();
     world_model.reset();
     world_model_map.clear();
@@ -120,8 +119,7 @@ void WorldMapCanvasWidget::setProject(Project* p) {
 
 void WorldMapCanvasWidget::setMap(const std::string& map_id) {
     if (current_map != map_id) {
-        undo_actions.clear();
-        redo_actions.clear();
+        history.clear();
         current_map = map_id;
         world_model.reset();
         world_model_map.clear();
@@ -256,9 +254,7 @@ void WorldMapCanvasWidget::recordEntityEdit() {
     if (!project || current_map.empty() || !project->maps.contains(current_map)) return;
     Json& map = project->maps[current_map];
     if (!map.contains("entities") || !map["entities"].is_array()) map["entities"] = JsonArray{};
-    undo_actions.push_back({true, map["entities"]});
-    if (undo_actions.size() > 100) undo_actions.erase(undo_actions.begin());
-    redo_actions.clear();
+    history.record_entity(map["entities"]);
 }
 
 QRectF WorldMapCanvasWidget::mapBounds() const {
@@ -442,24 +438,29 @@ void WorldMapCanvasWidget::paintTile(const QPoint& tile) {
 
 void WorldMapCanvasWidget::undo() {
     if (!project || current_map.empty() || !project->maps.contains(current_map) ||
-        undo_actions.empty()) return;
+        !history.can_undo()) return;
     Json& map = project->maps[current_map];
-    const UndoAction action = undo_actions.back();
-    undo_actions.pop_back();
+    const editor::WorldCommandHistory::Action action = history.take_undo();
     if (action.entities) {
-        redo_actions.push_back({true, map["entities"]});
+        editor::WorldCommandHistory::Action redo;
+        redo.entities = true;
+        redo.state = map["entities"];
+        history.push_redo(std::move(redo));
         map["entities"] = action.state;
         emit entitiesChanged();
     } else if (!action.model_rects.empty() && world_model) {
-        UndoAction redo;
+        editor::WorldCommandHistory::Action redo;
         for (auto it = action.model_rects.rbegin(); it != action.model_rects.rend(); ++it) {
             redo.model_rects.push_back(world_model->captureRect(it->layer, it->rect));
             world_model->restore(*it);
             world_model->writeRect(map, it->layer, it->rect);
         }
-        redo_actions.push_back(std::move(redo));
+        history.push_redo(std::move(redo));
     } else {
-        redo_actions.push_back({false, map["layers"], {}});
+        editor::WorldCommandHistory::Action redo;
+        redo.entities = false;
+        redo.state = map["layers"];
+        history.push_redo(std::move(redo));
         map["layers"] = action.state;
     }
     surface_cache = {};
@@ -469,24 +470,29 @@ void WorldMapCanvasWidget::undo() {
 
 void WorldMapCanvasWidget::redo() {
     if (!project || current_map.empty() || !project->maps.contains(current_map) ||
-        redo_actions.empty()) return;
+        !history.can_redo()) return;
     Json& map = project->maps[current_map];
-    const UndoAction action = redo_actions.back();
-    redo_actions.pop_back();
+    const editor::WorldCommandHistory::Action action = history.take_redo();
     if (action.entities) {
-        undo_actions.push_back({true, map["entities"]});
+        editor::WorldCommandHistory::Action undo;
+        undo.entities = true;
+        undo.state = map["entities"];
+        history.push_undo(std::move(undo));
         map["entities"] = action.state;
         emit entitiesChanged();
     } else if (!action.model_rects.empty() && world_model) {
-        UndoAction undo;
+        editor::WorldCommandHistory::Action undo;
         for (auto it = action.model_rects.rbegin(); it != action.model_rects.rend(); ++it) {
             undo.model_rects.push_back(world_model->captureRect(it->layer, it->rect));
             world_model->restore(*it);
             world_model->writeRect(map, it->layer, it->rect);
         }
-        undo_actions.push_back(std::move(undo));
+        history.push_undo(std::move(undo));
     } else {
-        undo_actions.push_back({false, map["layers"], {}});
+        editor::WorldCommandHistory::Action undo;
+        undo.entities = false;
+        undo.state = map["layers"];
+        history.push_undo(std::move(undo));
         map["layers"] = action.state;
     }
     surface_cache = {};
@@ -788,9 +794,7 @@ void WorldMapCanvasWidget::mousePressEvent(QMouseEvent* event) {
         if ((selected_tool == WorldTool::PaintTerrain ||
              (selected_tool == WorldTool::PaintBiome && !modelStroke)) && project &&
             project->maps.contains(current_map) && tile.x() >= 0 && tile.y() >= 0) {
-            undo_actions.push_back({false, project->maps[current_map]["layers"]});
-            if (undo_actions.size() > 100) undo_actions.erase(undo_actions.begin());
-            redo_actions.clear();
+            history.record_layers(project->maps[current_map]["layers"]);
         }
         if ((world::is_paint_tool(selected_tool) || modelStroke) &&
             project && project->maps.contains(current_map) && tile.x() >= 0 && tile.y() >= 0) {
@@ -838,11 +842,7 @@ void WorldMapCanvasWidget::mouseMoveEvent(QMouseEvent* event) {
 void WorldMapCanvasWidget::mouseReleaseEvent(QMouseEvent* event) {
     if (event->button() == Qt::LeftButton) {
         if (!stroke_model_rects.empty()) {
-            UndoAction action;
-            action.model_rects = std::move(stroke_model_rects);
-            undo_actions.push_back(std::move(action));
-            if (undo_actions.size() > 100) undo_actions.erase(undo_actions.begin());
-            redo_actions.clear();
+            history.record_rects(std::move(stroke_model_rects));
         }
         stroke_model_rects.clear();
         stroke_captured_cells.clear();
