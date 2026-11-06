@@ -3,6 +3,7 @@
 #include "TileTexture.hpp"
 #include "world/HdSurface.hpp"
 #include "world/WorldMapHelpers.hpp"
+#include "world/MapView.hpp"
 #include "aur/autotile.hpp"
 #include "aur/clock.hpp"
 #include "aur/forge.hpp"
@@ -56,89 +57,6 @@
 #include <utility>
 
 namespace aur {
-namespace {
-
-std::string make_biome_id(const std::string& name) {
-    std::string id;
-    bool separator = false;
-    for (unsigned char ch : name) {
-        if (std::isalnum(ch)) {
-            if (separator && !id.empty()) id.push_back('_');
-            id.push_back(static_cast<char>(std::tolower(ch)));
-            separator = false;
-        } else {
-            separator = true;
-        }
-    }
-    return id;
-}
-
-bool has_hd_surface(const Json& map) {
-    return map.contains("worldgen") && map["worldgen"].is_object() &&
-        map["worldgen"].contains("style") &&
-        map["worldgen"]["style"].as_string() == "hd2d" &&
-        map.contains("layers") && map["layers"].is_object() &&
-        map["layers"].contains("elevation") && map["layers"]["elevation"].is_array();
-}
-
-uint32_t surface_hash(uint32_t seed, int x, int y, uint32_t layer) {
-    uint32_t value = seed ^ static_cast<uint32_t>(x) * 0x9e3779b9u ^
-                     static_cast<uint32_t>(y) * 0x85ebca6bu ^ layer;
-    value ^= value >> 16;
-    value *= 0x7feb352du;
-    value ^= value >> 15;
-    value *= 0x846ca68bu;
-    return value ^ (value >> 16);
-}
-
-std::string terrain_tile_category(const std::string& name) {
-    std::string normalized = name;
-    std::transform(normalized.begin(), normalized.end(), normalized.begin(),
-                   [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
-    if (normalized.find("biome_") == 0) return "biomes";
-    const auto contains_any = [&normalized](std::initializer_list<const char*> terms) {
-        return std::any_of(terms.begin(), terms.end(), [&normalized](const char* term) {
-            return normalized.find(term) != std::string::npos;
-        });
-    };
-    if (contains_any({"shore", "coast", "beach", "sand"})) return "coast";
-    if (contains_any({"ocean", "water", "sea", "reef"})) return "underwater";
-    if (contains_any({"mountain", "hill", "cliff", "rock", "stone", "snow", "scree"})) {
-        return "elevation";
-    }
-    if (contains_any({"grass", "forest", "foliage", "jungle", "moss"})) return "surface";
-    return "structures";
-}
-
-std::string climate_weather(const Project* project, const std::string& climate,
-                            uint32_t roll) {
-    if (!project || !project->meta.contains("weather")) return "clear";
-    const Json& weather_settings = project->meta.at("weather");
-    if (!weather_settings.is_object() || !weather_settings.contains("profiles")) return "clear";
-    const Json& profiles = weather_settings["profiles"];
-    if (!profiles.is_object()) return "clear";
-    const Json* profile = profiles.contains(climate) ? &profiles[climate] : nullptr;
-    if ((!profile || !profile->is_object()) && profiles.contains("temperate")) {
-        profile = &profiles["temperate"];
-    }
-    if (!profile || !profile->is_object()) return "clear";
-
-    int total_weight = 0;
-    for (const auto& [_, weight] : profile->as_object()) {
-        if (weight.is_number() && weight.as_int() > 0) total_weight += weight.as_int();
-    }
-    if (total_weight <= 0) return "clear";
-
-    int selection = static_cast<int>(roll % static_cast<uint32_t>(total_weight));
-    for (const auto& [weather, weight] : profile->as_object()) {
-        if (!weight.is_number() || weight.as_int() <= 0) continue;
-        selection -= weight.as_int();
-        if (selection < 0) return weather;
-    }
-    return "clear";
-}
-
-} // namespace
 
 class WorldMapOverlayWidget final : public QWidget {
 public:
@@ -524,7 +442,7 @@ void WorldMapCanvasWidget::setMap(const std::string& map_id) {
 
 void WorldMapCanvasWidget::ensureWorldModel() {
     if (!project || current_map.empty() || !project->maps.contains(current_map) ||
-        !has_hd_surface(project->maps.at(current_map))) {
+        !world::has_hd_surface(project->maps.at(current_map))) {
         world_model.reset();
         world_model_map.clear();
         return;
@@ -624,18 +542,19 @@ void WorldMapCanvasWidget::setZoom(qreal zoom) {
 
 void WorldMapCanvasWidget::fitToView() {
     if (!project || current_map.empty() || !project->maps.contains(current_map)) return;
-    const Json& map = project->maps.at(current_map);
+    const auto map_view = world::MapView::current(project, current_map);
+    if (!map_view) return;
     qreal source_tile_size = 1.0;
-    if (!has_hd_surface(map)) {
-        const auto tileset = project->tilesets.find(map["tileset"].as_string());
+    if (!map_view->hasHdSurface()) {
+        const auto tileset = project->tilesets.find(map_view->tileset());
         source_tile_size = tileset != project->tilesets.end() &&
             tileset->second.contains("tile") ? tileset->second["tile"].as_int() : 16;
     }
     constexpr qreal padding = 24.0;
     const qreal fit = std::min((width() - padding * 2) /
-                                   (map["w"].as_int() * source_tile_size),
+                                   (map_view->width() * source_tile_size),
                                (height() - padding * 2) /
-                                   (map["h"].as_int() * source_tile_size));
+                                   (map_view->height() * source_tile_size));
     pan_offset = {};
     setZoom(fit);
 }
@@ -652,13 +571,14 @@ void WorldMapCanvasWidget::recordEntityEdit() {
 QRectF WorldMapCanvasWidget::mapBounds() const {
     if (!project || current_map.empty() || !project->maps.contains(current_map)) return {};
 
-    const Json& map = project->maps.at(current_map);
-    const int map_width = map["w"].as_int();
-    const int map_height = map["h"].as_int();
+    const auto map_view = world::MapView::current(project, current_map);
+    if (!map_view) return {};
+    const int map_width = map_view->width();
+    const int map_height = map_view->height();
     if (map_width <= 0 || map_height <= 0) return {};
     qreal source_tile_size = 1.0;
-    if (!has_hd_surface(map)) {
-        const auto tileset = project->tilesets.find(map["tileset"].as_string());
+    if (!map_view->hasHdSurface()) {
+        const auto tileset = project->tilesets.find(map_view->tileset());
         source_tile_size = tileset != project->tilesets.end() &&
             tileset->second.contains("tile") ? tileset->second["tile"].as_int() : 16;
     }
@@ -687,14 +607,15 @@ QPoint WorldMapCanvasWidget::tileAt(const QPointF& position) const {
     if (!project || !project->maps.contains(current_map) ||
         position.y() < bounds.top() || position.y() >= bounds.bottom()) return {-1, -1};
 
-    const Json& map = project->maps.at(current_map);
-    const int map_width = map["w"].as_int();
-    const int map_height = map["h"].as_int();
+    const auto map_view = world::MapView::current(project, current_map);
+    if (!map_view) return {-1, -1};
+    const int map_width = map_view->width();
+    const int map_height = map_view->height();
     const qreal cell = bounds.width() / map_width;
     const int tile_x = static_cast<int>(std::floor((position.x() - bounds.left()) / cell));
     const int tile_y = static_cast<int>(std::floor((position.y() - bounds.top()) / cell));
     if (tile_y < 0 || tile_y >= map_height) return {-1, -1};
-    if (aur::wraps_world_x(map)) return {aur::wrapX(tile_x, map_width), tile_y};
+    if (map_view->wrapsX()) return {aur::wrapX(tile_x, map_width), tile_y};
     if (tile_x < 0 || tile_x >= map_width) return {-1, -1};
     return {tile_x, tile_y};
 }
@@ -725,7 +646,7 @@ void WorldMapCanvasWidget::paintTile(const QPoint& tile) {
         (!wraps_x && (tile.x() < 0 || tile.x() >= map_width))) return;
     const int center_x = wraps_x ? aur::wrapX(tile.x(), map_width) : tile.x();
     if (!map.contains("layers") || !map["layers"].is_object()) return;
-    const bool hdSurface = has_hd_surface(map);
+    const bool hdSurface = world::has_hd_surface(map);
     const int radius = brush_size / 2;
     std::vector<QPoint> stamp;
     std::set<int> stamp_indices;
@@ -938,7 +859,7 @@ void WorldMapCanvasWidget::paintCanvas(QPainter& painter) {
     const int map_width = map["w"].as_int();
     const int map_height = map["h"].as_int();
     const QRectF bounds = mapBounds();
-    const bool hd_surface = has_hd_surface(map);
+    const bool hd_surface = world::has_hd_surface(map);
     const bool wraps_x = aur::wraps_world_x(map);
     if (bounds.isEmpty() || !map.contains("layers") || !map["layers"].is_object() ||
         (!hd_surface && !map["layers"].contains("ground"))) return;
@@ -1331,7 +1252,7 @@ void WorldMapCanvasWidget::paintCanvas(QPainter& painter) {
                         [static_cast<size_t>(x)].as_int();
                 }
                 const std::string weather = preview_weather == "climate"
-                    ? climate_weather(project, climate, weather_roll) : preview_weather;
+                    ? world::climate_weather(project, climate, weather_roll) : preview_weather;
                 if (weather == "clear") continue;
                 const uint32_t position_hash = static_cast<uint32_t>(worldgen_seed) ^
                     static_cast<uint32_t>(x) * 73856093u ^
@@ -1585,7 +1506,7 @@ void WorldMapCanvasWidget::mousePressEvent(QMouseEvent* event) {
         }
         const bool modelStroke = world::is_height_tool(selected_tool) ||
             (selected_tool == WorldTool::PaintBiome && project && project->maps.contains(current_map) &&
-             has_hd_surface(project->maps.at(current_map)));
+             world::has_hd_surface(project->maps.at(current_map)));
         if ((selected_tool == WorldTool::PaintTerrain ||
              (selected_tool == WorldTool::PaintBiome && !modelStroke)) && project &&
             project->maps.contains(current_map) && tile.x() >= 0 && tile.y() >= 0) {
@@ -2102,7 +2023,7 @@ WorldPanel::WorldPanel(Project* p, QWidget* parent)
 
         const int seed_value = seed->value();
         const std::string seed_text = std::to_string(seed_value);
-        const std::string base_id = make_biome_id("new_world_seed_" + seed_text);
+        const std::string base_id = world::make_biome_id("new_world_seed_" + seed_text);
         const std::string base_name = "New World " + seed_text;
         std::string id = base_id;
         std::string name = base_name;
@@ -2255,7 +2176,7 @@ void WorldPanel::refreshMapContents() {
             }
             item->setData(Qt::UserRole, static_cast<int>(index));
             item->setData(Qt::UserRole + 1,
-                          QString::fromStdString(terrain_tile_category(name)));
+                          QString::fromStdString(world::terrain_tile_category(name)));
         }
     }
     if (tilePalette->count() > 0) tilePalette->setCurrentRow(0);
@@ -2428,7 +2349,7 @@ void WorldPanel::createBiome() {
         return;
     }
 
-    std::string id = make_biome_id(name);
+    std::string id = world::make_biome_id(name);
     if (id.empty()) {
         QMessageBox::warning(this, "Create biome", "The name must contain at least one letter or number.");
         return;
@@ -2469,7 +2390,7 @@ void WorldPanel::createWorldEntity(const QPoint& tile, WorldTool tool) {
             this, "Add world location", "Location ID:", QLineEdit::Normal,
             "new_location", &accepted).trimmed();
         if (!accepted) return;
-        const std::string id = make_biome_id(entered_id.toStdString());
+        const std::string id = world::make_biome_id(entered_id.toStdString());
         if (id.empty()) {
             QMessageBox::warning(this, "Add world location",
                                  "Enter a location ID containing at least one letter or number.");
@@ -2594,7 +2515,7 @@ void WorldPanel::editWorldEntity() {
 
     std::string id;
     if (type == "location") {
-        id = make_biome_id(idEdit.text().trimmed().toStdString());
+        id = world::make_biome_id(idEdit.text().trimmed().toStdString());
         if (id.empty()) {
             QMessageBox::warning(this, "Edit world location",
                                  "Enter a location ID containing at least one letter or number.");

@@ -21,3 +21,5 @@
 
 - WorldPanel step 1 moved the complete HD surface pixel-generation body to `studio/world/HdSurface.cpp`; the public operation accepts map, project and region, returns a cropped image only for a non-null region, and preserves the prior full-map output for a null region. A 32×16 seeded generated world yields stable RGB32 FNV-1a checksum `7986464436153998528`. Both full Release build and both CTest targets passed.
 - WorldPanel tool state and entity-placement dispatch now use `WorldTool` with the ordered `kWorldToolNames` table; pixel/map behavior was not changed. Typed-tool changes pass Release build and both CTest targets. Pending checkpoint commit before continuing.
+- World tab now sits immediately after Map Editor (commit `8ed26ab`), matching the requested tab-view placement.
+- Step 3 integrates existing helper implementations into the panel and adds defensive `MapView::elevationAt`/`biomeAt` accessors plus test coverage. Camera bounds/fit/tile hit testing now gets dimensions, tileset identity and wrapping from MapView. Surface rendering itself remains isolated behind its extracted API. Release build and CTest passed; this step's commit is still pending.
