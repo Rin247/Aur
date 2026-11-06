@@ -1,6 +1,6 @@
 # WorldSim P3.1: plan
 
-Status: P0 (golden-hash safety net) — starting.
+Status: P1 (core fields + kernels) — next.
 
 ## Goal
 
@@ -77,29 +77,30 @@ CMakeLists.txt                 sources + test wiring
 ## Phases
 
 ### P0 Safety net
-- [ ] `test_worldsim_determinism_stubs`: compile the empty `WorldSim` shell
-      (params, configure, advance as no-op, hash over seed+tick) and pin the
-      hash contract test so the kernel work starts from a passing green gate.
-Acceptance: build green, EngineTests + TopologyTests pass, commit
-`worldsim-p0`.
+
+- [x] `test_worldsim_shell` / `_pins_and_values` / `_json_roundtrip`: empty `WorldSim` shell (params, configure, tick counter, stable FNV-1a hash over seed+ticks+fields+pins, JSON round-trip with hex-encoded 64-bit seed/ticks because `aur::Json` has no 64-bit integer type) committed `d0425e8`; three CTest suites green including the new `WorldSimTests` focused mode.
+
+Acceptance: build green, EngineTests + TopologyTests + WorldSimTests pass, commit `worldsim-p0`.
 
 ### P1 Core fields
+
 - [ ] Configure: downsample height from a map JSON (half-tile mean), seed
       per-field from hash(seed, field, cell).
 - [ ] Kernels: diffusion (temperature, moisture), advect+decay (wind u/v,
       cloud coverage), precipitation rule (coverage+moisture→rain), snowpack
       accumulate/melt by temperature; double-buffered, wrapped X reads.
 - [ ] Pins honored in every kernel write.
-Acceptance: unit tests — wrap continuity (edge cells read across the seam),
-pin immutability, double-buffer (advance(2) == advance(1)+advance(1)), bounded
-values; commit `worldsim-p1`.
+      Acceptance: unit tests — wrap continuity (edge cells read across the seam),
+      pin immutability, double-buffer (advance(2) == advance(1)+advance(1)), bounded
+      values; commit `worldsim-p1`.
 
 ### P2 Determinism + persistence
+
 - [ ] Golden hash: 32×16 world, fixed seed, 10,000 ticks; hash recorded as a
       test constant. Repeat-run equality and save/load round-trip equality.
 - [ ] `--worldsim` focused CTest mode.
-Acceptance: golden-hash test green twice in a row (run-to-run), save/load
-round-trip byte-equal hash; commit `worldsim-p2`.
+      Acceptance: golden-hash test green twice in a row (run-to-run), save/load
+      round-trip byte-equal hash; commit `worldsim-p2`.
 
 ## Acceptance
 
