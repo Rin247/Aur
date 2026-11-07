@@ -19,6 +19,7 @@
 - **World Time Settings tab should be baked into the World editor** — merge the standalone tab into the World panel instead of a separate tab; reported 2026-11-06.
 - **Implement SNES-style platformer games and metroidvanias** — build SNES-style platformer and metroidvania game support into the engine.
 - **Refactor and merge the pixel and sprite editors** — they are almost identical in scope; consolidate into one editor.
+- **Review `Bible/Operations/` per AGENTS.md** — go through all docs (including World Map Topology Handover.md) and make a proper plan, splitting the workload; do not skip World Map Topology.
 
 ## Closed
 
