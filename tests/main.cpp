@@ -32,6 +32,7 @@ void test_realtime_parity();
 void test_offline_render_job();
 void test_song_v1_contract();
 void test_song_v2_migration();
+void test_midi_fidelity();
 void test_song_history();
 void test_note_props();
 
@@ -102,6 +103,7 @@ int main(int argc, char** argv) {
     RUN_TEST(test_offline_render_job);
     RUN_TEST(test_song_v1_contract);
     RUN_TEST(test_song_v2_migration);
+    RUN_TEST(test_midi_fidelity);
     RUN_TEST(test_song_history);
     RUN_TEST(test_note_props);
 

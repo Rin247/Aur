@@ -42,6 +42,124 @@ std::vector<std::uint8_t> make_midi_with_division(std::uint16_t division) {
 }
 
 } // namespace
+// P4: MIDI fidelity — tempo/T.S. maps, markers, CC/bend/pressure automation
+// survive a full export/import round trip on the v2 model.
+void test_midi_fidelity()
+{
+    auto point = [](int step, int value) {
+        return aur::JsonObject{{"step", step}, {"value", value}};
+    };
+    auto lane = [](int cc, aur::JsonArray points) {
+        return aur::JsonObject{{"cc", cc}, {"points", std::move(points)}};
+    };
+    aur::Json song = aur::JsonObject{
+        {"name", "Fidelity"},
+        {"tempo", 100}, {"beats", 4},
+        {"tempo_map", aur::JsonArray{
+            aur::JsonObject{{"step", 0}, {"bpm", 100}},
+            aur::JsonObject{{"step", 16}, {"bpm", 150}}}},
+        {"time_sig_map", aur::JsonArray{
+            aur::JsonObject{{"step", 0}, {"num", 4}, {"den", 4}},
+            aur::JsonObject{{"step", 32}, {"num", 7}, {"den", 8}}}},
+        {"markers", aur::JsonArray{
+            aur::JsonObject{{"step", 16}, {"name", "Chorus"}}}},
+        {"tracks", aur::JsonArray{
+            aur::JsonObject{
+                {"name", "Lead"}, {"channel", 1}, {"program", 40},
+                {"automation", aur::JsonArray{
+                    lane(74, aur::JsonArray{point(0, 40), point(8, 100)}),
+                    lane(128, aur::JsonArray{point(4, 1024), point(12, -2048)}),
+                    lane(129, aur::JsonArray{point(2, 64)})}},
+                {"notes", aur::JsonArray{aur::JsonArray{0, 60, 4, 100}}}}}}};
+
+    const aur::Json imported = aur::import_standard_midi(
+        aur::export_standard_midi(song), "X");
+
+    // Tempo map: both entries round-trip (sorted, first becomes scalar tempo).
+    const aur::JsonArray& tempo_map = imported["tempo_map"].as_array();
+    ASSERT(tempo_map.size() == 2);
+    ASSERT(tempo_map[0]["step"].as_int() == 0 && tempo_map[0]["bpm"].as_int() == 100);
+    ASSERT(tempo_map[1]["step"].as_int() == 16 && tempo_map[1]["bpm"].as_int() == 150);
+    ASSERT(imported["tempo"].as_int() == 100);
+
+    // Time-signature map round-trips including 7/8.
+    const aur::JsonArray& sig_map = imported["time_sig_map"].as_array();
+    ASSERT(sig_map.size() == 2);
+    ASSERT(sig_map[1]["num"].as_int() == 7 && sig_map[1]["den"].as_int() == 8);
+
+    // Marker round-trips with name and step.
+    ASSERT(imported["markers"].as_array().size() == 1);
+    ASSERT(imported["markers"][0]["name"].as_string() == "Chorus");
+    ASSERT(imported["markers"][0]["step"].as_int() == 16);
+
+    // Automation: CC74, bend (±1024/−2048 -> 14-bit), pressure all return.
+    const aur::Json& lead = imported["tracks"][0];
+    ASSERT(lead.contains("automation") && lead["automation"].is_array());
+    const aur::JsonArray& lanes = lead["automation"].as_array();
+    ASSERT(lanes.size() == 3);
+    bool saw_cc74 = false, saw_bend = false, saw_pressure = false;
+    for (const aur::Json& lane : lanes) {
+        const int cc = lane["cc"].as_int();
+        if (cc == 74) {
+            saw_cc74 = true;
+            ASSERT(lane["points"].as_array().size() == 2);
+            ASSERT(lane["points"][0]["value"].as_int() == 40);
+            ASSERT(lane["points"][1]["value"].as_int() == 100);
+        } else if (cc == 128) {
+            saw_bend = true;
+            const aur::JsonArray& points = lane["points"].as_array();
+            ASSERT(points.size() == 2);
+            ASSERT(points[0]["value"].as_int() == 1024);
+            ASSERT(points[1]["value"].as_int() == -2048);
+        } else if (cc == 129) {
+            saw_pressure = true;
+            ASSERT(lane["points"][0]["value"].as_int() == 64);
+        }
+    }
+    ASSERT(saw_cc74 && saw_bend && saw_pressure);
+
+    // Import-side synthetic file: CC + bend + marker inside a hand-built track.
+    std::vector<std::uint8_t> track{
+        0x00, 0xff, 0x06, 5, 'B', 'e', 'g', 'i', 'n',
+        0x00, 0xb0, 11, 80,
+        0x00, 0xe0, 0x00, 0x50,
+        0x00, 0xd0, 70,
+        0x00, 0x90, 62, 100,
+        0x60, 0x80, 62, 0,
+        0x00, 0xff, 0x51, 3, 0x07, 0xa1, 0x20,
+        0x00, 0xff, 0x2f, 0x00};
+    std::vector<std::uint8_t> midi{'M', 'T', 'h', 'd'};
+    const auto append_u32 = [&](std::uint32_t v) {
+        midi.push_back(static_cast<std::uint8_t>(v >> 24));
+        midi.push_back(static_cast<std::uint8_t>(v >> 16));
+        midi.push_back(static_cast<std::uint8_t>(v >> 8));
+        midi.push_back(static_cast<std::uint8_t>(v));
+    };
+    const auto append_u16 = [&](std::uint16_t v) {
+        midi.push_back(static_cast<std::uint8_t>(v >> 8));
+        midi.push_back(static_cast<std::uint8_t>(v));
+    };
+    append_u32(6); append_u16(0); append_u16(1); append_u16(480);
+    midi.insert(midi.end(), {'M', 'T', 'r', 'k'});
+    append_u32(static_cast<std::uint32_t>(track.size()));
+    midi.insert(midi.end(), track.begin(), track.end());
+    const aur::Json synthetic = aur::import_standard_midi(midi, "Synth");
+    ASSERT(synthetic["markers"][0]["name"].as_string() == "Begin");
+    const aur::Json& synth_track = synthetic["tracks"][0];
+    ASSERT(synth_track.contains("automation"));
+    bool saw_cc11 = false, saw_bend_lane = false, saw_pressure_lane = false;
+    int tempo_entries = 0;
+    for (const aur::Json& lane : synth_track["automation"].as_array()) {
+        if (lane["cc"].as_int() == 11) { saw_cc11 = true; ASSERT(lane["points"][0]["value"].as_int() == 80); }
+        else if (lane["cc"].as_int() == 128) { saw_bend_lane = true; ASSERT(lane["points"][0]["value"].as_int() == 2048); }
+        else if (lane["cc"].as_int() == 129) { saw_pressure_lane = true; ASSERT(lane["points"][0]["value"].as_int() == 70); }
+    }
+    ASSERT(saw_cc11 && saw_bend_lane && saw_pressure_lane);
+    for (const aur::Json& point : synthetic["tempo_map"].as_array())
+        ++tempo_entries;
+    ASSERT(tempo_entries >= 1);
+}
+
 void test_midi_import_export() {
     for (const std::uint16_t division : {96, 384, 480, 960}) {
         const aur::Json ppqn_song = aur::import_standard_midi(
