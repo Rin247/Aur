@@ -219,7 +219,7 @@ MainWindow::MainWindow(const std::string& project_path, QWidget* parent)
     tabs->addTab(new DatabasePanel(&project, this), "Database");
     tabs->addTab(new EventPanel(&project, this), "Event Scripting");
     tabs->addTab(new MusicPanel(&project, this), "Music Studio");
-    tabs->addTab(new WorldSettingsPanel(&project, this), "World & Time Settings");
+    // World & Time Settings is baked into the World tab (WANTED #3).
 
     auto installEditorMenu = [this](QWidget* canvas, const std::function<void()>& undo,
                                       const std::function<void()>& redo,

@@ -1,6 +1,7 @@
 ﻿#include "WorldPanel.hpp"
 #include "RhiBackend.hpp"
 #include "TileTexture.hpp"
+#include "WorldSettingsPanel.hpp"
 #include "world/HdSurface.hpp"
 #include "world/WorldMapHelpers.hpp"
 #include "world/MapView.hpp"
@@ -230,7 +231,27 @@ WorldPanel::WorldPanel(Project* p, QWidget* parent)
     splitter->setStretchFactor(0, 0);
     splitter->setStretchFactor(1, 1);
     splitter->setSizes({235, 760});
-    layout->addWidget(splitter, 1);
+
+    auto* footer = new QLabel(QStringLiteral("Wheel: zoom \u00b7 Ctrl+wheel: snap 1/2/4/8/16\u00d7 \u00b7 middle-drag: pan \u00b7 "
+                              "Keys 1-7: tool \u00b7 Ctrl+Z/Y: undo/redo \u00b7 "
+                              "Raise/Lower height or paint biome \u00b7 Add Location/Exit, then click \u00b7 "
+                              "Fit: show the whole world \u00b7 Save with Ctrl+S."), this);
+    footer->setStyleSheet("color: #8d98a3;");
+
+    // Time & World settings are baked into the World editor as a second tab
+    // (WANTED #3: the standalone tab is gone from MainWindow).
+    auto* worldTabs = new QTabWidget(this);
+    auto* mapTab = new QWidget(worldTabs);
+    auto* mapTabLayout = new QVBoxLayout(mapTab);
+    mapTabLayout->setContentsMargins(0, 0, 0, 0);
+    mapTabLayout->setSpacing(8);
+    mapTabLayout->addWidget(splitter, 1);
+    mapTabLayout->addWidget(footer);
+    worldTabs->addTab(mapTab, "World Map");
+    worldTabs->addTab(new WorldSettingsPanel(project, worldTabs),
+                      "Time & World Settings");
+    layout->addWidget(worldTabs, 1);
+
     generation_job = new world::WorldGenerationJob(this, this);
     connect(generation_job, &world::WorldGenerationJob::generationFinished, this,
             [this](const QString& map_id, const Json& map) {
@@ -251,13 +272,6 @@ WorldPanel::WorldPanel(Project* p, QWidget* parent)
     auto* redoShortcut = new QShortcut(QKeySequence::Redo, this);
     redoShortcut->setContext(Qt::WidgetWithChildrenShortcut);
     connect(redoShortcut, &QShortcut::activated, mapCanvas, &WorldMapCanvasWidget::redo);
-
-    auto* footer = new QLabel(QStringLiteral("Wheel: zoom \u00b7 Ctrl+wheel: snap 1/2/4/8/16\u00d7 \u00b7 middle-drag: pan \u00b7 "
-                              "Keys 1-7: tool \u00b7 Ctrl+Z/Y: undo/redo \u00b7 "
-                              "Raise/Lower height or paint biome \u00b7 Add Location/Exit, then click \u00b7 "
-                              "Fit: show the whole world \u00b7 Save with Ctrl+S."), this);
-    footer->setStyleSheet("color: #8d98a3;");
-    layout->addWidget(footer);
 
     connect(mapCombo, &QComboBox::currentIndexChanged, this, [this](int index) {
         if (index >= 0) selectMap(mapCombo->itemData(index).toString().toStdString());
