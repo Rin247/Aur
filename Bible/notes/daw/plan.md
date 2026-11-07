@@ -1,6 +1,9 @@
 # DAW: plan
 
-Status: P3 closed-out; P4.1 MIDI fidelity landed (`f1420e3`); P6.1 first-class clips landed (`7d0b8da`). Next: P4 remainder (record count-in, SysEx input), P5 piano roll (lane editor), or P6 remainder (launch quantisation, arrangement timeline). MD/SNES cores awaited from owner's frontier model (WANTED.md).
+Status: P3 closed-out; P4.1 MIDI fidelity landed (`f1420e3`); P4.2/P4.3 device-layer
+timestamps, SysEx input and record count-in landed (`1146cf8`, `4f07f1b`). P6.1 clips
+landed (`7d0b8da`). Remaining open in P4: clip/arrangement export (lands with P6
+clips work). Next: P5 piano roll or P6 remainder.
 
 Master plan for the Music Studio DAW initiative, seeded from the owner-supplied
 gameplan and corrected by a source audit on 2026-11-06. One note file per major
@@ -187,9 +190,16 @@ Progress 2026-11-07:
       (track["automation"][{cc,points:[{step,value}]}]; bend=128,
       pressure=129), full export/import round-trip tests incl. a hand-built
       synthetic MIDI file — `daw-p4.1` (`f1420e3`), suite 35/35.
-- [ ] Remaining: MIDI record with count-in (needs the PianoRollCanvas record
-      path), SysEx *input* via MidiDeviceIo, timestamps in the device layer,
-      clip/arrangement export (lands with P6 clips).
+- [x] P4.2 device layer: input timestamps (`messageReceived(msg, timestampMs)`
+      from MIM_DATA's ms stamp), SysEx input via four prepared 4 KiB
+      MIM_LONGDATA buffers recycled after delivery (`sysExReceived(data, ms)`
+      signal, buffers re-queued on MidiDeviceIo), record count-in in
+      MidiSession (`setCountInBars`, recordStep offset past the count-in,
+      realtime events dropped during count-in, status shows remaining
+      seconds) — `daw-p4.2` (`1146cf8`), suite 36/36.
+- [x] P4.3 MusicPanel count-in control (QSpinBox 0–8 bars, default 1, applied
+      on record arm) — `daw-p4.3` (`4f07f1b`).
+- [ ] Remaining: clip/arrangement export (lands with P6 clips).
 
 ### P5 Piano roll
 

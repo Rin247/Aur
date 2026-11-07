@@ -145,3 +145,20 @@ Settled with evidence before code; each entry dated. Amend rather than argue.
   renamed the `aur_studio` target to `aur_tests` mid-session; restored
   immediately and verified (Studio still builds). Lesson: edit target
   blocks by their full header text, never a bare `add_executable(` anchor.
+- **2026-11-07 — P4.2 device-layer contract.** `MidiDeviceIo::messageReceived`
+  now carries the WinMM millisecond timestamp (`quint32 msg, qint64 ms`), and a
+  new `sysExReceived(QByteArray, qint64 ms)` delivers MIM_LONGDATA. SysEx uses
+  four prepared 4 KiB buffers recycled with `midiInAddBuffer` inside the
+  callback (the standard WinMM pattern); buffers are prepared on `openInput`
+  and unprepared on `closeInput`. `MidiSession` forwards SysEx to the panel
+  via a same-named signal — no SysEx consumer yet; the recording path
+  (capture into a track lane) is deliberately deferred until an editor needs
+  it. Callers that connect to `messageReceived` with a one-argument lambda
+  still compile (Qt connects by argument count).
+- **2026-11-07 — Count-in model.** Count-in lives in `MidiSession`, not the
+  device layer: `setCountInBars(n)` sets `countInEndMs = n·4·60000/bpm` at the
+  fixed kDefaultBpm (120) matching the existing `recordStep` mapping.
+  `recordStep()` subtracts the count-in span, so recorded steps stay
+  bar-aligned at 0; events arriving during count-in are dropped rather than
+  buffered (the clock baseline only becomes valid once count-in ends).
+  MusicPanel exposes a 0–8-bar spinbox (default 1) applied on arm.

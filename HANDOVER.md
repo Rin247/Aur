@@ -12,6 +12,12 @@ headless Null only under RHI_POLICY_HEADLESS=1. See C:\Projects\POLICY.md.
   undoable track props via the fixed `begin_track_edit`/`commit_track_change` snapshot
   model), per-note velocity (Alt+drag, velocity-shaded) + `SongDocument::note_velocity/
   note_props/set_note_prop/clear_note_props` with tests.
+- P4.2 (`1146cf8`) + P4.3 (`4f07f1b`) landed 2026-11-07: device-layer input
+  timestamps, SysEx input (4×4 KiB recycled MIM_LONGDATA buffers,
+  `sysExReceived` signal forwarded by MidiSession), record count-in
+  (0–8-bar control in the MIDI bar; `recordStep` offsets past the count-in,
+  events during count-in dropped). Remaining in P4: clip/arrangement export
+  (deferred to P6).
 - P4.1 (`f1420e3`): lossless MIDI — every tempo/T.S. meta into v2 maps, markers, CC
   lanes, pitch bend + aftertouch as automation lanes (`{cc,points}`, bend=128,
   pressure=129), full round-trip tests incl. a synthetic MIDI file.
@@ -19,10 +25,9 @@ headless Null only under RHI_POLICY_HEADLESS=1. See C:\Projects\POLICY.md.
   the v1 `{notes}` clip shape, `SongDocument::clip_at/_mut/clip_info/set_clip_info`,
   session grid shows clip name/bars/notes, `test_song_clips.cpp`. Decision recorded in
   daw/decisions.md; suite 36/36.
-- Next in daw plan: P4 remainder (record count-in, SysEx input via MidiDeviceIo),
-  P5 piano roll (lane editor UI — lane edits must use the TrackProps undo path, see
-  NOTES), P6 remainder (launch quantisation, arrangement timeline). P2 close still
-  needs the owner GUI soak.
+- Next in daw plan: P5 piano roll (lane editor UI — lane edits must use the
+  TrackProps undo path, see NOTES), P6 remainder (launch quantisation,
+  arrangement timeline, clip export). P2 close still needs the owner GUI soak.
 - MD/SNES synth cores (`YmFmCore`, `SnesPcmCore`/`BrrCodec`/`SnesEcho`) expected from
   the owner's frontier model as portable C++20 drops under `engine/aur/audio/`; the
   integration spec is in WANTED.md. On delivery: keep files <400 lines, add golden
