@@ -19,7 +19,7 @@ Agents decide and continue; they do not ask for decisions already inferable from
 
 ## Housekeeping (estate rule)
 
-Implementation files go in `src/`, headers in `include/`, tests in `tests/`. No stray files in module or project roots. Agents clean up misplaced files they create in the same pass.
+Implementation files and their headers are co-located in the same directory (e.g. `studio/world/foo.cpp` beside `studio/world/foo.h`); tests in `tests/`. Do not split into separate `src/` and `include/` trees for new code. No stray files in module or project roots. Agents clean up misplaced files they create in the same pass.
 
 > Dirty working trees are treated as non-dirty: commit and push them (use --no-verify if comment-bloat hooks block), and note any deferred comment cleanup in HANDOVER.md.
 
@@ -48,6 +48,8 @@ Implementation files go in `src/`, headers in `include/`, tests in `tests/`. No 
 > `WANTED.md` is a living document, not a frozen record; update it as work progresses.
 
 > No command, test or script may hang: every command uses an explicit timeout, exit codes are verified (0 is not a pass if the process was killed or timed out), and scripts exit on their own with no unguarded `pause`. See QUIRKS.md §34 and §45.
+
+> Headers and implementation are co-located in the same directory (e.g. `studio/world/foo.cpp` beside `studio/world/foo.h`); do not split into separate `src/` and `include/` trees for new code.
 
 > `vswhere.exe` is not on PATH; call it by absolute path `C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe`.
 
