@@ -48,6 +48,10 @@ namespace aur
             // command boundary, not mid-callback.
             void loadSong(const Json &song);
 
+            // GUI thread: queue one audition note at the current frame.
+            // Applied at the command boundary; ignored when idle-safe.
+            void audition(int pitch, int velocity = 90, int lengthSteps = 2);
+
             // Audio thread: fill interleaved stereo frames. No locks, no allocation.
             void render(float *out, int frames);
 
@@ -67,6 +71,7 @@ namespace aur
             std::mutex songMutex; // held by loadSong only
             Json pendingSong;     // swapped under mutex
             bool pending = false;
+            std::vector<Voice> pendingAuditions; // applied at command boundary
 
             // Audio-thread state (touched only inside render / command boundary).
             std::deque<Voice> voices;

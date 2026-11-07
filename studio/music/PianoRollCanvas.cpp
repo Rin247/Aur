@@ -1,9 +1,12 @@
 #include "PianoRollCanvas.hpp"
 
+#include "QtAudioOutput.hpp"
+
 #include <QKeyEvent>
 #include <QMouseEvent>
 #include <QPainter>
 #include <QResizeEvent>
+#include <QTimer>
 
 #include <algorithm>
 #include <cmath>
@@ -28,6 +31,10 @@ namespace aur
     {
         setMinimumSize(keyWidth + minimumStepCount * stepWidth, pitchCount * pitchHeight);
         setFocusPolicy(Qt::StrongFocus);
+        auto *playheadTimer = new QTimer(this);
+        connect(playheadTimer, &QTimer::timeout, this,
+                [this]() { updatePlayhead(); });
+        playheadTimer->start(33);
     }
 
     void PianoRollCanvasWidget::setHistory(editor::SongHistory *value)
@@ -342,6 +349,25 @@ namespace aur
         notifySongChanged();
     }
 
+    void PianoRollCanvasWidget::updatePlayhead()
+    {
+        int step = -1;
+        if (playheadFrames && playheadBpm && playheadActive &&
+            playheadActive->load(std::memory_order_relaxed))
+        {
+            const std::int64_t frames = playheadFrames->load(std::memory_order_relaxed);
+            const int bpm = std::max(1, playheadBpm->load(std::memory_order_relaxed));
+            const double seconds = static_cast<double>(frames) /
+                                   audio::QtAudioOutput::kSampleRate;
+            step = static_cast<int>(seconds * bpm * 4.0 / 60.0);
+        }
+        if (step != playheadStep)
+        {
+            playheadStep = step;
+            update();
+        }
+    }
+
     void PianoRollCanvasWidget::notifySongChanged()
     {
         if (onSongChanged)
@@ -452,6 +478,15 @@ namespace aur
             painter.setBrush(QColor(138, 180, 248, 30));
             painter.drawRect(marqueeRect);
         }
+        if (playheadStep >= 0)
+        {
+            const int px = keyWidth + (playheadStep - firstVisibleStep) * stepWidth;
+            if (px >= keyWidth)
+            {
+                painter.setPen(QPen(QColor("#f0bd58"), 1));
+                painter.drawLine(px, 0, px, height());
+            }
+        }
     }
 
     void PianoRollCanvasWidget::mousePressEvent(QMouseEvent *event)
@@ -492,6 +527,8 @@ namespace aur
                 if (history)
                     history->begin_note_edit(song, trackIndex);
                 JsonArray note{snapped(step), pitch, 4, 90};
+                if (auditionHook)
+                    auditionHook(pitch, 90);
                 JsonArray &notes =
                     song["tracks"][static_cast<size_t>(trackIndex)]["notes"].as_array();
                 notes.push_back(Json(std::move(note)));

@@ -788,6 +788,12 @@ MusicPanel::MusicPanel(Project* p, QWidget* parent)
 
     pianoRoll->setChangeCallback([this](const Json& song) { saveCurrentSong(song); });
     pianoRoll->setHistory(&songHistory);
+    pianoRoll->attachPlayhead(&audioOutput->getMixer().playheadFrames,
+                              &audioOutput->getMixer().playheadBpm,
+                              &audioOutput->getMixer().playheadActive);
+    pianoRoll->setAuditionHook([this](int pitch, int velocity) {
+        audioOutput->getMixer().audition(pitch, velocity, 2);
+    });
     connect(pianoRoll, &PianoRollCanvasWidget::historyChanged, this, [this]() {
         emit undoStateChanged(pianoRoll && pianoRoll->canUndo(),
                               pianoRoll && pianoRoll->canRedo());

@@ -35,6 +35,18 @@ namespace aur
         void redo();
         bool canUndo() const;
         bool canRedo() const;
+        void attachPlayhead(const std::atomic<std::int64_t> *frames,
+                            const std::atomic<int> *bpm,
+                            const std::atomic<bool> *active)
+        {
+            playheadFrames = frames;
+            playheadBpm = bpm;
+            playheadActive = active;
+        }
+        void setAuditionHook(std::function<void(int pitch, int velocity)> hook)
+        {
+            auditionHook = std::move(hook);
+        }
         void setSnapSteps(int steps) { snapSteps = steps; update(); }
         int snap() const { return snapSteps; }
 
@@ -75,6 +87,11 @@ namespace aur
         bool velocityDrag = false; // Alt+drag: vertical drag adjusts velocity
         int dragOriginVelocity = 90;
         int snapSteps = 1; // 0 off, 1/2/4 steps, 5 = triplet (16/3)
+        const std::atomic<std::int64_t> *playheadFrames = nullptr;
+        const std::atomic<int> *playheadBpm = nullptr;
+        const std::atomic<bool> *playheadActive = nullptr;
+        std::function<void(int pitch, int velocity)> auditionHook;
+        int playheadStep = -1;
         editor::SongHistory *history = nullptr;
         std::function<void(const Json &)> onSongChanged;
 
@@ -83,6 +100,7 @@ namespace aur
         int snapped(int step) const;
         void cycleSnap();
         void quantiseSelection();
+        void updatePlayhead();
         void selectOnly(int index);
         void deleteSelected(const char *label);
         void copySelected();

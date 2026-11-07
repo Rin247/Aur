@@ -37,6 +37,23 @@ namespace aur
             pending = true;
         }
 
+        void RealtimeMixer::audition(int pitch, int velocity, int lengthSteps)
+        {
+            Voice voice;
+            voice.pitch = std::clamp(pitch, 0, 127);
+            voice.frequency = 440.0 * std::pow(2.0, (voice.pitch - 69) / 12.0);
+            voice.amplitude = 0.14 * std::clamp(velocity, 0, 127) / 127.0;
+            voice.pan = 0.5;
+            voice.program = 0;
+            voice.drum = false;
+            std::lock_guard<std::mutex> lock(songMutex);
+            // start/end resolved against frameCounter at the command boundary;
+            // store the requested length in steps via end-start for now.
+            voice.start = 0;
+            voice.end = std::max(1, lengthSteps);
+            pendingAuditions.push_back(voice);
+        }
+
         void RealtimeMixer::schedule(const Json &song, std::int64_t baseFrame)
         {
             voices.clear();
@@ -106,6 +123,20 @@ namespace aur
                     pending = false;
                 }
                 schedule(song, frameCounter);
+            }
+            if (!pendingAuditions.empty())
+            {
+                const double auditionFramesPerStep = sampleRate * 60.0 / (bpm * 4.0);
+                for (Voice &a : pendingAuditions)
+                {
+                    Voice v = a;
+                    const std::int64_t length =
+                        static_cast<std::int64_t>(v.end * auditionFramesPerStep);
+                    v.start = frameCounter + frames; // next callback
+                    v.end = v.start + length;
+                    upcoming.push_back(v);
+                }
+                pendingAuditions.clear();
             }
 
             const double framesPerStep = sampleRate * 60.0 / (bpm * 4.0);
