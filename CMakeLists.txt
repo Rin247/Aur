@@ -136,6 +136,7 @@ add_executable(aur_tests
     tests/test_song_v1.cpp
     tests/test_song_v2.cpp
     tests/test_song_history.cpp
+    tests/test_song_clips.cpp
     studio/SongHistory.cpp
     studio/world/HdSurface.cpp
     studio/world/WorldMapHelpers.cpp

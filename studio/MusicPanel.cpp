@@ -2,6 +2,7 @@
 #include "music/SongLibrary.hpp"
 #include "aur/audio/midi.hpp"
 #include "aur/audio/synth.hpp"
+#include "aur/audio/SongDocument.hpp"
 
 #include <QFile>
 #include <QFileDialog>
@@ -239,8 +240,15 @@ namespace aur
                 const int noteCount = hasClip && clip.contains("notes") && clip["notes"].is_array()
                                           ? static_cast<int>(clip["notes"].as_array().size())
                                           : 0;
+                const audio::SongDocument::ClipInfo clipInfo =
+                    hasClip ? audio::SongDocument::clip_info(clip, trackNames[row].toStdString())
+                            : audio::SongDocument::ClipInfo{};
                 auto *button = new QPushButton(
-                    hasClip ? QString("●  %1 notes").arg(noteCount) : QString("+"),
+                    hasClip ? QString("●  %1\n%2 · %3")
+                                  .arg(QString::fromStdString(clipInfo.name))
+                                  .arg(clipInfo.length / 16)
+                                  .arg(noteCount)
+                            : QString("+"),
                     sessionGrid);
                 button->setMinimumHeight(52);
                 const bool active = activeScene == column && hasClip;
@@ -285,6 +293,13 @@ namespace aur
             const Json &track = (*song)["tracks"][static_cast<size_t>(trackIndex)];
             JsonArray clipNotes = music::notesForBar(track, sceneIndex);
             clip = JsonObject{{"notes", clipNotes}};
+            const std::string clipName =
+                (track.contains("name") && track["name"].is_string()
+                     ? track["name"].as_string()
+                     : "Track " + std::to_string(trackIndex + 1)) +
+                " · " + std::to_string(sceneIndex + 1);
+            audio::SongDocument::set_clip_info(
+                clip, audio::SongDocument::ClipInfo{clipName, 0, 16, false, -1});
             selectedScene = sceneIndex;
             activeScene = -1;
         }

@@ -55,6 +55,22 @@ namespace aur::audio
         static void set_note_prop(Json &note, const char *key, int value);
         static void clear_note_props(Json &note);
 
+        // First-class clips (P6). A clip is scenes[n].clips[track] with additive
+        // fields over the v1 {notes} shape: name, start, length, muted, color.
+        // Accessors supply v1 defaults; setters keep the object shape stable.
+        struct ClipInfo
+        {
+            std::string name;
+            int start = 0;
+            int length = 16;
+            bool muted = false;
+            int color = -1;
+        };
+        static const Json *clip_at(const Json &song, int sceneIndex, int trackIndex);
+        static Json *clip_at_mut(Json &song, int sceneIndex, int trackIndex);
+        static ClipInfo clip_info(const Json &clip, const std::string &fallbackName);
+        static void set_clip_info(Json &clip, const ClipInfo &info);
+
     private:
         struct MapPoint
         {

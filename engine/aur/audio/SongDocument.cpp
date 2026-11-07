@@ -288,5 +288,67 @@ namespace aur
             note.as_array().erase(note.as_array().begin() + 4);
         }
 
+        const Json *SongDocument::clip_at(const Json &song, int sceneIndex,
+                                          int trackIndex)
+        {
+            if (sceneIndex < 0 || trackIndex < 0 || !song.contains("scenes") ||
+                !song["scenes"].is_array() ||
+                sceneIndex >= static_cast<int>(song["scenes"].as_array().size()))
+                return nullptr;
+            const Json &scene = song["scenes"][static_cast<size_t>(sceneIndex)];
+            if (!scene.contains("clips") || !scene["clips"].is_array() ||
+                trackIndex >= static_cast<int>(scene["clips"].as_array().size()))
+                return nullptr;
+            const Json &clip = scene["clips"][static_cast<size_t>(trackIndex)];
+            return clip.is_object() ? &clip : nullptr;
+        }
+
+        Json *SongDocument::clip_at_mut(Json &song, int sceneIndex, int trackIndex)
+        {
+            if (sceneIndex < 0 || trackIndex < 0 || !song.contains("scenes") ||
+                !song["scenes"].is_array() ||
+                sceneIndex >= static_cast<int>(song["scenes"].as_array().size()))
+                return nullptr;
+            Json &scene = song["scenes"][static_cast<size_t>(sceneIndex)];
+            if (!scene.contains("clips") || !scene["clips"].is_array() ||
+                trackIndex >= static_cast<int>(scene["clips"].as_array().size()))
+                return nullptr;
+            Json &clip = scene["clips"][static_cast<size_t>(trackIndex)];
+            return clip.is_object() ? &clip : nullptr;
+        }
+
+        SongDocument::ClipInfo SongDocument::clip_info(const Json &clip,
+                                                       const std::string &fallbackName)
+        {
+            ClipInfo info;
+            info.name = fallbackName;
+            if (!clip.is_object())
+                return info;
+            if (clip.contains("name") && clip["name"].is_string() &&
+                !clip["name"].as_string().empty())
+                info.name = clip["name"].as_string();
+            if (clip.contains("start") && clip["start"].is_number())
+                info.start = std::max(0, clip["start"].as_int());
+            if (clip.contains("length") && clip["length"].is_number())
+                info.length = std::clamp(clip["length"].as_int(), 1, 2048);
+            if (clip.contains("muted") && clip["muted"].is_bool())
+                info.muted = clip["muted"].as_bool();
+            if (clip.contains("color") && clip["color"].is_number())
+                info.color = clip["color"].as_int();
+            return info;
+        }
+
+        void SongDocument::set_clip_info(Json &clip, const ClipInfo &info)
+        {
+            if (!clip.is_object())
+                return;
+            clip["name"] = info.name;
+            clip["start"] = std::max(0, info.start);
+            clip["length"] = std::clamp(info.length, 1, 2048);
+            clip["muted"] = info.muted;
+            if (info.color >= 0)
+                clip["color"] = info.color;
+        }
+
     } // namespace audio
 } // namespace aur
