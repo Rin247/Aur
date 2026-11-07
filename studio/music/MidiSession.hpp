@@ -6,6 +6,7 @@
 #include <QPushButton>
 #include <QString>
 #include <QTimer>
+#include <atomic>
 #include <map>
 #include <vector>
 #include "MidiDeviceIo.hpp"
@@ -37,6 +38,18 @@ namespace aur
         ~MidiSession() override;
 
         MidiDeviceIo &devices() { return midiDevices; }
+
+        // Clock source for playback scheduling. When attached, event timing
+        // derives from the mixer's sample clock instead of a wall timer, so
+        // hardware MIDI stays in sync with what is heard.
+        void attachClock(const std::atomic<std::int64_t> *frames,
+                         const std::atomic<int> *bpm,
+                         const std::atomic<bool> *active)
+        {
+            playheadFrames = frames;
+            playheadBpm = bpm;
+            playheadActive = active;
+        }
 
         void refreshDevices(QComboBox *inputCombo, QComboBox *outputCombo);
         void toggleInput(QComboBox *inputCombo, QPushButton *inputButton);
@@ -81,6 +94,12 @@ namespace aur
         QString midiOutputSongId;
         QString recordSongId;
         int selectedTrack = -1;
+        // External sample-clock source (owned by the mixer); null = wall timer.
+        const std::atomic<std::int64_t> *playheadFrames = nullptr;
+        const std::atomic<int> *playheadBpm = nullptr;
+        const std::atomic<bool> *playheadActive = nullptr;
+        std::int64_t clockAnchorFrames = 0; // mixer frame when playback began
+        std::vector<MidiPlaybackEvent> pendingHardwareEvents; // sorted by timeMs
     };
 
 } // namespace aur

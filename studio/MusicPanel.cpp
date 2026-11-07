@@ -360,8 +360,9 @@ namespace aur
         }
 
         stopPreview();
+        audioOutput->getMixer().resetPlayback();
         audioOutput->getMixer().loadSong(*selectedSong);
-        audioOutput->start(44100);
+        audioOutput->start(audio::QtAudioOutput::kSampleRate);
         midiSession->startOutput(*selectedSong, currentSongId);
     }
 
@@ -492,6 +493,9 @@ MusicPanel::MusicPanel(Project* p, QWidget* parent)
     : QWidget(parent), project(p) {
     audioOutput = new audio::QtAudioOutput(this);
     midiSession = new MidiSession(this);
+    midiSession->attachClock(&audioOutput->getMixer().playheadFrames,
+                             &audioOutput->getMixer().playheadBpm,
+                             &audioOutput->getMixer().playheadActive);
     connect(midiSession, &MidiSession::noteRecorded, this,
             [this](const QString& songId, int trackIndex, int startStep,
                    int pitch, int length, int velocity) {

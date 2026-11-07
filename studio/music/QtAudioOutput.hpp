@@ -19,6 +19,8 @@ namespace aur
         {
             Q_OBJECT
         public:
+            static constexpr int kSampleRate = 44100;
+
             explicit QtAudioOutput(QObject *parent = nullptr);
             ~QtAudioOutput() override;
 

@@ -1,4 +1,5 @@
 #include "MidiSession.hpp"
+#include "QtAudioOutput.hpp"
 
 #include <QComboBox>
 #include <QElapsedTimer>
@@ -15,6 +16,8 @@ namespace aur
     namespace
     {
         constexpr int kDefaultBpm = 120;
+        constexpr int kMixerSampleRate = audio::QtAudioOutput::kSampleRate;
+        constexpr double framesPerSecond = kMixerSampleRate;
 
         int clampedInt(const Json &value, int fallback, int low, int high)
         {
@@ -223,6 +226,10 @@ namespace aur
         midiPlaybackIteration = 0;
         nextMidiPlaybackEvent = 0;
         midiOutputFailureShown = false;
+        if (playheadFrames)
+            clockAnchorFrames = playheadFrames->load(std::memory_order_relaxed);
+        else
+            midiPlaybackClock.start();
         const int bpm = clampedField(song, "tempo", kDefaultBpm, 30, 240);
         const double millisecondsPerStep = 60000.0 / (bpm * 4.0);
         int totalSteps = clampedField(song, "bars", 8, 1, 128) * 16;
@@ -290,7 +297,24 @@ namespace aur
             midiOutputTimer->stop();
             return;
         }
-        const qint64 now = midiPlaybackClock.elapsed();
+        qint64 now;
+        if (playheadFrames && playheadBpm && playheadActive)
+        {
+            if (!playheadActive->load(std::memory_order_relaxed))
+                return; // audio not running yet; hold MIDI until it starts
+            const std::int64_t elapsedFrames =
+                playheadFrames->load(std::memory_order_relaxed) - clockAnchorFrames;
+            if (elapsedFrames < 0)
+                return;
+            const int bpm = playheadBpm->load(std::memory_order_relaxed);
+            now = qRound64(elapsedFrames * 60000.0 /
+                           (static_cast<double>(bpm) * 4.0 *
+                            framesPerSecond));
+        }
+        else
+        {
+            now = midiPlaybackClock.elapsed();
+        }
         while (true)
         {
             if (nextMidiPlaybackEvent >= midiPlaybackEvents.size())

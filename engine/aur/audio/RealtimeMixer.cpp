@@ -177,6 +177,9 @@ namespace aur
             }
             levelLeft.store(peakLeft, std::memory_order_relaxed);
             levelRight.store(peakRight, std::memory_order_relaxed);
+            playheadFrames.store(frameCounter, std::memory_order_relaxed);
+            playheadBpm.store(bpm, std::memory_order_relaxed);
+            playheadActive.store(true, std::memory_order_relaxed);
         }
 
     } // namespace audio

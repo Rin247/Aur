@@ -19,6 +19,7 @@
 #include "music/MidiSession.hpp"
 #include "music/PianoRollCanvas.hpp"
 #include "music/QtAudioOutput.hpp"
+#include "aur/audio/RealtimeMixer.hpp"
 #include "aur/project.hpp"
 
 namespace aur

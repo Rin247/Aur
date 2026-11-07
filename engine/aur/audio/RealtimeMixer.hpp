@@ -32,6 +32,18 @@ namespace aur
             void setSampleRate(int rate) { sampleRate = rate; }
             int getSampleRate() const { return sampleRate; }
 
+            // GUI thread: rewind the playhead and clear all scheduled audio.
+            // Call before loadSong for a fresh playback, or to stop.
+            void resetPlayback()
+            {
+                frameCounter = 0;
+                nextWrapFrame = 0;
+                voices.clear();
+                upcoming.clear();
+                playheadFrames.store(0, std::memory_order_relaxed);
+                playheadActive.store(false, std::memory_order_relaxed);
+            }
+
             // GUI thread: replace the playing song. Takes effect at the next
             // command boundary, not mid-callback.
             void loadSong(const Json &song);
@@ -39,8 +51,13 @@ namespace aur
             // Audio thread: fill interleaved stereo frames. No locks, no allocation.
             void render(float *out, int frames);
 
-            std::atomic<double> levelLeft{0.0}; // meter, peak over last callback
+            std::atomic<double> levelLeft{0.0};  // meter, peak over last callback
             std::atomic<double> levelRight{0.0};
+            // Monotonic playback position in frames, updated after each
+            // callback fill; external clocks (MIDI out) sync to this.
+            std::atomic<std::int64_t> playheadFrames{0};
+            std::atomic<int> playheadBpm{120};
+            std::atomic<bool> playheadActive{false};
 
         private:
             void schedule(const Json &song, std::int64_t baseFrame);
