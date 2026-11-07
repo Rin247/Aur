@@ -288,6 +288,132 @@ namespace aur
             note.as_array().erase(note.as_array().begin() + 4);
         }
 
+        const Json *SongDocument::lane_at(const Json &track, int lane)
+        {
+            if (!track.contains("automation") || !track["automation"].is_array())
+                return nullptr;
+            for (const Json &entry : track["automation"].as_array())
+            {
+                if (entry.is_object() && entry.contains("cc") &&
+                    entry["cc"].is_number() && entry["cc"].as_int() == lane)
+                    return &entry;
+            }
+            return nullptr;
+        }
+
+        Json *SongDocument::lane_at_mut(Json &track, int lane)
+        {
+            if (!track.contains("automation") || !track["automation"].is_array())
+                return nullptr;
+            for (Json &entry : track["automation"].as_array())
+            {
+                if (entry.is_object() && entry.contains("cc") &&
+                    entry["cc"].is_number() && entry["cc"].as_int() == lane)
+                    return &entry;
+            }
+            return nullptr;
+        }
+
+        Json *SongDocument::create_lane(Json &track, int lane)
+        {
+            if (Json *existing = lane_at_mut(track, lane))
+                return existing;
+            if (!track.is_object())
+                return nullptr;
+            if (!track.contains("automation") || !track["automation"].is_array())
+                track["automation"] = JsonArray{};
+            track["automation"].as_array().push_back(
+                Json(JsonObject{{"cc", lane}, {"points", JsonArray{}}}));
+            return &track["automation"].as_array().back();
+        }
+
+        std::vector<SongDocument::LanePoint> SongDocument::lane_points(const Json &track,
+                                                                      int lane)
+        {
+            std::vector<LanePoint> points;
+            const Json *entry = lane_at(track, lane);
+            if (!entry || !entry->contains("points") || !(*entry)["points"].is_array())
+                return points;
+            for (const Json &point : (*entry)["points"].as_array())
+            {
+                if (!point.is_object() || !point.contains("step") ||
+                    !point.contains("value"))
+                    continue;
+                LanePoint p{0, 0};
+                p.step = point["step"].is_number() ? point["step"].as_int() : 0;
+                p.value = point["value"].is_number() ? point["value"].as_int() : 0;
+                points.push_back(p);
+            }
+            std::stable_sort(points.begin(), points.end(),
+                             [](const LanePoint &a, const LanePoint &b)
+                             { return a.step < b.step; });
+            return points;
+        }
+
+        void SongDocument::set_lane_point(Json &track, int lane, int step, int value)
+        {
+            Json *entry = lane_at_mut(track, lane);
+            if (!entry)
+                entry = create_lane(track, lane);
+            if (!entry)
+                return;
+            if (!entry->contains("points") || !(*entry)["points"].is_array())
+                (*entry)["points"] = JsonArray{};
+            JsonArray &points = (*entry)["points"].as_array();
+            for (Json &point : points)
+            {
+                if (point.is_object() && point.contains("step") &&
+                    point["step"].is_number() && point["step"].as_int() == step)
+                {
+                    point["value"] = std::clamp(value, 0, 127);
+                    return;
+                }
+            }
+            points.push_back(Json(JsonObject{{"step", std::max(0, step)},
+                                             {"value", std::clamp(value, 0, 127)}}));
+            std::stable_sort(points.begin(), points.end(),
+                             [](const Json &a, const Json &b)
+                             {
+                                 const int sa = a.is_object() && a.contains("step") &&
+                                                        a["step"].is_number()
+                                                    ? a["step"].as_int() : 0;
+                                 const int sb = b.is_object() && b.contains("step") &&
+                                                        b["step"].is_number()
+                                                    ? b["step"].as_int() : 0;
+                                 return sa < sb;
+                             });
+        }
+
+        void SongDocument::clear_lane_point(Json &track, int lane, int step)
+        {
+            Json *entry = lane_at_mut(track, lane);
+            if (!entry || !entry->contains("points") || !(*entry)["points"].is_array())
+                return;
+            JsonArray &points = (*entry)["points"].as_array();
+            points.erase(std::remove_if(points.begin(), points.end(),
+                                        [step](const Json &point)
+                                        {
+                                            return point.is_object() &&
+                                                   point.contains("step") &&
+                                                   point["step"].is_number() &&
+                                                   point["step"].as_int() == step;
+                                        }),
+                         points.end());
+        }
+
+        int SongDocument::lane_value_at(const Json &track, int lane, int step, int fallback)
+        {
+            const std::vector<LanePoint> points = lane_points(track, lane);
+            int value = fallback;
+            for (const LanePoint &p : points)
+            {
+                if (p.step > step)
+                    break;
+                value = p.value;
+            }
+            return value;
+        }
+
         const Json *SongDocument::clip_at(const Json &song, int sceneIndex,
                                           int trackIndex)
         {

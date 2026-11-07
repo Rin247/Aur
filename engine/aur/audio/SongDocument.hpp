@@ -55,6 +55,20 @@ namespace aur::audio
         static void set_note_prop(Json &note, const char *key, int value);
         static void clear_note_props(Json &note);
 
+        // Automation lanes (P5). track["automation"] = [{cc, points:[{step,value}]}]
+        // with bend = 128 and channel pressure = 129 (the P4.1 MIDI contract).
+        // Accessors never create lanes implicitly; set_lane_point/create_lane do.
+        static constexpr int kLaneBend = 128;
+        static constexpr int kLanePressure = 129;
+        struct LanePoint { int step; int value; };
+        static const Json *lane_at(const Json &track, int lane);
+        static Json *lane_at_mut(Json &track, int lane);
+        static Json *create_lane(Json &track, int lane);
+        static std::vector<LanePoint> lane_points(const Json &track, int lane);
+        static void set_lane_point(Json &track, int lane, int step, int value);
+        static void clear_lane_point(Json &track, int lane, int step);
+        static int lane_value_at(const Json &track, int lane, int step, int fallback);
+
         // First-class clips (P6). A clip is scenes[n].clips[track] with additive
         // fields over the v1 {notes} shape: name, start, length, muted, color.
         // Accessors supply v1 defaults; setters keep the object shape stable.
