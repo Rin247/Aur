@@ -51,7 +51,7 @@ Implementation files and their headers are co-located in the same directory (e.g
 
 > Headers and implementation are co-located in the same directory (e.g. `studio/world/foo.cpp` beside `studio/world/foo.h`); do not split into separate `src/` and `include/` trees for new code.
 
-> Toolbars must be functional and professional: they reflow or collapse on resize, never clip buttons, and every action is reachable. Hotkey support is required for apps that need it, so a heavy keyboard user (and an agent/harness) can navigate the whole app without a mouse.
+> If an agent or harness cannot complete a task because the UI requires a mouse or controller, that is a defect: toolbars, dropdowns, buttons, and menus must be keyboard-navigable, reflow or collapse on resize without clipping, and every action reachable without a pointer. Hotkey support is required for apps that need it.
 
 > `vswhere.exe` is not on PATH; call it by absolute path `C:\Program Files (x86)\Microsoft Visual Studio\Installer\vswhere.exe`.
 
