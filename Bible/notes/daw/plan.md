@@ -228,12 +228,23 @@ Progress 2026-11-07:
       `daw-p5.3+p5.4` (`70113b3`), suite 37/37. Note creation moved to
       Shift+click (plain click on empty grid now marquees); documented in
       the piano-hint label update that follows in the UI pass.
-- [ ] P5.5 snap grid incl. triplets + quantise command (undoable).
-- [ ] P5.6 playhead overlay driven by the mixer playhead atomics + audition
-      note on click (short offline render through the current synth).
-- [ ] P5.7 zoom control (swept as a control, never as an axis) + scale
-      highlight from a key/scale selector; full pitch range via vertical
-      scroll of the pitch window.
+- [x] P5.5 snap grid incl. triplets + quantise: Ctrl+G cycles off → 1/16 →
+      1/8 → 1/4 → triplet (bar thirds) → off, indicator painted top-right;
+      snapped() applies to note create and move; Ctrl+Q quantises the
+      selection to the current grid as one undoable NoteEdit —
+      `daw-p5.5` (`0927a76`).
+- [x] P5.6 playhead overlay + audition: PianoRollCanvasWidget::
+      attachPlayhead reads the mixer's playheadFrames/Bpm/Active atomics on a
+      33 ms QTimer and draws a step-positioned line; RealtimeMixer::audition
+      queues a one-note Voice applied at the render command boundary, wired
+      to note-create clicks — `daw-p5.6` (`88410f8`).
+- [x] P5.7 zoom + pitch window: Ctrl+wheel stepped zoom levels
+      (8/12/16/24/32/48 px per step, zoom swept as a control, never an
+      axis), full MIDI pitch range 12–107 with plain-wheel pitch-window
+      scrolling via pitchOffsetRows; stepWidth() accessor keeps the scroll
+      mapping correct at every zoom — `daw-p5.7` (`aead0a2`).
+- [ ] P5 remainder: stable note ids, scale highlight, key/scale selector,
+      duplicate/paste offsets snapping to the grid.
 
 ### P6 Session and arrangement
 

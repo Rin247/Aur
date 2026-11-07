@@ -26,7 +26,12 @@ headless Null only under RHI_POLICY_HEADLESS=1. See C:\Projects\POLICY.md.
   session grid shows clip name/bars/notes, `test_song_clips.cpp`. Decision recorded in
   daw/decisions.md; suite 36/36.
 - P5.3+P5.4 (`70113b3`): piano-roll marquee multi-select (plain drag on empty grid; Ctrl adds to selection), Ctrl+click toggles, group move/resize/velocity-drag over `dragOrigins` snapshots, Delete removes the selection in one undoable NoteEdit; Shift+click now creates notes (plain click marquees). Copy/paste (Ctrl+C/V, pasted at relative offsets from the copied span's first step) and duplicate (Ctrl+D, appended one selection-span right). Suite 37/37; the piano hint label lists the bindings.
-- P5 remainder: snap incl. triplets + quantise (P5.5), playhead overlay + audition (P5.6), zoom + scale highlight + full pitch window (P5.7).
+- P5.5–P5.7 (`0927a76`, `88410f8`, `aead0a2`) landed 2026-11-07: snap grid incl.
+  triplets (Ctrl+G cycle, Ctrl+Q quantise on the selection), playhead overlay from
+  the mixer playhead atomics, RealtimeMixer::audition() for click preview, Ctrl+wheel
+  stepped zoom (8–48 px/step), full pitch range 12–107 with wheel pitch-window
+  scroll. Suite 37/37.
+- P5 remainder: stable note ids, scale highlight/key-scale selector.
 - Next in daw plan: P5 remainder, P6 remainder (launch quantisation,
   arrangement timeline, clip export). P2 close still needs the owner GUI soak.
 - MD/SNES synth cores (`YmFmCore`, `SnesPcmCore`/`BrrCodec`/`SnesEcho`) expected from
