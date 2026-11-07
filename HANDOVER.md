@@ -25,10 +25,8 @@ headless Null only under RHI_POLICY_HEADLESS=1. See C:\Projects\POLICY.md.
   the v1 `{notes}` clip shape, `SongDocument::clip_at/_mut/clip_info/set_clip_info`,
   session grid shows clip name/bars/notes, `test_song_clips.cpp`. Decision recorded in
   daw/decisions.md; suite 36/36.
-- P5.1 (`532de0b`) + P5.2 (`721e043`) landed 2026-11-07: automation lane
-  accessors in SongDocument + a velocity/CC/bend lane strip docked under the
-  piano roll, edits on the TrackProps undo path. Suite 37/37. Next in P5:
-  multi-select/marquee, copy/paste, snap/quantise, zoom, playhead, audition.
+- P5.3+P5.4 (`70113b3`): piano-roll marquee multi-select (plain drag on empty grid; Ctrl adds to selection), Ctrl+click toggles, group move/resize/velocity-drag over `dragOrigins` snapshots, Delete removes the selection in one undoable NoteEdit; Shift+click now creates notes (plain click marquees). Copy/paste (Ctrl+C/V, pasted at relative offsets from the copied span's first step) and duplicate (Ctrl+D, appended one selection-span right). Suite 37/37; the piano hint label lists the bindings.
+- P5 remainder: snap incl. triplets + quantise (P5.5), playhead overlay + audition (P5.6), zoom + scale highlight + full pitch window (P5.7).
 - Next in daw plan: P5 remainder, P6 remainder (launch quantisation,
   arrangement timeline, clip export). P2 close still needs the owner GUI soak.
 - MD/SNES synth cores (`YmFmCore`, `SnesPcmCore`/`BrrCodec`/`SnesEcho`) expected from

@@ -777,7 +777,7 @@ MusicPanel::MusicPanel(Project* p, QWidget* parent)
     });
     pianoLayout->addWidget(velocityStrip);
     auto* pianoHint = new QLabel(
-        "Piano Roll — click empty grid to add · drag to move or resize · right-click/Delete to remove · 16 steps per bar",
+        "Piano Roll — drag empty grid to marquee-select · Shift+click adds a note · drag to move/resize (Alt = velocity) · Ctrl+click toggles · Ctrl+C/V/D copies/pastes/duplicates · right-click or Delete removes",
         pianoPage);
     pianoHint->setStyleSheet("color: #aeb5c5; padding: 3px;");
     pianoLayout->addWidget(pianoHint);

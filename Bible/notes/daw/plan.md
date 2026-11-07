@@ -221,9 +221,13 @@ Progress 2026-11-07:
       signed/centred and clamp to ±8192; all edits go through
       `begin_track_edit`/`commit_track_change` per the P6.2 undo-path rule —
       `daw-p5.2` (`721e043`).
-- [ ] P5.3 marquee multi-select + move/resize of the selection, Delete on the
-      selection, per-note lane targeting for the velocity row.
-- [ ] P5.4 copy/paste (clipboard between tracks), duplicate (Ctrl+D).
+- [x] P5.3 + P5.4 marquee multi-select (drag on empty grid, Ctrl to add),
+      group move/resize/velocity-drag on the whole selection, Delete removes
+      all selected, Ctrl+click toggles, copy/paste (Ctrl+C/V, paste at step 0
+      of the copied span) and duplicate (Ctrl+D, appended one span right) —
+      `daw-p5.3+p5.4` (`70113b3`), suite 37/37. Note creation moved to
+      Shift+click (plain click on empty grid now marquees); documented in
+      the piano-hint label update that follows in the UI pass.
 - [ ] P5.5 snap grid incl. triplets + quantise command (undoable).
 - [ ] P5.6 playhead overlay driven by the mixer playhead atomics + audition
       note on click (short offline render through the current synth).
