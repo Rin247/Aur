@@ -534,5 +534,145 @@ namespace aur
                 clip["color"] = info.color;
         }
 
+        std::vector<SongDocument::Placement> SongDocument::placements(const Json &song)
+        {
+            std::vector<Placement> out;
+            if (!song.contains("arrangement") || !song["arrangement"].is_array())
+                return out;
+            for (const Json &p : song["arrangement"].as_array())
+            {
+                if (!p.is_object() || !p.contains("scene") || !p.contains("track") ||
+                    !p.contains("step") || !p["scene"].is_number() ||
+                    !p["track"].is_number() || !p["step"].is_number())
+                    continue;
+                Placement q;
+                q.scene = std::max(0, p["scene"].as_int());
+                q.track = std::max(0, p["track"].as_int());
+                q.step = std::max(0, p["step"].as_int());
+                q.length = p.contains("length") && p["length"].is_number()
+                               ? std::clamp(p["length"].as_int(), 1, 65536)
+                               : 16;
+                out.push_back(q);
+            }
+            std::stable_sort(out.begin(), out.end(),
+                             [](const Placement &a, const Placement &b)
+                             { return a.step < b.step; });
+            return out;
+        }
+
+        const Json *SongDocument::placement_at(const Json &song, int step, int track)
+        {
+            if (!song.contains("arrangement") || !song["arrangement"].is_array())
+                return nullptr;
+            for (const Json &p : song["arrangement"].as_array())
+            {
+                if (p.is_object() && p.contains("step") && p.contains("track") &&
+                    p["step"].is_number() && p["track"].is_number() &&
+                    p["step"].as_int() == step && p["track"].as_int() == track)
+                    return &p;
+            }
+            return nullptr;
+        }
+
+        Json *SongDocument::placement_at_mut(Json &song, int step, int track)
+        {
+            if (!song.contains("arrangement") || !song["arrangement"].is_array())
+                return nullptr;
+            for (Json &p : song["arrangement"].as_array())
+            {
+                if (p.is_object() && p.contains("step") && p.contains("track") &&
+                    p["step"].is_number() && p["track"].is_number() &&
+                    p["step"].as_int() == step && p["track"].as_int() == track)
+                    return &p;
+            }
+            return nullptr;
+        }
+
+        void SongDocument::add_placement(Json &song, const Placement &p)
+        {
+            if (!song.contains("arrangement") || !song["arrangement"].is_array())
+                song["arrangement"] = JsonArray{};
+            JsonArray &arr = song["arrangement"].as_array();
+            arr.emplace_back(JsonObject{{"scene", std::max(0, p.scene)},
+                                        {"track", std::max(0, p.track)},
+                                        {"step", std::max(0, p.step)},
+                                        {"length", std::clamp(p.length, 1, 65536)}});
+            std::stable_sort(arr.begin(), arr.end(),
+                             [](const Json &a, const Json &b)
+                             {
+                                 const int sa = a.contains("step") && a["step"].is_number()
+                                                    ? a["step"].as_int()
+                                                    : 0;
+                                 const int sb = b.contains("step") && b["step"].is_number()
+                                                    ? b["step"].as_int()
+                                                    : 0;
+                                 return sa < sb;
+                             });
+        }
+
+        void SongDocument::remove_placement(Json &song, int step, int track)
+        {
+            if (!song.contains("arrangement") || !song["arrangement"].is_array())
+                return;
+            JsonArray &arr = song["arrangement"].as_array();
+            arr.erase(std::remove_if(arr.begin(), arr.end(),
+                                     [step, track](const Json &p)
+                                     {
+                                         return p.is_object() && p.contains("step") &&
+                                                p.contains("track") && p["step"].is_number() &&
+                                                p["track"].is_number() &&
+                                                p["step"].as_int() == step &&
+                                                p["track"].as_int() == track;
+                                     }),
+                      arr.end());
+        }
+
+        Json SongDocument::flatten_arrangement(const Json &song)
+        {
+            Json out = song;
+            if (!out.contains("tracks") || !out["tracks"].is_array())
+                return out;
+            JsonArray &tracks = out["tracks"].as_array();
+            for (Json &track : tracks)
+                track["notes"] = JsonArray{};
+
+            const std::vector<Placement> placed = placements(song);
+            for (const Placement &p : placed)
+            {
+                const Json *clip = clip_at(song, p.scene, p.track);
+                if (!clip || !clip->contains("notes") || !(*clip)["notes"].is_array() ||
+                    p.track >= static_cast<int>(tracks.size()))
+                    continue;
+                JsonArray &notes = tracks[static_cast<size_t>(p.track)]["notes"].as_array();
+                for (const Json &note : (*clip)["notes"].as_array())
+                {
+                    if (!note.is_array() || note.as_array().size() < 3 ||
+                        !note.as_array()[0].is_number() ||
+                        !note.as_array()[2].is_number())
+                        continue;
+                    const int step = note.as_array()[0].as_int();
+                    const int length = note.as_array()[2].as_int();
+                    const int absStep = p.step + step;
+                    if (absStep < p.step || absStep >= p.step + p.length)
+                        continue;
+                    const int clipped = std::max(1, std::min(length, p.step + p.length - absStep));
+                    Json moved = note;
+                    moved.as_array()[0] = absStep;
+                    moved.as_array()[2] = clipped;
+                    notes.push_back(moved);
+                }
+            }
+            if (!out.contains("bars") || !out["bars"].is_number())
+                out["bars"] = 1;
+            int maxStep = 0;
+            for (const Json &track : tracks)
+                for (const Json &note : track["notes"].as_array())
+                    if (note.is_array() && note.as_array().size() >= 3 &&
+                        note.as_array()[0].is_number())
+                        maxStep = std::max(maxStep, note.as_array()[0].as_int() + 1);
+            out["bars"] = std::max(1, (maxStep + 15) / 16);
+            return out;
+        }
+
     } // namespace audio
 } // namespace aur

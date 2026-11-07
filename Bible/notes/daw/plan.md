@@ -149,7 +149,7 @@ Progress 2026-11-07:
       recorded note into that scene column's clip for the track (16-step
       window, empty clips created on demand) alongside the track notes —
       `daw-p6.4.1` (`fbcd0c3`). Count-in applies as in P4.2.
-- [ ] P6.5 arrangement data model: song["arrangement"] =
+- [x] P6.5 arrangement data model: song["arrangement"] =
       [{scene, step, length}] scene-scoped placements (sorted by step;
       SongDocument::placements/placement_at/placement_at_mut/add_placement/
       remove_placement with clamping + v1 songs reading as empty),

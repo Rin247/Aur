@@ -97,6 +97,28 @@ namespace aur::audio
         static ClipInfo clip_info(const Json &clip, const std::string &fallbackName);
         static void set_clip_info(Json &clip, const ClipInfo &info);
 
+        // Arrangement placements (P6). song["arrangement"] is a sorted-by-step
+        // array of {scene, track, step, length}: scene-scoped clip placements on
+        // the absolute timeline. v1 songs have no key and read as empty.
+        struct Placement
+        {
+            int scene = 0;
+            int track = 0;
+            int step = 0;
+            int length = 16;
+        };
+        static std::vector<Placement> placements(const Json &song);
+        static const Json *placement_at(const Json &song, int step, int track);
+        static Json *placement_at_mut(Json &song, int step, int track);
+        static void add_placement(Json &song, const Placement &p);
+        static void remove_placement(Json &song, int step, int track);
+
+        // Flattens arrangement placements into an absolute-step song: clip
+        // notes (clip-relative) are offset by the placement step and clipped
+        // to the placement length window. Tracks without a placement at a
+        // step get nothing; scenes outside the song are skipped.
+        static Json flatten_arrangement(const Json &song);
+
     private:
         struct MapPoint
         {

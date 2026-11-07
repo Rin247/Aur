@@ -162,3 +162,14 @@ Settled with evidence before code; each entry dated. Amend rather than argue.
   bar-aligned at 0; events arriving during count-in are dropped rather than
   buffered (the clock baseline only becomes valid once count-in ends).
   MusicPanel exposes a 0–8-bar spinbox (default 1) applied on arm.
+- **2026-11-07 — Arrangement placement model (P6.5).** `song["arrangement"]`
+  is a sorted-by-step array of `{scene, track, step, length}` — scene-scoped
+  clip placements on the absolute timeline (not clip-level start offsets; a
+  placement says "play that scene's clip here"). Accessors:
+  `placements/placement_at/placement_at_mut/add_placement/remove_placement`
+  (v1 songs read as empty; add sorts, clamps to ≥0, length 1–65536).
+  `flatten_arrangement` copies the song, zeroes every track's notes, then
+  offsets each placed clip's clip-relative notes by the placement step,
+  clipping lengths to the placement window and dropping notes that start
+  outside it; `bars` recomputed from content. Null clips and out-of-range
+  scenes/tracks are skipped. Engine-only; the canvas (P6.6) consumes these.
