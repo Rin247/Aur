@@ -32,6 +32,7 @@ void test_realtime_parity();
 void test_offline_render_job();
 void test_song_v1_contract();
 void test_song_v2_migration();
+void test_song_history();
 
 int main(int argc, char** argv) {
     // Allow a focused run without the memory-heavy full generator sweep.
@@ -100,6 +101,7 @@ int main(int argc, char** argv) {
     RUN_TEST(test_offline_render_job);
     RUN_TEST(test_song_v1_contract);
     RUN_TEST(test_song_v2_migration);
+    RUN_TEST(test_song_history);
 
     std::cout << "\nResults: " << g_tests_passed << " passed, " << g_tests_failed << " failed.\n";
     return g_tests_failed > 0 ? 1 : 0;

@@ -46,6 +46,12 @@ add_executable(aur_mcp tools/mcp_main.cpp)
 target_link_libraries(aur_mcp PRIVATE aur_engine)
 
 # Aur Studio executable (IDE / Editors)
+add_library(aur_editor_common STATIC
+    studio/SongHistory.cpp
+)
+target_include_directories(aur_editor_common PUBLIC studio)
+target_link_libraries(aur_editor_common PUBLIC aur_engine)
+
 add_executable(aur_studio
     studio/main.cpp
     studio/MainWindow.cpp
@@ -60,6 +66,7 @@ add_executable(aur_studio
     studio/music/SongLibrary.hpp
     studio/music/QtAudioOutput.cpp
     studio/music/QtAudioOutput.hpp
+    studio/SongHistory.cpp
     studio/MapEditorPanel.cpp
     studio/DatabasePanel.cpp
     studio/ForgePanel.cpp
@@ -128,6 +135,8 @@ add_executable(aur_tests
     tests/test_offline_render.cpp
     tests/test_song_v1.cpp
     tests/test_song_v2.cpp
+    tests/test_song_history.cpp
+    studio/SongHistory.cpp
     studio/world/HdSurface.cpp
     studio/world/WorldMapHelpers.cpp
     studio/world/MapView.cpp
