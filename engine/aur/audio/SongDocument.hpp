@@ -46,9 +46,21 @@ namespace aur::audio
         static void set_tempo_at(Json &song, int step, int bpm);
         static void set_time_sig_at(Json &song, int step, int num, int den);
 
+        // Scale highlight (P5): song-level "key_root" (0-11, C=0) and
+        // "key_scale" (index into scales()). Masks are bit i = scale degree
+        // i above the root (bit 0 = tonic), rotated by root at read time.
+        struct ScaleDef { const char *name; int mask; };
+        static const std::vector<ScaleDef> &scales();
+        static std::vector<bool> scale_mask(const Json &song);
+
         // Per-note properties. A note stays [step,pitch,length,velocity]; an
         // optional 5th object slot carries extra per-note data. Velocity is
         // position 3 and always present (v1 default 90).
+        // Stable ids (P5): note_props may carry "id" — assigned lazily on
+        // first edit via ensure_note_id, unique within a song, monotonic
+        // from the song's next_id counter. v1 songs without ids read as -1.
+        static int note_id(const Json &note);
+        static int ensure_note_id(Json &note, int *nextId);
         static int note_velocity(const Json &note);
         static void set_note_velocity(Json &note, int velocity);
         static const Json *note_props(const Json &note);

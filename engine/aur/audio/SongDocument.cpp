@@ -288,6 +288,64 @@ namespace aur
             note.as_array().erase(note.as_array().begin() + 4);
         }
 
+        const std::vector<SongDocument::ScaleDef> &SongDocument::scales()
+        {
+            static const std::vector<ScaleDef> table = {
+                {"Major", 0b101011010101},
+                {"Minor (natural)", 0b010110101011},
+                {"Harmonic minor", 0b010110101001},
+                {"Melodic minor", 0b010110110101},
+                {"Dorian", 0b011011010101},
+                {"Phrygian", 0b010110110101},
+                {"Lydian", 0b101010101010},
+                {"Mixolydian", 0b101101010101},
+                {"Locrian", 0b010110110110},
+                {"Blues", 0b100110110010},
+                {"Pentatonic major", 0b101010010100},
+                {"Pentatonic minor", 0b010100101010},
+                {"Chromatic", 0b111111111111},
+            };
+            return table;
+        }
+
+        std::vector<bool> SongDocument::scale_mask(const Json &song)
+        {
+            std::vector<bool> onPitch(12, false);
+            const int root = song.contains("key_root") && song["key_root"].is_number()
+                                 ? std::clamp(song["key_root"].as_int(), 0, 11)
+                                 : -1;
+            const int scaleIndex = song.contains("key_scale") && song["key_scale"].is_number()
+                                       ? song["key_scale"].as_int()
+                                       : -1;
+            if (root < 0 || scaleIndex < 0 ||
+                scaleIndex >= static_cast<int>(scales().size()))
+                return onPitch;
+            const int mask = scales()[static_cast<size_t>(scaleIndex)].mask;
+            for (int degree = 0; degree < 12; ++degree)
+                onPitch[static_cast<size_t>((root + degree) % 12)] = (mask >> degree) & 1;
+            return onPitch;
+        }
+
+        int SongDocument::note_id(const Json &note)
+        {
+            const Json *props = note_props(note);
+            if (!props || !props->contains("id") || !(*props)["id"].is_number())
+                return -1;
+            return (*props)["id"].as_int();
+        }
+
+        int SongDocument::ensure_note_id(Json &note, int *nextId)
+        {
+            const int existing = note_id(note);
+            if (existing >= 0)
+                return existing;
+            const int id = nextId ? *nextId : 0;
+            if (nextId)
+                ++*nextId;
+            set_note_prop(note, "id", id);
+            return id;
+        }
+
         const Json *SongDocument::lane_at(const Json &track, int lane)
         {
             if (!track.contains("automation") || !track["automation"].is_array())

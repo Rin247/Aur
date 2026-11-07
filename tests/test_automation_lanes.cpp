@@ -1,6 +1,8 @@
 #include "mini_test.hpp"
 #include "aur/audio/SongDocument.hpp"
 
+#include <cstring>
+
 namespace
 {
     using aur::Json;
@@ -46,6 +48,36 @@ namespace
         ASSERT(SongDocument::lane_value_at(track, 74, 0, -1) == -1);
         ASSERT(SongDocument::lane_value_at(track, 74, 99, -1) == 10);
         ASSERT(SongDocument::lane_value_at(track, 11, 0, -1) == -1);
+    }
+
+    void test_note_ids_and_scales()
+    {
+        using aur::audio::SongDocument;
+        Json note = aur::parse_json("[0,60,4,100]");
+        ASSERT(SongDocument::note_id(note) == -1); // v1 notes have no id
+        int nextId = 41;
+        ASSERT(SongDocument::ensure_note_id(note, &nextId) == 41);
+        ASSERT(SongDocument::note_id(note) == 41);
+        ASSERT(nextId == 42);
+        ASSERT(SongDocument::ensure_note_id(note, &nextId) == 41); // idempotent
+        ASSERT(nextId == 42);
+        SongDocument::clear_note_props(note);
+        ASSERT(SongDocument::note_id(note) == -1);
+        ASSERT(SongDocument::ensure_note_id(note, nullptr) == 0); // null counter ok
+
+        Json song = aur::parse_json("{\"tracks\":[]}");
+        ASSERT(SongDocument::scale_mask(song)[5] == false); // no key set
+        song["key_root"] = 2;                               // D
+        song["key_scale"] = 0;                              // major
+        const auto mask = SongDocument::scale_mask(song);
+        ASSERT(mask[1] && mask[2] && mask[4] && mask[6] && mask[8] && mask[9] && mask[11]);
+        ASSERT(!mask[0] && !mask[3] && !mask[5] && !mask[7] && !mask[10]);
+        ASSERT(SongDocument::scales().size() >= 10);
+        ASSERT(strcmp(SongDocument::scales()[0].name, "Major") == 0);
+        song["key_scale"] = 99; // out of range → no highlight
+        const auto empty = SongDocument::scale_mask(song);
+        for (bool b : empty)
+            ASSERT(!b);
     }
 
     void test_lane_edit()
@@ -97,4 +129,5 @@ void test_automation_lanes()
 {
     test_lane_access();
     test_lane_edit();
+    test_note_ids_and_scales();
 }

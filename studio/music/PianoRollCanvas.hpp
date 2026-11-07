@@ -5,6 +5,7 @@
 #include <QRect>
 #include <set>
 #include <functional>
+#include <vector>
 #include "aur/audio/SongDocument.hpp"
 #include "aur/json.hpp"
 #include "SongHistory.hpp"
@@ -92,6 +93,7 @@ namespace aur
         bool velocityDrag = false; // Alt+drag: vertical drag adjusts velocity
         int dragOriginVelocity = 90;
         int snapSteps = 1; // 0 off, 1/2/4 steps, 5 = triplet (16/3)
+        std::vector<bool> scaleMask;
         int currentStepWidth = baseStepWidth;
         static constexpr int kZoomLevels[6] = {8, 12, 16, 24, 32, 48};
         int zoomIndex = 2;

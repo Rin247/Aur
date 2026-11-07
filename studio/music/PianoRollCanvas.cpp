@@ -103,6 +103,7 @@ namespace aur
         song = value;
         trackIndex = selectedTrack;
         selectedNotes.clear();
+        scaleMask = audio::SongDocument::scale_mask(song);
         const int newContentWidth = contentWidth();
         if (newContentWidth > width())
             resize(newContentWidth, pitchCount * pitchHeight);
@@ -419,10 +420,17 @@ namespace aur
         for (int row = 0; row < pitchCount; ++row)
         {
             const int pitch = visiblePitchAt(row);
+            if (pitch < lowestPitch || pitch > highestPitch)
+                continue;
             const QRect key(0, row * pitchHeight, keyWidth, pitchHeight);
             const bool blackKey = pitch % 12 == 1 || pitch % 12 == 3 ||
                                   pitch % 12 == 6 || pitch % 12 == 8 || pitch % 12 == 10;
+            const bool inScale = !scaleMask.empty() &&
+                                 static_cast<size_t>(pitch) < scaleMask.size() &&
+                                 scaleMask[static_cast<size_t>(pitch % 12 + 12) % 12];
             painter.fillRect(key, blackKey ? QColor("#292c38") : QColor("#363945"));
+            if (inScale)
+                painter.fillRect(key, QColor(72, 214, 160, 36));
             painter.setPen(QColor("#858a99"));
             painter.drawText(key.adjusted(4, 0, -2, 0), Qt::AlignVCenter | Qt::AlignRight,
                              noteName(pitch));
