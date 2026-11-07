@@ -295,8 +295,10 @@ Progress 2026-11-07:
       show ▶ playing (amber) / queued N steps (blue) states; play-scene
       launches through the quantiser — `daw-p6.3.1` (`1b48b4c`),
       `daw-p6.3.2` (`e18509c`), `test_clip_launcher.cpp`, suite 38/38.
-      Note: engine-side song swap on promotion is the next wiring step
-      (the callback fires; the mixer swap must carry the new scene's notes).
+      Note: engine-side song swap on promotion is done — `daw-p6.3.4`
+      (`18cd90e`): the tick handler scans for any Playing slot, builds that
+      scene via makeScenePreview, and calls loadSong without resetting the
+      transport (MIDI out re-armed for the new scene).
 - [ ] Remaining: scene record into slot, arrangement timeline with
       placements/loop brace, lane editor UI.
 

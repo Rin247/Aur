@@ -34,12 +34,11 @@ headless Null only under RHI_POLICY_HEADLESS=1. See C:\Projects\POLICY.md.
 - P5.9 (`9e03b9d`) landed 2026-11-07: stable note ids in note_props + scale
   highlight (`key_root`/`key_scale`, 13-mode table) on the piano keys. Suite
   37/37. P5 remainder: id-stable selection across edits, key/scale selector UI.
-- P6.3 (`1b48b4c`, `e18509c`) landed 2026-11-07: ClipLauncherStates
-  (idle/queued/playing, 1-bar launch quantise on the mixer clock) + session
-  grid badges/colours and play-scene routing through the quantiser. Suite
-  38/38. Next wiring step: mixer song swap carries the promoted scene's
-  notes. Then P6 remainder: scene record into slot, arrangement timeline,
-  lane editor UI.
+- P6.3 (`1b48b4c`, `e18509c`, `18cd90e`) landed 2026-11-07: ClipLauncherStates
+  (idle/queued/playing, 1-bar launch quantise on the mixer clock), session
+  grid badges/colours, play-scene routing through the quantiser, and
+  promotion → loadSong swap without transport reset. Suite 38/38. Then P6
+  remainder: scene record into slot, arrangement timeline, lane editor UI.
 - Next in daw plan: P5 remainder, P6 remainder (launch quantisation,
   arrangement timeline, clip export). P2 close still needs the owner GUI soak.
 - MD/SNES synth cores (`YmFmCore`, `SnesPcmCore`/`BrrCodec`/`SnesEcho`) expected from
