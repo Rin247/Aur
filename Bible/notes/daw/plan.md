@@ -299,11 +299,11 @@ Progress 2026-11-07:
       (`18cd90e`): the tick handler scans for any Playing slot, builds that
       scene via makeScenePreview, and calls loadSong without resetting the
       transport (MIDI out re-armed for the new scene).
-- [ ] P6.4 scene record into slot: a Record button per session column; when
-      armed and the transport plays, incoming MIDI notes are appended to the
-      column's clips (per track, routed by the selected track list row) as
-      steps derived from the mixer playhead clock, using the MidiSession
-      record path already wired for count-in.
+- [x] P6.4 scene record into slot: record arm captures `recordingScene =
+      selectedScene` at arm time; the `noteRecorded` handler mirrors each
+      recorded note into that scene column's clip for the track (16-step
+      window, empty clips created on demand) alongside the track notes —
+      `daw-p6.4.1` (`fbcd0c3`). Count-in applies as in P4.2.
 - [ ] Remaining: arrangement timeline with placements/loop brace, lane editor
       UI.
 
