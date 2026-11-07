@@ -1,4 +1,5 @@
 #include "PixelEditorPanel.hpp"
+#include "PixelEditSession.hpp"
 #include "aur/gfx.hpp"
 
 #include <QIcon>
@@ -605,23 +606,10 @@ void PixelEditorPanel::refreshAnimationData() {
 }
 
 void PixelEditorPanel::refreshPalette() {
-    paletteWidget->clear();
-    if (!project || graphicCombo->currentIndex() < 0) return;
-    const std::string id = graphicCombo->currentData().toString().toStdString();
-    const auto graphic = project->graphics.find(id);
-    if (graphic == project->graphics.end() || !graphic->second.contains("palette")) return;
-
-    const auto& palette = graphic->second["palette"].as_array();
-    for (size_t index = 0; index < palette.size(); ++index) {
-        const QString color = QString::fromStdString(palette[index].as_string());
-        auto* item = new QListWidgetItem(
-            QString("%1  %2").arg(index, 2, 10, QChar('0')).arg(color), paletteWidget);
-        item->setData(Qt::UserRole, static_cast<int>(index));
-        QPixmap swatch(16, 16);
-        swatch.fill(palette_color(palette[index]));
-        item->setIcon(QIcon(swatch));
-    }
-    if (paletteWidget->count() > 0) paletteWidget->setCurrentRow(1);
+    const std::string id = graphicCombo->currentIndex() >= 0
+                               ? graphicCombo->currentData().toString().toStdString()
+                               : std::string();
+    PixelEditSession::fill_palette(paletteWidget, project ? *project : Project("."), id);
 }
 
 void PixelEditorPanel::resizeEvent(QResizeEvent* event) {
@@ -784,42 +772,15 @@ void SpriteEditorPanel::refreshSprites() {
 void SpriteEditorPanel::refreshFrames() {
     if (!project || spriteCombo->currentIndex() < 0) return;
     const std::string graphic_id = spriteCombo->currentData().toString().toStdString();
-    const auto graphic_it = project->graphics.find(graphic_id);
-    if (graphic_it == project->graphics.end()) return;
-    const Json& graphic = graphic_it->second;
     const std::string direction = directionCombo->currentText().toStdString();
     const std::string pose = poseCombo->currentText().toStdString();
-    const std::string directional_animation = pose + "_" + direction;
-    const Json& animations = graphic["anims"];
-    const Json* animation = nullptr;
-    if (animations.is_object() && animations.contains(directional_animation)) {
-        animation = &animations[directional_animation];
-    } else if (animations.is_object() && animations.contains(pose)) {
-        animation = &animations[pose];
-    }
-
-    std::vector<std::string> frames;
-    if (animation && (*animation)["frames"].is_array()) {
-        for (const Json& frame : (*animation)["frames"].as_array()) {
-            if (frame.is_string()) frames.push_back(frame.as_string());
-            else if (frame.is_number()) frames.push_back(std::to_string(frame.as_int()));
-        }
-    }
-    if (frames.empty() && graphic["frames"].is_object()) {
-        for (const auto& [frame_id, rows] : graphic["frames"].as_object()) {
-            if (rows.is_array() && (frame_id.find(direction) != std::string::npos ||
-                                    direction == "down")) frames.push_back(frame_id);
-        }
-    }
+    const std::vector<std::string> frames =
+        PixelEditSession::resolve_anim_frames(*project, graphic_id, direction, pose);
 
     frameCombo->blockSignals(true);
     frameCombo->clear();
-    std::set<std::string> unique_frames;
-    for (const std::string& frame : frames) {
-        if (unique_frames.insert(frame).second) {
-            frameCombo->addItem(QString::fromStdString(frame), QString::fromStdString(frame));
-        }
-    }
+    for (const std::string& frame : frames)
+        frameCombo->addItem(QString::fromStdString(frame), QString::fromStdString(frame));
     frameCombo->blockSignals(false);
     if (frameCombo->count() > 0) {
         frameCombo->setCurrentIndex(0);
@@ -828,22 +789,10 @@ void SpriteEditorPanel::refreshFrames() {
 }
 
 void SpriteEditorPanel::refreshPalette() {
-    paletteWidget->clear();
-    if (!project || spriteCombo->currentIndex() < 0) return;
-    const std::string id = spriteCombo->currentData().toString().toStdString();
-    const auto graphic = project->graphics.find(id);
-    if (graphic == project->graphics.end() || !graphic->second["palette"].is_array()) return;
-    const auto& palette = graphic->second["palette"].as_array();
-    for (size_t index = 0; index < palette.size(); ++index) {
-        auto* item = new QListWidgetItem(
-            QString("%1  %2").arg(index, 2, 10, QChar('0'))
-                .arg(QString::fromStdString(palette[index].as_string())), paletteWidget);
-        item->setData(Qt::UserRole, static_cast<int>(index));
-        QPixmap swatch(16, 16);
-        swatch.fill(palette_color(palette[index]));
-        item->setIcon(QIcon(swatch));
-    }
-    if (paletteWidget->count() > 0) paletteWidget->setCurrentRow(1);
+    const std::string id = spriteCombo->currentIndex() >= 0
+                               ? spriteCombo->currentData().toString().toStdString()
+                               : std::string();
+    PixelEditSession::fill_palette(paletteWidget, project ? *project : Project("."), id);
 }
 
 void SpriteEditorPanel::resizeEvent(QResizeEvent* event) {

@@ -97,6 +97,8 @@ add_executable(aur_studio
     studio/RhiBackend.cpp
     studio/RhiBackend.hpp
     studio/PixelEditorPanel.cpp
+    studio/PixelEditSession.cpp
+    studio/PixelEditSession.hpp
     studio/EventPanel.cpp
     studio/TilesetEditorPanel.cpp
     studio/WorldSettingsPanel.cpp
