@@ -1,6 +1,7 @@
 #include "MapEditorPanel.hpp"
 #include "TileTexture.hpp"
 #include <QKeySequence>
+#include <QMessageBox>
 #include <QOverload>
 #include <QShortcut>
 #include <QWheelEvent>
@@ -618,10 +619,19 @@ MapEditorPanel::MapEditorPanel(Project* p, QWidget* parent)
     connect(redoShortcut, &QShortcut::activated, canvas, &MapCanvasWidget::redo);
 
     QWidget* inspectorDock = new QWidget(this);
-    QFormLayout* form = new QFormLayout(inspectorDock);
-    form->addRow("Selected Object:", new QLabel("Tile / Entity", inspectorDock));
-    form->addRow("Facing Dir:", new QLineEdit("down", inspectorDock));
-    form->addRow("Event ID:", new QLineEdit("talk_elder", inspectorDock));
+    QVBoxLayout* inspectorLayout = new QVBoxLayout(inspectorDock);
+    QFormLayout* form = new QFormLayout();
+    selectedObjectLabel = new QLabel("Tile / Entity", inspectorDock);
+    form->addRow("Selected Object:", selectedObjectLabel);
+    facingEdit = new QLineEdit("down", inspectorDock);
+    form->addRow("Facing Dir:", facingEdit);
+    eventCombo = new QComboBox(inspectorDock);
+    eventCombo->setEditable(true);
+    form->addRow("Event ID:", eventCombo);
+    inspectorLayout->addLayout(form);
+    eventApplyButton = new QPushButton("Apply to Entity", inspectorDock);
+    inspectorLayout->addWidget(eventApplyButton);
+    inspectorLayout->addStretch();
     splitter->addWidget(inspectorDock);
 
     splitter->setSizes({200, 700, 300});
@@ -699,6 +709,103 @@ MapEditorPanel::MapEditorPanel(Project* p, QWidget* parent)
             (found->operator[]("y").as_int() + 0.5) * bounds.height() / map["h"].as_int());
         canvas->centerOn(center);
     });
+
+    // Inspector: the palette row drives what the canvas will paint/place; the
+    // facing/event rows edit the selected entity kind's record in the map.
+    const auto syncInspectorFromKind = [this](int entity_kind) {
+        if (!project || current_map.empty() || !project->maps.contains(current_map)) {
+            selectedObjectLabel->setText("Tile / Entity");
+            facingEdit->clear();
+            facingEdit->setEnabled(false);
+            eventCombo->clear();
+            eventCombo->setEnabled(false);
+            eventApplyButton->setEnabled(false);
+            return;
+        }
+        static const std::array<const char*, 8> kinds{
+            "spawn", "exit", "npc", "chest", "sign", "trigger", "light", "enemy"};
+        const auto& map = project->maps.at(current_map);
+        const Json* entity = nullptr;
+        if (entity_kind >= 0 && entity_kind < static_cast<int>(kinds.size()) &&
+            map.contains("entities") && map["entities"].is_array()) {
+            const char* wanted = kinds[static_cast<size_t>(entity_kind)];
+            const auto found = std::find_if(map["entities"].as_array().begin(),
+                map["entities"].as_array().end(), [wanted](const Json& e) {
+                    return e.contains("type") && e["type"].is_string() &&
+                           e["type"].as_string() == wanted;
+                });
+            if (found != map["entities"].as_array().end())
+                entity = &*found;
+        }
+        if (entity) {
+            selectedObjectLabel->setText(QString("Entity: %1")
+                                             .arg(QString::fromStdString(
+                                                 (*entity)["type"].as_string())));
+            facingEdit->setText(QString::fromStdString(
+                entity->contains("facing") && (*entity)["facing"].is_string()
+                    ? (*entity)["facing"].as_string()
+                    : "down"));
+            facingEdit->setEnabled(true);
+            eventCombo->setCurrentText(
+                entity->contains("event") && (*entity)["event"].is_string()
+                    ? QString::fromStdString((*entity)["event"].as_string())
+                    : QString());
+            eventCombo->setEnabled(true);
+            eventApplyButton->setEnabled(true);
+        } else {
+            selectedObjectLabel->setText("Tile / Entity");
+            facingEdit->clear();
+            facingEdit->setEnabled(false);
+            eventCombo->clear();
+            eventCombo->setEnabled(false);
+            eventApplyButton->setEnabled(false);
+        }
+    };
+    connect(entityTypeWidget, &QListWidget::currentRowChanged, this,
+            [syncInspectorFromKind](int row) {
+                syncInspectorFromKind(row <= 2 ? -1 : row - 3);
+            });
+    connect(eventApplyButton, &QPushButton::clicked, this, [this]() {
+        const int row = entityTypeWidget->currentRow();
+        if (row <= 2 || !project || current_map.empty() ||
+            !project->maps.contains(current_map))
+            return;
+        static const std::array<const char*, 8> kinds{
+            "spawn", "exit", "npc", "chest", "sign", "trigger", "light", "enemy"};
+        const int entity_kind = row - 3;
+        if (entity_kind < 0 || entity_kind >= static_cast<int>(kinds.size())) return;
+        const char* wanted = kinds[static_cast<size_t>(entity_kind)];
+        Json& map = project->maps[current_map];
+        if (!map.contains("entities") || !map["entities"].is_array()) return;
+        const auto found = std::find_if(map["entities"].as_array().begin(),
+            map["entities"].as_array().end(), [wanted](const Json& e) {
+                return e.contains("type") && e["type"].is_string() &&
+                       e["type"].as_string() == wanted;
+            });
+        if (found == map["entities"].as_array().end()) return;
+        const std::string event_id = eventCombo->currentText().toStdString();
+        if (!event_id.empty() && !project->events.contains(event_id)) {
+            QMessageBox::warning(this, "Event ID",
+                                 QString("Event '%1' is not in the project event registry.")
+                                     .arg(QString::fromStdString(event_id)));
+            return;
+        }
+        (*found)["facing"] = facingEdit->text().toStdString();
+        if (event_id.empty()) found->as_object().erase("event");
+        else (*found)["event"] = event_id;
+        selectedObjectLabel->setText(QString("Entity: %1 (saved)")
+                                         .arg(QString::fromStdString(wanted)));
+    });
+    const auto refreshEventChoices = [this]() {
+        if (!eventCombo) return;
+        const QSignalBlocker blocker(eventCombo);
+        eventCombo->clear();
+        eventCombo->addItem(QString());
+        if (project)
+            for (const auto& [event_id, event] : project->events)
+                eventCombo->addItem(QString::fromStdString(event_id));
+    };
+    refreshEventChoices();
 
     refreshMaps();
 }

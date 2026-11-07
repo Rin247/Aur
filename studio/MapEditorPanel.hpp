@@ -101,6 +101,10 @@ class MapEditorPanel : public QWidget {
     QPushButton* zoomOutButton = nullptr;
     QLabel* zoomLabel = nullptr;
     QLabel* modeHint = nullptr;
+    QLabel* selectedObjectLabel = nullptr;
+    QLineEdit* facingEdit = nullptr;
+    QComboBox* eventCombo = nullptr;
+    QPushButton* eventApplyButton = nullptr;
     std::string current_map;
 
 
