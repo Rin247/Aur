@@ -21,6 +21,13 @@ Settled with evidence before code; each entry dated. Amend rather than argue.
 
 ## Settled
 
+- **2026-11-07 — Audio backend (P2): Qt6 `QAudioSink`.** `Qt6::Multimedia` is
+  already a required dependency of both `aur_game` and `aur_studio`
+  (CMakeLists.txt:13,38,84), so no new linkage; the engine's real-time output
+  goes through a narrow `AudioOutput` interface so a WASAPI/miniaudio swap
+  later touches one file. Callback rules (contract 4) still apply: the sink's
+  read callback only pulls from the mixer ring, never allocates or locks.
+
 - **2026-11-06 — `MusicEngine` is currently dead code.** No call sites exist
   (`grep MusicEngine` matches only `music.hpp`). P11 defines the runtime
   contract fresh; no compatibility shim needed before then.

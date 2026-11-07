@@ -26,6 +26,7 @@ add_library(aur_engine STATIC
     engine/aur/mcp.cpp
     engine/aur/audio/midi.cpp
     engine/aur/audio/synth.cpp
+    engine/aur/audio/VoiceCore.cpp
 )
 target_include_directories(aur_engine PUBLIC engine)
 

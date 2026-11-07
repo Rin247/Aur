@@ -6,7 +6,7 @@
 
 namespace aur {
 
-enum class PreviewSynth { Gm, Fm, RetroPsg };
+enum class PreviewSynth : int { Gm = 0, Fm = 1, RetroPsg = 2 };
 
 struct StereoPcm {
     int sample_rate = 44100;
