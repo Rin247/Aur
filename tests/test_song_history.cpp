@@ -25,6 +25,34 @@ namespace
 
 } // namespace
 
+// P3.5: per-note properties.
+void test_note_props()
+{
+    using aur::Json;
+    Json note = aur::JsonArray{4, 60, 8, 100};
+    ASSERT(aur::audio::SongDocument::note_velocity(note) == 100);
+    ASSERT(aur::audio::SongDocument::note_props(note) == nullptr);
+
+    aur::audio::SongDocument::set_note_velocity(note, 200); // clamped
+    ASSERT(aur::audio::SongDocument::note_velocity(note) == 127);
+
+    aur::audio::SongDocument::set_note_prop(note, "articulation", 3);
+    const aur::Json *props = aur::audio::SongDocument::note_props(note);
+    ASSERT(props && props->contains("articulation") &&
+           (*props)["articulation"].as_int() == 3);
+    // note stays [step,pitch,length,velocity,{props}] — 5 slots, velocity intact
+    ASSERT(note.as_array().size() == 5);
+    ASSERT(aur::audio::SongDocument::note_velocity(note) == 127);
+
+    aur::audio::SongDocument::clear_note_props(note);
+    ASSERT(note.as_array().size() == 4);
+    ASSERT(aur::audio::SongDocument::note_props(note) == nullptr);
+
+    // v1-shaped short note falls back to the default velocity.
+    Json shortNote = aur::JsonArray{0, 60, 4};
+    ASSERT(aur::audio::SongDocument::note_velocity(shortNote) == 90);
+}
+
 // P3.3: typed song edits are undoable and redoable on the shared stack.
 void test_song_history()
 {

@@ -246,5 +246,47 @@ namespace aur
             write_map(song, "time_sig_map", points, true);
         }
 
+        int SongDocument::note_velocity(const Json &note)
+        {
+            if (!note.is_array() || note.as_array().size() < 4)
+                return 90;
+            const Json &velocity = note.as_array()[3];
+            return velocity.is_number() ? std::clamp(velocity.as_int(), 0, 127) : 90;
+        }
+
+        void SongDocument::set_note_velocity(Json &note, int velocity)
+        {
+            if (!note.is_array() || note.as_array().size() < 4)
+                return;
+            note.as_array()[3] = std::clamp(velocity, 0, 127);
+        }
+
+        const Json *SongDocument::note_props(const Json &note)
+        {
+            if (!note.is_array() || note.as_array().size() < 5)
+                return nullptr;
+            const Json &props = note.as_array()[4];
+            return props.is_object() ? &props : nullptr;
+        }
+
+        void SongDocument::set_note_prop(Json &note, const char *key, int value)
+        {
+            if (!note.is_array())
+                return;
+            JsonArray &items = note.as_array();
+            while (items.size() < 4)
+                items.push_back(Json(0));
+            if (items.size() < 5 || !items[4].is_object())
+                items.push_back(Json(JsonObject{}));
+            items[4].as_object()[key] = value;
+        }
+
+        void SongDocument::clear_note_props(Json &note)
+        {
+            if (!note.is_array() || note.as_array().size() < 5)
+                return;
+            note.as_array().erase(note.as_array().begin() + 4);
+        }
+
     } // namespace audio
 } // namespace aur

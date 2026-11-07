@@ -3,7 +3,9 @@
 #include <QWidget>
 #include <QPoint>
 #include <functional>
+#include "aur/audio/SongDocument.hpp"
 #include "aur/json.hpp"
+#include "SongHistory.hpp"
 #include "SongHistory.hpp"
 
 namespace aur
@@ -55,6 +57,8 @@ namespace aur
         QPoint dragStartPos;
         bool resizingNote = false;
         bool dragging = false; // note edit in progress; history committed on release
+        bool velocityDrag = false; // Alt+drag: vertical drag adjusts velocity
+        int dragOriginVelocity = 90;
         editor::SongHistory *history = nullptr;
         std::function<void(const Json &)> onSongChanged;
 

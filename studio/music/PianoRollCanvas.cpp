@@ -6,6 +6,7 @@
 #include <QResizeEvent>
 
 #include <algorithm>
+#include <string>
 
 namespace aur
 {
@@ -230,12 +231,13 @@ namespace aur
             const QRect noteRect(keyWidth + (visibleStart - firstVisibleStep) * stepWidth + 1,
                                  (highestPitch - pitch) * pitchHeight + 1,
                                  std::max(2, (visibleEnd - visibleStart) * stepWidth - 2), pitchHeight - 2);
+            QColor fill = noteColor.darker(70 + (audio::SongDocument::note_velocity(note) * 90 / 127));
+            if (i == static_cast<size_t>(selectedNote))
+                fill = QColor("#f0bd58");
             painter.setPen(i == static_cast<size_t>(selectedNote)
                                ? QPen(QColor("#fff0a8"), 2)
-                               : QPen(noteColor.darker(150), 1));
-            painter.setBrush(i == static_cast<size_t>(selectedNote)
-                                 ? QColor("#f0bd58")
-                                 : noteColor);
+                               : QPen(fill.darker(150), 1));
+            painter.setBrush(fill);
             painter.drawRoundedRect(noteRect, 2, 2);
         }
     }
@@ -291,8 +293,10 @@ namespace aur
         dragOriginStep = note[0].as_int();
         dragOriginPitch = note[1].as_int();
         dragOriginLength = std::max(1, note[2].as_int());
+        dragOriginVelocity = audio::SongDocument::note_velocity(note);
         dragStartPos = event->pos();
-        resizingNote = event->pos().x() >= keyWidth +
+        velocityDrag = event->modifiers() & Qt::AltModifier;
+        resizingNote = !velocityDrag && event->pos().x() >= keyWidth +
                                                (dragOriginStep + dragOriginLength) * stepWidth - 5;
         if (history)
             history->begin_note_edit(song, trackIndex);
@@ -309,6 +313,13 @@ namespace aur
         if (selectedNote >= static_cast<int>(notes.size()))
             return;
         Json &note = notes[static_cast<size_t>(selectedNote)];
+        if (velocityDrag)
+        {
+            const int velocityDelta = (event->pos().y() - dragStartPos.y()) / pitchHeight;
+            audio::SongDocument::set_note_velocity(note, dragOriginVelocity - velocityDelta);
+            notifySongChanged();
+            return;
+        }
         const int stepDelta = (event->pos().x() - dragStartPos.x()) / stepWidth;
         if (resizingNote)
         {
@@ -330,9 +341,12 @@ namespace aur
     {
         if (dragging && history)
             history->commit_note_edit(song, trackIndex,
-                                      resizingNote ? "resize note" : "move note");
+                                      velocityDrag ? "set velocity"
+                                      : resizingNote ? "resize note"
+                                                     : "move note");
         dragging = false;
         resizingNote = false;
+        velocityDrag = false;
         emit historyChanged();
     }
 
