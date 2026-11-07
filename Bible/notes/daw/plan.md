@@ -3,9 +3,11 @@
 Status: P3 closed-out; P4.1–P4.3 MIDI device layer + count-in landed
 (`f1420e3`, `1146cf8`, `4f07f1b`). P6.1 clips landed (`7d0b8da`). P5 started:
 P5.1 lane accessors (`532de0b`) + P5.2 lane strip (`721e043`) landed.
-Remaining in P4: clip/arrangement export (lands with P6). Next: P5 remainder
-(multi-select/marquee, copy/paste, snap/quantise, scale highlight, zoom,
-playhead, audition) or P6 remainder (launch quantisation, arrangement).
+Remaining in P4: clip/arrangement export — closed with P6.7
+(`3a7e890`, exportArrangementMidi). Next: P5 remainder (automation-lane
+UI polish) or move on to P7a/P8. 2026-11-07: P6.5–P6.7 landed —
+arrangement placements + flatten (`259ecb0`), ArrangementCanvas timeline
+(`91eadea`), arrangement playback/export (`3a7e890`); suite 39/39.
 
 Master plan for the Music Studio DAW initiative, seeded from the owner-supplied
 gameplan and corrected by a source audit on 2026-11-06. One note file per major
@@ -156,13 +158,13 @@ Progress 2026-11-07:
       makeArrangementPreview flattening placements into an absolute-step song
       (clip notes offset by placement step, clip length window applied),
       test_arrangement.cpp — engine only, no UI.
-- [ ] P6.6 ArrangementCanvas (studio/music/): painted timeline, one row per
+- [x] P6.6 ArrangementCanvas (studio/music/): painted timeline, one row per
       track, placement blocks from arrangement placements (clip name/colour),
       click places the selected scene's clip for that track at the snapped
       step, drag moves a placement, Delete removes, loop brace + markers
       ruler from loop/markers, tempo/T.S. lanes render from the v2 maps;
       all edits via begin_track_edit/commit_track_change.
-- [ ] P6.7 arrangement playback: play-arrangement builds the flattened preview
+- [x] P6.7 arrangement playback: play-arrangement builds the flattened preview
       and drives the mixer linearly (no loop wrap past the last placement);
       MIDI export of arrangement/clip (closes the P4 remainder).
 - [ ] Acceptance: test_arrangement green (placements, flatten, clamping,

@@ -7,6 +7,22 @@ headless Null only under RHI_POLICY_HEADLESS=1. See C:\Projects\POLICY.md.
 
 ## DAW initiative (active plan: `Bible/notes/daw/plan.md`)
 
+- P6.5–P6.7 landed 2026-11-07 — the P6 remainder is done. P6.5 (`259ecb0`):
+  `SongDocument` arrangement placements (`song["arrangement"]`, sorted
+  `{scene, track, step, length}`) with accessors + clamping, and
+  `flatten_arrangement` (clip-relative notes offset to absolute steps,
+  clipped to the placement window, `bars` recomputed); `test_arrangement.cpp`,
+  suite 39/39. Placement model decision in daw/decisions.md.
+- P6.6 (`91eadea`): `ArrangementCanvas` (`studio/music/`) — painted timeline,
+  one row per track, placement blocks (clip name/colour), bar ruler with
+  markers, loop brace, tempo lane from `tempo_map`. Click an empty cell places
+  the selected scene's clip; drag moves (keeps scene+length); Delete removes.
+  All edits via `begin_track_edit`/`commit_track_change` (TrackProps).
+  Live in MusicPanel as an "Arrangement" tab; session-grid clicks set the
+  placement scene.
+- P6.7 (`3a7e890`): Play Arrangement flattens and drives mixer + MIDI out;
+  Export Arrangement MIDI flattens then exports. Closes the P4
+  clip/arrangement-export remainder.
 - P3.4 (`e92bfd5`) + P3.5 (`2fbeb92`) landed 2026-11-07: SongHistory wired into
   PianoRollCanvas/MusicPanel (undoable note edits grouped per drag stroke, Ctrl+Z/Y,
   undoable track props via the fixed `begin_track_edit`/`commit_track_change` snapshot
@@ -41,8 +57,8 @@ headless Null only under RHI_POLICY_HEADLESS=1. See C:\Projects\POLICY.md.
   scene; noteRecorded mirrors notes into the column's clips). Suite 38/38.
   Then P6 remainder: arrangement timeline with placements/loop brace, lane
   editor UI.
-- Next in daw plan: P5 remainder, P6 remainder (launch quantisation,
-  arrangement timeline, clip export). P2 close still needs the owner GUI soak.
+- Next in daw plan: P7a GM/GS instrument, P8 effects (P5 lane-editor polish
+  remains). P2 close still needs the owner GUI soak.
 - MD/SNES synth cores (`YmFmCore`, `SnesPcmCore`/`BrrCodec`/`SnesEcho`) expected from
   the owner's frontier model as portable C++20 drops under `engine/aur/audio/`; the
   integration spec is in WANTED.md. On delivery: keep files <400 lines, add golden
