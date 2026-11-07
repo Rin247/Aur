@@ -113,6 +113,18 @@ namespace aur
         trackIndex = selectedTrack;
         selectedNotes.clear();
         scaleMask = audio::SongDocument::scale_mask(song);
+        nextNoteId = 1;
+        if (Json *track = currentTrack())
+        {
+            if (track->contains("notes") && (*track)["notes"].is_array())
+            {
+                for (Json &note : (*track)["notes"].as_array())
+                {
+                    const int id = audio::SongDocument::ensure_note_id(note, &nextNoteId);
+                    Q_UNUSED(id);
+                }
+            }
+        }
         const int newContentWidth = contentWidth();
         if (newContentWidth > width())
             resize(newContentWidth, pitchCount * pitchHeight);
@@ -266,7 +278,8 @@ namespace aur
                 continue;
             ClipNote clip{note[0].as_int(), note[1].as_int(),
                           std::max(1, note[2].as_int()),
-                          audio::SongDocument::note_velocity(note)};
+                          audio::SongDocument::note_velocity(note),
+                          audio::SongDocument::note_id(note)};
             clipboardMinStep = clipboard.empty() ? clip.step
                                                  : std::min(clipboardMinStep, clip.step);
             clipboard.push_back(clip);
@@ -288,6 +301,8 @@ namespace aur
             JsonArray note{clip.step - clipboardMinStep, clip.pitch, clip.length,
                            clip.velocity};
             notes.push_back(Json(std::move(note)));
+            Json &created = notes.back();
+            audio::SongDocument::ensure_note_id(created, &nextNoteId);
             selectedNotes.insert(static_cast<int>(notes.size()) - 1);
         }
         if (history)
@@ -314,7 +329,8 @@ namespace aur
                 continue;
             source.push_back({note[0].as_int(), note[1].as_int(),
                               std::max(1, note[2].as_int()),
-                              audio::SongDocument::note_velocity(note)});
+                              audio::SongDocument::note_velocity(note),
+                              audio::SongDocument::note_id(note)});
             span = std::max(span, note[0].as_int() + std::max(1, note[2].as_int()));
         }
         if (source.empty())
@@ -333,6 +349,8 @@ namespace aur
             JsonArray note{clip.step + spanOffset, clip.pitch, clip.length,
                            clip.velocity};
             mutableNotes.push_back(Json(std::move(note)));
+            Json &created = mutableNotes.back();
+            audio::SongDocument::ensure_note_id(created, &nextNoteId);
             selectedNotes.insert(static_cast<int>(mutableNotes.size()) - 1);
         }
         if (history)
@@ -599,12 +617,13 @@ namespace aur
                     return;
                 if (history)
                     history->begin_note_edit(song, trackIndex);
-                JsonArray note{snapped(step), pitch, 4, 90};
-                if (auditionHook)
-                    auditionHook(pitch, 90);
                 JsonArray &notes =
                     song["tracks"][static_cast<size_t>(trackIndex)]["notes"].as_array();
+                JsonArray note{snapped(step), pitch, 4, 90};
                 notes.push_back(Json(std::move(note)));
+                audio::SongDocument::ensure_note_id(notes.back(), &nextNoteId);
+                if (auditionHook)
+                    auditionHook(pitch, 90);
                 selectOnly(static_cast<int>(notes.size()) - 1);
                 resizingNote = false;
                 if (history)

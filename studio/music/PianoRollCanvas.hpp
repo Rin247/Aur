@@ -94,6 +94,7 @@ namespace aur
         int dragOriginVelocity = 90;
         int snapSteps = 1; // 0 off, 1/2/4 steps, 5 = triplet (16/3)
         std::vector<bool> scaleMask;
+        int nextNoteId = 1; // counter for ensure_note_id on created notes
         int currentStepWidth = baseStepWidth;
         static constexpr int kZoomLevels[6] = {8, 12, 16, 24, 32, 48};
         int zoomIndex = 2;
@@ -123,7 +124,7 @@ namespace aur
         void duplicateSelection();
         void notifySongChanged();
 
-        struct ClipNote { int step; int pitch; int length; int velocity; };
+        struct ClipNote { int step; int pitch; int length; int velocity; int id; };
         std::vector<ClipNote> clipboard;
         int clipboardMinStep = 0;
         std::vector<ClipNote> duplicated; // pending paste offset for Ctrl+D
