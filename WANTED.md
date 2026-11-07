@@ -19,9 +19,9 @@
 - **World Time Settings tab should be baked into the World editor** — merge the standalone tab into the World panel instead of a separate tab; reported 2026-11-06.
 - **Implement SNES-style platformer games and metroidvanias** — build SNES-style platformer and metroidvania game support into the engine.
 - **Refactor and merge the pixel and sprite editors** — they are almost identical in scope; consolidate into one editor.
-- **Review `Bible/Operations/` per AGENTS.md** — go through all docs (including World Map Topology Handover.md) and make a proper plan, splitting the workload; do not skip World Map Topology.
 
 ## Closed
 
+- **#52 Review Bible/Operations/** (closed 2026-11-07): all six docs + evidence audited; Agent Guide title fixed, Handover.md mojibake/stale-DAW-status/empty-A1/duplicate open-work lists fixed, Roadmap Music Studio bullets refreshed to the landed DAW scope, World Map Topology Handover got a current-status header (P3.0+P3.1 complete, P3.2 owner-gated). Plan at `Bible/notes/ops-review.md`.
 - **#50 Project tidy audit** (closed 2026-11-06): reference chat relocated to `Bible/Archive/Reference/`, empty duplicate Bible folder removed, tests confirmed under `tests/`, stray root objects removed (`NUL.obj`, MSVC `.obj` leftovers). Root handover keeps the active graphics-backend policy.
 - **#51 WorldPanel refactor** (closed 2026-11-06): all plan steps complete through 7c (`WorldMapCanvas` split). `WorldPanel.cpp` at 917 lines, under the owner's 1,000-line soft cap (+25% overhead rule); build green, both CTest suites pass. Layout documented in `Bible/Operations/NOTES.md`; the plan file was removed with acceptance verified (git history holds the record).

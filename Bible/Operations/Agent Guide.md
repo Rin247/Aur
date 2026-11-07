@@ -1,4 +1,4 @@
-# AGENTS.md — Aur
+# Agent Guide — Aur
 
 > Guidelines for AI agents working within the Aur repository.
 

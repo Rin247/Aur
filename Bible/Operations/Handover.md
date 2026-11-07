@@ -1,4 +1,4 @@
-﻿# HANDOVER.md â€” Aur
+# HANDOVER.md — Aur
 
 > Current session status and implementation state for agent handover. See the [Bible index](../README.md) for document navigation and source precedence.
 
@@ -13,10 +13,10 @@ Aur is the C++20 / Qt 6.12 product: `aur_engine`, `aur_studio`, `aur_game`, `aur
 - **Studio UI**: Starts maximized to the screen work area (16:10 on the target display) with a frameless Qt title/menu bar, Qt minimize/maximize/close controls, and a 1280Ã—720 minimum. The World editor includes 12 editable JRPG biome presets, biome painting, seeded spherical world generation (continents, archipelago, supercontinent, fractured) up to 2560Ã—1280 tiles (new-map default, capped at 3,276,800 cells), and an elevation-shaded HD surface with distance-aware beaches, surf, underwater shelves, smooth deep-ocean shading, polar ice, connected drainage-fed rivers, inland lakes, forest, and clustered mountain detail plus terrain overrides. Generated worlds use elevation/climate/biome/hydrology layers rather than legacy tile grids; terrain and biome painting work directly on those layers. The filtered terrain palette can add an original 21-tile starter set: nine general terrain/elevation materials plus dedicated terrain starters for all 12 project biomes, then brush selected tiles over any elevation/depth. The map canvas previews temperature/equator/poles and illustrative wind/current overlays; its weather selector previews project climate profiles or forced clear, cloudy, rain, snow, storm, and fog, while local time updates terrain lighting direction, day/night color, and weather animation. Weather/time are editor previews, not map-persisted settings. Generated worlds start without placeholder spawn/location markers; add authored locations as needed. River, lake, beach, mountain-range, hill, and cave brushes author terrain directly. The renderer supports this bounded map size; larger worlds need compact layer storage and viewport/chunk rendering. The current JSON layer model is memory-intensive at the maximum size: Release `aur_tests.exe` peaked at 6,280 MiB working set (6,359 MiB private bytes) while exercising the 2560Ã—1280 generator case; the complete suite took 27.83 seconds, so that is not an isolated generation-time measurement. Actual Studio generation and D3D12 rendering at 2560Ã—1280 were verified on Intel UHD Graphics: the UI returned to idle in 97.57 seconds, peaking at 7,031 MiB working set (7,133 MiB private bytes). The map was visually checked at 19%, 100%, and 400% zoom. This wall time includes UI refresh and a five-second idle tail; GPU frame time and FPS remain unmeasured. New generated maps use automatic seed-based IDs/names (numbered for duplicates), with a random seed on dialog open and a Randomize control, so seed experiments do not require manual renaming. Tactical maps show terrain, units, and collision like Fire Emblem / Advance Wars. Pixel Editor includes frame selection, animation preview, 720p-minimum adaptive zoom, and up to 64Ã— manual zoom; Sprite Editor focuses on direction/pose/frame editing.
 - **World Map:** source-tile-aware zoom, cursor-centered wheel zoom, middle-drag pan, culling, fit, and project-backed location/exit editing are implemented.
 
-- **Music Studio**: Songs, tracks, notes, scenes, and clips are project-backed. Session Grid provides track rows, scene columns, clip creation/removal, scene launch preview, and scene management; the Piano Roll remains a separate tab for note editing. A searchable, named 128-patch GM program selector writes standard program numbers, with a dedicated channel-10 drum-track workflow. Standard MIDI Type 0/1 import/export retains channel, bank, program, common controllers, and SysEx. On Windows, WinMM MIDI input/output can connect hardware devices, record incoming notes into the selected track, and route preview playback to external GM/GS devices. Built-in GM-family, six-operator FM-style, and retro PSG previews are original oscillator synthesisâ€”not sampled SoundFont playback or a GS soundbank player. SoundFont/sample playback, VST hosting, and BRR/SPC playback are not implemented.
+- **Music Studio**: Songs, tracks, notes, scenes, and clips are project-backed. Session Grid provides track rows, scene columns, clip creation/removal, scene launch preview, and scene management; the Piano Roll remains a separate tab for note editing. A searchable, named 128-patch GM program selector writes standard program numbers, with a dedicated channel-10 drum-track workflow. Standard MIDI Type 0/1 import/export retains channel, bank, program, common controllers, and SysEx. On Windows, WinMM MIDI input/output can connect hardware devices, record incoming notes into the selected track, and route preview playback to external GM/GS devices. Built-in GM-family, six-operator FM-style, and retro PSG previews are original oscillator synthesis—not sampled SoundFont playback or a GS soundbank player. SoundFont/sample playback, VST hosting, and BRR/SPC playback are not implemented.
 - **Editor basics**: File menu supports Open Project (`Ctrl+O`), Save (`Ctrl+S`), and Reload from Disk. Opening another project prompts to save only when the project data differs from its last saved/opened snapshot. Map paint strokes and Sprite/Pixel frame edits have bounded local undo/redo; Sprite/Pixel support same-dimension full-frame copy/cut/paste. Transparent sprite previews now use a light checkerboard. This is a first pass, not project-wide history yet.
 - **Character generation**: The Character Forge supports the complete race and supernatural category roster, seeded race-aware appearances, gender identity (`female`, `male`, `non-binary`, `unspecified`), visual presentation (`feminine`, `masculine`, `androgynous`), and main-character/NPC/follower roles. Creature and pet generation is in the same workflow. Alignment is authored separately from creed/morality and corruption. See [Character Creator and Species Visuals](../Production/Character%20Creator%20and%20Species%20Visuals.md).
-- **Asset Forge**: Studio draws deterministic editable 32Ã—32 indexed-pixel clothing (pants, shorts, skirts, dresses, shirts, tunics) and props natively; this is procedural pixel drawing, not image generation. Character generation produces clothing/accessories onlyâ€”weapon art is a separate prop workflow.
+- **Asset Forge**: Studio draws deterministic editable 32Ã—32 indexed-pixel clothing (pants, shorts, skirts, dresses, shirts, tunics) and props natively; this is procedural pixel drawing, not image generation. Character generation produces clothing/accessories only—weapon art is a separate prop workflow.
 - **Race authoring**: Database > Races now edits project-backed race records (create, rename/ID change, update, delete) with editable lore and gameplay fields. Sylvi's sample includes the six mortal peoples and supernatural groups from the legacy World Bible taxonomy; Sylvi's actor record links to `sylvani`. Edits apply in memory and persist through the normal Save Project action.
 - **World/time authoring**: World & Time Settings edits calendar length, seasons, phase boundaries, the five era definitions, and weighted weather profiles by climate. The game clock reads those project settings; weather rolls use the active map's climate profile, and the renderer displays rain, snow, fog, and cloud cover.
 - **In-game cheats**: Press **F2** during gameplay or Studio playtest to open the in-game debug menu (available in Release builds). It pauses movement/clock while open and can set era, year/season/day/time, clock rate and pause state, climate (or return to the map climate), weather lock, and arbitrary runtime story/world switches. An optional HUD shows the active values. These are runtime overrides, not saved game state; project settings persist through Save Project.
@@ -43,15 +43,15 @@ ctest --test-dir build\Release --output-on-failure
 1. **Editors:** Map/Pixel shortcuts need a live smoke test; project-wide undo/redo, region selection/clipboard, complete entity authoring, and dirty-state/autosave recovery remain open.
 2. **Roadmap:** MCP external-change notifications, era-specific layers/timegates, authored art, audio playback features, and headless golden-image tests. See `Roadmap.md`.
 3. **P3.1 WorldSim core complete** (2026-11-06): `engine/aur/worldsim.{hpp,cpp}` with deterministic kernels, golden-hash/split-advance/run-to-run equality, save/load round-trip, and measured tick cost; plan at `Bible/notes/worldsim-p31.md` records the layout and deviations. P3.2 (editor simulation tools) is next and owner-gated. P3.0 gate evidence: [World Map Topology Handover](World%20Map%20Topology%20Handover.md).
-4. **Music Studio DAW initiative started** (2026-11-06): plan at `Bible/notes/daw/plan.md` (audit-corrected gameplan; see `decisions.md` for verified clamp facts, the dead `MusicEngine`, and the unread `map["music"]` reference). P0 safety net in progress.
-
-
-
-
+4. **Music Studio DAW initiative** (active): plan at `Bible/notes/daw/plan.md`
+   (audit-corrected gameplan; see `decisions.md`). Landed through P6.7 —
+   real-time engine, song v2 + undo, MIDI fidelity + devices/count-in, full
+   piano roll, session grid/launcher/scene-record, arrangement placements,
+   canvas, playback + arrangement MIDI export; suite 39/39. P2 close awaits
+   the owner GUI soak; next: P7a GM/GS instrument, P8 effects.
 
 ## Build entry points
 `AIO.bat` dispatches to `AIO-win.bat` and `AIO-linux.bat`; `build.bat` remains available. The Windows dispatcher selects the requested configuration tree and builds `aur_studio` for Qt deployment. Release tree selection was verified 2026-11-06; toolbar/context-menu changes rebuilt and passed Release CTest on 2026-11-06.
-
 
 ## Asset-pipeline audit (A0; implementation not authorized)
 This source-inspection audit records unresolved editor gaps; recheck current code before acting. A0 is not authorization for implementation.
@@ -101,32 +101,12 @@ Audit complete; no behavior changes made. A0 exit evidence: the three left-pane 
 
 **Open defects logged for future phase planning:** Tileset grid is empty despite project tiles; flag controls are decorative; gameplay flags are mislabeled as render attributes; Map Inspector event field is sample-only and accepts arbitrary text; palette state/library absent; map cells lack SNES render attributes; Sprite/Pixel palette/editor state and undo stacks are separate; Forge lacks versioned provenance/hash/gallery and layered outputs.
 
-
 **Additional build-entry note:** verified that root `AIO.bat` also handles configure/build/run (`build`, `debug`, `test`, `run`). Its test action runs CTest against Debug; this audit did not execute either build path.
 
-
 ## Open work
-- P3.0 topology gate is complete (final 400% edge-column evidence captured 2026-11-06, `Bible/Operations/evidence/p3-seam-400pct.png`). P3.1 WorldSim is the next phase and requires owner approval before starting. See [World Map Topology Handover](World%20Map%20Topology%20Handover.md).
+- P3.0 topology gate is complete (final 400% edge-column evidence captured 2026-11-06, `Bible/Operations/evidence/p3-seam-400pct.png`); P3.1 WorldSim core is also complete. P3.2 editor simulation tools is next and requires owner approval before starting. See [World Map Topology Handover](World%20Map%20Topology%20Handover.md).
 - Map/Pixel keyboard shortcuts are implemented but not live-smoke-tested. Project-wide undo/redo, map region selection/clipboard, complete entity authoring, and dirty-state/autosave recovery remain open.
-- Other roadmap work: MCP external-change notifications, era-specific layers/timegates, authored art, audio playback features, and headless golden-image tests. See `Roadmap.md`.
+- Other roadmap work: MCP external-change notifications, era-specific layers/timegates, authored art, audio playback features (DAW P7a/P8), and headless golden-image tests. See `Roadmap.md`.
 
 ## Focused handovers
-P3.0 evidence and remaining acceptance are in [World Map Topology Handover](World%20Map%20Topology%20Handover.md). A0 findings are source-inspection notes, not implementation authorization; recheck active code before acting. Audio work remains in the roadmap and focused design documents.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-## A1 Map Editor follow-up
-
+P3.0 evidence is in [World Map Topology Handover](World%20Map%20Topology%20Handover.md). A0 findings are source-inspection notes, not implementation authorization; recheck active code before acting. DAW work lives in `Bible/notes/daw/plan.md`.

@@ -84,3 +84,18 @@
 - Launch quantise contract: launch while stopped = immediate; while running = queued to the next bar boundary (`targetBar = (frame + barFrames)/barFrames`, barFrames from mixer bpm atomics at 44100 Hz). Promotion only in `tick()` on the GUI timer — never from the audio thread.
 - P6.3.4 (`18cd90e`): promotion → mixer swap. On tick promotion the timer handler scans the grid for any Playing slot, builds that scene with makeScenePreview, and calls loadSong — **without** resetPlayback, so the transport keeps running and the swap lands at the next command boundary (contract 4 holds: no mid-callback mutation). midiSession->startOutput re-arms hardware MIDI against the new scene; a stop was never queued (stopAll idles slots without a swap — notes-off on stop is currently implicit in the next loadSong, an acceptable simplification until scene-record work forces a proper queued stop).
 - P6.4 (`fbcd0c3`): scene record mirrors each recorded note into the armed scene's clip for that track (step clipped to the 16-step window; empty clips created as `{"notes":[]}` on demand; clips resized to track count). The scene is captured at arm time (`recordingScene`), so switching the selected scene mid-record does not retarget — deliberate, matches DAW convention. Track notes and clip notes are written independently (no dedup between them).
+
+## Operations doc review (2026-11-07)
+
+- Closed the WANTED item "Review Bible/Operations/ per AGENTS.md". Findings
+  and actions: Agent Guide.md title corrected (was mislabeled `AGENTS.md`);
+  Operations `Handover.md` mojibake repaired (triple-encoded em dash in the
+  title needed a byte-level replace — script under `build/fix_title.ps1`,
+  deleted after use), stale "DAW P0 in progress" updated to the P6.7 state,
+  empty `## A1 Map Editor follow-up` removed, duplicate open-work list
+  merged, blank-line padding collapsed; `Roadmap.md` Music Studio bullets
+  refreshed to the DAW plan's actual landed scope; `World Map Topology
+  Handover.md` got a current-status header (P3.0 + P3.1 complete, P3.2
+  owner-gated) with the historical body kept as gate-evidence record.
+  `Project Overview.md`, `MCP Server.md`, `evidence/` audited accurate —
+  unchanged. Review plan at `Bible/notes/ops-review.md`.

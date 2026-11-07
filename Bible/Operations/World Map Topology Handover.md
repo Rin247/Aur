@@ -1,5 +1,13 @@
 # World Map Topology Handover
 
+> **Current status (2026-11-07):** P3.0 (cylindrical topology) is **complete**
+> with full acceptance evidence (engine regressions + live D3D12 seam
+captures; see the dated result records at the bottom). P3.1 (deterministic
+WorldSim core) is also **complete** — plan at `Bible/notes/worldsim-p31.md`.
+The next phase, **P3.2 editor simulation tools, is owner-gated** and must not
+start without approval. The body below is the P3.0 handoff record; the later
+roadmap (P3.1b → P12) remains advisory and individually gated.
+
 ## Purpose and scope
 
 This document turns the user's
