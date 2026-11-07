@@ -1,6 +1,6 @@
 # DAW: plan
 
-Status: P0 complete; P1 extraction next.
+Status: P1 in progress (audio move committed; MusicPanel split next).
 
 Master plan for the Music Studio DAW initiative, seeded from the owner-supplied
 gameplan and corrected by a source audit on 2026-11-06. One note file per major
@@ -112,7 +112,11 @@ engine (P2) defines the timing contract.
 
 ### P1 Extraction, no behaviour change
 
-- [ ] Move `synth`, `midi`, song model into `engine/aur/audio/` namespaces.
+- [x] Move `synth`, `midi` into `engine/aur/audio/` (`aur::audio` namespace
+      deferred — both files already live in plain `namespace aur`; naming a
+      sub-namespace now would churn every call site for no P1 gain; revisit
+      when the engine gains more modules). CMake + all includes updated;
+      build green, suite 28/28, tags `daw-p1.1`.
 - [ ] Split `MusicPanel` into TransportBar, MidiDevicePanel, MidiRecorder,
       SessionView, TrackPanel, GeneratorPanel + thin host; measure sizes.
 - [ ] `MusicEngine` stays as-is (unused) until P11.
