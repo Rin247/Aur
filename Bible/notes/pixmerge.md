@@ -1,6 +1,6 @@
 # Pixel/Sprite editor merge
 
-Status: plan committed; not started.
+Status: P0 landed (`4dc2b19`, tag `pixmerge-p0`); P1 session extraction is next.
 
 ## Goal
 
@@ -65,10 +65,15 @@ duplicate panel.
 
 ### Phase 0 — pin current behaviour
 
-- [ ] Add `tests/test_pixel_session.cpp` covering: frame copy/paste
+- [x] Add `tests/test_pixel_session.cpp` covering: frame copy/paste
       round-trip through the canvas API, undo/redo restoring exact frame
       rows, palette read for anim-backed and plain graphics.
-      Acceptance: suite green with the new file; tag `pixmerge-p0`.
+      Landed as a headless data-layer pin: frames resolve for plain and
+      anim-backed graphics, undo/redo stack shape (the pin caught a redo
+      bug in its own first draft — redo must push current onto undo, not
+      back onto redo), palette hex decode, missing-graphic guards.
+      Clipboard round-trip stays a manual GUI check (aur_tests has no
+      QApplication). Suite 40/40; tag `pixmerge-p0`.
 
 ### Phase 1 — extract the session
 
