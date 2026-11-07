@@ -1,6 +1,7 @@
 #include "MusicPanel.hpp"
 #include "music/SongLibrary.hpp"
 #include "music/VelocityLaneStrip.hpp"
+#include "music/ScaleSelector.hpp"
 #include "aur/audio/midi.hpp"
 #include "aur/audio/synth.hpp"
 #include "aur/audio/SongDocument.hpp"
@@ -35,6 +36,20 @@ namespace aur
             return nullptr;
         auto it = project->music.find(currentSongId.toStdString());
         return it == project->music.end() ? nullptr : &it->second;
+    }
+
+    const Json *MusicPanel::currentSong() const
+    {
+        return const_cast<MusicPanel *>(this)->currentSong();
+    }
+
+    void MusicPanel::syncScaleSelector(const Json &song)
+    {
+        const int root = song.contains("key_root") && song["key_root"].is_number()
+                             ? song["key_root"].as_int() : 0;
+        const int scale = song.contains("key_scale") && song["key_scale"].is_number()
+                              ? song["key_scale"].as_int() : -1;
+        scaleSelector->setKey(root, scale);
     }
 
     void MusicPanel::saveCurrentSong(const Json &song)
@@ -152,6 +167,7 @@ namespace aur
         refreshTracks();
         trackList->setCurrentRow(selectedTrack);
         pianoRoll->setSong(*song, selectedTrack); velocityStrip->setSong(*song, selectedTrack);
+    syncScaleSelector(*song);
         updateTrackProperties();
         updatingControls = false;
     }
@@ -776,6 +792,24 @@ MusicPanel::MusicPanel(Project* p, QWidget* parent)
                               pianoRoll && pianoRoll->canRedo());
     });
     pianoLayout->addWidget(velocityStrip);
+    scaleSelector = new ScaleSelector(pianoPage);
+    scaleSelector->setChangeCallback([this](int root, int scale) {
+        Json *song = currentSong();
+        if (!song)
+            return;
+        if (scale < 0)
+        {
+            song->as_object().erase("key_root");
+            song->as_object().erase("key_scale");
+        }
+        else
+        {
+            (*song)["key_root"] = root;
+            (*song)["key_scale"] = scale;
+        }
+        saveCurrentSong(*song);
+    });
+    pianoLayout->addWidget(scaleSelector);
     auto* pianoHint = new QLabel(
         "Piano Roll — drag empty grid to marquee-select · Shift+click adds a note · drag to move/resize (Alt = velocity) · Ctrl+click toggles · Ctrl+C/V/D copies/pastes/duplicates · right-click or Delete removes",
         pianoPage);
@@ -854,6 +888,7 @@ MusicPanel::MusicPanel(Project* p, QWidget* parent)
         midiSession->setSelectedTrack(row);
         if (Json* song = currentSong()) {
             pianoRoll->setSong(*song, selectedTrack); velocityStrip->setSong(*song, selectedTrack);
+    syncScaleSelector(*song);
             updateTrackProperties();
         }
         refreshSessionGrid();
@@ -899,6 +934,7 @@ MusicPanel::MusicPanel(Project* p, QWidget* parent)
         refreshTracks();
         trackList->setCurrentRow(selectedTrack);
         pianoRoll->setSong(*song, selectedTrack); velocityStrip->setSong(*song, selectedTrack);
+    syncScaleSelector(*song);
         refreshSessionGrid();
     });
     connect(addSceneButton, &QPushButton::clicked, this, [this]() {

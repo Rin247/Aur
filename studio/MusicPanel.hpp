@@ -19,6 +19,7 @@
 #include "music/MidiSession.hpp"
 #include "music/PianoRollCanvas.hpp"
 #include "music/VelocityLaneStrip.hpp"
+#include "music/ScaleSelector.hpp"
 #include "music/QtAudioOutput.hpp"
 #include "SongHistory.hpp"
 #include "aur/audio/RealtimeMixer.hpp"
@@ -34,7 +35,10 @@ namespace aur
         QComboBox *songCombo = nullptr;
         QListWidget *trackList = nullptr;
         PianoRollCanvasWidget *pianoRoll = nullptr;
+
         VelocityLaneStrip *velocityStrip = nullptr;
+        ScaleSelector *scaleSelector = nullptr;
+        void syncScaleSelector(const Json &song);
         QLineEdit *songName = nullptr;
         QTabWidget *editorTabs = nullptr;
         QTableWidget *sessionGrid = nullptr;
@@ -65,6 +69,7 @@ namespace aur
 
         int clampedInt(const Json &value, int fallback, int low, int high) const;
         Json *currentSong();
+        const Json *currentSong() const;
         void saveCurrentSong(const Json &song);
         void refreshTracks();
         void selectSong(const QString &id);
