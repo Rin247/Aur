@@ -35,6 +35,8 @@ namespace aur
         void redo();
         bool canUndo() const;
         bool canRedo() const;
+        void setSnapSteps(int steps) { snapSteps = steps; update(); }
+        int snap() const { return snapSteps; }
 
     signals:
         void historyChanged();
@@ -72,11 +74,15 @@ namespace aur
         bool dragging = false; // note edit in progress; history committed on release
         bool velocityDrag = false; // Alt+drag: vertical drag adjusts velocity
         int dragOriginVelocity = 90;
+        int snapSteps = 1; // 0 off, 1/2/4 steps, 5 = triplet (16/3)
         editor::SongHistory *history = nullptr;
         std::function<void(const Json &)> onSongChanged;
 
         int noteAt(const QPoint &pos) const;
         bool noteIntersectsMarquee(int index) const;
+        int snapped(int step) const;
+        void cycleSnap();
+        void quantiseSelection();
         void selectOnly(int index);
         void deleteSelected(const char *label);
         void copySelected();

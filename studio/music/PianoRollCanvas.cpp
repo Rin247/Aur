@@ -6,6 +6,7 @@
 #include <QResizeEvent>
 
 #include <algorithm>
+#include <cmath>
 #include <map>
 #include <string>
 
@@ -290,6 +291,57 @@ namespace aur
             resize(newContentWidth, height());
     }
 
+    int PianoRollCanvasWidget::snapped(int step) const
+    {
+        if (snapSteps <= 0)
+            return std::max(0, step);
+        if (snapSteps == 5)
+        {
+            // Triplet: nearest 1/3 of a bar (16 steps / 3), step base 0.
+            const double third = 16.0 / 3.0;
+            return std::max(0, static_cast<int>(std::lround(step / third) * third));
+        }
+        const int grid = std::max(1, snapSteps);
+        return std::max(0, (step / grid) * grid);
+    }
+
+    void PianoRollCanvasWidget::cycleSnap()
+    {
+        // Off -> 1 step (16th) -> 2 (8th) -> 4 (beat) -> 5 (triplet) -> off.
+        snapSteps = snapSteps == 0 ? 1 : snapSteps == 1 ? 2 : snapSteps == 2 ? 4
+                   : snapSteps == 4 ? 5 : 0;
+        update();
+    }
+
+    void PianoRollCanvasWidget::quantiseSelection()
+    {
+        if (selectedNotes.empty() || trackIndex < 0 || !song.contains("tracks") ||
+            !song["tracks"].is_array() || snapSteps <= 0 ||
+            trackIndex >= static_cast<int>(song["tracks"].as_array().size()))
+            return;
+        JsonArray &notes = song["tracks"][static_cast<size_t>(trackIndex)]["notes"].as_array();
+        bool changed = false;
+        for (int index : selectedNotes)
+        {
+            if (index >= static_cast<int>(notes.size()))
+                continue;
+            Json &note = notes[static_cast<size_t>(index)];
+            if (!note.is_array() || note.as_array().size() < 3)
+                continue;
+            const int target = snapped(note[0].as_int());
+            if (target != note[0].as_int())
+            {
+                note[0] = target;
+                changed = true;
+            }
+        }
+        if (!changed)
+            return;
+        if (history)
+            history->commit_note_edit(song, trackIndex, "quantise");
+        notifySongChanged();
+    }
+
     void PianoRollCanvasWidget::notifySongChanged()
     {
         if (onSongChanged)
@@ -345,6 +397,17 @@ namespace aur
         }
         painter.setPen(QColor("#0c0d12"));
         painter.drawLine(keyWidth - 1, 0, keyWidth - 1, height());
+
+        if (snapSteps != 1)
+        {
+            const QString snapLabel = snapSteps == 0 ? "snap: off"
+                                      : snapSteps == 2 ? "snap: 1/8"
+                                      : snapSteps == 4 ? "snap: 1/4"
+                                      : snapSteps == 5 ? "snap: 1/4T"
+                                                       : "snap: 1/16";
+            painter.setPen(QColor("#8ab4f8"));
+            painter.drawText(width() - 78, 14, snapLabel);
+        }
 
         if (!song.contains("tracks") || !song["tracks"].is_array() ||
             trackIndex < 0 || trackIndex >= static_cast<int>(song["tracks"].as_array().size()))
@@ -428,7 +491,7 @@ namespace aur
                     return;
                 if (history)
                     history->begin_note_edit(song, trackIndex);
-                JsonArray note{step, pitch, 4, 90};
+                JsonArray note{snapped(step), pitch, 4, 90};
                 JsonArray &notes =
                     song["tracks"][static_cast<size_t>(trackIndex)]["notes"].as_array();
                 notes.push_back(Json(std::move(note)));
@@ -560,7 +623,7 @@ namespace aur
                 if (index >= static_cast<int>(notes.size()))
                     continue;
                 Json &note = notes[static_cast<size_t>(index)];
-                note[0] = std::max(0, origin.step + stepDelta);
+                note[0] = std::max(0, snapped(origin.step + stepDelta));
                 note[1] = std::clamp(origin.pitch + pitchDelta, lowestPitch, highestPitch);
             }
         }
@@ -598,6 +661,18 @@ namespace aur
             song["tracks"].is_array())
         {
             deleteSelected("delete notes");
+            return;
+        }
+        if (event->key() == Qt::Key_G && event->modifiers() & Qt::ControlModifier)
+        {
+            cycleSnap();
+            return;
+        }
+        if (event->key() == Qt::Key_Q && event->modifiers() & Qt::ControlModifier)
+        {
+            if (history)
+                history->begin_note_edit(song, trackIndex);
+            quantiseSelection();
             return;
         }
         if (event->key() == Qt::Key_C && event->modifiers() & Qt::ControlModifier)
