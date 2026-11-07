@@ -1,6 +1,6 @@
 # DAW: plan
 
-Status: P3 closed-out (P3.4–P3.5 landed); P4.1 MIDI fidelity landed (`f1420e3`). Next: P4 remainder (record count-in, SysEx input) or P6 session/arrangement. MD/SNES cores awaited from owner's frontier model (WANTED.md).
+Status: P3 closed-out; P4.1 MIDI fidelity landed (`f1420e3`); P6.1 first-class clips landed (`7d0b8da`). Next: P4 remainder (record count-in, SysEx input), P5 piano roll (lane editor), or P6 remainder (launch quantisation, arrangement timeline). MD/SNES cores awaited from owner's frontier model (WANTED.md).
 
 Master plan for the Music Studio DAW initiative, seeded from the owner-supplied
 gameplan and corrected by a source audit on 2026-11-06. One note file per major
@@ -203,6 +203,23 @@ undoable.
 Painted clip grid with launch quantisation, queued/playing states, scene
 launch/stop, record into slot, clip edit in piano roll; arrangement timeline
 with placements, loop brace, markers, tempo/T.S. lanes.
+
+Progress 2026-11-07:
+- [x] P6.1 first-class clips: additive fields over the v1 `{notes}` clip shape
+      (name/start/length/muted/color) with `SongDocument::clip_at/_mut/
+      clip_info/set_clip_info` accessors (defaults for v1 songs), session grid
+      buttons now show clip name + bar count + note count, new clips get
+      first-class fields — `daw-p6.1` (`7d8b8da`... see git log),
+      `test_song_clips.cpp`, suite 36/36.
+- [x] P6.2 automation lanes land via the P4.1 `track["automation"]` model
+      (bend=128, pressure=129 lanes, import/export round-tripped); undo wiring
+      uses the P3.4 `begin_note_edit`/`commit_note_edit` path because lanes live
+      on the track object alongside notes — a NoteEdit commit snapshots only
+      notes, so lane edits must go through `begin_track_edit`/
+      `commit_track_change` (TrackProps). No lane *editor* UI yet; that arrives
+      with the P5 piano-roll velocity/automation lane strip.
+- [ ] Remaining: launch quantisation + queued/playing states, scene record
+      into slot, arrangement timeline with placements/loop brace, lane editor UI.
 
 ### P7a GM/GS instrument
 

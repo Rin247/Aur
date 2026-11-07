@@ -21,6 +21,16 @@ Settled with evidence before code; each entry dated. Amend rather than argue.
 
 ## Settled
 
+- **2026-11-07 — Clip model (P6.1).** A clip object keeps the flat
+  `scenes[n].clips[track]` slot layout the session grid already renders (null
+  = empty slot) and adds first-class fields inside each non-null clip:
+  `name` (default "Track·Scene"), `start` (step, default 0), `length` (steps,
+  default 16 = one bar), `muted` (bool, default false), `color` (optional int
+  tag), plus the existing `notes`. All fields additive — old songs with bare
+  `{notes}` clips read unchanged (defaults supplied by accessors). Note steps
+  inside a clip stay clip-relative (0 = clip start), which `notesForBar`
+  already produced; `makeScenePreview` unchanged while clips are 1 bar.
+  Launch quantisation and arrangement timeline placements stay future work.
 - **2026-11-07 — Audio backend (P2): Qt6 `QAudioSink`.** `Qt6::Multimedia` is
   already a required dependency of both `aur_game` and `aur_studio`
   (CMakeLists.txt:13,38,84), so no new linkage; the engine's real-time output
