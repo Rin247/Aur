@@ -108,6 +108,7 @@ namespace aur
 
         int noteAt(const QPoint &pos) const;
         bool noteIntersectsMarquee(int index) const;
+        Json *currentTrack();
         int pitchRow(int pitch) const;
         int visiblePitch(int y) const;
         int visiblePitchAt(int row) const;

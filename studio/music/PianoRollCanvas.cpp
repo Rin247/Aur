@@ -1,5 +1,6 @@
 #include "PianoRollCanvas.hpp"
 
+#include "NoteIndex.hpp"
 #include "QtAudioOutput.hpp"
 
 #include <QKeyEvent>
@@ -80,17 +81,25 @@ namespace aur
 
     void PianoRollCanvasWidget::undo()
     {
+        const std::vector<int> before = editor::NoteIndex::ids(currentTrack());
+        const std::set<int> selectedIds =
+            editor::NoteIndex::toIds(selectedNotes, before);
         if (history)
             history->undo(song);
-        selectedNotes.clear();
+        selectedNotes = editor::NoteIndex::toIndices(
+            selectedIds, editor::NoteIndex::ids(currentTrack()));
         notifySongChanged();
     }
 
     void PianoRollCanvasWidget::redo()
     {
+        const std::vector<int> before = editor::NoteIndex::ids(currentTrack());
+        const std::set<int> selectedIds =
+            editor::NoteIndex::toIds(selectedNotes, before);
         if (history)
             history->redo(song);
-        selectedNotes.clear();
+        selectedNotes = editor::NoteIndex::toIndices(
+            selectedIds, editor::NoteIndex::ids(currentTrack()));
         notifySongChanged();
     }
 
@@ -402,6 +411,14 @@ namespace aur
             playheadStep = step;
             update();
         }
+    }
+
+    Json *PianoRollCanvasWidget::currentTrack()
+    {
+        if (!song.contains("tracks") || !song["tracks"].is_array() || trackIndex < 0 ||
+            trackIndex >= static_cast<int>(song["tracks"].as_array().size()))
+            return nullptr;
+        return &song["tracks"][static_cast<size_t>(trackIndex)];
     }
 
     void PianoRollCanvasWidget::notifySongChanged()
