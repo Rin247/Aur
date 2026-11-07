@@ -18,6 +18,7 @@
 - **Map editor starts zoomed out on first boot** — default zoom should be fit-to-view (or 100%) on a fresh open; reported from the UI 2026-11-06.
 - **World Time Settings tab should be baked into the World editor** — merge the standalone tab into the World panel instead of a separate tab; reported 2026-11-06.
 - **Implement SNES-style platformer games and metroidvanias** — build SNES-style platformer and metroidvania game support into the engine.
+- **Refactor and merge the pixel and sprite editors** — they are almost identical in scope; consolidate into one editor.
 
 ## Closed
 
