@@ -536,9 +536,14 @@ void WorldPanel::refreshGraph() {
 }
 
 void WorldPanel::selectMap(const std::string& map_id) {
+    const bool first_show = current_map.empty();
     current_map = map_id;
     mapCanvas->setMap(map_id);
     refreshMapContents();
+    // First boot / first selection shows the whole world (WANTED: the editor
+    // used to open zoomed to 100% on a corner of the 256×128 map).
+    if (first_show)
+        mapCanvas->fitToView();
 }
 
 void WorldPanel::refreshMapContents() {
