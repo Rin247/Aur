@@ -285,12 +285,18 @@ Progress 2026-11-07:
       notes, so lane edits must go through `begin_track_edit`/
       `commit_track_change` (TrackProps). No lane *editor* UI yet; that arrives
       with the P5 piano-roll velocity/automation lane strip.
-- [ ] P6.3 launch quantisation + queued/playing states: ClipLauncher model
-      (studio/, Qt-side state machine over the scene grid) — launching a
-      clip while the mixer plays queues it to start on the next bar boundary
-      (quantise = 1 bar); queued/playing badges painted on the grid button;
-      stop queued the same way. No engine change: scheduling stays in the
-      existing song-swap command boundary.
+- [x] P6.3 launch quantisation + queued/playing states:
+      `ClipLauncherStates` (`studio/music/`, plain class + `std::function`
+      callback — no moc) holds idle/queued/playing per (scene, track) slot;
+      launch while stopped plays immediately, while running queues to the
+      next bar boundary (1-bar quantise, frames derived from the mixer
+      playhead atomics); `queuedInSteps` drives a countdown badge; the 100 ms
+      timer promotes queued slots and repaints the grid. Session grid buttons
+      show ▶ playing (amber) / queued N steps (blue) states; play-scene
+      launches through the quantiser — `daw-p6.3.1` (`1b48b4c`),
+      `daw-p6.3.2` (`e18509c`), `test_clip_launcher.cpp`, suite 38/38.
+      Note: engine-side song swap on promotion is the next wiring step
+      (the callback fires; the mixer swap must carry the new scene's notes).
 - [ ] Remaining: scene record into slot, arrangement timeline with
       placements/loop brace, lane editor UI.
 
