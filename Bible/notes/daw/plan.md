@@ -304,8 +304,24 @@ Progress 2026-11-07:
       recorded note into that scene column's clip for the track (16-step
       window, empty clips created on demand) alongside the track notes —
       `daw-p6.4.1` (`fbcd0c3`). Count-in applies as in P4.2.
-- [ ] Remaining: arrangement timeline with placements/loop brace, lane editor
-      UI.
+- [ ] P6.5 arrangement data model: song["arrangement"] =
+      [{scene, step, length}] scene-scoped placements (sorted by step;
+      SongDocument::placements/placement_at/placement_at_mut/add_placement/
+      remove_placement with clamping + v1 songs reading as empty),
+      makeArrangementPreview flattening placements into an absolute-step song
+      (clip notes offset by placement step, clip length window applied),
+      test_arrangement.cpp — engine only, no UI.
+- [ ] P6.6 ArrangementCanvas (studio/music/): painted timeline, one row per
+      track, placement blocks from arrangement placements (clip name/colour),
+      click places the selected scene's clip for that track at the snapped
+      step, drag moves a placement, Delete removes, loop brace + markers
+      ruler from loop/markers, tempo/T.S. lanes render from the v2 maps;
+      all edits via begin_track_edit/commit_track_change.
+- [ ] P6.7 arrangement playback: play-arrangement builds the flattened preview
+      and drives the mixer linearly (no loop wrap past the last placement);
+      MIDI export of arrangement/clip (closes the P4 remainder).
+- [ ] Acceptance: test_arrangement green (placements, flatten, clamping,
+      v1-empty), Studio shows and plays an arrangement, export round-trips.
 
 ### P7a GM/GS instrument
 
