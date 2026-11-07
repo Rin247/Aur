@@ -765,7 +765,7 @@ MusicPanel::MusicPanel(Project* p, QWidget* parent)
     connect(pianoScroll->horizontalScrollBar(), &QScrollBar::valueChanged,
             pianoRoll, [this](int value) {
                 if (pianoRoll) pianoRoll->setVisibleStep(
-                    std::max(0, value / PianoRollCanvasWidget::stepWidth));
+                    std::max(0, value / pianoRoll->stepWidth()));
             });
     pianoLayout->addWidget(pianoScroll, 1);
     velocityStrip = new VelocityLaneStrip(pianoPage);

@@ -27,9 +27,44 @@ namespace aur
 
     } // namespace
 
+    int PianoRollCanvasWidget::pitchRow(int pitch) const
+    {
+        return highestPitch - pitch + pitchOffsetRows;
+    }
+
+    int PianoRollCanvasWidget::visiblePitch(int y) const
+    {
+        return highestPitch - (y / pitchHeight) + pitchOffsetRows;
+    }
+
+    int PianoRollCanvasWidget::visiblePitchAt(int row) const
+    {
+        return highestPitch - row + pitchOffsetRows;
+    }
+
+    void PianoRollCanvasWidget::setPitchOffset(int lowestVisiblePitch)
+    {
+        pitchOffsetRows = std::clamp(highestPitch - lowestVisiblePitch, 0,
+                                     pitchCount - 1);
+        update();
+    }
+
+    void PianoRollCanvasWidget::zoom(int delta)
+    {
+        // Swept as a control: stepped levels via Ctrl+wheel or +/-, never an axis.
+        const int newIndex = std::clamp(zoomIndex + (delta > 0 ? 1 : -1), 0, 5);
+        if (newIndex == zoomIndex)
+            return;
+        zoomIndex = newIndex;
+        currentStepWidth = kZoomLevels[zoomIndex];
+        const int newContentWidth = contentWidth();
+        resize(std::max(width(), newContentWidth), height());
+        update();
+    }
+
     PianoRollCanvasWidget::PianoRollCanvasWidget(QWidget *parent) : QWidget(parent)
     {
-        setMinimumSize(keyWidth + minimumStepCount * stepWidth, pitchCount * pitchHeight);
+        setMinimumSize(keyWidth + minimumStepCount * baseStepWidth, pitchCount * pitchHeight);
         setFocusPolicy(Qt::StrongFocus);
         auto *playheadTimer = new QTimer(this);
         connect(playheadTimer, &QTimer::timeout, this,
@@ -117,9 +152,9 @@ namespace aur
                 }
             }
         }
-        const int viewportSteps = std::max(1, (width() - keyWidth) / stepWidth);
+        const int viewportSteps = std::max(1, (width() - keyWidth) / currentStepWidth);
         const int requiredSteps = ((lastStep + viewportSteps - 1) / viewportSteps) * viewportSteps;
-        return keyWidth + requiredSteps * stepWidth;
+        return keyWidth + requiredSteps * currentStepWidth;
     }
 
     void PianoRollCanvasWidget::setChangeCallback(std::function<void(const Json &)> callback)
@@ -136,7 +171,7 @@ namespace aur
         if (!notes.is_array())
             return -1;
         const int x = pos.x() - keyWidth;
-        const int pitch = highestPitch - (pos.y() / pitchHeight);
+        const int pitch = visiblePitch(pos.y());
         if (x < 0 || pitch < lowestPitch || pitch > highestPitch)
             return -1;
         for (int i = static_cast<int>(notes.as_array().size()) - 1; i >= 0; --i)
@@ -146,9 +181,9 @@ namespace aur
                 continue;
             const int start = note[0].as_int();
             const int length = std::max(1, note[2].as_int());
-            const int left = keyWidth + start * stepWidth;
-            const int right = left + length * stepWidth;
-            const int top = (highestPitch - note[1].as_int()) * pitchHeight;
+            const int left = keyWidth + start * currentStepWidth;
+            const int right = left + length * currentStepWidth;
+            const int top = (pitchRow(note[1].as_int())) * pitchHeight;
             if (pos.x() >= left && pos.x() < right &&
                 pos.y() >= top && pos.y() < top + pitchHeight)
                 return i;
@@ -170,9 +205,9 @@ namespace aur
             return false;
         const int start = note[0].as_int();
         const int length = std::max(1, note[2].as_int());
-        const QRect noteRect(keyWidth + start * stepWidth,
-                             (highestPitch - note[1].as_int()) * pitchHeight,
-                             length * stepWidth, pitchHeight);
+        const QRect noteRect(keyWidth + start * currentStepWidth,
+                             (pitchRow(note[1].as_int())) * pitchHeight,
+                             length * currentStepWidth, pitchHeight);
         return marqueeRect.intersects(noteRect);
     }
 
@@ -383,7 +418,7 @@ namespace aur
 
         for (int row = 0; row < pitchCount; ++row)
         {
-            const int pitch = highestPitch - row;
+            const int pitch = visiblePitchAt(row);
             const QRect key(0, row * pitchHeight, keyWidth, pitchHeight);
             const bool blackKey = pitch % 12 == 1 || pitch % 12 == 3 ||
                                   pitch % 12 == 6 || pitch % 12 == 8 || pitch % 12 == 10;
@@ -399,12 +434,12 @@ namespace aur
             }
         }
 
-        const int displayedSteps = (width() - keyWidth) / stepWidth;
+        const int displayedSteps = (width() - keyWidth) / currentStepWidth;
         const int firstGridStep = (firstVisibleStep / 16) * 16;
         const int lastGridStep = firstVisibleStep + displayedSteps;
         for (int step = firstGridStep; step <= lastGridStep; ++step)
         {
-            const int x = keyWidth + (step - firstVisibleStep) * stepWidth;
+            const int x = keyWidth + (step - firstVisibleStep) * currentStepWidth;
             const int barNumber = step / 16;
             const int barBeat = step % 16;
             painter.setPen(barBeat == 0 ? QColor("#555b6d") : barBeat % 4 == 0 ? QColor("#393d4b")
@@ -460,9 +495,9 @@ namespace aur
             const int visibleEnd = std::min(step + length, firstVisibleStep + displayedSteps);
             if (visibleStart >= visibleEnd)
                 continue;
-            const QRect noteRect(keyWidth + (visibleStart - firstVisibleStep) * stepWidth + 1,
-                                 (highestPitch - pitch) * pitchHeight + 1,
-                                 std::max(2, (visibleEnd - visibleStart) * stepWidth - 2), pitchHeight - 2);
+            const QRect noteRect(keyWidth + (visibleStart - firstVisibleStep) * currentStepWidth + 1,
+                                 (pitchRow(pitch)) * pitchHeight + 1,
+                                 std::max(2, (visibleEnd - visibleStart) * currentStepWidth - 2), pitchHeight - 2);
             QColor fill = noteColor.darker(70 + (audio::SongDocument::note_velocity(note) * 90 / 127));
             const bool selected = selectedNotes.count(static_cast<int>(i)) > 0;
             if (selected)
@@ -480,13 +515,26 @@ namespace aur
         }
         if (playheadStep >= 0)
         {
-            const int px = keyWidth + (playheadStep - firstVisibleStep) * stepWidth;
+            const int px = keyWidth + (playheadStep - firstVisibleStep) * currentStepWidth;
             if (px >= keyWidth)
             {
                 painter.setPen(QPen(QColor("#f0bd58"), 1));
                 painter.drawLine(px, 0, px, height());
             }
         }
+    }
+
+    void PianoRollCanvasWidget::wheelEvent(QWheelEvent *event)
+    {
+        if (event->modifiers() & Qt::ControlModifier)
+        {
+            zoom(event->angleDelta().y() > 0 ? 1 : -1);
+            event->accept();
+            return;
+        }
+        // Plain vertical wheel scrolls the pitch window.
+        setPitchOffset(highestPitch - visiblePitch(event->angleDelta().y() > 0 ? -pitchHeight * 3 : pitchHeight * 3));
+        event->accept();
     }
 
     void PianoRollCanvasWidget::mousePressEvent(QMouseEvent *event)
@@ -517,8 +565,8 @@ namespace aur
             if (event->modifiers() & Qt::ShiftModifier)
             {
                 const int step = firstVisibleStep +
-                                 std::max(0, (event->pos().x() - keyWidth) / stepWidth);
-                const int pitch = std::clamp(highestPitch - event->pos().y() / pitchHeight,
+                                 std::max(0, (event->pos().x() - keyWidth) / currentStepWidth);
+                const int pitch = std::clamp(visiblePitch(event->pos().y()),
                                              lowestPitch, highestPitch);
                 if (trackIndex < 0 || !song.contains("tracks") ||
                     !song["tracks"].is_array() ||
@@ -591,7 +639,7 @@ namespace aur
         velocityDrag = event->modifiers() & Qt::AltModifier;
         resizingNote = !velocityDrag && selectedNotes.size() == 1 &&
                        event->pos().x() >= keyWidth +
-                                              (dragOriginStep + dragOriginLength) * stepWidth - 5;
+                                              (dragOriginStep + dragOriginLength) * currentStepWidth - 5;
         if (history)
             history->begin_note_edit(song, trackIndex);
         dragging = true;
@@ -616,9 +664,9 @@ namespace aur
                     continue;
                 const int start = note[0].as_int();
                 const int length = std::max(1, note[2].as_int());
-                const QRect noteRect(keyWidth + start * stepWidth,
-                                     (highestPitch - note[1].as_int()) * pitchHeight,
-                                     length * stepWidth, pitchHeight);
+                const QRect noteRect(keyWidth + start * currentStepWidth,
+                                     (pitchRow(note[1].as_int())) * pitchHeight,
+                                     length * currentStepWidth, pitchHeight);
                 if (marqueeRect.intersects(noteRect))
                     selectedNotes.insert(i);
             }
@@ -642,7 +690,7 @@ namespace aur
             notifySongChanged();
             return;
         }
-        const int stepDelta = (event->pos().x() - dragStartPos.x()) / stepWidth;
+        const int stepDelta = (event->pos().x() - dragStartPos.x()) / currentStepWidth;
         const int pitchDelta = (dragStartPos.y() - event->pos().y()) / pitchHeight;
         if (resizingNote)
         {
