@@ -828,8 +828,47 @@ MusicPanel::MusicPanel(Project* p, QWidget* parent)
                              &audioOutput->getMixer().playheadActive);
     auto *launcherTimer = new QTimer(this);
     connect(launcherTimer, &QTimer::timeout, this, [this]() {
+        const int previousPlaying = launcherPlayingScene;
         if (clipLauncher.tick())
+        {
+            // A queued slot promoted: swap the mixer to the scene whose
+            // slots are now playing, without resetting the transport.
+            int promoted = -1;
+            for (int scene = 0; scene < sessionGrid->columnCount(); ++scene)
+            {
+                bool anyPlaying = false;
+                for (int track = 0; track < sessionGrid->rowCount(); ++track)
+                {
+                    if (clipLauncher.state(scene, track) == ClipLauncherStates::State::Playing)
+                    {
+                        anyPlaying = true;
+                        break;
+                    }
+                }
+                if (anyPlaying)
+                {
+                    promoted = scene;
+                    break;
+                }
+            }
+            if (promoted >= 0)
+            {
+                Json sceneSong = makeScenePreview(promoted);
+                if (!sceneSong.is_null())
+                {
+                    activeScene = promoted;
+                    audioOutput->getMixer().loadSong(sceneSong);
+                    midiSession->startOutput(sceneSong, currentSongId);
+                }
+            }
             refreshSessionGrid();
+        }
+        launcherPlayingScene = clipLauncher.state(
+                                        selectedScene >= 0 ? selectedScene : 0, 0) ==
+                                ClipLauncherStates::State::Playing
+                                   ? selectedScene
+                                   : -1;
+        Q_UNUSED(previousPlaying);
     });
     launcherTimer->start(100);
     auto* pianoHint = new QLabel(

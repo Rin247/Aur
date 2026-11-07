@@ -40,6 +40,7 @@ namespace aur
         VelocityLaneStrip *velocityStrip = nullptr;
         ScaleSelector *scaleSelector = nullptr;
         ClipLauncherStates clipLauncher;
+        int launcherPlayingScene = -1;
         void syncScaleSelector(const Json &song);
         QLineEdit *songName = nullptr;
         QTabWidget *editorTabs = nullptr;
