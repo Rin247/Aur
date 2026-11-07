@@ -249,7 +249,17 @@ Progress 2026-11-07:
       song-level `key_root`/`key_scale` (13-mode table, bit i = degree i
       above root) tinting the in-scale piano keys — `daw-p5.9` (`9e03b9d`).
       Key/scale selector UI lands with the song-properties editor.
-- [ ] P5 remainder: id-stable selection across edits, key/scale selector UI.
+- [x] P5.11 key/scale selector UI: `ScaleSelector` (`studio/music/`) row under
+      the lane strip — root combo (C..B) + scale combo (13 modes, "—" =
+      none); writes song `key_root`/`key_scale` via MusicPanel (both keys
+      erased on "none"), synced from the song on every load via
+      `syncScaleSelector` — `daw-p5.11` (`536cf54`).
+- [x] P5.12 id-stable selection: `NoteIndex` (`studio/music/`, header-only)
+      maps note-array indices ↔ stable ids; undo/redo in the piano roll now
+      convert the selection to ids before the mutation and back to indices
+      after, so the selection survives reordering — `daw-p5.12` (`6c18073`).
+- [ ] P5 remainder: assign ids on note create so paste/duplicate carry them;
+      scale-aware note colouring (vs keys-only tint).
 
 ### P6 Session and arrangement
 
