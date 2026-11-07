@@ -28,6 +28,7 @@ add_library(aur_engine STATIC
     engine/aur/audio/synth.cpp
     engine/aur/audio/VoiceCore.cpp
     engine/aur/audio/RealtimeMixer.cpp
+    engine/aur/audio/OfflineRenderJob.cpp
 )
 target_include_directories(aur_engine PUBLIC engine)
 
@@ -123,6 +124,7 @@ add_executable(aur_tests
     tests/test_song_clamp.cpp
     tests/test_synth_golden.cpp
     tests/test_realtime_parity.cpp
+    tests/test_offline_render.cpp
     studio/world/HdSurface.cpp
     studio/world/WorldMapHelpers.cpp
     studio/world/MapView.cpp
