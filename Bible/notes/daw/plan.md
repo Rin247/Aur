@@ -285,8 +285,14 @@ Progress 2026-11-07:
       notes, so lane edits must go through `begin_track_edit`/
       `commit_track_change` (TrackProps). No lane *editor* UI yet; that arrives
       with the P5 piano-roll velocity/automation lane strip.
-- [ ] Remaining: launch quantisation + queued/playing states, scene record
-      into slot, arrangement timeline with placements/loop brace, lane editor UI.
+- [ ] P6.3 launch quantisation + queued/playing states: ClipLauncher model
+      (studio/, Qt-side state machine over the scene grid) — launching a
+      clip while the mixer plays queues it to start on the next bar boundary
+      (quantise = 1 bar); queued/playing badges painted on the grid button;
+      stop queued the same way. No engine change: scheduling stays in the
+      existing song-swap command boundary.
+- [ ] Remaining: scene record into slot, arrangement timeline with
+      placements/loop brace, lane editor UI.
 
 ### P7a GM/GS instrument
 
