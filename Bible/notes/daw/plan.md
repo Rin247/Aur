@@ -243,8 +243,13 @@ Progress 2026-11-07:
       axis), full MIDI pitch range 12–107 with plain-wheel pitch-window
       scrolling via pitchOffsetRows; stepWidth() accessor keeps the scroll
       mapping correct at every zoom — `daw-p5.7` (`aead0a2`).
-- [ ] P5 remainder: stable note ids, scale highlight, key/scale selector,
-      duplicate/paste offsets snapping to the grid.
+- [x] P5.9 stable note ids + scale highlight: `SongDocument::note_id/
+      ensure_note_id` (id lives in note_props["id"], lazily assigned,
+      monotonic counter, v1 notes read as −1); scale highlight from
+      song-level `key_root`/`key_scale` (13-mode table, bit i = degree i
+      above root) tinting the in-scale piano keys — `daw-p5.9` (`9e03b9d`).
+      Key/scale selector UI lands with the song-properties editor.
+- [ ] P5 remainder: id-stable selection across edits, key/scale selector UI.
 
 ### P6 Session and arrangement
 

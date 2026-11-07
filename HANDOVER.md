@@ -31,7 +31,9 @@ headless Null only under RHI_POLICY_HEADLESS=1. See C:\Projects\POLICY.md.
   the mixer playhead atomics, RealtimeMixer::audition() for click preview, Ctrl+wheel
   stepped zoom (8–48 px/step), full pitch range 12–107 with wheel pitch-window
   scroll. Suite 37/37.
-- P5 remainder: stable note ids, scale highlight/key-scale selector.
+- P5.9 (`9e03b9d`) landed 2026-11-07: stable note ids in note_props + scale
+  highlight (`key_root`/`key_scale`, 13-mode table) on the piano keys. Suite
+  37/37. P5 remainder: id-stable selection across edits, key/scale selector UI.
 - Next in daw plan: P5 remainder, P6 remainder (launch quantisation,
   arrangement timeline, clip export). P2 close still needs the owner GUI soak.
 - MD/SNES synth cores (`YmFmCore`, `SnesPcmCore`/`BrrCodec`/`SnesEcho`) expected from
