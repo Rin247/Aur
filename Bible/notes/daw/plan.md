@@ -1,6 +1,6 @@
 # DAW: plan
 
-Status: P3.4 (history wiring) + P3.5 (per-note velocity/props) landed and pushed (`e92bfd5`, `2fbeb92`); P6 absorbs automation lanes + arrangement clips. MD/SNES cores awaited from owner's frontier model (WANTED.md).
+Status: P3 closed-out (P3.4–P3.5 landed); P4.1 MIDI fidelity landed (`f1420e3`). Next: P4 remainder (record count-in, SysEx input) or P6 session/arrangement. MD/SNES cores awaited from owner's frontier model (WANTED.md).
 
 Master plan for the Music Studio DAW initiative, seeded from the owner-supplied
 gameplan and corrected by a source audit on 2026-11-06. One note file per major
@@ -179,6 +179,17 @@ Progress 2026-11-07:
 Lossless import (ticks, tempo/T.S. maps, CC, pitch bend, aftertouch→automation,
 SysEx, markers), export for arrangement/clip/tracks, device layer with
 timestamps + SysEx input, MIDI record with count-in; round-trip tests.
+
+Progress 2026-11-07:
+- [x] P4.1 import/export: tempo_map + time_sig_map (all events, not just the
+      first), markers (meta 0x06), CC lanes (all controllers), pitch bend and
+      channel/poly aftertouch folded into automation lanes
+      (track["automation"][{cc,points:[{step,value}]}]; bend=128,
+      pressure=129), full export/import round-trip tests incl. a hand-built
+      synthetic MIDI file — `daw-p4.1` (`f1420e3`), suite 35/35.
+- [ ] Remaining: MIDI record with count-in (needs the PianoRollCanvas record
+      path), SysEx *input* via MidiDeviceIo, timestamps in the device layer,
+      clip/arrangement export (lands with P6 clips).
 
 ### P5 Piano roll
 
