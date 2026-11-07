@@ -645,6 +645,13 @@ MusicPanel::MusicPanel(Project* p, QWidget* parent)
     recordMidiButton->setCheckable(true);
     recordMidiButton->setToolTip("Arm MIDI input and record notes into the selected track.");
     midiBar->addWidget(recordMidiButton);
+    countInBarsSpin = new QSpinBox(this);
+    countInBarsSpin->setRange(0, 8);
+    countInBarsSpin->setValue(1);
+    countInBarsSpin->setSuffix(" bars");
+    countInBarsSpin->setToolTip("Count-in before recorded notes are captured (0 disables).");
+    midiBar->addWidget(new QLabel("Count-in", this));
+    midiBar->addWidget(countInBarsSpin);
     midiStatusLabel = new QLabel("No MIDI devices connected", this);
     midiStatusLabel->setStyleSheet("color: #aeb8c2;");
     midiBar->addWidget(midiStatusLabel, 1);
@@ -973,6 +980,7 @@ MusicPanel::MusicPanel(Project* p, QWidget* parent)
         }
         midiSession->setSelectedTrack(selectedTrack);
         midiSession->setRecordTarget(currentSongId);
+        midiSession->setCountInBars(countInBarsSpin->value());
         midiSession->setRecording(enabled);
         recordMidiButton->setText(enabled ? "Stop Recording" : "Record MIDI");
     });

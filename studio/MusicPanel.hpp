@@ -50,6 +50,7 @@ namespace aur
         QPushButton *midiInputButton = nullptr;
         QPushButton *midiOutputButton = nullptr;
         QPushButton *recordMidiButton = nullptr;
+        QSpinBox *countInBarsSpin = nullptr;
         QLabel *midiStatusLabel = nullptr;
         audio::QtAudioOutput *audioOutput = nullptr;
         MidiSession *midiSession = nullptr;
