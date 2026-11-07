@@ -47,6 +47,8 @@ Implementation files go in `src/`, headers in `include/`, tests in `tests/`. No 
 
 > `WANTED.md` is a living document, not a frozen record; update it as work progresses.
 
+> No command, test or script may hang: every command uses an explicit timeout, exit codes are verified (0 is not a pass if the process was killed or timed out), and scripts exit on their own with no unguarded `pause`. See QUIRKS.md §34 and §45.
+
 ## Plans (estate rule)
 
 A to-do list that lives only in the conversation is lost on compaction, restart or handoff. Any task that spans more than one session, more than one module or about ten files, and every refactor, gets a plan file in the repo. In-context to-do lists are working notes, never the source of truth.
