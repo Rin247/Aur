@@ -258,8 +258,12 @@ Progress 2026-11-07:
       maps note-array indices ↔ stable ids; undo/redo in the piano roll now
       convert the selection to ids before the mutation and back to indices
       after, so the selection survives reordering — `daw-p5.12` (`6c18073`).
-- [ ] P5 remainder: assign ids on note create so paste/duplicate carry them;
-      scale-aware note colouring (vs keys-only tint).
+- [x] P5.14 ids on note create/paste/duplicate: Shift+click create calls
+      ensure_note_id with the canvas's `nextNoteId` counter; paste/duplicate
+      assign fresh ids to the created notes (the copied ClipNote's source id
+      is deliberately NOT reused — duplicates are new notes); setSong seeds
+      `nextNoteId` past the max existing id so loaded songs never collide —
+      `daw-p5.14` (`ce7274b`).
 
 ### P6 Session and arrangement
 
