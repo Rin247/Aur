@@ -464,6 +464,76 @@ namespace aur
         midiSession->stopOutput();
     }
 
+    void MusicPanel::playArrangement()
+    {
+        const Json *song = currentSong();
+        if (!song)
+            return;
+        const Json flat = audio::SongDocument::flatten_arrangement(*song);
+        bool any = false;
+        if (flat.contains("tracks") && flat["tracks"].is_array())
+            for (const Json &track : flat["tracks"].as_array())
+                if (track.contains("notes") && track["notes"].is_array() &&
+                    !track["notes"].as_array().empty())
+                    any = true;
+        if (!any)
+        {
+            QMessageBox::information(this, "Arrangement",
+                                     "The arrangement is empty — place clips first.");
+            return;
+        }
+        stopPreview();
+        audioOutput->getMixer().resetPlayback();
+        audioOutput->getMixer().loadSong(flat);
+        audioOutput->start(audio::QtAudioOutput::kSampleRate);
+        midiSession->startOutput(flat, currentSongId);
+    }
+
+    void MusicPanel::exportArrangementMidi()
+    {
+        const Json *song = currentSong();
+        if (!song)
+            return;
+        const Json flat = audio::SongDocument::flatten_arrangement(*song);
+        bool any = false;
+        if (flat.contains("tracks") && flat["tracks"].is_array())
+            for (const Json &track : flat["tracks"].as_array())
+                if (track.contains("notes") && track["notes"].is_array() &&
+                    !track["notes"].as_array().empty())
+                    any = true;
+        if (!any)
+        {
+            QMessageBox::information(this, "Arrangement MIDI",
+                                     "The arrangement is empty — nothing to export.");
+            return;
+        }
+        const QString path = QFileDialog::getSaveFileName(
+            this, "Export Arrangement MIDI",
+            QString::fromStdString((*song)["name"].is_string()
+                                       ? (*song)["name"].as_string()
+                                       : "arrangement") + " arrangement.mid",
+            "MIDI files (*.mid)");
+        if (path.isEmpty())
+            return;
+        try
+        {
+            const std::vector<uint8_t> data = export_standard_midi(flat);
+            QFile file(path);
+            if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate))
+            {
+                QMessageBox::warning(this, "Arrangement MIDI", file.errorString());
+                return;
+            }
+            file.write(reinterpret_cast<const char *>(data.data()),
+                       static_cast<qint64>(data.size()));
+        }
+        catch (const std::exception &error)
+        {
+            QMessageBox::warning(this, "Arrangement MIDI",
+                                 QString::fromStdString(error.what()));
+        }
+    }
+
     void MusicPanel::importMidi()
     {
         if (!project)
@@ -905,6 +975,13 @@ MusicPanel::MusicPanel(Project* p, QWidget* parent)
 
     auto *arrangePage = new QWidget(editorTabs);
     auto *arrangeLayout = new QVBoxLayout(arrangePage);
+    auto *arrangeToolbar = new QHBoxLayout();
+    auto *playArrangeButton = new QPushButton("Play Arrangement", arrangePage);
+    auto *exportArrangeButton = new QPushButton("Export Arrangement MIDI…", arrangePage);
+    arrangeToolbar->addWidget(playArrangeButton);
+    arrangeToolbar->addWidget(exportArrangeButton);
+    arrangeToolbar->addStretch();
+    arrangeLayout->addLayout(arrangeToolbar);
     arrangementCanvas = new ArrangementCanvas(arrangePage);
     arrangementCanvas->setHistory(&songHistory);
     arrangementCanvas->setChangeCallback([this](const Json &song) { saveCurrentSong(song); });
@@ -913,6 +990,10 @@ MusicPanel::MusicPanel(Project* p, QWidget* parent)
                               pianoRoll && pianoRoll->canRedo());
     });
     arrangeLayout->addWidget(arrangementCanvas, 1);
+    connect(playArrangeButton, &QPushButton::clicked, this,
+            [this]() { playArrangement(); });
+    connect(exportArrangeButton, &QPushButton::clicked, this,
+            [this]() { exportArrangementMidi(); });
     auto *arrangeHint = new QLabel(
         "Arrangement — click an empty cell to place the selected scene's clip · drag to move · Delete removes · Play Arrangement flattens the timeline",
         arrangePage);

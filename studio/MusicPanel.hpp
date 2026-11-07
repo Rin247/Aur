@@ -88,6 +88,8 @@ namespace aur
         Json makeScenePreview(int sceneIndex);
         void playPreview(const Json *previewSong = nullptr);
         void stopPreview();
+        void playArrangement();
+        void exportArrangementMidi();
         void importMidi();
         void exportMidi();
 
