@@ -221,9 +221,15 @@ Progress 2026-11-07:
       signed/centred and clamp to ±8192; all edits go through
       `begin_track_edit`/`commit_track_change` per the P6.2 undo-path rule —
       `daw-p5.2` (`721e043`).
-- [ ] Remaining: multi-select/marquee, duplicate, copy/paste, snap incl.
-      triplets, quantise, scale highlight, full pitch range, zoom, playhead,
-      audition.
+- [ ] P5.3 marquee multi-select + move/resize of the selection, Delete on the
+      selection, per-note lane targeting for the velocity row.
+- [ ] P5.4 copy/paste (clipboard between tracks), duplicate (Ctrl+D).
+- [ ] P5.5 snap grid incl. triplets + quantise command (undoable).
+- [ ] P5.6 playhead overlay driven by the mixer playhead atomics + audition
+      note on click (short offline render through the current synth).
+- [ ] P5.7 zoom control (swept as a control, never as an axis) + scale
+      highlight from a key/scale selector; full pitch range via vertical
+      scroll of the pitch window.
 
 ### P6 Session and arrangement
 
