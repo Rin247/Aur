@@ -104,3 +104,16 @@ Settled with evidence before code; each entry dated. Amend rather than argue.
   QMediaPlayer; `stereoPcmToWav` stays for export paths (P11).
 - **2026-11-07 — parity test numbers.** 8 kHz, 1-bar song, 16k frames:
   max_delta ≈ 3.2e-5 (≈1 int16 LSB), rel 1.2e-5, threshold rel < 5e-4.
+- **2026-11-07 — MIDI-out clock sync (P2.5).** `MidiSession::attachClock`
+  binds the session to the mixer's `playheadFrames/playheadBpm/
+  playheadActive` atomics; `pumpOutput` converts mixer frames → ms via
+  `frames·60000/(bpm·4·rate)` from a `clockAnchorFrames` snapshot taken in
+  `startOutput`. Wall-timer path stays as fallback when no clock is attached.
+  Sample rate comes from `QtAudioOutput::kSampleRate` (single definition).
+- **2026-11-07 — OfflineRenderJob (P2.6).** `synthesize_preview` grew
+  optional trailing args (`const std::atomic<bool>* cancel`,
+  `const RenderProgress&`) — defaults keep every existing call site and the
+  golden/parity contracts untouched. Cancel returns an empty PCM; callers
+  distinguish cancel (empty result, empty error) from failure (empty result,
+  non-empty error). Job is one-render-per-instance, non-copyable,
+  destructor cancels and joins via `std::future`.

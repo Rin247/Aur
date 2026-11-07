@@ -1,6 +1,6 @@
 # DAW: plan
 
-Status: P2 core done (mixer + QAudioSink + parity committed); soak + MIDI clock sync remain.
+Status: P2 engineering done (P2.1–P2.6 committed); only the owner-side soak/latency checklist remains before tagging `daw-p2`.
 
 Master plan for the Music Studio DAW initiative, seeded from the owner-supplied
 gameplan and corrected by a source audit on 2026-11-06. One note file per major
@@ -136,12 +136,17 @@ Sequencer + mixer + audio output behind `IInstrument`; replace WAV +
 thread through the same code. Acceptance: soak without underruns, measured
 latency recorded, offline/live hash equality.
 
-Status 2026-11-07: core done (P2.1–P2.4 committed). RealtimeMixer + parity
-(1 LSB, rel 1.2e-5) green; QAudioSink pull output replaces WAV/QMediaPlayer.
+Status 2026-11-07 (updated, second pass): MIDI-out now derives its event
+clock from the mixer's playhead atomics (`playheadFrames`/`playheadBpm`/
+`playheadActive`, anchored at start, converted via
+`frames·60000/(bpm·4·rate)`) — hardware MIDI no longer drifts against the
+audio. `resetPlayback()` rewinds the playhead on stop/restart. Offline
+render is threaded: `OfflineRenderJob` (start/cancel/progress,
+cooperatively cancelled between voice frames), tested sample-exact against
+the synchronous path plus a 600 s cancel case — suite 30/30, `daw-p2.5`,
+`daw-p2.6`.
 Remaining before close: manual soak + latency measurement in Studio (owner
-GUI run), MIDI-out clock sync with the mixer clock, and offline-render
-worker thread with progress/cancel (currently still synchronous in the
-quick-song path). Tag `daw-p2` only after the soak.
+GUI run, unautomatable from here). Tag `daw-p2` only after the soak.
 
 ### P3 Song v2 + undo
 
