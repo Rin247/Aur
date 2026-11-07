@@ -120,6 +120,7 @@ add_executable(aur_tests
     tests/test_worldsim.cpp
     tests/test_song_clamp.cpp
     tests/test_synth_golden.cpp
+    tests/test_realtime_parity.cpp
     studio/world/HdSurface.cpp
     studio/world/WorldMapHelpers.cpp
     studio/world/MapView.cpp

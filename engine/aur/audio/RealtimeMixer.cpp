@@ -88,16 +88,9 @@ namespace aur
                 }
             }
             loopSteps = lastStep;
+            nextWrapFrame = baseFrame +
+                static_cast<std::int64_t>(lastStep * framesPerStep);
             loopVoices = std::vector<Voice>(upcoming.begin(), upcoming.end());
-            // Store the loop template at zero-based offsets: rebuild on each wrap by
-            // shifting back to baseFrame == 0 and re-adding the loop length.
-            const std::int64_t loopFrames =
-                static_cast<std::int64_t>(loopSteps * framesPerStep);
-            for (Voice &v : loopVoices)
-            {
-                v.start -= baseFrame + loopFrames;
-                v.end -= baseFrame + loopFrames;
-            }
         }
 
         void RealtimeMixer::render(float *out, int frames)
@@ -131,18 +124,18 @@ namespace aur
             double peakRight = 0.0;
             for (int i = 0; i < frames; ++i, ++frameCounter)
             {
-                // Loop wrap: restart the scheduled voices relative to the loop start.
-                if (loopFrames > 0 && frameCounter >= loopFrames)
+                // Loop wrap: schedule the next pass at its absolute offset;
+                // frameCounter is monotonically increasing.
+                if (loopFrames > 0 && frameCounter >= nextWrapFrame)
                 {
-                    const std::int64_t offset = (frameCounter / loopFrames) * loopFrames;
                     for (const Voice &tmpl : loopVoices)
                     {
                         Voice v = tmpl;
-                        v.start += offset;
-                        v.end += offset;
+                        v.start += nextWrapFrame;
+                        v.end += nextWrapFrame;
                         upcoming.push_back(v);
                     }
-                    frameCounter -= offset;
+                    nextWrapFrame += loopFrames;
                     for (auto it = upcoming.begin();
                          it != upcoming.end() && it->start <= frameCounter + 1;)
                     {
@@ -158,6 +151,11 @@ namespace aur
                     if (frameCounter >= it->end)
                     {
                         it = voices.erase(it);
+                        continue;
+                    }
+                    if (frameCounter < it->start)
+                    {
+                        ++it; // scheduled ahead; keep for its start frame
                         continue;
                     }
                     const double time = static_cast<double>(frameCounter - it->start) /

@@ -55,6 +55,7 @@ namespace aur
             std::deque<Voice> voices;
             std::deque<Voice> upcoming; // scheduled with absolute frames
             std::int64_t frameCounter = 0;
+            std::int64_t nextWrapFrame = 0;
             int bpm = 120;
             int loopSteps = 0;             // song length in steps; 0 = no loop
             std::vector<Voice> loopVoices; // template voices for loop restarts
