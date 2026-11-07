@@ -1,5 +1,6 @@
 #include "MusicPanel.hpp"
 #include "music/SongLibrary.hpp"
+#include "music/VelocityLaneStrip.hpp"
 #include "aur/audio/midi.hpp"
 #include "aur/audio/synth.hpp"
 #include "aur/audio/SongDocument.hpp"
@@ -121,7 +122,7 @@ namespace aur
             selectedScene = -1;
             activeScene = -1;
             trackList->clear();
-            pianoRoll->setSong(Json{}, -1);
+            pianoRoll->setSong(Json{}, -1); velocityStrip->setSong(Json{}, -1);
             refreshSessionGrid();
             songName->clear();
             tempo->setValue(120);
@@ -150,7 +151,7 @@ namespace aur
         selectedTrack = 0;
         refreshTracks();
         trackList->setCurrentRow(selectedTrack);
-        pianoRoll->setSong(*song, selectedTrack);
+        pianoRoll->setSong(*song, selectedTrack); velocityStrip->setSong(*song, selectedTrack);
         updateTrackProperties();
         updatingControls = false;
     }
@@ -163,7 +164,7 @@ namespace aur
         if (!song || !(*song).contains("tracks") || !(*song)["tracks"].is_array())
         {
             selectedTrack = -1;
-            pianoRoll->setSong(song ? *song : Json{}, -1);
+            pianoRoll->setSong(song ? *song : Json{}, -1); velocityStrip->setSong(song ? *song : Json{}, -1);
             refreshSessionGrid();
             return;
         }
@@ -575,7 +576,7 @@ MusicPanel::MusicPanel(Project* p, QWidget* parent)
             });
         if (songId == currentSongId) {
             refreshTracks();
-            pianoRoll->setSong(song, selectedTrack);
+            pianoRoll->setSong(song, selectedTrack); velocityStrip->setSong(song, selectedTrack);
             refreshSessionGrid();
         }
     });
@@ -767,6 +768,14 @@ MusicPanel::MusicPanel(Project* p, QWidget* parent)
                     std::max(0, value / PianoRollCanvasWidget::stepWidth));
             });
     pianoLayout->addWidget(pianoScroll, 1);
+    velocityStrip = new VelocityLaneStrip(pianoPage);
+    velocityStrip->setHistory(&songHistory);
+    velocityStrip->setChangeCallback([this](const Json& song) { saveCurrentSong(song); });
+    connect(velocityStrip, &VelocityLaneStrip::historyChanged, this, [this]() {
+        emit undoStateChanged(pianoRoll && pianoRoll->canUndo(),
+                              pianoRoll && pianoRoll->canRedo());
+    });
+    pianoLayout->addWidget(velocityStrip);
     auto* pianoHint = new QLabel(
         "Piano Roll — click empty grid to add · drag to move or resize · right-click/Delete to remove · 16 steps per bar",
         pianoPage);
@@ -838,7 +847,7 @@ MusicPanel::MusicPanel(Project* p, QWidget* parent)
         selectedTrack = row;
         midiSession->setSelectedTrack(row);
         if (Json* song = currentSong()) {
-            pianoRoll->setSong(*song, selectedTrack);
+            pianoRoll->setSong(*song, selectedTrack); velocityStrip->setSong(*song, selectedTrack);
             updateTrackProperties();
         }
         refreshSessionGrid();
@@ -883,7 +892,7 @@ MusicPanel::MusicPanel(Project* p, QWidget* parent)
         selectedTrack = std::min(selectedTrack, static_cast<int>(tracks.size()) - 1);
         refreshTracks();
         trackList->setCurrentRow(selectedTrack);
-        pianoRoll->setSong(*song, selectedTrack);
+        pianoRoll->setSong(*song, selectedTrack); velocityStrip->setSong(*song, selectedTrack);
         refreshSessionGrid();
     });
     connect(addSceneButton, &QPushButton::clicked, this, [this]() {

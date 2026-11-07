@@ -18,6 +18,7 @@
 #include <map>
 #include "music/MidiSession.hpp"
 #include "music/PianoRollCanvas.hpp"
+#include "music/VelocityLaneStrip.hpp"
 #include "music/QtAudioOutput.hpp"
 #include "SongHistory.hpp"
 #include "aur/audio/RealtimeMixer.hpp"
@@ -33,6 +34,7 @@ namespace aur
         QComboBox *songCombo = nullptr;
         QListWidget *trackList = nullptr;
         PianoRollCanvasWidget *pianoRoll = nullptr;
+        VelocityLaneStrip *velocityStrip = nullptr;
         QLineEdit *songName = nullptr;
         QTabWidget *editorTabs = nullptr;
         QTableWidget *sessionGrid = nullptr;

@@ -62,6 +62,8 @@ add_executable(aur_studio
     studio/music/MidiSession.hpp
     studio/music/PianoRollCanvas.cpp
     studio/music/PianoRollCanvas.hpp
+    studio/music/VelocityLaneStrip.cpp
+    studio/music/VelocityLaneStrip.hpp
     studio/music/SongLibrary.cpp
     studio/music/SongLibrary.hpp
     studio/music/QtAudioOutput.cpp
