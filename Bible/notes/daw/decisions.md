@@ -117,3 +117,21 @@ Settled with evidence before code; each entry dated. Amend rather than argue.
   distinguish cancel (empty result, empty error) from failure (empty result,
   non-empty error). Job is one-render-per-instance, non-copyable,
   destructor cancels and joins via `std::future`.
+- **2026-11-07 — P3 approach.** Song v2 is additive JSON keys over the same
+  document (`format:"2"`, `ticks_per_step:120`, `tempo_map`,
+  `time_sig_map`, `loop`, `markers`) rather than a parallel binary format:
+  every v1 reader keeps working and migration is idempotent and lossless.
+  v1 scalar keys (`tempo`, `beats`, `loop_bar`) stay on disk and act as
+  fallbacks; accessors prefer v2 maps.
+- **2026-11-07 — SongDocument::save writes `<path>.bak` from the previous
+  file before overwriting** (contract 1). Only when a previous file exists.
+- **2026-11-07 — SongHistory snapshot model.** begin_note_edit snapshots the
+  track's notes before mutation; commit_note_edit pairs it with the
+  post-edit state. Undo/redo store the opposite payload captured at
+  traversal time. Track-props commits snapshot the whole track object;
+  wiring into the UI panels is deferred to P5, where the piano roll replaces
+  its destructive mutation path.
+- **2026-11-07 — CMake near-miss recorded.** During P3.3 a careless edit
+  renamed the `aur_studio` target to `aur_tests` mid-session; restored
+  immediately and verified (Studio still builds). Lesson: edit target
+  blocks by their full header text, never a bare `add_executable(` anchor.

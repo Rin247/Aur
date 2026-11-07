@@ -1,6 +1,6 @@
 # DAW: plan
 
-Status: P2 engineering done (P2.1–P2.6 committed); only the owner-side soak/latency checklist remains before tagging `daw-p2`.
+Status: P3 foundation done (v1 pinned, CommandStack shared, v2 model, typed undo); wiring + P3 close-out remain.
 
 Master plan for the Music Studio DAW initiative, seeded from the owner-supplied
 gameplan and corrected by a source audit on 2026-11-06. One note file per major
@@ -154,6 +154,21 @@ Tick time base, tempo/time-signature maps, markers, loop points, first-class
 clips/slots/scenes/arrangement, automation lanes, per-note properties; v1
 migration with backup; typed commands on the shared undo stack; no 128-bar/
 4096-step caps.
+
+Progress 2026-11-07:
+- [x] P3.0 v1 contract pinned (`test_song_v1.cpp`, overworld + inn
+      flavours) — `daw-p3.0`.
+- [x] P3.1 shared `studio/CommandStack` extracted;
+      `WorldCommandHistory` rebased, no behaviour change — `daw-p3.1`.
+- [x] P3.2 `SongDocument` v2 model: additive migration (format/
+      ticks_per_step/tempo_map/time_sig_map/loop/markers), `.bak` backup
+      save, map accessors with v1 fallbacks — `daw-p3.2`.
+- [x] P3.3 `SongHistory` typed undo/redo for note and track edits on the
+      shared stack (`test_song_history.cpp`, incl. 100-deep bounded
+      history) — `daw-p3.3`.
+- [ ] Remaining for P3 close: wire SongHistory into PianoRollCanvas/
+      MusicPanel edits (replacing destructive mutation), per-note
+      properties, automation lanes, first-class arrangement clips.
 
 ### P4 MIDI fidelity
 
