@@ -3,6 +3,7 @@
 #ifdef _WIN32
 #include <windows.h>
 #include <array>
+#include <QByteArray>
 #endif
 
 namespace aur {
@@ -91,8 +92,13 @@ QString MidiDeviceIo::openInput(unsigned int deviceId) {
         reinterpret_cast<DWORD_PTR>(&MidiDeviceIo::inputCallback),
         reinterpret_cast<DWORD_PTR>(this), CALLBACK_FUNCTION);
     if (result != MMSYSERR_NOERROR) return inputError(result);
+    if (!prepareSysExBuffers()) {
+        midiInClose(openedInput);
+        return "Could not prepare SysEx buffers for MIDI input.";
+    }
     result = midiInStart(openedInput);
     if (result != MMSYSERR_NOERROR) {
+        releaseSysExBuffers();
         midiInClose(openedInput);
         return inputError(result);
     }
@@ -126,6 +132,7 @@ QString MidiDeviceIo::closeInput() {
     input = nullptr;
     MMRESULT firstError = midiInStop(closingInput);
     const MMRESULT resetResult = midiInReset(closingInput);
+    releaseSysExBuffers();
     if (firstError == MMSYSERR_NOERROR && resetResult != MMSYSERR_NOERROR) {
         firstError = resetResult;
     }
@@ -163,11 +170,59 @@ QString MidiDeviceIo::sendShortMessage(quint32 message) {
 }
 
 #ifdef _WIN32
+bool MidiDeviceIo::prepareSysExBuffers() {
+    if (sysExPrepared) return true;
+    for (SysExBuffer &buffer : sysExBuffers) {
+        buffer = {};
+        MIDIHDR &header = buffer.header;
+        header.lpData = reinterpret_cast<LPSTR>(buffer.data.data());
+        header.dwBufferLength = kMidiSysExBufferSize;
+        if (midiInPrepareHeader(input, &header, sizeof(header)) != MMSYSERR_NOERROR) {
+            releaseSysExBuffers();
+            return false;
+        }
+        if (midiInAddBuffer(input, &header, sizeof(header)) != MMSYSERR_NOERROR) {
+            midiInUnprepareHeader(input, &header, sizeof(header));
+            releaseSysExBuffers();
+            return false;
+        }
+    }
+    sysExPrepared = true;
+    return true;
+}
+
+void MidiDeviceIo::releaseSysExBuffers() {
+    if (!sysExPrepared) return;
+    for (SysExBuffer &buffer : sysExBuffers) {
+        if (buffer.header.dwFlags & MHDR_PREPARED) {
+            midiInUnprepareHeader(input, &buffer.header, sizeof(buffer.header));
+        }
+        buffer.header = {};
+    }
+    sysExPrepared = false;
+}
+
 void CALLBACK MidiDeviceIo::inputCallback(HMIDIIN, UINT message, DWORD_PTR instance,
-                                          DWORD_PTR messageData, DWORD_PTR) {
-    if (message != MIM_DATA || instance == 0) return;
+                                          DWORD_PTR messageData, DWORD_PTR timestamp) {
+    if (instance == 0) return;
     auto* device = reinterpret_cast<MidiDeviceIo*>(instance);
-    emit device->messageReceived(static_cast<quint32>(messageData));
+    const qint64 stampMs = static_cast<qint64>(timestamp);
+    switch (message) {
+        case MIM_DATA:
+            emit device->messageReceived(static_cast<quint32>(messageData), stampMs);
+            break;
+        case MIM_LONGDATA: {
+            auto* header = reinterpret_cast<MIDIHDR*>(messageData);
+            if (!header) break;
+            const QByteArray data(reinterpret_cast<const char*>(header->lpData),
+                                  static_cast<int>(header->dwBytesRecorded));
+            emit device->sysExReceived(data, stampMs);
+            if (device->input) midiInAddBuffer(device->input, header, sizeof(MIDIHDR));
+            break;
+        }
+        default:
+            break;
+    }
 }
 #endif
 

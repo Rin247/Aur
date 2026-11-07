@@ -3,6 +3,10 @@
 #include <QObject>
 #include <QVector>
 #include <QString>
+#include <array>
+
+constexpr unsigned int kMidiSysExBufferCount = 4;
+constexpr unsigned int kMidiSysExBufferSize = 4096;
 
 #ifdef _WIN32
 #ifndef NOMINMAX
@@ -25,6 +29,14 @@ class MidiDeviceIo : public QObject {
 #ifdef _WIN32
     HMIDIIN input = nullptr;
     HMIDIOUT output = nullptr;
+    struct SysExBuffer {
+        MIDIHDR header{};
+        std::array<BYTE, kMidiSysExBufferSize> data{};
+    };
+    std::array<SysExBuffer, kMidiSysExBufferCount> sysExBuffers{};
+    bool sysExPrepared = false;
+    bool prepareSysExBuffers();
+    void releaseSysExBuffers();
     static void CALLBACK inputCallback(HMIDIIN handle, UINT message,
                                        DWORD_PTR instance, DWORD_PTR messageData,
                                        DWORD_PTR timestamp);
@@ -45,7 +57,8 @@ public:
     QString sendShortMessage(quint32 message);
 
 signals:
-    void messageReceived(quint32 message);
+    void messageReceived(quint32 message, qint64 timestampMs);
+    void sysExReceived(const QByteArray &data, qint64 timestampMs);
 };
 
 } // namespace aur

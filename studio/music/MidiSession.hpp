@@ -55,8 +55,12 @@ namespace aur
         void toggleInput(QComboBox *inputCombo, QPushButton *inputButton);
         void toggleOutput(QComboBox *outputCombo, QPushButton *outputButton);
         void setRecording(bool enabled);
+        void setCountInBars(int bars) { countInBars = std::clamp(bars, 0, 8); }
+        int countIn() const { return countInBars; }
+        qint64 countInRemainingMs() const;
+        bool inCountIn() const;
         void flushHeldNotes();
-        void receiveMessage(quint32 message);
+        void receiveMessage(quint32 message, qint64 timestampMs = 0);
         void startOutput(const Json &song, const QString &songId);
         void stopOutput();
         bool recording() const { return midiRecording; }
@@ -67,6 +71,7 @@ namespace aur
     signals:
         void noteRecorded(const QString &songId, int trackIndex,
                           int startStep, int pitch, int length, int velocity);
+        void sysExReceived(const QByteArray &data, qint64 timestampMs);
         void statusChanged(const QString &status);
         void outputError(const QString &message);
         void outputStopped();
@@ -91,6 +96,8 @@ namespace aur
         size_t nextMidiPlaybackEvent = 0;
         bool midiRecording = false;
         bool midiOutputFailureShown = false;
+        int countInBars = 0;
+        qint64 countInEndMs = 0;
         QString midiOutputSongId;
         QString recordSongId;
         int selectedTrack = -1;

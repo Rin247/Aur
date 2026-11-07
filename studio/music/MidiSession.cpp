@@ -38,8 +38,11 @@ namespace aur
                 [this]()
                 { pumpOutput(); });
         connect(&midiDevices, &MidiDeviceIo::messageReceived, this,
-                [this](quint32 message)
-                { receiveMessage(message); });
+                [this](quint32 message, qint64 timestampMs)
+                { receiveMessage(message, timestampMs); });
+        connect(&midiDevices, &MidiDeviceIo::sysExReceived, this,
+                [this](const QByteArray &data, qint64 timestampMs)
+                { emit sysExReceived(data, timestampMs); });
     }
 
     MidiSession::~MidiSession()
@@ -142,14 +145,34 @@ namespace aur
         {
             heldMidiNotes.clear();
             midiRecordClock.start();
+            countInEndMs = countInBars > 0
+                ? qRound64(countInBars * 4.0 * 60000.0 / kDefaultBpm)
+                : 0;
+        }
+        else
+        {
+            countInEndMs = 0;
         }
         updateStatus();
+    }
+
+    bool MidiSession::inCountIn() const
+    {
+        return midiRecording && countInEndMs > 0 && midiRecordClock.elapsed() < countInEndMs;
+    }
+
+    qint64 MidiSession::countInRemainingMs() const
+    {
+        if (!inCountIn())
+            return 0;
+        return countInEndMs - midiRecordClock.elapsed();
     }
 
     int MidiSession::recordStep()
     {
         const qint64 elapsed = midiRecordClock.isValid() ? midiRecordClock.elapsed() : 0;
-        const qint64 steps = qRound64(elapsed * kDefaultBpm * 4.0 / 60000.0);
+        const qint64 counted = std::max<qint64>(0, elapsed - countInEndMs);
+        const qint64 steps = qRound64(counted * kDefaultBpm * 4.0 / 60000.0);
         return static_cast<int>(std::clamp<qint64>(steps, 0, 1000000));
     }
 
@@ -180,16 +203,21 @@ namespace aur
         if (midiDevices.outputConnected() && outputCombo)
             connections.push_back("Out: " + outputCombo->currentText());
         if (midiRecording)
-            connections.push_back("Recording");
+            connections.push_back(inCountIn() && countInRemainingMs() > 0
+                ? QString("Count-in %1").arg(qRound64(countInRemainingMs() / 1000.0))
+                : QString("Recording"));
         emit statusChanged(connections.isEmpty()
                                ? QString("No MIDI devices connected")
                                : connections.join(" · "));
     }
 
-    void MidiSession::receiveMessage(quint32 message)
+    void MidiSession::receiveMessage(quint32 message, qint64 timestampMs)
     {
-        if (!midiRecording)
+        Q_UNUSED(timestampMs);
+        if (!midiRecording || inCountIn())
             return;
+        // Realtime events during count-in are dropped, not buffered: the
+        // clock baseline only becomes valid once the count-in ends.
         const int status = static_cast<int>(message & 0xff);
         const int kind = status & 0xf0;
         if (kind != 0x80 && kind != 0x90)
