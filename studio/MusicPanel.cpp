@@ -39,8 +39,11 @@ namespace aur
     {
         if (!project || currentSongId.isEmpty())
             return;
+        const bool structural = song.contains("tracks") && song["tracks"].is_array() &&
+                                selectedTrack >= 0 &&
+                                selectedTrack < static_cast<int>(song["tracks"].as_array().size());
         project->music[currentSongId.toStdString()] = song;
-        if (selectedTrack >= 0 && selectedTrack < static_cast<int>(song["tracks"].as_array().size()))
+        if (structural)
         {
             const Json &track = song["tracks"][static_cast<size_t>(selectedTrack)];
             const QString name = track.contains("name")
@@ -52,6 +55,32 @@ namespace aur
             if (QListWidgetItem *item = trackList->item(selectedTrack))
                 item->setText(QString("%1  ·  %2 notes").arg(name).arg(notes));
         }
+    }
+
+    bool MusicPanel::undoSongEdit()
+    {
+        Json *song = currentSong();
+        if (!song || !pianoRoll || !pianoRoll->canUndo())
+            return false;
+        pianoRoll->undo();
+        if (project && !currentSongId.isEmpty())
+            project->music[currentSongId.toStdString()] = *song;
+        updateTrackProperties();
+        refreshTracks();
+        return true;
+    }
+
+    bool MusicPanel::redoSongEdit()
+    {
+        Json *song = currentSong();
+        if (!song || !pianoRoll || !pianoRoll->canRedo())
+            return false;
+        pianoRoll->redo();
+        if (project && !currentSongId.isEmpty())
+            project->music[currentSongId.toStdString()] = *song;
+        updateTrackProperties();
+        refreshTracks();
+        return true;
     }
 
     void MusicPanel::setProject(Project *p)
@@ -321,6 +350,15 @@ namespace aur
         updatingControls = false;
     }
 
+    void MusicPanel::beginTrackEdit()
+    {
+        Json *song = currentSong();
+        if (!song || selectedTrack < 0 ||
+            selectedTrack >= static_cast<int>((*song)["tracks"].as_array().size()))
+            return;
+        songHistory.begin_track_edit(*song, selectedTrack);
+    }
+
     void MusicPanel::updateTrackProperty(const char *key, int value)
     {
         if (updatingControls)
@@ -329,7 +367,12 @@ namespace aur
         if (!song || selectedTrack < 0 ||
             selectedTrack >= static_cast<int>((*song)["tracks"].as_array().size()))
             return;
+        songHistory.begin_track_edit(*song, selectedTrack);
         (*song)["tracks"][static_cast<size_t>(selectedTrack)][key] = value;
+        songHistory.commit_track_change(*song, selectedTrack,
+                                        editor::SongAction::Kind::TrackProps,
+                                        std::string("set ") + key);
+        project->music[currentSongId.toStdString()] = *song;
         refreshTracks();
     }
 
@@ -713,6 +756,11 @@ MusicPanel::MusicPanel(Project* p, QWidget* parent)
     layout->addWidget(splitter, 1);
 
     pianoRoll->setChangeCallback([this](const Json& song) { saveCurrentSong(song); });
+    pianoRoll->setHistory(&songHistory);
+    connect(pianoRoll, &PianoRollCanvasWidget::historyChanged, this, [this]() {
+        emit undoStateChanged(pianoRoll && pianoRoll->canUndo(),
+                              pianoRoll && pianoRoll->canRedo());
+    });
     connect(songCombo, &QComboBox::currentIndexChanged, this, [this](int index) {
         if (index >= 0) selectSong(songCombo->itemData(index).toString());
     });

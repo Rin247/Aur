@@ -19,6 +19,7 @@
 #include "music/MidiSession.hpp"
 #include "music/PianoRollCanvas.hpp"
 #include "music/QtAudioOutput.hpp"
+#include "SongHistory.hpp"
 #include "aur/audio/RealtimeMixer.hpp"
 #include "aur/project.hpp"
 
@@ -52,6 +53,7 @@ namespace aur
         QLabel *midiStatusLabel = nullptr;
         audio::QtAudioOutput *audioOutput = nullptr;
         MidiSession *midiSession = nullptr;
+        editor::SongHistory songHistory;
         QString currentSongId;
         int selectedTrack = -1;
         int selectedScene = -1;
@@ -65,6 +67,7 @@ namespace aur
         void selectSong(const QString &id);
         void updateTrackProperties();
         void updateTrackProperty(const char *key, int value);
+        void beginTrackEdit();
         void refreshSessionGrid();
         void toggleClip(int sceneIndex, int trackIndex);
         Json makeScenePreview(int sceneIndex);
@@ -79,6 +82,11 @@ namespace aur
         void setProject(Project *p);
         void refreshSongs();
         void generateQuickSong(const std::string &style);
+        bool undoSongEdit();
+        bool redoSongEdit();
+
+    signals:
+        void undoStateChanged(bool canUndo, bool canRedo);
     };
 
 } // namespace aur

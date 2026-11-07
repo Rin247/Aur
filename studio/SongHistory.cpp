@@ -37,6 +37,11 @@ namespace aur::editor
         pendingBefore = track_notes(song, trackIndex);
     }
 
+    void SongHistory::begin_track_edit(Json &song, int trackIndex)
+    {
+        pendingTrackBefore = song["tracks"][static_cast<size_t>(trackIndex)];
+    }
+
     void SongHistory::commit_track_change(Json &song, int trackIndex,
                                           SongAction::Kind kind,
                                           std::string label)
@@ -45,10 +50,10 @@ namespace aur::editor
         action.kind = kind;
         action.track_index = trackIndex;
         action.label = std::move(label);
-        Json &track = song["tracks"][static_cast<size_t>(trackIndex)];
-        action.before = track;
+        action.before = std::move(pendingTrackBefore);
+        pendingTrackBefore = Json{};
+        action.after = song["tracks"][static_cast<size_t>(trackIndex)];
         stack_.push_undo(std::move(action));
-        (void)song;
     }
 
     Json SongHistory::current_state(Json &song, const SongAction &action)

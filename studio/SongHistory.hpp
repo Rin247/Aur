@@ -41,7 +41,10 @@ namespace aur::editor
         void begin_note_edit(Json &song, int trackIndex);
         void commit_note_edit(Json &song, int trackIndex, std::string label);
 
-        // Generic snapshot commit for track-level property edits.
+        // Record a completed track-level edit (rename, props, per-note data).
+        // begin_track_edit() snapshots the whole track, commit_track_change()
+        // pairs it with the post-edit state.
+        void begin_track_edit(Json &song, int trackIndex);
         void commit_track_change(Json &song, int trackIndex, SongAction::Kind kind,
                                  std::string label);
 
@@ -60,7 +63,8 @@ namespace aur::editor
                                   const Json &payload);
 
         CommandStack<SongAction> stack_;
-        Json pendingBefore; // snapshot taken by begin_note_edit()
+        Json pendingBefore;      // notes snapshot taken by begin_note_edit()
+        Json pendingTrackBefore; // track snapshot taken by begin_track_edit()
     };
 
 } // namespace aur::editor

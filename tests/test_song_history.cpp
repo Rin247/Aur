@@ -56,17 +56,19 @@ void test_song_history()
     ASSERT(song["tempo"].as_int() == 120);
     ASSERT(notes(song).size() == 2);
 
-    // Track-property edit snapshots and restores the whole track.
+    // Track-property edit: begin_track_edit snapshots the whole track before
+    // mutation; commit_track_change pairs it with the post-edit state.
+    history.begin_track_edit(song, 0);
+    song["tracks"][0]["volume"] = 64;
     history.commit_track_change(song, 0, aur::editor::SongAction::Kind::TrackProps,
                                 "volume");
-    song["tracks"][0]["volume"] = 64;
-    history.commit_note_edit(song, 0, "props"); // reuse NoteEdit? no — this
-    // would snapshot notes; instead the property path is: commit_track_change
-    // BEFORE mutating, so undo restores the pre-mutation track. Model the
-    // call order correctly here: begin (commit_track_change), mutate, then a
-    // matching commit is only needed for note edits. For track props the
-    // snapshot must be committed after mutation as `after`. Keep this test
-    // scoped to the note path; track-props flow is wired in P5 UI work.
+    ASSERT(song["tracks"][0]["volume"].as_int() == 64);
+    ASSERT(history.can_undo());
+    history.undo(song);
+    ASSERT(!song["tracks"][0].contains("volume"));
+    ASSERT(song["tracks"][0]["notes"].as_array().size() == 2);
+    history.redo(song);
+    ASSERT(song["tracks"][0]["volume"].as_int() == 64);
 
     // Depth: many edits, undo walks back through all of them.
     aur::editor::SongHistory deep;
