@@ -1,6 +1,6 @@
 # DAW: plan
 
-Status: P3 foundation done (v1 pinned, CommandStack shared, v2 model, typed undo); wiring + P3 close-out remain.
+Status: P3.4 (history wiring) + P3.5 (per-note velocity/props) landed and pushed (`e92bfd5`, `2fbeb92`); P6 absorbs automation lanes + arrangement clips. MD/SNES cores awaited from owner's frontier model (WANTED.md).
 
 Master plan for the Music Studio DAW initiative, seeded from the owner-supplied
 gameplan and corrected by a source audit on 2026-11-06. One note file per major
@@ -166,9 +166,13 @@ Progress 2026-11-07:
 - [x] P3.3 `SongHistory` typed undo/redo for note and track edits on the
       shared stack (`test_song_history.cpp`, incl. 100-deep bounded
       history) — `daw-p3.3`.
-- [ ] Remaining for P3 close: wire SongHistory into PianoRollCanvas/
+- [x] Remaining for P3 close: wire SongHistory into PianoRollCanvas/
       MusicPanel edits (replacing destructive mutation), per-note
       properties, automation lanes, first-class arrangement clips.
+      (P3.4–P3.5 landed 2026-11-07: SongHistory wired into the piano roll and
+      panel with Ctrl+Z/Y and undoable track props; Alt+drag velocity editing
+      with velocity shading; SongDocument per-note prop API + tests. Automation
+      lanes and arrangement clips moved into P6 where their editors live.)
 
 ### P4 MIDI fidelity
 
