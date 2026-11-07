@@ -1,9 +1,11 @@
 # DAW: plan
 
-Status: P3 closed-out; P4.1 MIDI fidelity landed (`f1420e3`); P4.2/P4.3 device-layer
-timestamps, SysEx input and record count-in landed (`1146cf8`, `4f07f1b`). P6.1 clips
-landed (`7d0b8da`). Remaining open in P4: clip/arrangement export (lands with P6
-clips work). Next: P5 piano roll or P6 remainder.
+Status: P3 closed-out; P4.1–P4.3 MIDI device layer + count-in landed
+(`f1420e3`, `1146cf8`, `4f07f1b`). P6.1 clips landed (`7d0b8da`). P5 started:
+P5.1 lane accessors (`532de0b`) + P5.2 lane strip (`721e043`) landed.
+Remaining in P4: clip/arrangement export (lands with P6). Next: P5 remainder
+(multi-select/marquee, copy/paste, snap/quantise, scale highlight, zoom,
+playhead, audition) or P6 remainder (launch quantisation, arrangement).
 
 Master plan for the Music Studio DAW initiative, seeded from the owner-supplied
 gameplan and corrected by a source audit on 2026-11-06. One note file per major
@@ -207,6 +209,21 @@ Custom model-view, stable note ids, multi-select/marquee, move/resize/
 duplicate, copy/paste, snap incl. triplets, quantise, velocity + automation
 lanes, scale highlight, full pitch range, zoom, playhead, audition — all
 undoable.
+
+Progress 2026-11-07:
+- [x] P5.1 automation lane accessors in SongDocument (`lane_at/_mut/
+      create_lane/lane_points/set_lane_point/clear_lane_point/lane_value_at`,
+      bend=128, pressure=129) with `test_automation_lanes.cpp` — `daw-p5.1`
+      (`532de0b`), suite 37/37.
+- [x] P5.2 VelocityLaneStrip (`studio/music/`) docked under the piano roll:
+      velocity ladder per note-on step + one row per automation lane
+      (CC/bend/pressure), click/drag to draw points, bend lanes render
+      signed/centred and clamp to ±8192; all edits go through
+      `begin_track_edit`/`commit_track_change` per the P6.2 undo-path rule —
+      `daw-p5.2` (`721e043`).
+- [ ] Remaining: multi-select/marquee, duplicate, copy/paste, snap incl.
+      triplets, quantise, scale highlight, full pitch range, zoom, playhead,
+      audition.
 
 ### P6 Session and arrangement
 

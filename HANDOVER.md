@@ -25,8 +25,11 @@ headless Null only under RHI_POLICY_HEADLESS=1. See C:\Projects\POLICY.md.
   the v1 `{notes}` clip shape, `SongDocument::clip_at/_mut/clip_info/set_clip_info`,
   session grid shows clip name/bars/notes, `test_song_clips.cpp`. Decision recorded in
   daw/decisions.md; suite 36/36.
-- Next in daw plan: P5 piano roll (lane editor UI — lane edits must use the
-  TrackProps undo path, see NOTES), P6 remainder (launch quantisation,
+- P5.1 (`532de0b`) + P5.2 (`721e043`) landed 2026-11-07: automation lane
+  accessors in SongDocument + a velocity/CC/bend lane strip docked under the
+  piano roll, edits on the TrackProps undo path. Suite 37/37. Next in P5:
+  multi-select/marquee, copy/paste, snap/quantise, zoom, playhead, audition.
+- Next in daw plan: P5 remainder, P6 remainder (launch quantisation,
   arrangement timeline, clip export). P2 close still needs the owner GUI soak.
 - MD/SNES synth cores (`YmFmCore`, `SnesPcmCore`/`BrrCodec`/`SnesEcho`) expected from
   the owner's frontier model as portable C++20 drops under `engine/aur/audio/`; the

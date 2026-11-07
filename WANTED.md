@@ -4,9 +4,9 @@
 
 ## Active plans
 
-- `Bible/notes/daw/` — Music Studio DAW initiative (P1 extraction, P3 undo,
-  P4.1–P4.3 MIDI device layer + count-in, P6.1 clips all landed; P2 close
-  awaits owner GUI soak; next automatable: P5 piano roll or P6 remainder).
+- `Bible/notes/daw/` — Music Studio DAW initiative (P1, P3, P4.1–P4.3 MIDI
+  device layer + count-in, P6.1 clips, P5.1 lane accessors + P5.2 lane strip
+  all landed; P2 close awaits owner GUI soak; next: P5 remainder, P6 remainder).
 - `Bible/notes/sc-cleanroom.md` — SC (Sound Canvas-style) clean-room instrument, planning only; sequenced behind DAW P7a/P7b.
 - `Bible/notes/worldsim-p31.md` — P3.1 WorldSim core complete (P0–P2 committed 2026-11-06); P3.2 editor simulation tools is next, owner-gated.
 
