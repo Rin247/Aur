@@ -148,6 +148,7 @@ add_executable(aur_tests
     tests/test_automation_lanes.cpp
     tests/test_clip_launcher.cpp
     tests/test_arrangement.cpp
+    tests/test_pixel_session.cpp
     studio/SongHistory.cpp
     studio/music/ClipLauncherStates.cpp
     studio/world/HdSurface.cpp
