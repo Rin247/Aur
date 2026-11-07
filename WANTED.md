@@ -4,7 +4,7 @@
 
 ## Active plans
 
-- `Bible/notes/daw/` — Music Studio DAW initiative (P0 safety net closed 2026-11-06; P1 extraction next).
+- `Bible/notes/daw/` — Music Studio DAW initiative (P1 extraction closed 2026-11-07; P2 real-time engine next).
 - `Bible/notes/worldsim-p31.md` — P3.1 WorldSim core complete (P0–P2 committed 2026-11-06); P3.2 editor simulation tools is next, owner-gated.
 
 ## Open
