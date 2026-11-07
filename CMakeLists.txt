@@ -56,6 +56,8 @@ add_executable(aur_studio
     studio/music/PianoRollCanvas.hpp
     studio/music/SongLibrary.cpp
     studio/music/SongLibrary.hpp
+    studio/music/QtAudioOutput.cpp
+    studio/music/QtAudioOutput.hpp
     studio/MapEditorPanel.cpp
     studio/DatabasePanel.cpp
     studio/ForgePanel.cpp

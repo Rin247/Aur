@@ -13,74 +13,71 @@
 #include <QLineEdit>
 #include <QTabWidget>
 #include <QTableWidget>
-#include <QMediaPlayer>
-#include <QAudioOutput>
-#include <QTemporaryDir>
 #include <QString>
 #include <functional>
 #include <map>
 #include "music/MidiSession.hpp"
 #include "music/PianoRollCanvas.hpp"
+#include "music/QtAudioOutput.hpp"
 #include "aur/project.hpp"
 
-namespace aur {
+namespace aur
+{
 
-class MusicPanel : public QWidget {
-    Q_OBJECT
-    Project* project = nullptr;
-    QComboBox* songCombo = nullptr;
-    QListWidget* trackList = nullptr;
-    PianoRollCanvasWidget* pianoRoll = nullptr;
-    QLineEdit* songName = nullptr;
-    QTabWidget* editorTabs = nullptr;
-    QTableWidget* sessionGrid = nullptr;
-    QSpinBox* tempo = nullptr;
-    QComboBox* previewSynth = nullptr;
-    QComboBox* instrument = nullptr;
-    QSpinBox* bank = nullptr;
-    QSpinBox* channel = nullptr;
-    QSpinBox* volume = nullptr;
-    QSpinBox* pan = nullptr;
-    QPushButton* playButton = nullptr;
-    QPushButton* playSceneButton = nullptr;
-    QComboBox* midiInputCombo = nullptr;
-    QComboBox* midiOutputCombo = nullptr;
-    QPushButton* midiInputButton = nullptr;
-    QPushButton* midiOutputButton = nullptr;
-    QPushButton* recordMidiButton = nullptr;
-    QLabel* midiStatusLabel = nullptr;
-    QMediaPlayer* player = nullptr;
-    QAudioOutput* audioOutput = nullptr;
-    QTemporaryDir previewDirectory;
-    MidiSession* midiSession = nullptr;
-    int previewCount = 0;
-    QString currentSongId;
-    int selectedTrack = -1;
-    int selectedScene = -1;
-    int activeScene = -1;
-    bool updatingControls = false;
+    class MusicPanel : public QWidget
+    {
+        Q_OBJECT
+        Project *project = nullptr;
+        QComboBox *songCombo = nullptr;
+        QListWidget *trackList = nullptr;
+        PianoRollCanvasWidget *pianoRoll = nullptr;
+        QLineEdit *songName = nullptr;
+        QTabWidget *editorTabs = nullptr;
+        QTableWidget *sessionGrid = nullptr;
+        QSpinBox *tempo = nullptr;
+        QComboBox *previewSynth = nullptr;
+        QComboBox *instrument = nullptr;
+        QSpinBox *bank = nullptr;
+        QSpinBox *channel = nullptr;
+        QSpinBox *volume = nullptr;
+        QSpinBox *pan = nullptr;
+        QPushButton *playButton = nullptr;
+        QPushButton *playSceneButton = nullptr;
+        QComboBox *midiInputCombo = nullptr;
+        QComboBox *midiOutputCombo = nullptr;
+        QPushButton *midiInputButton = nullptr;
+        QPushButton *midiOutputButton = nullptr;
+        QPushButton *recordMidiButton = nullptr;
+        QLabel *midiStatusLabel = nullptr;
+        audio::QtAudioOutput *audioOutput = nullptr;
+        MidiSession *midiSession = nullptr;
+        QString currentSongId;
+        int selectedTrack = -1;
+        int selectedScene = -1;
+        int activeScene = -1;
+        bool updatingControls = false;
 
-    int clampedInt(const Json& value, int fallback, int low, int high) const;
-    Json* currentSong();
-    void saveCurrentSong(const Json& song);
-    void refreshTracks();
-    void selectSong(const QString& id);
-    void updateTrackProperties();
-    void updateTrackProperty(const char* key, int value);
-    void refreshSessionGrid();
-    void toggleClip(int sceneIndex, int trackIndex);
-    Json makeScenePreview(int sceneIndex);
-    void playPreview(const Json* previewSong = nullptr);
-    void stopPreview();
-    void importMidi();
-    void exportMidi();
+        int clampedInt(const Json &value, int fallback, int low, int high) const;
+        Json *currentSong();
+        void saveCurrentSong(const Json &song);
+        void refreshTracks();
+        void selectSong(const QString &id);
+        void updateTrackProperties();
+        void updateTrackProperty(const char *key, int value);
+        void refreshSessionGrid();
+        void toggleClip(int sceneIndex, int trackIndex);
+        Json makeScenePreview(int sceneIndex);
+        void playPreview(const Json *previewSong = nullptr);
+        void stopPreview();
+        void importMidi();
+        void exportMidi();
 
-public:
-    explicit MusicPanel(Project* project = nullptr, QWidget* parent = nullptr);
-    ~MusicPanel() override;
-    void setProject(Project* p);
-    void refreshSongs();
-    void generateQuickSong(const std::string& style);
-};
+    public:
+        explicit MusicPanel(Project *project = nullptr, QWidget *parent = nullptr);
+        ~MusicPanel() override;
+        void setProject(Project *p);
+        void refreshSongs();
+        void generateQuickSong(const std::string &style);
+    };
 
 } // namespace aur

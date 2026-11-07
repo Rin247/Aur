@@ -358,51 +358,16 @@ namespace aur
             QMessageBox::information(this, "Music Preview", "Create a song and add notes before previewing.");
             return;
         }
-        if (!previewDirectory.isValid())
-        {
-            QMessageBox::warning(this, "Music Preview", "Could not create temporary preview storage.");
-            return;
-        }
 
-        const std::string synthId = (*selectedSong)["preview_synth"].is_string()
-                                        ? (*selectedSong)["preview_synth"].as_string()
-                                        : "gm";
-        const PreviewSynth synth = synthId == "retro_psg" ? PreviewSynth::RetroPsg
-                                   : synthId == "fm"      ? PreviewSynth::Fm
-                                                          : PreviewSynth::Gm;
-        StereoPcm pcm;
-        try
-        {
-            pcm = synthesize_preview(*selectedSong, synth, 44100, 180);
-        }
-        catch (const std::exception &error)
-        {
-            QMessageBox::information(this, "Music Preview", QString::fromStdString(error.what()));
-            return;
-        }
-
-        const QByteArray wav = music::stereoPcmToWav(pcm);
         stopPreview();
-        const QString filePath = previewDirectory.filePath(
-            QString("music-preview-%1.wav").arg(++previewCount));
-        QFile file(filePath);
-        if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate) ||
-            file.write(wav) != wav.size() || !file.flush())
-        {
-            QMessageBox::warning(this, "Music Preview", "Could not write the temporary audio preview.");
-            return;
-        }
-        file.close();
-        player->setSource(QUrl::fromLocalFile(filePath));
-        player->setLoops(QMediaPlayer::Infinite);
-        player->play();
+        audioOutput->getMixer().loadSong(*selectedSong);
+        audioOutput->start(44100);
         midiSession->startOutput(*selectedSong, currentSongId);
     }
 
     void MusicPanel::stopPreview()
     {
-        if (player)
-            player->stop();
+        audioOutput->stop();
         midiSession->stopOutput();
     }
 
@@ -524,10 +489,8 @@ const std::array<const char*, 128>& gmInstrumentNames() {
 } // namespace
 
 MusicPanel::MusicPanel(Project* p, QWidget* parent)
-    : QWidget(parent), project(p), player(new QMediaPlayer(this)),
-      audioOutput(new QAudioOutput(this)) {
-    player->setAudioOutput(audioOutput);
-    audioOutput->setVolume(0.7);
+    : QWidget(parent), project(p) {
+    audioOutput = new audio::QtAudioOutput(this);
     midiSession = new MidiSession(this);
     connect(midiSession, &MidiSession::noteRecorded, this,
             [this](const QString& songId, int trackIndex, int startStep,
@@ -917,8 +880,14 @@ MusicPanel::MusicPanel(Project* p, QWidget* parent)
             [this]() { generateQuickSong("Battle"); });
     connect(villageButton, &QPushButton::clicked, this,
             [this]() { generateQuickSong("Village"); });
-    connect(playButton, &QPushButton::clicked, this, [this]() { playPreview(); });
-    connect(stopButton, &QPushButton::clicked, this, [this]() { stopPreview(); });
+    connect(playButton, &QPushButton::clicked, this, [this]() {
+        playPreview();
+        playButton->setText("Playing…");
+    });
+    connect(stopButton, &QPushButton::clicked, this, [this]() {
+        stopPreview();
+        playButton->setText("Play Preview");
+    });
     connect(midiInputButton, &QPushButton::clicked, this,
             [this]() { midiSession->toggleInput(midiInputCombo, midiInputButton); });
     connect(midiOutputButton, &QPushButton::clicked, this,
@@ -942,15 +911,6 @@ MusicPanel::MusicPanel(Project* p, QWidget* parent)
     });
     connect(importMidiButton, &QPushButton::clicked, this, [this]() { importMidi(); });
     connect(exportMidiButton, &QPushButton::clicked, this, [this]() { exportMidi(); });
-    connect(player, &QMediaPlayer::playbackStateChanged, this,
-            [this](QMediaPlayer::PlaybackState state) {
-        playButton->setText(state == QMediaPlayer::PlayingState ? "Playing…" : "Play Preview");
-    });
-    connect(player, &QMediaPlayer::errorOccurred, this,
-            [this](QMediaPlayer::Error error, const QString& message) {
-        if (error != QMediaPlayer::NoError)
-            QMessageBox::warning(this, "Music Preview Error", message);
-    });
     midiSession->refreshDevices(midiInputCombo, midiOutputCombo);
     refreshSongs();
 }
