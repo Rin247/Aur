@@ -125,6 +125,7 @@ add_executable(aur_tests
     tests/test_synth_golden.cpp
     tests/test_realtime_parity.cpp
     tests/test_offline_render.cpp
+    tests/test_song_v1.cpp
     studio/world/HdSurface.cpp
     studio/world/WorldMapHelpers.cpp
     studio/world/MapView.cpp

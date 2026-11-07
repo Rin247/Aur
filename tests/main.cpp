@@ -30,6 +30,7 @@ void test_song_clamp_regression();
 void test_synth_golden_hash();
 void test_realtime_parity();
 void test_offline_render_job();
+void test_song_v1_contract();
 
 int main(int argc, char** argv) {
     // Allow a focused run without the memory-heavy full generator sweep.
@@ -96,6 +97,7 @@ int main(int argc, char** argv) {
     RUN_TEST(test_synth_golden_hash);
     RUN_TEST(test_realtime_parity);
     RUN_TEST(test_offline_render_job);
+    RUN_TEST(test_song_v1_contract);
 
     std::cout << "\nResults: " << g_tests_passed << " passed, " << g_tests_failed << " failed.\n";
     return g_tests_failed > 0 ? 1 : 0;
