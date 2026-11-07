@@ -37,6 +37,7 @@ void test_song_history();
 void test_note_props();
 void test_song_clips();
 void test_automation_lanes();
+void test_clip_launcher();
 
 int main(int argc, char** argv) {
     // Allow a focused run without the memory-heavy full generator sweep.
@@ -110,6 +111,7 @@ int main(int argc, char** argv) {
     RUN_TEST(test_note_props);
     RUN_TEST(test_song_clips);
     RUN_TEST(test_automation_lanes);
+    RUN_TEST(test_clip_launcher);
 
     std::cout << "\nResults: " << g_tests_passed << " passed, " << g_tests_failed << " failed.\n";
     return g_tests_failed > 0 ? 1 : 0;

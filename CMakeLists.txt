@@ -142,7 +142,9 @@ add_executable(aur_tests
     tests/test_song_history.cpp
     tests/test_song_clips.cpp
     tests/test_automation_lanes.cpp
+    tests/test_clip_launcher.cpp
     studio/SongHistory.cpp
+    studio/music/ClipLauncherStates.cpp
     studio/world/HdSurface.cpp
     studio/world/WorldMapHelpers.cpp
     studio/world/MapView.cpp
