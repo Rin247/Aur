@@ -1,6 +1,7 @@
 #include "MusicPanel.hpp"
 #include "music/SongLibrary.hpp"
 #include "music/VelocityLaneStrip.hpp"
+#include "music/ArrangementCanvas.hpp"
 #include "music/ScaleSelector.hpp"
 #include "aur/audio/midi.hpp"
 #include "aur/audio/synth.hpp"
@@ -138,6 +139,7 @@ namespace aur
             activeScene = -1;
             trackList->clear();
             pianoRoll->setSong(Json{}, -1); velocityStrip->setSong(Json{}, -1);
+            arrangementCanvas->setSong(Json{});
             refreshSessionGrid();
             songName->clear();
             tempo->setValue(120);
@@ -167,6 +169,7 @@ namespace aur
         refreshTracks();
         trackList->setCurrentRow(selectedTrack);
         pianoRoll->setSong(*song, selectedTrack); velocityStrip->setSong(*song, selectedTrack);
+        arrangementCanvas->setSong(*song);
     syncScaleSelector(*song);
         updateTrackProperties();
         updatingControls = false;
@@ -181,6 +184,7 @@ namespace aur
         {
             selectedTrack = -1;
             pianoRoll->setSong(song ? *song : Json{}, -1); velocityStrip->setSong(song ? *song : Json{}, -1);
+            arrangementCanvas->setSong(song ? *song : Json{});
             refreshSessionGrid();
             return;
         }
@@ -626,6 +630,7 @@ MusicPanel::MusicPanel(Project* p, QWidget* parent)
         if (songId == currentSongId) {
             refreshTracks();
             pianoRoll->setSong(song, selectedTrack); velocityStrip->setSong(song, selectedTrack);
+            arrangementCanvas->setSong(song);
             refreshSessionGrid();
         }
     });
@@ -897,6 +902,24 @@ MusicPanel::MusicPanel(Project* p, QWidget* parent)
     pianoHint->setStyleSheet("color: #aeb5c5; padding: 3px;");
     pianoLayout->addWidget(pianoHint);
     editorTabs->addTab(pianoPage, "Piano Roll");
+
+    auto *arrangePage = new QWidget(editorTabs);
+    auto *arrangeLayout = new QVBoxLayout(arrangePage);
+    arrangementCanvas = new ArrangementCanvas(arrangePage);
+    arrangementCanvas->setHistory(&songHistory);
+    arrangementCanvas->setChangeCallback([this](const Json &song) { saveCurrentSong(song); });
+    connect(arrangementCanvas, &ArrangementCanvas::historyChanged, this, [this]() {
+        emit undoStateChanged(pianoRoll && pianoRoll->canUndo(),
+                              pianoRoll && pianoRoll->canRedo());
+    });
+    arrangeLayout->addWidget(arrangementCanvas, 1);
+    auto *arrangeHint = new QLabel(
+        "Arrangement — click an empty cell to place the selected scene's clip · drag to move · Delete removes · Play Arrangement flattens the timeline",
+        arrangePage);
+    arrangeHint->setStyleSheet("color: #aeb5c5; padding: 3px;");
+    arrangeLayout->addWidget(arrangeHint);
+    editorTabs->addTab(arrangePage, "Arrangement");
+
     splitter->addWidget(editorTabs);
     splitter->setSizes({270, 1300});
     layout->addWidget(splitter, 1);
@@ -969,6 +992,7 @@ MusicPanel::MusicPanel(Project* p, QWidget* parent)
         midiSession->setSelectedTrack(row);
         if (Json* song = currentSong()) {
             pianoRoll->setSong(*song, selectedTrack); velocityStrip->setSong(*song, selectedTrack);
+        arrangementCanvas->setSong(*song);
     syncScaleSelector(*song);
             updateTrackProperties();
         }
@@ -1015,6 +1039,7 @@ MusicPanel::MusicPanel(Project* p, QWidget* parent)
         refreshTracks();
         trackList->setCurrentRow(selectedTrack);
         pianoRoll->setSong(*song, selectedTrack); velocityStrip->setSong(*song, selectedTrack);
+        arrangementCanvas->setSong(*song);
     syncScaleSelector(*song);
         refreshSessionGrid();
     });
@@ -1065,9 +1090,10 @@ MusicPanel::MusicPanel(Project* p, QWidget* parent)
             playPreview(&scene);
     });
     connect(sessionGrid->horizontalHeader(), &QHeaderView::sectionClicked, this,
-            [this](int column) { selectedScene = column; });
+            [this](int column) { selectedScene = column; if (arrangementCanvas) arrangementCanvas->setPlaceScene(std::max(0, selectedScene)); });
     connect(sessionGrid, &QTableWidget::cellClicked, this, [this](int row, int column) {
         selectedScene = column;
+        if (arrangementCanvas) arrangementCanvas->setPlaceScene(std::max(0, selectedScene));
         if (row >= 0 && row < trackList->count()) trackList->setCurrentRow(row);
     });
     connect(instrument, &QComboBox::currentIndexChanged, this,

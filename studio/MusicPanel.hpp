@@ -19,6 +19,8 @@
 #include "music/MidiSession.hpp"
 #include "music/PianoRollCanvas.hpp"
 #include "music/VelocityLaneStrip.hpp"
+#include "music/ArrangementCanvas.hpp"
+#include "music/ArrangementCanvas.hpp"
 #include "music/ScaleSelector.hpp"
 #include "music/ClipLauncherStates.hpp"
 #include "music/QtAudioOutput.hpp"
@@ -38,6 +40,7 @@ namespace aur
         PianoRollCanvasWidget *pianoRoll = nullptr;
 
         VelocityLaneStrip *velocityStrip = nullptr;
+        ArrangementCanvas *arrangementCanvas = nullptr;
         ScaleSelector *scaleSelector = nullptr;
         ClipLauncherStates clipLauncher;
         int launcherPlayingScene = -1;
