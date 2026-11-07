@@ -35,26 +35,26 @@ namespace aur
         return static_cast<std::int64_t>(sceneIndex) * 4096 + trackIndex;
     }
 
-    ClipLauncherStates::Slot *ClipLauncherStates::slotAt(int sceneIndex, int trackIndex)
+    ClipSlotState *ClipLauncherStates::slotAt(int sceneIndex, int trackIndex)
     {
-        auto it = slots.find(slotKey(sceneIndex, trackIndex));
-        return it == slots.end() ? nullptr : &it->second;
+        auto it = slotStates.find(slotKey(sceneIndex, trackIndex));
+        return it == slotStates.end() ? nullptr : &it->second;
     }
 
     ClipLauncherStates::State ClipLauncherStates::state(int sceneIndex, int trackIndex) const
     {
-        const auto it = slots.find(slotKey(sceneIndex, trackIndex));
-        return it == slots.end() ? State::Idle : it->second.state;
+        const auto it = slotStates.find(slotKey(sceneIndex, trackIndex));
+        return it == slotStates.end() ? State::Idle : it->second.value;
     }
 
     void ClipLauncherStates::launch(int sceneIndex, int trackIndex)
     {
-        Slot &slot = slots[slotKey(sceneIndex, trackIndex)];
+        ClipSlotState &slot = slotStates[slotKey(sceneIndex, trackIndex)];
         const std::int64_t frame = currentFrame();
         if (frame < 0)
         {
             // Transport stopped: start immediately.
-            slot.state = State::Playing;
+            slot.value = State::Playing;
             slot.targetBar = -1;
             if (onStateChanged)
                 onStateChanged();
@@ -62,7 +62,7 @@ namespace aur
         }
         // Transport running: queue to the next bar boundary.
         const int barFrames = framesPerBar();
-        slot.state = State::Queued;
+        slot.value = State::Queued;
         slot.queueStartFrames = frame;
         slot.targetBar = static_cast<int>((frame + barFrames) / barFrames);
         if (onStateChanged)
@@ -71,10 +71,10 @@ namespace aur
 
     void ClipLauncherStates::stopAll()
     {
-        for (auto &[key, slot] : slots)
+        for (auto &[key, slot] : slotStates)
         {
-            if (slot.state == State::Playing)
-                slot.state = State::Idle; // engine notes-off handled by swap
+            if (slot.value == State::Playing)
+                slot.value = State::Idle; // engine notes-off handled by swap
         }
         if (onStateChanged)
             onStateChanged();
@@ -82,8 +82,8 @@ namespace aur
 
     int ClipLauncherStates::queuedInSteps(int sceneIndex, int trackIndex) const
     {
-        const auto it = slots.find(slotKey(sceneIndex, trackIndex));
-        if (it == slots.end() || it->second.state != State::Queued)
+        const auto it = slotStates.find(slotKey(sceneIndex, trackIndex));
+        if (it == slotStates.end() || it->second.value != State::Queued)
             return 0;
         const std::int64_t frame = currentFrame();
         if (frame < 0)
@@ -99,14 +99,14 @@ namespace aur
     {
         bool changed = false;
         const std::int64_t frame = currentFrame();
-        for (auto &[key, slot] : slots)
+        for (auto &[key, slot] : slotStates)
         {
-            if (slot.state == State::Queued && frame >= 0)
+            if (slot.value == State::Queued && frame >= 0)
             {
                 const int barFrames = framesPerBar();
                 if (frame >= static_cast<std::int64_t>(slot.targetBar) * barFrames)
                 {
-                    slot.state = State::Playing;
+                    slot.value = State::Playing;
                     changed = true;
                 }
             }

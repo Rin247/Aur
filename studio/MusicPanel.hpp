@@ -20,6 +20,7 @@
 #include "music/PianoRollCanvas.hpp"
 #include "music/VelocityLaneStrip.hpp"
 #include "music/ScaleSelector.hpp"
+#include "music/ClipLauncherStates.hpp"
 #include "music/QtAudioOutput.hpp"
 #include "SongHistory.hpp"
 #include "aur/audio/RealtimeMixer.hpp"
@@ -38,6 +39,7 @@ namespace aur
 
         VelocityLaneStrip *velocityStrip = nullptr;
         ScaleSelector *scaleSelector = nullptr;
+        ClipLauncherStates clipLauncher;
         void syncScaleSelector(const Json &song);
         QLineEdit *songName = nullptr;
         QTabWidget *editorTabs = nullptr;

@@ -66,6 +66,8 @@ add_executable(aur_studio
     studio/music/VelocityLaneStrip.hpp
     studio/music/ScaleSelector.cpp
     studio/music/ScaleSelector.hpp
+    studio/music/ClipLauncherStates.cpp
+    studio/music/ClipLauncherStates.hpp
     studio/music/SongLibrary.cpp
     studio/music/SongLibrary.hpp
     studio/music/QtAudioOutput.cpp

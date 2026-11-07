@@ -261,19 +261,32 @@ namespace aur
                     hasClip ? audio::SongDocument::clip_info(clip, trackNames[row].toStdString())
                             : audio::SongDocument::ClipInfo{};
                 auto *button = new QPushButton(
-                    hasClip ? QString("●  %1\n%2 · %3")
+                    hasClip ? QString("●  %1\n%2 · %3%4")
                                   .arg(QString::fromStdString(clipInfo.name))
                                   .arg(clipInfo.length / 16)
                                   .arg(noteCount)
+                                  .arg(clipLauncher.state(column, row) ==
+                                               ClipLauncherStates::State::Playing
+                                           ? "\n▶ playing"
+                                           : clipLauncher.state(column, row) ==
+                                                     ClipLauncherStates::State::Queued
+                                           ? QString("\nqueued %1 steps").arg(
+                                                 clipLauncher.queuedInSteps(column, row))
+                                           : QString())
                             : QString("+"),
                     sessionGrid);
                 button->setMinimumHeight(52);
-                const bool active = activeScene == column && hasClip;
-                button->setStyleSheet(active
-                                          ? "QPushButton { background:#795c2d; border:2px solid #f0bd58; color:#fff1cf; font-weight:700; }"
-                                      : hasClip
-                                          ? "QPushButton { background:#285b52; border:1px solid #428d79; color:#e4fff2; }"
-                                          : "QPushButton { background:#1b222a; border:1px dashed #49535d; color:#929da8; }");
+                const bool active = clipLauncher.state(column, row) !=
+                                            ClipLauncherStates::State::Idle &&
+                                    hasClip;
+                button->setStyleSheet(
+                    active ? (clipLauncher.state(column, row) ==
+                                      ClipLauncherStates::State::Playing
+                                  ? "QPushButton { background:#795c2d; border:2px solid #f0bd58; color:#fff1cf; font-weight:700; }"
+                                  : "QPushButton { background:#2d4a79; border:2px solid #8ab4f8; color:#e4efff; font-weight:700; }")
+                           : hasClip
+                               ? "QPushButton { background:#285b52; border:1px solid #428d79; color:#e4fff2; }"
+                               : "QPushButton { background:#1b222a; border:1px dashed #49535d; color:#929da8; }");
                 button->setToolTip(hasClip
                                        ? QString("%1 · %2 notes").arg(sceneNames[column]).arg(noteCount)
                                        : QString("Create a clip from %1 in %2").arg(trackNames[row], sceneNames[column]));
@@ -810,6 +823,15 @@ MusicPanel::MusicPanel(Project* p, QWidget* parent)
         saveCurrentSong(*song);
     });
     pianoLayout->addWidget(scaleSelector);
+    clipLauncher.attachClock(&audioOutput->getMixer().playheadFrames,
+                             &audioOutput->getMixer().playheadBpm,
+                             &audioOutput->getMixer().playheadActive);
+    auto *launcherTimer = new QTimer(this);
+    connect(launcherTimer, &QTimer::timeout, this, [this]() {
+        if (clipLauncher.tick())
+            refreshSessionGrid();
+    });
+    launcherTimer->start(100);
     auto* pianoHint = new QLabel(
         "Piano Roll — drag empty grid to marquee-select · Shift+click adds a note · drag to move/resize (Alt = velocity) · Ctrl+click toggles · Ctrl+C/V/D copies/pastes/duplicates · right-click or Delete removes",
         pianoPage);
@@ -977,9 +999,11 @@ MusicPanel::MusicPanel(Project* p, QWidget* parent)
         if (selectedScene < 0) return;
         const Json scene = makeScenePreview(selectedScene);
         if (scene.is_null()) return;
+        clipLauncher.launch(selectedScene, 0);
         activeScene = selectedScene;
         refreshSessionGrid();
-        playPreview(&scene);
+        if (clipLauncher.state(selectedScene, 0) == ClipLauncherStates::State::Playing)
+            playPreview(&scene);
     });
     connect(sessionGrid->horizontalHeader(), &QHeaderView::sectionClicked, this,
             [this](int column) { selectedScene = column; });

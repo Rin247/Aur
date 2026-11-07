@@ -10,20 +10,27 @@ namespace aur
 {
 
     // Session-grid launch state machine (P6.3). Pure logic, no Qt moc:
-    // the grid paints from this, the mixer song-swap is driven from it
-    // via std::function callbacks (moc's parser mishandles commas in
-    // template member declarations, so Q_OBJECT is deliberately avoided).
+    // the grid paints from this; song swaps are driven through a callback
+    // (a Q_OBJECT member `slots` collides with Qt's own macro, so the
+    // class deliberately avoids moc).
     //
     // States per (scene, track) slot: idle → queued → playing.
     // A launch while the transport is playing queues the clip to start on
     // the next bar boundary (quantise = 1 bar); a launch while stopped
     // takes effect immediately. stopAll idles all playing slots.
+    struct ClipSlotState
+    {
+        enum class Value { Idle, Queued, Playing };
+        Value value = Value::Idle;
+        std::int64_t queueStartFrames = 0;
+        int targetBar = -1;
+    };
+
     class ClipLauncherStates
     {
     public:
         static constexpr int kStepsPerBar = 16;
-
-        enum class State { Idle, Queued, Playing };
+        using State = ClipSlotState::Value;
 
         ClipLauncherStates() = default;
 
@@ -46,22 +53,15 @@ namespace aur
         std::function<void()> onStateChanged;
 
     private:
-        struct Slot
-        {
-            State state = State::Idle;
-            std::int64_t queueStartFrames = 0;
-            int targetBar = -1;
-        };
-
         static std::int64_t slotKey(int sceneIndex, int trackIndex);
-        Slot *slotAt(int sceneIndex, int trackIndex);
+        ClipSlotState *slotAt(int sceneIndex, int trackIndex);
         std::int64_t currentFrame() const;
         int framesPerBar() const;
 
         const std::atomic<std::int64_t> *playheadFrames = nullptr;
         const std::atomic<int> *playheadBpm = nullptr;
         const std::atomic<bool> *playheadActive = nullptr;
-        std::map<std::int64_t, Slot> slots;
+        std::map<std::int64_t, ClipSlotState> slotStates;
     };
 
 } // namespace aur
