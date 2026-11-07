@@ -81,3 +81,26 @@ Settled with evidence before code; each entry dated. Amend rather than argue.
   the session reaching into `Project` directly. Same behaviour (note appended,
   sorted by step, UI refreshed) but the session no longer touches project
   state; revisit if recording needs transactional undo (P3).
+- **2026-11-07 — P2 core shape.** `VoiceCore` (`render_voice_sample`,
+  `voice_envelope`) is the single DSP path; `synthesize_preview` and
+  `RealtimeMixer` both call it. `PreviewSynth` and `audio::Timbre` share
+  underlying values (0/1/2). Golden PCM hashes verified unchanged after the
+  move — sample-exact.
+- **2026-11-07 — P0 timing "quirk" resolved.** The preview formula
+  `step·rate·60/(bpm·4)` was correct all along (the P0 probe had counted
+  interleaved samples at 8 kHz: 1000 frames/step, not 125). No engine change
+  needed; P2 parity confirmed both paths agree.
+- **2026-11-07 — RealtimeMixer contract details.** `loadSong` swaps a pending
+  song under a mutex consumed at the next command boundary (top of a render
+  call), never mid-fill. Voices scheduled ahead are kept, not erased, once
+  their start passes (early bug: future voices were erased at frame 0 —
+  parity test caught it). Loop wrap reschedules template voices at absolute
+  `k·loopFrames` offsets; frameCounter is monotonic. Parity is asserted over
+  the first loop pass only — a looping mixer cannot match a non-looping
+  offline render past the wrap (drum noise re-seeds per pass).
+- **2026-11-07 — Qt 6.12 QAudioSink callback API.** `start` takes a
+  `QSpan<float>` callback, not the old `QIODevice*` overload; buffer sized at
+  100 ms. MusicPanel preview no longer writes temp WAVs or uses
+  QMediaPlayer; `stereoPcmToWav` stays for export paths (P11).
+- **2026-11-07 — parity test numbers.** 8 kHz, 1-bar song, 16k frames:
+  max_delta ≈ 3.2e-5 (≈1 int16 LSB), rel 1.2e-5, threshold rel < 5e-4.
