@@ -57,3 +57,20 @@ Settled with evidence before code; each entry dated. Amend rather than argue.
   deliberately).
 - **2026-11-06 — owner-reported UI issues logged in WANTED.md:** map editor
   first-boot zoom; World Time Settings merged into the World editor.
+- **2026-11-07 — P1 closed.** Tag `daw-p1`; commits `daw-p1.1` (synth/midi
+  moved to `engine/aur/audio/`, plain `namespace aur` kept — sub-namespace
+  deferred until the engine gains more modules) and `daw-p1.2` (MusicPanel
+  split). Suite 28/28, no behaviour change.
+- **2026-11-07 — MusicPanel split layout.** `studio/music/PianoRollCanvas`
+  (canvas widget + piano-roll constants), `studio/music/MidiSession` (QObject
+  owning device I/O, recording clock, playback scheduler; talks to the panel
+  via `noteRecorded`/`statusChanged`/`outputError` signals), `studio/music/
+  SongLibrary` (makeTrack/notesForBar/initializeScenes/songIdFromName/
+  quickSong/stereoPcmToWav — Qt-light helpers). MusicPanel host is 921 lines
+  (above the 750 soft cap): the ~380-line constructor is the next extraction
+  candidate; do not grow the host.
+- **2026-11-07 — commitRecordedNote changed shape deliberately.** Recording
+  commit now flows MidiSession→panel via the `noteRecorded` signal instead of
+  the session reaching into `Project` directly. Same behaviour (note appended,
+  sorted by step, UI refreshed) but the session no longer touches project
+  state; revisit if recording needs transactional undo (P3).
