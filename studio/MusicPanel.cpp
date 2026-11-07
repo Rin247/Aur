@@ -603,6 +603,26 @@ MusicPanel::MusicPanel(Project* p, QWidget* parent)
                 return left.is_array() && right.is_array() &&
                        left[0].as_int() < right[0].as_int();
             });
+        // Scene record: mirror the note into the armed scene column's clip
+        // for this track, clipped to the clip's 16-step window.
+        if (recordingScene >= 0)
+        {
+            music::initializeScenes(song);
+            JsonArray& scenes = song["scenes"].as_array();
+            if (recordingScene < static_cast<int>(scenes.size()))
+            {
+                JsonArray& clips = scenes[static_cast<size_t>(recordingScene)]["clips"].as_array();
+                clips.resize(song["tracks"].as_array().size());
+                Json& clip = clips[static_cast<size_t>(trackIndex)];
+                if (clip.is_null())
+                    clip = JsonObject{{"notes", JsonArray{}}};
+                const int clipStep = std::clamp(startStep % 16, 0, 15);
+                if (!clip.contains("notes") || !clip["notes"].is_array())
+                    clip["notes"] = JsonArray{};
+                clip["notes"].as_array().emplace_back(
+                    JsonArray{clipStep, pitch, length, velocity});
+            }
+        }
         if (songId == currentSongId) {
             refreshTracks();
             pianoRoll->setSong(song, selectedTrack); velocityStrip->setSong(song, selectedTrack);
@@ -1092,6 +1112,7 @@ MusicPanel::MusicPanel(Project* p, QWidget* parent)
                 "Connect a MIDI input, select a song, and select a track before recording.");
             return;
         }
+        recordingScene = enabled ? selectedScene : -1;
         midiSession->setSelectedTrack(selectedTrack);
         midiSession->setRecordTarget(currentSongId);
         midiSession->setCountInBars(countInBarsSpin->value());

@@ -41,6 +41,7 @@ namespace aur
         ScaleSelector *scaleSelector = nullptr;
         ClipLauncherStates clipLauncher;
         int launcherPlayingScene = -1;
+        int recordingScene = -1; // -1 = record to track only
         void syncScaleSelector(const Json &song);
         QLineEdit *songName = nullptr;
         QTabWidget *editorTabs = nullptr;
