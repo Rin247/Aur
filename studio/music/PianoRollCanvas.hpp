@@ -2,10 +2,11 @@
 
 #include <QWidget>
 #include <QPoint>
+#include <QRect>
+#include <set>
 #include <functional>
 #include "aur/audio/SongDocument.hpp"
 #include "aur/json.hpp"
-#include "SongHistory.hpp"
 #include "SongHistory.hpp"
 
 namespace aur
@@ -47,12 +48,24 @@ namespace aur
         void keyPressEvent(QKeyEvent *event) override;
 
     private:
+        struct NoteSnapshot
+        {
+            int step;
+            int pitch;
+            int length;
+            int velocity;
+        };
+
         Json song;
         int trackIndex = -1;
-        int selectedNote = -1;
+        std::set<int> selectedNotes;
+        bool marqueeSelecting = false;
+        QRect marqueeRect;
+        QPoint marqueeStartPos;
         int dragOriginStep = 0;
         int dragOriginPitch = 0;
         int dragOriginLength = 1;
+        std::map<int, NoteSnapshot> dragOrigins; // note index -> pre-drag state
         int firstVisibleStep = 0;
         QPoint dragStartPos;
         bool resizingNote = false;
@@ -63,7 +76,18 @@ namespace aur
         std::function<void(const Json &)> onSongChanged;
 
         int noteAt(const QPoint &pos) const;
+        bool noteIntersectsMarquee(int index) const;
+        void selectOnly(int index);
+        void deleteSelected(const char *label);
+        void copySelected();
+        void pasteClipboard();
+        void duplicateSelection();
         void notifySongChanged();
+
+        struct ClipNote { int step; int pitch; int length; int velocity; };
+        std::vector<ClipNote> clipboard;
+        int clipboardMinStep = 0;
+        std::vector<ClipNote> duplicated; // pending paste offset for Ctrl+D
     };
 
 } // namespace aur
