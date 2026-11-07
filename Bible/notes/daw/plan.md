@@ -1,6 +1,6 @@
 # DAW: plan
 
-Status: P1 in progress (audio move committed; MusicPanel split next).
+Status: P1 complete (audio move + MusicPanel split committed; P2 next).
 
 Master plan for the Music Studio DAW initiative, seeded from the owner-supplied
 gameplan and corrected by a source audit on 2026-11-06. One note file per major
@@ -116,11 +116,18 @@ engine (P2) defines the timing contract.
       deferred — both files already live in plain `namespace aur`; naming a
       sub-namespace now would churn every call site for no P1 gain; revisit
       when the engine gains more modules). CMake + all includes updated;
-      build green, suite 28/28, tags `daw-p1.1`.
-- [ ] Split `MusicPanel` into TransportBar, MidiDevicePanel, MidiRecorder,
-      SessionView, TrackPanel, GeneratorPanel + thin host; measure sizes.
-- [ ] `MusicEngine` stays as-is (unused) until P11.
-      Acceptance: build + tests green, no behaviour change, sizes recorded.
+      build green, suite 28/28, tag `daw-p1.1`.
+- [x] Split `MusicPanel` into PianoRollCanvas (`studio/music/`, 310 cpp
+      lines), MidiSession (`studio/music/`, device I/O + recording + output
+      scheduling behind signals, 370), SongLibrary (`studio/music/`, track/
+      scene/quick-song/WAV helpers, 190) + a 921-line MusicPanel host.
+      Sizes recorded 2026-11-07; build green, suite 28/28, `daw-p1.2`.
+      Note: MusicPanel host is still above the 750-line soft cap — the
+      constructor (~380 lines of UI wiring) is the next extraction candidate
+      when P2+ touches this code; do not let it grow.
+- [x] `MusicEngine` stays as-is (unused) until P11.
+      Acceptance: build + tests green, no behaviour change, sizes recorded —
+      P1 closed 2026-11-07.
 
 ### P2 Real-time engine
 
