@@ -1,0 +1,52 @@
+# CMake and build output
+/build/
+/build-*/
+/out/
+/dist/
+/target/
+/obj/
+/bin/
+CMakeCache.txt
+CMakeFiles/
+*_autogen/
+
+# Compiled artifacts
+*.obj
+*.o
+*.a
+*.lib
+*.exe
+*.dll
+*.pdb
+*.ilk
+
+# IDE and local machine settings
+.idea/
+.vs/
+.vscode/
+.qt/
+*.user
+local.properties
+
+# Python reference prototype
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+
+# Logs and operating-system files
+*.log
+logs/
+Thumbs.db
+desktop.ini
+.DS_Store
+build/
+third_party/
+.kilo/
+test/
+temp/
+tmp/
+tools/
+
+reference/
+reference/**

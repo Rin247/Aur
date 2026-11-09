@@ -1,0 +1,40 @@
+#pragma once
+
+#include <QString>
+#include <string>
+#include <vector>
+#include "aur/project.hpp"
+
+class QListWidget;
+
+namespace aur
+{
+
+    // Shared selection/palette/frame data for the pixel and sprite editors
+    // (pixmerge P1): one definition of palette listing and anim frame-id
+    // resolution instead of the previous per-panel copies. Pure functions
+    // over the project JSON — no Qt state of its own beyond the widget fill
+    // helpers. The canvas (PixelCanvasWidget) stays the sole edit surface.
+    class PixelEditSession
+    {
+    public:
+        // Fills a palette list widget from graphics[id]["palette"]; returns
+        // the number of entries written. Selects row 1 (index 1 = first
+        // opaque color) when anything was written.
+        static int fill_palette(QListWidget *widget, const Project &project,
+                                const std::string &graphic_id);
+
+        // Resolves the frame ids an anim-backed graphic exposes for a
+        // direction/pose pair: pose_direction anim first, then bare pose,
+        // then frame ids containing the direction (all frames when the
+        // direction is "down"). Returns the deduplicated id list.
+        static std::vector<std::string> resolve_anim_frames(
+            const Project &project, const std::string &graphic_id,
+            const std::string &direction, const std::string &pose);
+
+        // Frame ids of a plain graphic (frames object keys in JSON order).
+        static std::vector<std::string> resolve_plain_frames(
+            const Project &project, const std::string &graphic_id);
+    };
+
+} // namespace aur

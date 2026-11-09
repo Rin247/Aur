@@ -1,0 +1,486 @@
+{
+ "actors": {
+  "bram": {
+   "char": "bram",
+   "class": "knight",
+   "def": 6,
+   "growth": {
+    "def": 1,
+    "hp": 8,
+    "mag": 0.2,
+    "mp": 1,
+    "spd": 0.4,
+    "str": 1.3
+   },
+   "hp": 52,
+   "level": 2,
+   "mag": 1,
+   "mp": 10,
+   "name": "Bram",
+   "skill": "quake",
+   "spd": 5,
+   "str": 10,
+   "weapon": "axe"
+  },
+  "mira": {
+   "char": "mira",
+   "class": "archer",
+   "def": 2,
+   "growth": {
+    "def": 0.5,
+    "hp": 6,
+    "mag": 1,
+    "mp": 2,
+    "spd": 1,
+    "str": 0.8
+   },
+   "hp": 34,
+   "level": 2,
+   "mag": 7,
+   "mp": 20,
+   "name": "Mira",
+   "skill": "bolt",
+   "spd": 9,
+   "str": 7,
+   "weapon": "bow"
+  },
+  "sylvi": {
+   "char": "sylvi",
+   "class": "lord",
+   "def": 3,
+   "growth": {
+    "def": 0.7,
+    "hp": 7,
+    "mag": 0.8,
+    "mp": 2,
+    "spd": 0.8,
+    "str": 1.2
+   },
+   "hp": 40,
+   "level": 1,
+   "mag": 5,
+   "mp": 24,
+   "name": "Sylvi",
+   "race": "sylvani",
+   "skill": "gale",
+   "spd": 8,
+   "str": 9,
+   "weapon": "sword"
+  }
+ },
+ "classes": {
+  "archer": {
+   "move": 5,
+   "name": "Archer"
+  },
+  "knight": {
+   "move": 5,
+   "name": "Knight"
+  },
+  "lord": {
+   "move": 6,
+   "name": "Lord"
+  }
+ },
+ "enemies": {
+  "bandit": {
+   "ai": "chaser",
+   "atk": 5,
+   "def": 2,
+   "gfx": "bandit",
+   "hp": 18,
+   "look": "bandit",
+   "mov": 5,
+   "name": "Bandit",
+   "skl": 5,
+   "spd": 45,
+   "tspd": 4,
+   "weapon": "axe",
+   "xp": 10
+  },
+  "bandit_archer": {
+   "ai": "chaser",
+   "atk": 4,
+   "def": 1,
+   "gfx": "bandit_archer",
+   "hp": 15,
+   "look": "bandit_archer",
+   "mov": 5,
+   "name": "Brigand Archer",
+   "skl": 7,
+   "spd": 40,
+   "tspd": 6,
+   "weapon": "bow",
+   "xp": 12
+  },
+  "bandit_boss": {
+   "ai": "chaser",
+   "atk": 7,
+   "def": 4,
+   "gfx": "bandit_boss",
+   "hp": 30,
+   "look": "bandit_boss",
+   "mov": 4,
+   "name": "Brigand Chief",
+   "skl": 8,
+   "spd": 45,
+   "tspd": 5,
+   "weapon": "lance",
+   "xp": 30
+  },
+  "bat": {
+   "aggro": 150,
+   "ai": "flyer",
+   "atk": 5,
+   "def": 0,
+   "gfx": "bat",
+   "gold": 4,
+   "hp": 10,
+   "name": "Cave Bat",
+   "spd": 55,
+   "xp": 5
+  },
+  "slime": {
+   "ai": "hopper",
+   "atk": 4,
+   "def": 0,
+   "drops": [
+    {
+     "item": "candy",
+     "p": 0.15
+    }
+   ],
+   "gfx": "slime",
+   "gold": 3,
+   "hp": 14,
+   "name": "Slime",
+   "spd": 38,
+   "xp": 4
+  },
+  "slime_blue": {
+   "ai": "hopper",
+   "atk": 6,
+   "def": 1,
+   "drops": [
+    {
+     "item": "chocolate",
+     "p": 0.1
+    }
+   ],
+   "gfx": "slime_blue",
+   "gold": 6,
+   "hp": 24,
+   "name": "Blue Slime",
+   "spd": 44,
+   "xp": 7
+  },
+  "slime_king": {
+   "aggro": 160,
+   "ai": "hopper",
+   "atk": 9,
+   "def": 3,
+   "drops": [
+    {
+     "item": "candy",
+     "p": 1
+    }
+   ],
+   "gfx": "slime_king",
+   "gold": 60,
+   "hp": 70,
+   "name": "Slime King",
+   "r": 8,
+   "spd": 50,
+   "xp": 40
+  }
+ },
+ "items": {
+  "candy": {
+   "name": "Candy",
+   "price": 30,
+   "type": "heal_hp",
+   "value": 40
+  },
+  "chocolate": {
+   "name": "Chocolate",
+   "price": 40,
+   "type": "heal_mp",
+   "value": 20
+  },
+  "moon_shard": {
+   "name": "Moon Shard",
+   "type": "key"
+  }
+ },
+ "races": {
+  "beastkin": {
+   "adaptations": "Enhanced chemical and thermal senses; moisture-absorbing palms, soles, and sensory nodes around the throat and neck.",
+   "appearance": "Wolf-like features, dense muscle and bone, and semi-retractable claws.",
+   "category": "Mortal · wolf-like people",
+   "combat_role": "Close-quarters vanguards with strong stagger potential and terrain traversal.",
+   "culture": "Pack-oriented communities with strong bonds and clan identity.",
+   "habitat": "Varied; often organized around pack and clan communities.",
+   "lifespan": "70–90 years.",
+   "maturation": "",
+   "name": "Beastkin",
+   "naming": "Guttural, pack- and clan-influenced phonetics.",
+   "notes": "The bible distinguishes Beastkin from were-creatures, which it describes as the result of later experiments."
+  },
+  "fairies_nymphs": {
+   "adaptations": "",
+   "appearance": "",
+   "category": "Supernatural · atmospheric fae",
+   "combat_role": "",
+   "culture": "Known as fae in western traditions and Tianling in eastern traditions.",
+   "habitat": "Atmospheric and aetherically active environments.",
+   "lifespan": "",
+   "maturation": "",
+   "name": "Fairies / Nymphs",
+   "naming": "",
+   "notes": "A broad category in the source taxonomy; individual kinds and cultures remain open for authoring."
+  },
+  "featherfolk": {
+   "adaptations": "Gliding and flight-oriented bodies; wing joints and lower legs absorb atmospheric moisture.",
+   "appearance": "Feathered, winged humanoids with reinforced lightweight bones.",
+   "category": "Mortal · avian people",
+   "combat_role": "Aerial mobility, glide-dodges, and wind-based maneuvering.",
+   "culture": "Communities value aerial travel, weather knowledge, and wind-weaving traditions.",
+   "habitat": "Highlands, cliffs, and regions with reliable updrafts and aetheric winds.",
+   "lifespan": "80–100 years.",
+   "maturation": "",
+   "name": "Featherfolk",
+   "naming": "Light consonants and wind- or sky-inspired phonetics.",
+   "notes": "The source bible describes reverse sexual size dimorphism; this can be refined as character designs are developed."
+  },
+  "gharuk": {
+   "adaptations": "Heat-venting dermal ridges and moisture-absorbing palms and soles adapted to dry soils. Water scarcity is a serious environmental challenge.",
+   "appearance": "Compact, blocky build with dense muscle; olive-green to moss-bronze skin and coarse, dark hair.",
+   "category": "Mortal · orc",
+   "combat_role": "Compact, powerful fighters; forge and scouting traditions influence their combat styles.",
+   "culture": "Clan and Forge-Hold communities. Oral epics, forge markings, mentorship, and the ideal 'Burn bright, pass the flame' are central.",
+   "habitat": "Arid regions, forge-holds, clay basins, and moisture-retaining deserts.",
+   "lifespan": "60–75 years; some elders live beyond 80.",
+   "maturation": "Rapid; commonly considered adult between 8 and 12 years.",
+   "name": "Gharuk",
+   "naming": "Panslavonic and Proto-Indo-European roots, with Solani nautical loanwords.",
+   "notes": "Use water access and climate as meaningful setting factors without treating any Gharuk individual as defined solely by them."
+  },
+  "kaeli": {
+   "adaptations": "Lower innate mana affinity than many peoples, balanced by stamina, chemical efficiency, and adaptability.",
+   "appearance": "Broadly varied; adaptable across climates and communities.",
+   "category": "Mortal · human",
+   "combat_role": "Adaptable generalists; individual skills and regional training vary widely.",
+   "culture": "Highly diverse. Trade and contact with other peoples have shaped many human societies.",
+   "habitat": "Wide-ranging; human cultures span kingdoms, republics, and cultivation clans.",
+   "lifespan": "120–150 years in a mana- and leyline-rich world.",
+   "maturation": "",
+   "name": "Kaeli",
+   "naming": "Panslavonic, Interslavic, and Proto-Indo-European roots, with Latin loanwords from Solani trade.",
+   "notes": "Kaeli are the human people and serve as a cultural and biological bridge among several peoples."
+  },
+  "sirens_mermaids": {
+   "adaptations": "",
+   "appearance": "",
+   "category": "Supernatural · aquatic Jin",
+   "combat_role": "",
+   "culture": "The source bible groups these among Jin, with regional interpretations.",
+   "habitat": "Coastal and aquatic environments.",
+   "lifespan": "",
+   "maturation": "",
+   "name": "Sirens / Mermaids",
+   "naming": "",
+   "notes": "Further distinctions between sirens and mermaids are left editable."
+  },
+  "solani": {
+   "adaptations": "Adapted to direct sun and salt air. Moisture-absorbing tissues filter salt; resin-like skin layers help limit water loss.",
+   "appearance": "Stockier and more muscular than the Sylvani, with bronze or tanned skin; leaf-like ears and root-like hair.",
+   "category": "Mortal · desert and tropical elf",
+   "combat_role": "Durable coastal and desert travelers, with strong trade and maritime traditions.",
+   "culture": "Outgoing, mercantile, and seafaring. Clan councils govern communities; salt trade and Brine-Master routes are culturally important.",
+   "habitat": "Desert, tropical, and coastal regions; prominent seafaring communities.",
+   "lifespan": "1,200–1,500 years",
+   "maturation": "Similar long maturation to the Sylvani.",
+   "name": "Solani",
+   "naming": "Latin-influenced names with regional phonetic shifts.",
+   "notes": "The Solani share elven ancestry with the Sylvani but have distinct regional adaptations and social traditions."
+  },
+  "elementals": {
+   "adaptations": "Sustained by leyline flow; their expression reflects elemental affinity.",
+   "appearance": "Form and dominant coloration reflect elemental affinity.",
+   "category": "Supernatural · elemental mana beings",
+   "combat_role": "",
+   "culture": "",
+   "habitat": "Leyline-rich regions and places associated with their elemental affinity.",
+   "lifespan": "",
+   "maturation": "",
+   "name": "Elementals",
+   "naming": "",
+   "notes": "Dominant coloration follows elemental affinity."
+  },
+  "spirits": {
+   "adaptations": "Sustained by leyline flow; their expression reflects elemental affinity.",
+   "appearance": "Form and dominant coloration reflect elemental affinity.",
+   "category": "Supernatural · spirits",
+   "combat_role": "",
+   "culture": "",
+   "habitat": "Leyline-rich regions and places associated with their elemental affinity.",
+   "lifespan": "",
+   "maturation": "",
+   "name": "Spirits",
+   "naming": "",
+   "notes": "Dominant coloration follows elemental affinity."
+  },
+  "sylvani": {
+   "adaptations": "Root-like hair structure; supplemental photosynthesis; palms and soles absorb moisture from moss, bark, leaf litter, and dew.",
+   "appearance": "Tall, lean build; pale to pinkish skin; leaf-like ears. Silver or blonde hair is common; crimson is rare, and grey or white is associated with strong mana affinity.",
+   "category": "Mortal · temperate elf",
+   "combat_role": "Patient, resilient combatants with strong affinity for sustained mana use.",
+   "culture": "Historically isolationist, with traditions of patience, lineage, and leyline meditation. Governance shifted from matriarchal monarchy to a representative conclave.",
+   "habitat": "Temperate highlands and canopy cities.",
+   "lifespan": "1,200–1,500 years",
+   "maturation": "Slow maturation; full maturity around 30 years.",
+   "name": "Sylvani",
+   "naming": "Old Norse and Germanic roots with Latin scholarly influence.",
+   "notes": "The Sylvani are the temperate elven people. Individual traits and regional traditions may vary."
+  },
+  "treesprites_dryads": {
+   "adaptations": "",
+   "appearance": "",
+   "category": "Supernatural · woodland fae",
+   "combat_role": "",
+   "culture": "Sylvani traditions call them Andvari and regard them as nature's breath.",
+   "habitat": "Woodlands and places of strong natural resonance.",
+   "lifespan": "",
+   "maturation": "",
+   "name": "Treesprites / Dryads",
+   "naming": "",
+   "notes": "The source bible groups these among woodland fae."
+  },
+  "undead": {
+   "adaptations": "",
+   "appearance": "Includes ghouls, wraiths, and liches.",
+   "category": "Anomalous · supernatural",
+   "combat_role": "",
+   "culture": "Feared and studied; some may be bargained with.",
+   "habitat": "",
+   "lifespan": "Varies by kind.",
+   "maturation": "",
+   "name": "Undead",
+   "naming": "",
+   "notes": "The source bible describes chaotic-evil alignment as common, not universal."
+  },
+  "vampires": {
+   "adaptations": "Described in the source bible as the result of Dark Age human experiments.",
+   "appearance": "",
+   "category": "Anomalous · human and Sylvani-derived",
+   "combat_role": "",
+   "culture": "Often regarded as cursed nobility; some practice blood magic.",
+   "habitat": "",
+   "lifespan": "",
+   "maturation": "",
+   "name": "Vampires",
+   "naming": "",
+   "notes": "Their origin is not widely known in the modern era."
+  },
+  "veylkai": {
+   "adaptations": "Powerful mana affinity; their presence influences mana tides and regional seasons.",
+   "appearance": "",
+   "category": "Supernatural · planetary mana beings",
+   "combat_role": "Deity-tier beings; alignment and local relationship affect their role in a region.",
+   "culture": "Communicate through harmonic frequencies known as the Chorus. They do not self-title; mortals give them local names.",
+   "habitat": "Regionally varied; strongly connected to planetary mana.",
+   "lifespan": "2,400–7,500 years.",
+   "maturation": "",
+   "name": "Dragons (Veyl'kai)",
+   "naming": "Region-specific names given by local peoples.",
+   "notes": "The source bible describes dragons as planetary mana magnets."
+  },
+  "were_creatures": {
+   "adaptations": "",
+   "appearance": "",
+   "category": "Anomalous · human and Beastkin-derived",
+   "combat_role": "",
+   "culture": "Described in the source bible as a Dark Age human experiment, called 'Strain β'.",
+   "habitat": "",
+   "lifespan": "",
+   "maturation": "",
+   "name": "Were-Creatures",
+   "naming": "",
+   "notes": "The source bible distinguishes these from naturally occurring Beastkin."
+  }
+ },
+ "skills": {
+  "bolt": {
+   "kind": "bolt",
+   "mp": 4,
+   "name": "Wind Arrow",
+   "power": 1.5
+  },
+  "gale": {
+   "kind": "nova",
+   "mp": 6,
+   "name": "Gale Burst",
+   "power": 1.6,
+   "radius": 46
+  },
+  "quake": {
+   "kind": "nova",
+   "mp": 8,
+   "name": "Quake",
+   "power": 1.4,
+   "radius": 56
+  }
+ },
+ "weapons": {
+  "axe": {
+   "arc": 100,
+   "cd": 0.5,
+   "hit": 78,
+   "kind": "axe",
+   "might": 7,
+   "name": "Hand Axe",
+   "range": [1, 1],
+   "reach": 20
+  },
+  "bow": {
+   "arc": 90,
+   "cd": 0.4,
+   "hit": 85,
+   "kind": "bow",
+   "might": 5,
+   "name": "Short Bow",
+   "range": [2, 2],
+   "reach": 26
+  },
+  "lance": {
+   "arc": 60,
+   "cd": 0.5,
+   "hit": 82,
+   "kind": "lance",
+   "might": 6,
+   "name": "Iron Lance",
+   "range": [1, 1],
+   "reach": 28
+  },
+  "sword": {
+   "arc": 110,
+   "cd": 0.36,
+   "hit": 90,
+   "kind": "sword",
+   "might": 5,
+   "name": "Iron Sword",
+   "range": [1, 1],
+   "reach": 22
+  },
+  "tome": {
+   "arc": 100,
+   "cd": 0.45,
+   "hit": 90,
+   "kind": "tome",
+   "might": 4,
+   "name": "Wind Tome",
+   "range": [1, 2],
+   "reach": 24
+  }
+ }
+}

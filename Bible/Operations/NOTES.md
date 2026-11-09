@@ -1,0 +1,143 @@
+# Operations Notes
+## Project tidy audit (2026-11-06)
+
+- Moved the original Sea of Stars map-size conversation into `Bible/Archive/Reference/`; updated its topology-handover link. The Bible root now contains only its index.
+- Removed the empty duplicate `Bible/Puzzle & Time/` directory; `Bible/Time and Puzzles/` is the populated topic directory.
+- Confirmed tests are grouped under root `tests/`; no `work/` or `imagegen/` directories exist in the inspected project tree.
+- Kept ignored `build/` output in place; it contains active build products and diagnostic images/logs and is not source content.
+- Tidy ask #50 remains open: the broader Operations/root audit is incomplete. The root handover still carries the active graphics-backend policy and should not be dropped as stale.
+
+
+## WorldPanel refactor audit (2026-11-06)
+
+- `WorldPanel.cpp` starts at 3,100 lines; the header has a duplicate `<memory>` include and relied on transitive Qt widget includes. Header cleanup now keeps value-type Qt includes, forward-declares pointer/member-event types, and includes the standard containers/types it names.
+- Baseline `cmake --build build/Release --parallel 8` and `ctest --test-dir build/Release --output-on-failure` passed before edits. Use `cmd /c .\\build.bat` under this shell to load Visual Studio's compiler environment; direct cmake build fails because the shell lacks MSVC standard include paths.
+- After the header cleanup, the project build exposed missing direct implementation includes (`QPainter`, widget definitions, and `QFutureWatcher`); adding those to `WorldPanel.cpp` restores a successful full build.
+- Existing `studio/world/MapView.*` / `WorldMapHelpers.*` files were already untracked at task start, so keep them out of unrelated commits while integrating them intentionally in the refactor.
+- Runtime `WeatherSystem` is not a direct replacement for the editor's deterministic `climate_weather(project, climate, roll)` preview selection; preserve the editor behavior unless a matching shared selector is added and tested.
+- The persistent plan is `Bible/Operations/WorldPanel Refactor Plan.md`; the first implementation checkpoint is header/include hygiene. The required `buildHdSurface` checksum still needs a testable Qt image-builder seam before completing step 1.
+
+- Added Aur request #51 to `WANTED.md` to keep the full WorldPanel refactor visible; its durable sequence and honest completion checklist are in `Bible/Operations/WorldPanel Refactor Plan.md`. Header cleanup is committed, but the checksum/surface extraction and steps 2–7 remain open; do not close the request until acceptance is tested.
+
+- WorldPanel step 1 moved the complete HD surface pixel-generation body to `studio/world/HdSurface.cpp`; the public operation accepts map, project and region, returns a cropped image only for a non-null region, and preserves the prior full-map output for a null region. A 32×16 seeded generated world yields stable RGB32 FNV-1a checksum `7986464436153998528`. Both full Release build and both CTest targets passed.
+- WorldPanel tool state and entity-placement dispatch now use `WorldTool` with the ordered `kWorldToolNames` table; pixel/map behavior was not changed. Typed-tool changes pass Release build and both CTest targets. Pending checkpoint commit before continuing.
+- World tab now sits immediately after Map Editor (commit `8ed26ab`), matching the requested tab-view placement.
+- Step 3 integrates existing helper implementations into the panel and adds defensive `MapView::elevationAt`/`biomeAt` accessors plus test coverage. Camera bounds/fit/tile hit testing now gets dimensions, tileset identity and wrapping from MapView. Surface rendering itself remains isolated behind its extracted API. Release build and CTest passed; this step's commit is still pending.
+- Terrain renderer extraction is the current active checkpoint, not complete: an explicit `TerrainView`/provider API has been drafted in an untracked `studio/world/TerrainRhiWidget.hpp`, but the QRhi implementation and canvas provider/removal of friend access have not yet moved. Keep step 4 open; do not stage this header alone. Existing unrelated dirty-tree changes (`AGENTS.md`, topology handover and archive relocation) remain untouched.
+
+- Step 4 complete (commit `636b69f`): `TerrainRhiWidget` now lives in `studio/world/TerrainRhiWidget.{hpp,cpp}` and consumes a `TerrainView` snapshot through a provider callback instead of friend access to `WorldMapCanvasWidget`. `paintCanvas` is temporarily public so `WorldMapOverlayWidget` can drive it without friendship; step 5 replaces that with overlay state. WorldPanel.cpp dropped to 2,266 lines. Build and both CTest targets green.
+
+- Step 5 progress: overlay toggles unified under `WorldOverlay` + `setOverlay(WorldOverlay, bool)`; weather rendering now lives in `studio/world/WorldWeatherOverlay.{hpp,cpp}` taking a `WeatherOverlayContext` (temperature/biome rows, bounds, seed, tick, weather string, ocean predicate callback). Weather is the first extracted overlay; remaining overlays still render inline and are tracked in the plan. `WorldPanel.cpp` is 2,085 lines (from 3,100 at audit). Build and both CTest targets green; weather commit `78a14f8`.
+
+- Step 5b (commit `2bf84bf`): temperature shading, climate axes, wind/current flow vectors, and the day/night CPU-fallback tint now render from `studio/world/WorldClimateOverlays.{hpp,cpp}` via context structs. Overlay composition order and the headless fallback condition are unchanged. WorldPanel.cpp down to 1,938 lines; build and both CTest targets green. Remaining overlays: entity markers, hover highlight.
+
+- Step 5 complete (commit `fdb05f1`): all overlays now render through extracted modules — `WorldWeatherOverlay`, `WorldClimateOverlays`, and `WorldMarkerOverlays` (entity markers, hover highlight, zoom label). `paintCanvas` is an ordered overlay pipeline; draw order and the day/night CPU fallback are unchanged. WorldPanel.cpp is 1,877 lines (from 3,100). Build and both CTest targets green.
+- Fast worldgen confirmation from the owner: new seeded worlds generate near-instantly — no regression from the seams introduced so far.
+
+- Step 6a (commit `a3a2a12`): camera math (zoom clamp, bounds, wrap-aware pan constrain, tile hit-testing, fit) now lives in `studio/world/WorldCamera.hpp` as pure functions over a `WorldCameraSpec`; the canvas builds the spec from `MapView` plus widget viewport. Behavior unchanged; build and tests green. Next: project-level command history (step 6b), then the press/drag/release tool interface (6c).
+
+- World editor text mojibake fixed (`0b7506b`): UTF-8 multibyte chars (×, ·, …, °, →) in `WorldPanel.cpp`/`WorldMarkerOverlays.cpp` string literals were corrupted in source; replaced with `\uXXXX` escapes inside `QStringLiteral`. Rule going forward: any non-ASCII character in Aur C++ source string literals must be written as a `\u` escape, never as a raw multibyte character.
+
+- Step 6b complete (commit `63bd21d`): project-level command history moved to `studio/world/WorldCommandHistory.{hpp,cpp}` — `Action` (entities flag, Json state, model rect snapshots), 100-entry limit, redo cleared on new record (matches old vector semantics); `undo()`/`redo()` now take/put actions via `take_undo`/`push_redo`/`take_redo`/`push_undo`. Added `test_command_history_roundtrip` and `test_command_history_limit` to both CTest suites. WorldPanel.cpp holds at 1,857 lines (net: history state removed from the widget, apply logic stays until step 6c). Build and both CTest targets green. Note: `aur::Json` has no `operator==`; tests compare via `as_int`/`as_string`. Untracked world headers reformatted by clang-format in the tree (`HdSurface.hpp`, `MapView.hpp`, `WorldMarkerOverlays.hpp`, `test_map_view.cpp`) were restored to HEAD before committing so the commit stays scoped; their formatting change remains a pending cleanup, not part of this step.
+
+- Step 6c complete (commit `0e88559`): press/drag/release stroke contract moved to `studio/world/WorldStrokeState.{hpp,cpp}`. `WorldStrokeState` owns begin/end bookkeeping (active, last tile, captured cell set, captured model rects); `stroke_line_tiles(from, to, wrap_width)` reproduces the drag interpolation byte-for-byte — legacy behavior passes raw x offsets and lets `paintTile` clamp/wrap, so the extracted helper must too (verified with a one-off MSVC probe before finalizing the test; expectation `(0,0)/(1,0)` was wrong, `(10,0)/(11,0)` is correct for from=9→to=1 on width 10). Added `test_stroke_line_tiles`. WorldPanel.cpp at 1,842 lines. Build + both CTest targets green. Probe scripts cleaned up after use.
+
+- Step 7a complete (commit `14f6314`): `WorldGenerationJob` extracted to `studio/world/WorldGenerationJob.{hpp,cpp}`. It owns the `QProgressDialog`, the cancel flag and request/source-project staleness checks; the panel constructs it once in its constructor and consumes `generationFinished`/`generationFailed` signals, preserving the exact acceptance condition (newest request + same project + not cancelled). Panel keeps naming/uniqueness and dialog UI, passes a `WorldGenerationParams` value. QtConcurrent/`QFutureWatcher`/`atomic_bool` includes left `WorldPanel.cpp`; it is 1,816 lines. Build + both CTest targets green. Note: the class is `Q_OBJECT` and lives in `aur::world`, so its moc requires the QtConcurrent-linked aur_studio target (wired in CMakeLists).
+
+- Step 7b complete (commit `fc1d8ab`): entity dialog construction extracted to `studio/world/WorldEntityDialogs.{hpp,cpp}`. `run_add_exit_dialog` keeps the "project has no target maps" warning inside the dialog helper (returns nullopt); edit dialogs return raw entered values (`WorldLocationEdits` / `WorldExitEdits`) and the panel retains ID normalization (`make_biome_id`), duplicate-ID rejection and `recordEntityEdit()` ordering so undo semantics are unchanged. `make_exit_entity` builds the identical Json payload (effect fade, h/w 1, target map/spawn). Note: `connect` in a non-QObject plain namespace needs explicit `QObject::connect` (WorldEntityDialogs functions are free functions). WorldPanel.cpp at 1,754 lines; build + both CTest targets green.
+
+- Owner decision (2026-11-06): general file sizing rule set to a soft cap of ~1,000 lines with a 25% overhead allowance (hard ceiling ~1,250), replacing the 800-line target for this refactor's acceptance. At 1,754 lines `WorldPanel.cpp` still exceeds even the hard ceiling, so a canvas-widget split (step 7c) is still required; after it, remaining files should be trimmed toward the 1,000-line soft cap where practical.
+
+- Step 7c complete: `WorldMapCanvasWidget` extracted to `studio/world/WorldMapCanvas.{hpp,cpp}` (128 + 868 lines). The overlay helper widget lives in the .cpp next to the canvas (it needs only the public `paintCanvas`, no friendship). `WorldPanel.hpp` now contains only the `WorldPanel` class (65 lines) and includes the canvas header; `MainWindow.cpp` needed no changes (`findChild<WorldMapCanvasWidget*>()` still resolves). Panel class implementation remains in `WorldPanel.cpp`, now 917 lines — inside the owner's 1,000-line soft cap. Build + both CTest targets green. MOC pitfall noted: moving a `Q_OBJECT` class between headers requires the target's AUTOMOC to pick up the new header path (automatic here since it's under a listed source's include graph).
+
+- Ask #50 closed (2026-11-06): root audit completed — the Sea of Stars map-size reference relocation committed, stray root objects (`NUL.obj`, `WorldStrokeState.obj` MSVC leftovers) removed, `WANTED.md` trimmed to two closed entries with no open asks. The completed `WorldPanel Refactor Plan.md` was deleted per estate rule (git history retains it); both asks recorded under Closed with verified evidence.
+- Sizing rule from the owner, noted for all future work: soft cap ~1,000 lines per file with a 25% overhead allowance (hard ceiling ~1,250), replacing the earlier 800-line target.
+- Operations is now clear of completed/refactor material: the WorldPanel plan is gone, and the handover no longer references it. Remaining documents are active: Agent Guide, Handover, Roadmap, MCP Server, World Map Topology Handover, NOTES.
+
+- P3.0 gate complete (2026-11-06): the last acceptance item — the dedicated 400% edge-column comparison — was captured live on the D3D12 QRhi path. At 400% zoom the full 256-tile Earth-like world fits in one viewport, so columns x=0 and x=255 render in the same frame (`Bible/Operations/evidence/p3-seam-400pct.png`): continuous ocean across both edges, no black strip, wrapped markers repeat correctly. Captured by launching Studio via the game-development skill (window activation + click into the World tab + zoom spinbox entry); evidence saved into the tracked `evidence/` folder. Handover updated; P3.1 remains owner-gated.
+
+- P3.1 WorldSim core complete (2026-11-06), plan at `Bible/notes/worldsim-p31.md`: `engine/aur/worldsim.{hpp,cpp}` (84 + 340 lines, Qt-free, `aur::worldsim`). Seven fields (temperature, moisture, wind u/v, cloud, rain, snowpack) over a wrap-aware grid; 3×3 diffusion, upwind cloud advection, latitude-driven wind relaxation, precipitation and snowpack kernels; double-buffered with pins honored everywhere. Determinism proven by run-to-run and batched-vs-stepped 10,000-tick hash equality on a 32×16 seeded world; save/load round-trip hash-equal (seed/ticks stored as 16-hex-digit strings because `aur::Json` has no 64-bit integer type — do not switch back to numeric without widening). Measured cost: 16 µs/tick at 32×16, ~1.1 ms/tick at 256×128. `WorldSimTests` added as a third focused CTest entry. Commits: `d0425e8` (P0 shell), `9f207a6` (P1 kernels), `6d92e14` (P2 determinism). P3.2 (editor simulation tools) is next and owner-gated. Deviations recorded in the plan: tile-resolution grid instead of half-tile; golden hash by equality rather than a literal constant.
+
+## DAW initiative (2026-11-07)
+
+- P3.4 (`e92bfd5`): SongHistory wired into PianoRollCanvas/MusicPanel. Note edits group per drag stroke (begin_note_edit on press, commit on release); right-click/Delete, add, move, resize are all undoable; Ctrl+Z/Y handled on the canvas. `commit_track_change` was rewritten: it previously snapshotted `before` AFTER mutation and never set `after`, making undo a silent no-op — now `begin_track_edit()` snapshots pre-mutation and commit pairs post-mutation. `updateTrackProperty` pushes into project->music on every change (tests assert undo of a props edit restores both notes and missing keys).
+- P3.5 (`2fbeb92`): `SongDocument::note_velocity/set_note_velocity/note_props/set_note_prop/clear_note_props` — note stays `[step,pitch,length,velocity]` with optional 5th object slot for extra per-note data; velocity clamped 0..127, default 90 for v1 short notes. Piano roll: Alt+drag vertically edits velocity, notes render velocity-shaded (darker = quieter). Tests in `test_song_history.cpp::test_note_props`.
+- P3 remainder (automation lanes, arrangement clips) moved into P6 where their editors live — do not build them under P3.
+- Build pitfall encountered: an earlier edit to `SongDocument.hpp` left a namespace imbalance (`namespace aur::audio` opened, two closers) that surfaced only as a cryptic MSVC syntax error at the file's last line. When a header edit reports success but the compiler points at `}` lines, diff the file against git before hunting semantics.
+- Frontier-model synth cores (YmFmCore, SnesPcmCore/BrrCodec/SnesEcho) expected as portable C++20 drops under `engine/aur/audio/` per WANTED.md; on delivery integrate behind VoiceCore/RealtimeMixer seams with golden-hash determinism tests.
+- P4.1 (`f1420e3`): MIDI fidelity pass. Import now records every tempo meta into `tempo_map` (was: first only) and every time-sig meta into `time_sig_map`; markers (meta 0x06) land in `markers`; CC controllers beyond bank/vol/pan, pitch bend, and channel/poly aftertouch are captured per channel into `track["automation"]` lanes (`{cc, points:[{step,value}]}`, bend=128, pressure=129 — poly AT folded into channel AT as a documented approximation). Export mirrors all of it back (tempo/T.S. maps with scalar fallbacks, marker meta, CC/bend/pressure lanes). `test_midi_fidelity` covers a full export→import round trip plus a hand-built synthetic file. Fixture gotchas recorded: a marker meta with a short length byte derails parsing into a running-status error, and bend msb 0x50 = value 2048 (not 192) — both cost a debug cycle; the synthetic-fixture builder in the test is the template for future device-layer tests.
+- P6.1 (`7d0b8da`): first-class clips. Decision recorded in daw/decisions.md — flat `scenes[n].clips[track]` slot layout kept, additive fields (`name/start/length/muted/color`) inside each non-null clip, accessors supply v1 defaults so old songs read unchanged. Session-grid buttons now render clip name + bars + note count; newly created clips get the full field set. `SongDocument::clip_at/_mut/clip_info/set_clip_info` are the engine-side seam the mixer/arrangement will consume. `test_song_clips.cpp` pins defaults, clamping and notes-payload preservation. Suite 36/36.
+- P6.2 note: automation-lane *data* landed with P4.1 (`track["automation"]`); lane edits must use `begin_track_edit`/`commit_track_change` (TrackProps) because a NoteEdit commit only snapshots the notes array. Lane editor UI deferred to the P5 piano-roll strip.
+- P5.1 (`532de0b`): `SongDocument` automation-lane accessors over the P4.1 `track["automation"]` model — `lane_at/_mut` (find by cc id), `create_lane` (idempotent), `lane_points` (step-sorted), `set_lane_point` (upsert, CC lanes clamp 0..127; bend lanes clamped by callers to ±8192), `clear_lane_point`, `lane_value_at` (step-lookup with hold-last semantics). `test_automation_lanes.cpp` pins read/sort/edit/defaults; suite 37/37.
+- P5.2 (`721e043`): `VelocityLaneStrip` docked under the piano scroll in MusicPanel. Velocity row edits every note starting at the clicked step (`set_note_velocity`); automation rows draw points + segments (bend centred, ±8192). All edits go through `begin_track_edit`/`commit_track_change` (TrackProps) per the P6.2 rule — a NoteEdit commit snapshots only notes. Strip mirrors `pianoRoll->setSong` at every call site. Known simplification: a velocity edit at a step retunes all simultaneous notes; per-note lane targeting is P5-remainder work.
+- Pitfall: `JsonArray`/`JsonObject` aggregate-init from `parse_json` — reordered lane points written back through `lane_at_mut` must keep the `points` array object type; `set_lane_point` guards with an is_array check before mutating.
+- P5.3+P5.4 (`70113b3`): piano roll multi-select. `selectedNotes` is a `std::set<int>`; drags capture a `dragOrigins` map (index → pre-drag step/pitch/length/velocity) so group move/resize/velocity-drag are all relative and one `commit_note_edit` covers the whole stroke. Marquee on empty-grid plain drag; Shift+click creates notes now (behaviour change from plain-click-create, called out in the hint label). Copy/paste keeps velocities, pastes at relative offsets from the copied span start; duplicate appends one selection-span right. Index-based selection is invalidated by undo/redo and setSong (cleared) — stable note ids remain P5 work (they gate cross-track clipboard fidelity).
+- Editor-agent commits noticed 2026-11-07: `94c8406` (AGENTS.md vswhere absolute-path rule — already reflected here), `b95dda2` (.gitattributes eol=crlf — explains the LF→CRLF warnings on every add; harmless).
+- P5.5 (`0927a76`): snap lives on the canvas, not MusicPanel (panel is over the soft-cap ratchet; don't grow it). Ctrl+G cycles off/1-16/1-8/1-4/triplet; `snapped()` is applied at note create and to move deltas (origin-relative, so a snapped move stays stable when the grid changes mid-drag is avoided — deltas snap from the origin, not the live position). Ctrl+Q quantise snaps selected note starts and commits only when something actually moved (no empty undo entries).
+- P5.6 (`88410f8`): playhead = mixer atomics → step via `frames·bpm·4/(60·rate)`, 33 ms QTimer on the canvas, redraw only on step change. `RealtimeMixer::audition()` builds a Voice on the GUI thread under songMutex, resolved to absolute frames at the next render command boundary (`start = frameCounter + frames`), pushed into `upcoming`. No locks/allocation added on the audio thread beyond the existing boundary swap.
+- P5.7 (`aead0a2`): zoom is six stepped levels {8,12,16,24,32,48} px/step via Ctrl+wheel (`zoom(int)`), pitch range widened to MIDI 12–107 with `pitchOffsetRows` vertical scroll on plain wheel. All row math goes through `pitchRow()/visiblePitch()/visiblePitchAt()`; horizontal scroll mapping in MusicPanel uses the `stepWidth()` accessor, not the old constant. Warning: the regex rename step→baseStepWidth touched MusicPanel.cpp too — verified by grep afterwards.
+- P5.9 (`9e03b9d`): stable note ids live in the per-note props object (`note_props()["id"]`) — lazily assigned by `ensure_note_id(note, &nextId)`, monotonic per song, idempotent, v1 notes read as −1. Scale highlight: song-level `key_root` (0–11) + `key_scale` (index into a 13-mode table); masks are bit i = degree i above the tonic, rotated by root at read time (`scale_mask`). Painted as a green tint on in-scale piano keys. Test-data trap hit and fixed: the first mask table had inverted/nonsense bit orders — pinned by asserting D major = pcs {1,2,4,6,8(?),9,11}… actually D major = D,E,F#,A,B,C# = pcs {2,4,6,9,11,1}; pc 8 is NOT in it. Always derive expectations from note names, not by eye.
+- P5.11 (`536cf54`): ScaleSelector is its own widget file — PianoRollCanvas.cpp was already over the 750-line ratchet, so the selector could not go there. Writes go through MusicPanel::currentSong() (returns a pointer into project->music) with `as_object().erase()` for clearing (the Json wrapper has no erase; the underlying std::map does). `syncScaleSelector` runs at every setSong site so a song switch resets the combos.
+- P5.12 (`6c18073`): selection stability via ids only across undo/redo for now — the ids must already exist in note_props (P4.1-imported notes have them; freshly created notes do not until the create path calls ensure_note_id, which is the remaining P5 item). NoteIndex is header-only and shared by nothing else yet; drag-time selection stays index-based deliberately (ids would churn during a move anyway).
+- P5.14 (`ce7274b`): ids on create — Shift+click, paste and duplicate all call `ensure_note_id(note, &nextNoteId)`. `nextNoteId` is seeded in setSong by running ensure_note_id over the loaded track (assigns to un-id'd imported notes too, and pushes the counter past the max), so no collisions with file-supplied ids. Deliberate: pasted/duplicated notes get NEW ids, not the source's — a duplicate is a new note; id reuse would break the "one id = one note" selection contract.
+- P6.3: ClipLauncherStates state machine. moc traps hit and recorded: (1) moc cannot parse member declarations with commas inside templates (`std::map<std::int64_t, Slot>`) — dropped Q_OBJECT entirely, the class is a plain type with an `onStateChanged` std::function; (2) the member name `slots` collides with a Qt macro (silently expands → broken declaration → bogus C2208) — renamed to `slotStates`. Slot struct lives at namespace scope as `ClipSlotState` with a `value` field (avoids clashing with Qt's `State`-related parsing in the studio TU). These cost several rebuild cycles; any new Qt-adjacent plain class should start from this pattern.
+- Launch quantise contract: launch while stopped = immediate; while running = queued to the next bar boundary (`targetBar = (frame + barFrames)/barFrames`, barFrames from mixer bpm atomics at 44100 Hz). Promotion only in `tick()` on the GUI timer — never from the audio thread.
+- P6.3.4 (`18cd90e`): promotion → mixer swap. On tick promotion the timer handler scans the grid for any Playing slot, builds that scene with makeScenePreview, and calls loadSong — **without** resetPlayback, so the transport keeps running and the swap lands at the next command boundary (contract 4 holds: no mid-callback mutation). midiSession->startOutput re-arms hardware MIDI against the new scene; a stop was never queued (stopAll idles slots without a swap — notes-off on stop is currently implicit in the next loadSong, an acceptable simplification until scene-record work forces a proper queued stop).
+- P6.4 (`fbcd0c3`): scene record mirrors each recorded note into the armed scene's clip for that track (step clipped to the 16-step window; empty clips created as `{"notes":[]}` on demand; clips resized to track count). The scene is captured at arm time (`recordingScene`), so switching the selected scene mid-record does not retarget — deliberate, matches DAW convention. Track notes and clip notes are written independently (no dedup between them).
+
+## Operations doc review (2026-11-07)
+
+- Closed the WANTED item "Review Bible/Operations/ per AGENTS.md". Findings
+  and actions: Agent Guide.md title corrected (was mislabeled `AGENTS.md`);
+  Operations `Handover.md` mojibake repaired (triple-encoded em dash in the
+  title needed a byte-level replace — script under `build/fix_title.ps1`,
+  deleted after use), stale "DAW P0 in progress" updated to the P6.7 state,
+  empty `## A1 Map Editor follow-up` removed, duplicate open-work list
+  merged, blank-line padding collapsed; `Roadmap.md` Music Studio bullets
+  refreshed to the DAW plan's actual landed scope; `World Map Topology
+  Handover.md` got a current-status header (P3.0 + P3.1 complete, P3.2
+  owner-gated) with the historical body kept as gate-evidence record.
+  `Project Overview.md`, `MCP Server.md`, `evidence/` audited accurate —
+  unchanged. Review plan at `Bible/notes/ops-review.md`.
+
+
+## Pixel/Sprite editor merge P2 (2026-11-07)
+
+- P2 merged both top-level panels into one `PixelEditorPanel` with Graphic /
+  Sprite mode toggle. `SpriteEditorPanel` class and MainWindow tab are gone.
+- One graphic selector is filtered by mode: Graphic lists all graphics;
+  Sprite lists graphics referenced by character/enemy records plus
+  anim-backed graphics. Sprite labels use record names where available.
+- Sprite mode exposes direction/pose and the shared frame selector; the
+  existing `PixelEditSession::resolve_anim_frames` resolves frame ids. Both
+  modes use the same canvas, palette, clipboard, and undo/redo path.
+- Preserved the former Sprite controls: three brushes, Pixel brush as the
+  default, 2x zoom on entry. Graphic mode retains its five brushes and
+  animation preview. Mode changes retain the Graphic-mode brush/zoom choice.
+- A P2 review caught and fixed two concrete defects before commit: Sprite
+  mode initially displayed graphic ids instead of character/enemy names; the
+  shared palette path created a throwaway `Project(".")` for null projects.
+  Both corrected. `PixelEditorPanel.cpp` final size 742 lines; do not grow.
+- Verification: Release `aur_studio` and `aur_tests` build succeeded; suite
+ 40/40 passed. Grep confirms no `SpriteEditorPanel` references in the
+  implementation/header/MainWindow.
+- Follow-up verification (2026-11-07): P2 and P3 were already landed in
+  `f958e55` and `e68304f`; checked the tracked panel, MainWindow wiring, and
+  retired-plan acceptance against the requested scope. No `SpriteEditorPanel`
+  implementation references remain. Release build targets reported no work;
+  CTest passed 3/3 (EngineTests, TopologyTests, WorldSimTests). P3 is the docs/
+  acceptance/plan-retirement phase and is complete; no further code change was
+  needed. The build emitted a non-fatal `vswhere.exe` PATH warning despite
+  returning success; retain the documented absolute-path rule for future
+  build invocations.
+
+## Pixel/Sprite P2–P3 follow-up (2026-11-07)
+
+- Decision: preserve the already-landed implementation and completed plan
+  retirement rather than reapply either change. This continuation confirmed
+  the single Graphic/Sprite mode selector, one MainWindow tab, no
+  `SpriteEditorPanel` implementation references, and the P3 WANTED/plan cleanup.
+- Verification in this pass: Release targets returned success with Ninja
+  reporting no work; full CTest passed 3/3. Build output also contained a
+  non-fatal `vswhere.exe` PATH warning, so future commands should use the
+  absolute path noted in HANDOVER/AGENTS.
