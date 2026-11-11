@@ -11,7 +11,6 @@ set "AIO_APP=Aur"
 set "AIO_FAMILY=cmake"
 set "AIO_EXE=Aur Studio.exe"
 set "AIO_CMAKE_DIR=."
-set "AIO_BUILD_TARGET=aur_studio"
 set "AIO_CMAKE_PRESETS=1"
 set "AIO_CMAKE_QT=1"
 set "AIO_CMAKE_APP=1"
@@ -98,9 +97,7 @@ exit /b 0
 :aio_win_try_preset
 set "CFG_RC=1"
 if "%~1"=="" exit /b 0
-rem  A build preset named Release may point at a Debug configure tree; check
-rem  that this preset CONFIGURES before treating its name as a match.
-"%CMAKE_EXE%" --list-presets=configure 2>nul | findstr /i /c:"%~1" >nul
+"%CMAKE_EXE%" --list-presets 2>nul | findstr /i /c:"%~1" >nul
 if errorlevel 1 exit /b 0
 "%CMAKE_EXE%" --preset %1 %QT_ARG% %ISA_ARG%
 if errorlevel 1 (
@@ -111,38 +108,33 @@ set "CFG_RC=0"
 echo [aio] configured with preset %1
 exit /b 0
 
-rem  Prefer the requested config tree; flat build trees are the fallback for
-rem  projects whose preset intentionally has no per-config directory.
+rem  The tree CMake actually wrote -- flat build\ or build\<cfg>, chosen by the
+rem  preset. The configuration's own directory wins when it exists: a scan for the
+rem  newest CMakeCache.txt answers with whichever configuration was touched last,
+rem  and a tree holding both Debug and Release has both. The scan is only for a
+rem  project whose preset wrote a differently-named directory.
 :aio_win_tree
 set "BDIR=%AIO_HOME%\%AIO_BUILD_DIR%\%CONFIG%"
-if exist "%BDIR%\CMakeCache.txt" goto :aio_win_tree_done
-if exist "%AIO_HOME%\%AIO_BUILD_DIR%\CMakeCache.txt" (
-    set "BDIR=%AIO_HOME%\%AIO_BUILD_DIR%"
-    goto :aio_win_tree_done
-)
+if exist "%BDIR%\CMakeCache.txt" exit /b 0
 set "BDIR="
 for /f "delims=" %%C in ('dir /b /s /a-d /o-d "%AIO_HOME%\%AIO_BUILD_DIR%\CMakeCache.txt" 2^>nul') do (
     if not defined BDIR for %%D in ("%%C") do set "BDIR=%%~dpD"
 )
-if not defined BDIR set "BDIR=%AIO_HOME%\%AIO_BUILD_DIR%\%CONFIG%"
-:aio_win_tree_done
-if "!BDIR:~-1!"=="\" set "BDIR=!BDIR:~0,-1!"
+if not defined BDIR set "BDIR=%AIO_HOME%\%AIO_BUILD_DIR%\%CONFIG%\"
 exit /b 0
 
 :aio_win_build_it
 call :aio_clear_qml_cache
 call :aio_win_tree
 echo [aio] build %AIO_APP% %CONFIG% -j %JOB_CAP% in %BDIR%
-if defined AIO_BUILD_TARGET (
-    "%CMAKE_EXE%" --build "%BDIR%" --config %CONFIG% --target %AIO_BUILD_TARGET% -j %JOB_CAP%
-) else (
-    "%CMAKE_EXE%" --build "%BDIR%" --config %CONFIG% -j %JOB_CAP%
-)
+"%CMAKE_EXE%" --build "%BDIR%" --config %CONFIG% -j %JOB_CAP%
 if errorlevel 1 (
     echo [aio] build failed
     exit /b 1
 )
-if "%AIO_CMAKE_QT%"=="1" "%QT_DIR%\bin\windeployqt.exe" --no-translations --compiler-runtime "%BDIR%\%AIO_EXE%"
+rem  A Qt app that has not been deployed cannot start: 0xC0000135 STATUS_DLL_NOT_FOUND,
+rem  and the configure, the link and the suite all pass on the way to it.
+if "%AIO_CMAKE_QT%"=="1" "%QT_DIR%\bin\windeployqt.exe" --no-translations --compiler-runtime "%BDIR%\%AIO_APP%.exe"
 if "%AIO_QT_DEPLOY%"=="1" call :aio_win_package
 exit /b 0
 
@@ -161,6 +153,8 @@ if not defined EXE (
     exit /b 1
 )
 echo [aio] run "%EXE%"
+rem  The deployed tree finds its own DLLs; a tree built without windeployqt only
+rem  runs while Qt's bin is on PATH, which is this machine and not the user's.
 set "PATH=%QT_DIR%\bin;%PATH%"
 start "" /d "%EXE%\.." "%EXE%" %EXTRA%
 exit /b 0
@@ -190,7 +184,6 @@ if not defined TDIR (
     echo [aio] no configured tree under %AIO_BUILD_DIR%; run "AIO.bat build".
     exit /b 1
 )
-if "!TDIR:~-1!"=="\" set "TDIR=!TDIR:~0,-1!"
 rem  --timeout is named because no test may wait forever (QUIRKS.md 45).
 echo [aio] ctest --test-dir "%TDIR%" --timeout 300
 "%CTEST_EXE%" --test-dir "%TDIR%" -C Release --output-on-failure --timeout 300
