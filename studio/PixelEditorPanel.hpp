@@ -16,79 +16,14 @@
 
 #include <QUndoStack>
 
-#include <functional>
 #include <memory>
 
 #include "aur/project.hpp"
 
+#include "PixelCanvas.hpp"
 #include "UndoCommands.hpp"
 
 namespace aur {
-
-class PixelCanvasWidget : public QWidget {
-    Q_OBJECT
-    Project* project = nullptr;
-    std::string graphic_id;
-    std::string current_frame = "0";
-    int selected_color_idx = 1;
-    int brush_mode = 0;
-    int zoom_scale = 16;
-    bool auto_zoom = true;
-    QSize available_viewport{1280, 720};
-    QPoint hover_pixel{-1, -1};
-    // D4.S1b: one QUndoStack whose commands target the live frame array
-    // (RegionKey::Direct); history survives frame switches and animation
-    // preview, since setFrame no longer touches it.
-    std::unique_ptr<QUndoStack> undo_stack;
-    std::unique_ptr<editor::SnapshotCommand> pending_command;
-    QPoint last_paint_pixel{-1, -1};  // previous stroke pixel, for interpolation
-    bool stroke_pending = false;      // stroke began; push undo on first real change
-    bool pending_open = false;        // a stroke's snapshot waits for finishUndo
-    // D5.S1.1: the sprite's frame sequence and where the current frame sits
-    // in it, so the neighbours can be drawn ghosted behind the frame.
-    std::vector<std::string> onion_frames;
-    int onion_index = -1;
-
-    bool paintAt(const QPoint& pixel);  // returns true when pixels changed
-    void resizeForGraphic();
-    void pushUndo();
-    void finishUndo();
-    void restoreFrame(const Json& rows);
-
-public:
-    explicit PixelCanvasWidget(QWidget* parent = nullptr);
-    void setGraphic(Project* p, const std::string& id);
-    void setSelectedColor(int idx);
-    void setBrushMode(int mode);
-    void setZoomScale(int scale);
-    void setAvailableViewportSize(const QSize& size);
-    void setFrame(const std::string& frame);
-    // The frames the onion skin draws behind the current one, and where the
-    // current frame sits in them. An empty sequence turns the skin off.
-    void setOnionSkin(const std::vector<std::string>& frames, int current_index);
-    // D5.S1.3: mirrors the right half of the current frame onto its left.
-    void mirrorFrameRightToLeft();
-    // D5.S1.4: a structural change to the graphic (a frame added, moved or
-    // removed), recorded as one undoable snapshot of the whole graphic.
-    void applyGraphicChange(const QString& label, const std::function<void(Json&)>& change);
-    void undo();
-    void redo();
-    void copyFrame();
-    void cutFrame();
-    void pasteFrame();
-    void clearHistory();
-
-protected:
-    void paintEvent(QPaintEvent* event) override;
-    void mousePressEvent(QMouseEvent* event) override;
-    void mouseMoveEvent(QMouseEvent* event) override;
-    void mouseReleaseEvent(QMouseEvent* event) override;
-    void paintStroke(const QPoint& from, const QPoint& to);
-    void leaveEvent(QEvent* event) override;
-
-signals:
-    void colorPicked(int index);
-};
 
 class PixelEditorPanel : public QWidget {
     Q_OBJECT

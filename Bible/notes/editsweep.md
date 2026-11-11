@@ -238,12 +238,17 @@ colours) and `tile` (the tile's size). `make_tileset_tile()` already renders
 a tile to a `QImage`, which is exactly what a PNG export needs.
 
 - [ ] D6.S1 The tile pixel editor, as three steps.
-  - [ ] D6.S1.1 `PixelSurface`: one pixel-editing surface, two editors.
+  - [x] D6.S1.1 `PixelSurface`: one pixel-editing surface, two editors.
         The pixel editor's canvas edits "a rows array with a palette"; that
         is what a tile is too. The surface moves to
         `studio/PixelSurface.{hpp,cpp}` and the pixel editor's canvas binds
         it to the current frame. A pure move: no behaviour change, and the
         render harness and the suite pin it.
+        **Landed.** `studio/PixelSurface.{hpp,cpp}` owns the brush, the zoom,
+        the undo and the painting; `studio/PixelCanvas.{hpp,cpp}` is the
+        binding that points it at a graphic's frame. The canvas lost 447
+        lines and the panel gained a surface it does not have to know about.
+        `<editsweep-d6s1>`
   - [ ] D6.S1.2 The tileset editor's pixel canvas: a `PixelSurface` over the
         current tile's rows and the tileset's palette, with the paint
         undoable over the tileset document.

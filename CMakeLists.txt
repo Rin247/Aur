@@ -129,6 +129,8 @@ add_executable(aur_studio
     studio/PixelEditorPanel.cpp
     studio/PixelEditSession.cpp
     studio/PixelFrameOps.cpp
+    studio/PixelSurface.cpp
+    studio/PixelCanvas.cpp
     studio/PixelEditSession.hpp
     studio/TilePaletteWidget.cpp
     studio/TilePaletteWidget.hpp
