@@ -21,8 +21,10 @@
   QUndoStack rewrite) landed with its base corrected against the real document
   shapes and the map editor converted to per-cell diffs; D4.S2 landed the two
   visual defects the owner reported — the map editor's first-boot zoom and the
-  world's black bars — with the render harness that proves them. Next: D5.S1
-  (sprite studio), D6.S1 (tile pixel editing).
+  world's black bars — with the render harness that proves them. **D5.S1 (the
+  sprite studio) landed**: onion skinning, a live preview of the sprite's own
+  sequence, the mirror, and the frame tools (add, duplicate, delete, reorder).
+  Next: D6.S1 (tile pixel editing via PixelSurface + PNG import/export).
 - `Bible/notes/groovebox-sequencer.md` — 128-step sequencer + groovebox
   initiative. P0–P7 landed 2026-11-11: engine model (`StepSequencer`,
   `Arpeggiator`), realtime + offline playback, groove globals (swing/

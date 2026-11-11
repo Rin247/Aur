@@ -36,8 +36,17 @@ diffs; D4.S1e rewrote the command-core tests against the real shapes;
 D4.S2 fixed the map editor's first-boot zoom, the world's black bars and the
 tool combo, and added the render harness.
 
-Next open phases: D5.S1 (sprite studio: onion skinning, live preview, frame
-management) and D6.S1 (tile pixel editing via PixelSurface + PNG import).
+**D5.S1, the sprite studio, landed** (four commits): onion skinning (the
+neighbouring frames ghosted behind the current one), a live preview of the
+sprite's own sequence at the anim's fps, the mirror (the right half onto its
+left), and the frame tools (add, duplicate, delete, reorder). The sprite's
+tools live in their own row under the toolbar; the graphic toolbar was
+clipping their labels. The structural edits are pure functions over the
+graphic JSON in `studio/PixelFrameOps.{hpp,cpp}`, so they are tested without
+a widget.
+
+Next open phase: D6.S1 (tile pixel editing via PixelSurface + PNG
+import/export).
 
 ## Active plans
 

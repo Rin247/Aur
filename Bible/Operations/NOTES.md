@@ -192,3 +192,36 @@
   pre-existing; it needs splitting and is not touched by this work.
   `studio/world/WorldMapCanvas.cpp` (934) and `studio/WorldPanel.cpp` (928)
   are under the soft cap.
+
+## The sprite studio (2026-11-11, D5.S1)
+
+- **The pixel editor's Graphic mode was complete and its Sprite mode was a
+  frame list.** Sprite mode had a direction and a pose picker and nothing
+  else: no onion skin, no preview, no mirror, no way to change the frames.
+- **Onion skinning**: the canvas draws the previous frame warm and the next
+  frame cool, at 0.32 alpha, behind the frame being drawn. The skin is on by
+  default in sprite mode -- a pose is drawn against its neighbours, not in the
+  dark.
+- **The live preview was graphic-mode only**, so a sprite's frames were never
+  seen moving. `PixelEditSession::resolve_anim` is now the one owner of the
+  anim a direction/pose pair names (the pose-direction anim, then the bare
+  pose, then none) and it carries the fps and the loop flag with it; the
+  frame list, the preview and the frame tools read the same answer.
+- **The sprite's controls had their own row.** They were in the graphic
+  toolbar, which was clipping the "Direction:" and "Pose:" labels.
+- **The frame tools are pure functions over the graphic JSON**
+  (`studio/PixelFrameOps.{hpp,cpp}`): add a blank frame, copy a frame's
+  pixels under a new name, take a frame out of the sequence (and out of the
+  graphic when no anim names it any more), and swap a frame with its
+  neighbour. A structural change is one undoable snapshot of the whole
+  graphic, the way the entity edits take the whole array.
+- **The mirror copies the right half onto the left, mirrored**, so the result
+  is symmetric about the middle and the mirror of a symmetric frame is itself.
+  The first version of the test expected a full flip ("dcab"); the
+  implementation was right and the expectation was not.
+- **The AIO build's Qt deploy named the project, not the executable.**
+  `tools/AIO-win.template.bat` called windeployqt with `%AIO_APP%.exe`,
+  which for Aur is "Aur.exe" while the executable is "Aur Studio.exe"; the
+  deploy failed and the failure was unchecked, so the build reported OK over
+  a tree that could not start. The template now deploys the stamped
+  `%AIO_EXE%` and reports a failed deploy.
