@@ -9,9 +9,10 @@ Settled with evidence before code; each entry dated. Amend rather than argue.
   (already linked via Qt6Multimedia for deployment) with the engine's output
   interface abstract enough to swap. Confirm `Qt6Multimedia` is already a
   dependency of `aur_studio` before committing to it.
-- **SoundFont loader** (P7a): TinySoundFont-style single-header vs own
-  implementation; which redistributable SoundFont (licence must permit
-  bundling) — verify licence text before any download lands in the repo.
+- **SoundFont bank file layout** (P7a P2): bundled in-repo vs owner-installed
+  under `~/.Aur/sf2/`; and whether the chosen bank is the final one. The plan
+  ships the generated test bank only until the owner confirms MuseScore
+  General.
 - **MIDI I/O library** (P4): keep WinMM behind an interface first; cross-platform
   abstraction only if a second platform actually needs it.
 - **Plugin story** (P12): decision document only; no SDK integration before M4.
@@ -173,3 +174,19 @@ Settled with evidence before code; each entry dated. Amend rather than argue.
   clipping lengths to the placement window and dropping notes that start
   outside it; `bars` recomputed from content. Null clips and out-of-range
   scenes/tracks are skipped. Engine-only; the canvas (P6.6) consumes these.
+- **2026-11-11 — SoundFont loader + bank (P7a).** Loader: TinySoundFont
+  (`tsf.h`) — MIT, single header, C API wrapped in a C++ core; FluidSynth is
+  LGPL (static linking needs an owner decision) and a from-scratch SF2 reader
+  is out of proportion. Bank candidate: MuseScore General — MIT with a
+  published per-sample copyright list; GeneralUser GS rejected (original
+  author grants unrestricted use, but third-party re-hosts mix in
+  Yamaha-copyrighted samples and are flagged as a licensing gray area). No
+  bank lands until the licence text is on disk beside it; until then P7a
+  tests run against a tiny bank generated in code. Evidence:
+  <https://github.com/schellingb/TinySoundFont>,
+  <https://musescore.org/en/handbook/2/soundfonts-and-sfz-files>,
+  <https://people.debian.org/~tg/sf/MuseScore_General_Lite.copyright>,
+  <https://musical-artifacts.com/artifacts?tags=generaluser>.
+  Interface note: the work-package brief sketched a free-standing `IMidiCore`;
+  the landed seam is `SynthCoreVoice::Kind` (adapters stay thinner and the
+  mixer already knows the shape).

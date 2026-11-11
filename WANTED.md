@@ -16,7 +16,8 @@
   record, arrangement placements/canvas/playback + arrangement MIDI export)
   all landed; P2 close awaits owner GUI soak; P8 effects framework landed
   (see Closed); P9 step sequencer + arpeggiator landed 2026-11-11 via the
-  groovebox initiative (see below). Next: P7a GM/GS instrument.
+  groovebox initiative (see below). Next: P7a GM/GS instrument — plan at
+  `Bible/notes/daw/gm-gs.md` (P0 next: vendor tsf.h + generated test bank).
 - `Bible/notes/groovebox-sequencer.md` — 128-step sequencer + groovebox
   initiative. P0–P7 landed 2026-11-11: engine model (`StepSequencer`,
   `Arpeggiator`), realtime + offline playback, groove globals (swing/
