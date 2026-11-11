@@ -174,12 +174,34 @@ whole-layer copy; a dense map stroke copies kilobytes per tile.
       fit). The PNGs land in `build/renders/`; AGENTS.md says to open them.
       `<editsweep-d4s2>`
 
-### D5+ — sprite studio (report feature 5) etc.
+### D5 — sprite studio (report feature 5)
 
-- [ ] D5.S1 Onion skinning, live preview in sprite mode, mirror-copy
-      right→left, frame add/duplicate/delete/reorder. `<editsweep-d5>`
+- [ ] D5.S1 The sprite studio's four tools, as four steps. Audited 2026-11-11:
+      the pixel editor's **Graphic** mode is complete (palette, brush, zoom,
+      preview, undo) and its **Sprite** mode is a frame list and a direction
+      and pose picker; everything below is what a sprite editor needs to
+      draw a walk cycle.
+  - [ ] D5.S1.1 Onion skinning: the canvas draws the previous and the next
+        frame of the sprite's sequence ghosted behind the current one, tinted
+        and at a low alpha, with a toggle in the sprite toolbar.
+  - [ ] D5.S1.2 Live preview in sprite mode: the preview button cycles the
+        sprite's own frame sequence at the animation's fps. Today the button
+        is graphic-mode only, so a sprite's frames are never seen moving.
+  - [ ] D5.S1.3 Mirror right→left: the right half of the current frame is
+        mirrored onto its left half, as one undoable step.
+  - [ ] D5.S1.4 Frame add / duplicate / delete / reorder over the sprite's
+        sequence, each one undoable.
+  The structural edits are pure functions over the graphic JSON in
+  `studio/PixelFrameOps.{hpp,cpp}`, so they are testable without Qt; the
+  pixel canvas's undo stack takes the whole graphic as the snapshot for a
+  structural change, the way the entity edits take the whole array. The
+  render harness gains the pixel page, and `--sprite` puts the editor in
+  sprite mode so the tools can be looked at.
+  `<editsweep-d5s1>`
+
+### D6 — tile pixel editing (report feature 6)
+
 - [ ] D6.S1 Tile pixel editing via PixelSurface + PNG import/export.
-      `<editsweep-d6>`
 
 ## Acceptance
 
