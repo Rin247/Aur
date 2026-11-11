@@ -33,6 +33,12 @@ class MainWindow : public QMainWindow {
 
 public:
     explicit MainWindow(const std::string& project_path = "projects/sylvi", QWidget* parent = nullptr);
+    // Selects a tab by title or index. Returns false when there is no such
+    // tab, so a script can say so instead of capturing the wrong page.
+    bool selectTab(const QString& name_or_index);
+    // Applies the zoom control to the current page's canvas, as a factor of
+    // its fit.
+    void setEditorZoom(qreal factor);
 
 public slots:
     void playProject();

@@ -538,6 +538,10 @@ void WorldPanel::setProject(Project* p) {
     refreshGraph();
 }
 
+void WorldPanel::setEditorZoom(qreal factor) {
+    if (mapCanvas) mapCanvas->zoomByFactor(factor);
+}
+
 void WorldPanel::refreshGraph() {
     if (!mapCombo) return;
     mapCombo->blockSignals(true);

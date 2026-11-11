@@ -383,6 +383,33 @@ bool MainWindow::nativeEvent(const QByteArray& eventType, void* message, qintptr
     return QMainWindow::nativeEvent(eventType, message, result);
 }
 
+bool MainWindow::selectTab(const QString& name_or_index) {
+    if (!tabs || name_or_index.isEmpty()) return false;
+    bool numeric = false;
+    const int index = name_or_index.toInt(&numeric);
+    if (numeric) {
+        if (index < 0 || index >= tabs->count()) return false;
+        tabs->setCurrentIndex(index);
+        return true;
+    }
+    for (int i = 0; i < tabs->count(); ++i) {
+        if (tabs->tabText(i).compare(name_or_index, Qt::CaseInsensitive) == 0) {
+            tabs->setCurrentIndex(i);
+            return true;
+        }
+    }
+    return false;
+}
+
+void MainWindow::setEditorZoom(qreal factor) {
+    if (!tabs) return;
+    QWidget* page = tabs->widget(tabs->currentIndex());
+    if (auto* map_editor = qobject_cast<MapEditorPanel*>(page))
+        map_editor->setEditorZoom(factor);
+    else if (auto* world = qobject_cast<WorldPanel*>(page))
+        world->setEditorZoom(factor);
+}
+
 void MainWindow::refreshProjectPanels() {
     for (auto* panel : findChildren<MapEditorPanel*>()) panel->setProject(&project);
     for (auto* panel : findChildren<PixelEditorPanel*>()) panel->setProject(&project);

@@ -73,9 +73,28 @@ int main(int argc, char* argv[]) {
         QToolTip { background: #252f39; color: #fff3d4; border: 1px solid #d3a75d; padding: 4px; }
     )");
     QString project_path;
-    if (argc > 1) {
-        project_path = QString::fromLocal8Bit(argv[1]);
-    } else {
+    QString tab_name;
+    qreal zoom_factor = 0.0;
+    int window_width = 0;
+    int window_height = 0;
+    for (int i = 1; i < argc; ++i) {
+        const QString arg = QString::fromLocal8Bit(argv[i]);
+        if (arg == "--tab" && i + 1 < argc) {
+            tab_name = QString::fromLocal8Bit(argv[++i]);
+        } else if (arg == "--zoom" && i + 1 < argc) {
+            zoom_factor = QString::fromLocal8Bit(argv[++i]).toDouble();
+        } else if (arg == "--size" && i + 1 < argc) {
+            const QString size = QString::fromLocal8Bit(argv[++i]).toLower();
+            const int x = size.indexOf('x');
+            if (x > 0) {
+                window_width = size.left(x).toInt();
+                window_height = size.mid(x + 1).toInt();
+            }
+        } else if (project_path.isEmpty()) {
+            project_path = arg;
+        }
+    }
+    if (project_path.isEmpty()) {
         const QString working_directory_project =
             QDir::current().filePath("projects/sylvi/project.json");
         const QString executable_directory_project =
@@ -90,6 +109,20 @@ int main(int argc, char* argv[]) {
         }
     }
     aur::MainWindow window(project_path.toStdString());
-    window.showMaximized();
+    if (!tab_name.isEmpty() && !window.selectTab(tab_name))
+        qWarning("Aur Studio: no tab named '%s'", qPrintable(tab_name));
+    if (window_width > 0 && window_height > 0) {
+        window.resize(window_width, window_height);
+        window.show();
+    } else {
+        window.showMaximized();
+    }
+    if (zoom_factor > 0.0) {
+        // After the show, so the canvas has its real size and the factor is
+        // taken against the fit rather than against a stale viewport.
+        QTimer::singleShot(0, &window, [&window, zoom_factor] {
+            window.setEditorZoom(zoom_factor);
+        });
+    }
     return app.exec();
 }

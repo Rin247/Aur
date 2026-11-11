@@ -8,6 +8,21 @@
 
 Before moving on from any task, update the relevant Bible/<module>/NOTES.md with findings, decisions, and defects discovered. Keep AGENTS.md at the project root as the single index that points into Bible/. Clean up any temporary logs or scratch files created during the work so they do not accumulate.
 
+## Render sweep (estate rule)
+
+The editor pages are rendered by the harness in `tests/render_check.py`, which
+drives the shipped executable through its own controls (`--tab`, `--zoom`,
+`--size`) and writes one PNG per page and size into `build/renders/`. Run it
+after any change to a canvas, a camera or the world's rendering:
+
+```powershell
+cd C:\Projects\Aur; python tests\render_check.py
+```
+
+**Open the PNGs.** A green build and a harness exit code say the window
+answered; they do not say the page is right. The zoom is swept as a control
+(0.75 / 1.0 / 1.5 of the canvas's own fit), not as an axis of the matrix.
+
 
 ## Anti-stall (estate rule)
 

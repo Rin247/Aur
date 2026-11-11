@@ -20,6 +20,7 @@
 #include <QPainterPath>
 #include <QPixmap>
 #include <QResizeEvent>
+#include <QShowEvent>
 #include <QPaintEvent>
 #include <QWheelEvent>
 
@@ -218,6 +219,7 @@ void WorldMapCanvasWidget::setRepeatWorldView(bool enabled) {
 }
 
 void WorldMapCanvasWidget::setZoom(qreal zoom) {
+    fit_pending = false;
     zoom_factor = studio::WorldCamera::clampZoom(zoom);
     constrainWorldCamera();
     refreshCanvas();
@@ -225,11 +227,35 @@ void WorldMapCanvasWidget::setZoom(qreal zoom) {
 }
 
 void WorldMapCanvasWidget::fitToView() {
+    if (!isVisible()) {
+        // The canvas has no real size yet; the fit waits for the first
+        // show/resize, or the world opens zoomed out against a stale size.
+        fit_pending = true;
+        return;
+    }
+    applyFit();
+}
+
+void WorldMapCanvasWidget::applyFit() {
     if (!project || current_map.empty() || !project->maps.contains(current_map)) return;
     const auto spec = cameraSpec(project, current_map, this, zoom_factor, pan_offset,
                                  repeat_world_view);
     pan_offset = {};
     setZoom(studio::WorldCamera::fitZoom(spec, size()));
+}
+
+void WorldMapCanvasWidget::requestPendingFit() {
+    if (!fit_pending) return;
+    QTimer::singleShot(0, this, [this] {
+        if (!fit_pending || !isVisible()) return;
+        fit_pending = false;
+        applyFit();
+    });
+}
+
+void WorldMapCanvasWidget::zoomByFactor(qreal factor) {
+    applyFit();
+    setZoom(zoom_factor * factor);
 }
 
 void WorldMapCanvasWidget::recordEntityEdit() {
@@ -519,7 +545,13 @@ void WorldMapCanvasWidget::resizeEvent(QResizeEvent* event) {
     QWidget::resizeEvent(event);
     if (terrain_renderer) terrain_renderer->setGeometry(rect());
     if (overlay_widget) overlay_widget->setGeometry(rect());
+    requestPendingFit();
     refreshCanvas();
+}
+
+void WorldMapCanvasWidget::showEvent(QShowEvent* event) {
+    QWidget::showEvent(event);
+    requestPendingFit();
 }
 
 void WorldMapCanvasWidget::paintCanvas(QPainter& painter) {

@@ -150,24 +150,24 @@ whole-layer copy; a dense map stroke copies kilobytes per tile.
 
 ### D4.S2 — the owner's two visual reports (landed 2026-11-11)
 
-- [ ] D4.S2.1 The map editor opened zoomed out instead of fitted. The fit ran
+- [x] D4.S2.1 The map editor opened zoomed out instead of fitted. The fit ran
       in the constructor, against a canvas that still had its minimum size, so
       the zoom was computed for a 512-wide widget and kept when the real
       canvas arrived. `fitToView()` now defers to the first show/resize that
       has a real size; the World editor's canvas got the same treatment (its
       `first_show` fit had the same defect). `<editsweep-d4s2>`
-- [ ] D4.S2.2 The world map showed black bars above and below the map. The
+- [x] D4.S2.2 The world map showed black bars above and below the map. The
       GPU terrain shader painted the margin outside the map with its own void
       colour, RGB (9,12,15), while the CPU path and the canvas paint the
       margin `#171b20`. The shader's margin is now `#171b20`, so the two
       paths agree. Measured in `build/renders/world_1280x770_z1.0.png`. `<editsweep-d4s2>`
-- [ ] D4.S2.3 The map editor's tool combo did not match the tool indices the
+- [x] D4.S2.3 The map editor's tool combo did not match the tool indices the
       code used: the combo said "Paint Tile" at index 0, which the canvas
       treats as Select/Move, so the paint tool painted nothing and the combo
       said "Erase Tile" for the slot that paints. The canonical order is now
       0 Select/Move, 1 Paint Tile, 2 Place Entity, 3 Erase Tile, and the
       combo follows it. `<editsweep-d4s2>`
-- [ ] D4.S2.4 A render harness, because "it builds" is not "it looks right".
+- [x] D4.S2.4 A render harness, because "it builds" is not "it looks right".
       `tests/render_check.py` drives the shipped executable through `--tab`,
       `--zoom` and `--size`, renders the Map Editor and World pages at both
       estate sizes, and sweeps the zoom as a control (0.75 / 1.0 / 1.5 of the

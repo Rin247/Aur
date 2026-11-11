@@ -141,3 +141,54 @@
   reporting no work; full CTest passed 3/3. Build output also contained a
   non-fatal `vswhere.exe` PATH warning, so future commands should use the
   absolute path noted in HANDOVER/AGENTS.
+
+## Editor undo base, the two visual defects and the render harness (2026-11-11)
+
+- **The undo base was written against fixtures the project does not have.**
+  `RegionKey::MapLayer` resolved one ROW of a layer, so a map-layer undo
+  wrote a whole layer into a single row; `RegionKey::TileFlags` resolved
+  `tiles[i].flags` as an array, but the project stores an int bitmask, so the
+  tileset undo resolved nothing and did nothing; `RegionKey::GraphicPixels`
+  resolved `graphics[i].pixels`, which does not exist (a frame is an array of
+  row strings). All three were invisible because the tests used the same
+  wrong shapes. The base now resolves regions through one shared
+  `resolveRegion()`, and `Json` grew an `operator==` so a recorder can tell a
+  changed cell from an unchanged one.
+- **Per-cell diffs for the map editor** (`studio/MapEditUndo.{hpp,cpp}`): a
+  stroke records the cells it touched and pushes one command with a diff per
+  cell. Entity strokes keep the whole-array snapshot, because an entity
+  insert shifts every later index and an index-addressed diff cannot restore
+  the array.
+- **The map editor opened zoomed out** because the fit ran in the constructor,
+  against a canvas that still had its minimum size, so the zoom was computed
+  for a 512-wide widget and kept when the real canvas arrived. `fitToView()`
+  now defers to the first show/resize that has a real size. The World
+  editor's canvas had the same defect and got the same treatment.
+- **The world map's black bars** were the terrain shader's own void colour,
+  RGB (9,12,15), painted over the margin above and below the map, while the
+  CPU path and the canvas paint that margin `#171b20`. The shader's margin
+  is now `#171b20`, so the two paths agree. Measured in
+  `build/renders/world_1280x770_z1.0.png`.
+- **The map editor's tool combo did not match the tool indices the canvas
+  used**: the combo said "Paint Tile" at index 0, which the canvas treats as
+  Select/Move, so the paint tool painted nothing and the combo labelled the
+  painting slot "Erase Tile". The canonical order is now 0 Select/Move,
+  1 Paint Tile, 2 Place Entity, 3 Erase Tile.
+- **The render harness** (`tests/render_check.py`) drives the shipped
+  executable through `--tab`, `--zoom` and `--size` and writes one PNG per
+  page and size into `build/renders/`. The app's own CLI is the control
+  surface; the harness reaches nothing inside the app. The zoom is a factor
+  of the canvas's own fit (0.75 / 1.0 / 1.5), which is what makes 1.0 the fit
+  view. The harness sets per-monitor DPI awareness v2 before it launches
+  anything, and the app inherits it: the capture is 1.5x the logical size on
+  this machine, and a window rect read from a DPI-unaware process reports
+  logical pixels, so the same window looks two different sizes depending on
+  who asks.
+- **The map editor was split** so neither half is over the size cap:
+  `studio/MapCanvas.{hpp,cpp}` holds the canvas (664 lines) and
+  `studio/MapEditorPanel.{hpp,cpp}` the panel (439 lines).
+- **File-size baseline** (owner's rule: soft ~1,000, hard ~1,250):
+  `studio/MusicPanel.cpp` is 1,348 lines — over the hard ceiling and
+  pre-existing; it needs splitting and is not touched by this work.
+  `studio/world/WorldMapCanvas.cpp` (934) and `studio/WorldPanel.cpp` (928)
+  are under the soft cap.

@@ -50,6 +50,8 @@ public:
     explicit WorldPanel(Project* project = nullptr, QWidget* parent = nullptr);
     void setProject(Project* p);
     void refreshGraph();
+    // The zoom control, as a factor of the fit.
+    void setEditorZoom(qreal factor);
 
 private:
     void selectMap(const std::string& map_id);

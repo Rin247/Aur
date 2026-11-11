@@ -65,7 +65,10 @@ void main()
     bool wrapsX = params.effects.w > 0.5;
     if (worldPosition.y < 0.0 || worldPosition.y >= 1.0 ||
         (!wrapsX && (worldPosition.x < 0.0 || worldPosition.x >= 1.0))) {
-        fragColor = vec4(0.035, 0.047, 0.060, 1.0);
+        // The margin around the world is the canvas background, not a void:
+        // the CPU path paints it #171b20, and the two must match or the
+        // editor shows black bars above and below the map.
+        fragColor = vec4(0.090196, 0.105882, 0.125490, 1.0);
         return;
     }
     if (wrapsX) worldPosition.x = fract(worldPosition.x);

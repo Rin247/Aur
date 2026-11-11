@@ -17,8 +17,12 @@
   2026-11-11** — parked mid-wiring, exact resume point recorded in the plan).
 - `Bible/notes/editsweep.md` — editor defect sweep; D1 (all 13 audited bugs)
   landed `1e5fce9`, D2.S1 tile palette widget landed `07fd68f`, D3.S1 entity
-  selection/multiples/inspector landed `218ba11`; ctest 7/7. Next: D4.S1
-  QUndoStack rewrite — the current top of the queue.
+  selection/multiples/inspector landed `218ba11`; ctest 7/7. D4.S1b (the
+  QUndoStack rewrite) landed with its base corrected against the real document
+  shapes and the map editor converted to per-cell diffs; D4.S2 landed the two
+  visual defects the owner reported — the map editor's first-boot zoom and the
+  world's black bars — with the render harness that proves them. Next: D5.S1
+  (sprite studio), D6.S1 (tile pixel editing).
 - `Bible/notes/groovebox-sequencer.md` — 128-step sequencer + groovebox
   initiative. P0–P7 landed 2026-11-11: engine model (`StepSequencer`,
   `Arpeggiator`), realtime + offline playback, groove globals (swing/
@@ -65,7 +69,6 @@
   wired with parity < 1e-5, MusicPanel dropdown updated. PSG (SN76489) and
   P8 FX framework remain open in the DAW plan. Details in git history;
   verification notes in `Bible/notes/synth-cores-delivery.md`.
-- **Map editor starts zoomed out on first boot** (closed 2026-11-07, `757b932`): the fix landed in the World editor — first map selection now calls `fitToView()`; the Map Editor itself already fitted on `refreshMaps()`.
 - **World Time Settings tab baked into the World editor** (closed 2026-11-07, `a6a2b3a`): WorldSettingsPanel is now a "Time & World Settings" sub-tab inside the World tab; the standalone MainWindow tab is removed; `setProject` still reaches it via recursive `findChildren`.
 - **A0 editor defects: Tileset Editor + Map Inspector** (closed 2026-11-07, `205bd9b` + `9f097f3`): tile list data-bound and rendered via `make_tileset_tile`, gameplay-flag checkboxes write `tiles[i].flags` (mislabeled "SNES Tile Attributes" retitled), Map Inspector's hardcoded Event ID replaced by a registry-validated combo with facing/event write-back. Operations/Handover.md A0 defect disposition recorded 2026-11-07.
 - **Refactor and merge the pixel and sprite editors** (closed 2026-11-07, `f958e55`, tag `pixmerge-p2`): one "Pixel & Sprite Editor" tab with Graphic/Sprite modes and shared canvas/palette/history; P0–P2 verified, suite 40/40. See Operations/NOTES.md and git history.
@@ -77,8 +80,13 @@
 
 ## Conformance findings (2026-11-11)
 
-- **Render harness missing** (QUIRKS 22): no ender_check.py/grab_window.py; 	ests/ is C++ logic only.
 - **No ~/.Aur data root** (15a): the studio has no QSettings/QStandardPaths; add the root and route settings/window state through it.
 - **Frameless without the mechanism** (13.1a): studio/MainWindow.cpp:144 sets FramelessWindowHint but there is no WM_NCCALCSIZE/WM_NCHITTEST — drag, resize, snap and Alt+Space are gone.
 - **Deployed exe missing**: no built Aur Studio.exe; deployed cannot pass until one exists.
+- **Render harness** (closed 2026-11-11): `tests/render_check.py` renders the
+  Map Editor and World pages at both estate sizes and sweeps the zoom as a
+  control; the PNGs land in `build/renders/` and AGENTS.md says to open them.
+- **App icon** (closed 2026-11-11): Aur's mark is a pixel globe from the
+  estate's single generator (`AssetLibrary/Icons`), installed as
+  `studio/resources/icons/` with a PE resource (`.rc`) so Explorer draws it.
 - **Identity**: the app is `Aur Studio` while the folder is Aur — owner decides which is canonical (29).

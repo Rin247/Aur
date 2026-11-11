@@ -73,6 +73,10 @@ namespace aur
         double preview_hour = 8.0;
         std::string preview_weather = "climate";
         QTimer simulation_timer;
+        // The first fit waits for a real widget size, like the map editor's.
+        bool fit_pending = false;
+        void applyFit();
+        void requestPendingFit();
 
         QRectF mapBounds() const;
         QPoint tileAt(const QPointF &position) const;
@@ -111,6 +115,8 @@ namespace aur
         void setZoom(qreal zoom);
         qreal zoomFactor() const noexcept { return zoom_factor; }
         void fitToView();
+        // The zoom control, as a factor of the fit.
+        void zoomByFactor(qreal factor);
         void recordEntityEdit();
         void undo();
         void redo();
@@ -118,6 +124,7 @@ namespace aur
     protected:
         void paintEvent(QPaintEvent *event) override;
         void resizeEvent(QResizeEvent *event) override;
+        void showEvent(QShowEvent *event) override;
         void mousePressEvent(QMouseEvent *event) override;
         void mouseMoveEvent(QMouseEvent *event) override;
         void mouseReleaseEvent(QMouseEvent *event) override;
