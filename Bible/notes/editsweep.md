@@ -258,9 +258,16 @@ a tile to a `QImage`, which is exactly what a PNG export needs.
         binding that points it at a graphic's frame. The canvas lost 447
         lines and the panel gained a surface it does not have to know about.
         `<editsweep-d6s1>`
-  - [ ] D6.S1.2 The tileset editor's pixel canvas: a `PixelSurface` over the
+  - [x] D6.S1.2 The tileset editor's pixel canvas: a `PixelSurface` over the
         current tile's rows and the tileset's palette, with the paint
         undoable over the tileset document.
+        **Landed.** The canvas sits between the tile list and the inspector,
+        the colour picker is the tile's own palette (`tile.pal` into the
+        tileset's `palettes`), and the flag toggles moved onto the surface's
+        stack, so one Ctrl+Z undoes the last edit whether it was a pixel or
+        a flag. The editor opens with the first tile selected, so the canvas
+        has something to show.
+        `<editsweep-d6s1>`
   - [ ] D6.S1.3 PNG import and export: export the current tile (or the
         current graphic frame) to a PNG file, and import a PNG into the
         current tile with every pixel snapped to the nearest colour in the

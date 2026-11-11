@@ -25,7 +25,7 @@ namespace aur
     } // namespace
 
     TilesetEditorPanel::TilesetEditorPanel(Project *p, QWidget *parent)
-        : QWidget(parent), project(p), flag_stack(std::make_unique<QUndoStack>(this))
+        : QWidget(parent), project(p)
     {
         QVBoxLayout *mainLayout = new QVBoxLayout(this);
 
@@ -33,12 +33,25 @@ namespace aur
         toolbar->addWidget(new QLabel("Tileset:", this));
         tsCombo = new QComboBox(this);
         toolbar->addWidget(tsCombo);
+        colorCombo = new QComboBox(this);
+        colorCombo->setMinimumWidth(140);
+        colorCombo->setToolTip("The colour the brush paints with");
+        toolbar->addWidget(new QLabel("Colour:", this));
+        toolbar->addWidget(colorCombo);
         mainLayout->addLayout(toolbar);
 
         QSplitter *splitter = new QSplitter(Qt::Horizontal, this);
 
         tileList = new QListWidget(this);
         splitter->addWidget(tileList);
+
+        // D6.S1.2: the tile's pixels, on the surface the pixel editor uses.
+        tileCanvas = new PixelSurface(this);
+        tileCanvas->setBrushMode(1);  // one pixel at a time
+        // A tile is small next to a sheet: the fit zoom would blow a 16x16
+        // tile up to the size of a window.
+        tileCanvas->setZoomScale(16);
+        splitter->addWidget(tileCanvas);
 
         QWidget *inspector = new QWidget(this);
         QVBoxLayout *inspectorLayout = new QVBoxLayout(inspector);
@@ -65,13 +78,18 @@ namespace aur
         inspectorLayout->addStretch();
         splitter->addWidget(inspector);
 
-        splitter->setSizes({250, 750});
+        splitter->setSizes({250, 500, 350});
         mainLayout->addWidget(splitter, 1);
 
         connect(tsCombo, &QComboBox::currentIndexChanged, this, [this](int index)
                 { selectTileset(index); });
         connect(tileList, &QListWidget::currentRowChanged, this, [this](int row)
                 { selectTile(row); });
+        connect(colorCombo, &QComboBox::currentIndexChanged, this, [this](int index)
+                { if (index >= 0) tileCanvas->setSelectedColor(index); });
+        connect(tileCanvas, &PixelSurface::colorPicked, this, [this](int index)
+                { if (index >= 0 && index < colorCombo->count()) colorCombo->setCurrentIndex(index); });
+        connect(tileCanvas, &PixelSurface::painted, this, [this] { refreshTileDetail(); });
         auto *flagUndoShortcut = new QShortcut(QKeySequence::Undo, this);
         flagUndoShortcut->setContext(Qt::WidgetWithChildrenShortcut);
         connect(flagUndoShortcut, &QShortcut::activated, this,
@@ -164,6 +182,12 @@ namespace aur
                         : "Tile " + std::to_string(i);
                 tileList->addItem(QString("%1  [%2]").arg(QString::fromStdString(name), QString::number(i)));
             }
+            // D6.S1.2: the canvas has something to show when the editor opens.
+            if (tileList->count() > 0)
+            {
+                tileList->setCurrentRow(0);
+                selectTile(0);
+            }
         }
         refreshTileDetail();
     }
@@ -188,6 +212,41 @@ namespace aur
         for (int i = 0; i < 6; ++i)
             flagChecks[i]->setEnabled(valid);
         updatingFlags = false;
+
+        // D6.S1.2: the surface edits the current tile's rows, drawn in the
+        // palette that tile names.
+        Json *rows = nullptr;
+        std::vector<std::string> palette;
+        int size = 0;
+        if (valid)
+        {
+            Json &tileset = project->tilesets[currentTilesetId()];
+            Json &tile = tileset["tiles"].as_array()[static_cast<size_t>(currentTile)];
+            if (tile.contains("rows") && tile["rows"].is_array())
+                rows = &tile["rows"];
+            const int palette_index = tile.contains("pal") ? tile["pal"].as_int() : 0;
+            if (tileset.contains("palettes") && tileset["palettes"].is_array())
+            {
+                const auto &palettes = tileset["palettes"].as_array();
+                if (palette_index >= 0 && palette_index < static_cast<int>(palettes.size()) &&
+                    palettes[static_cast<size_t>(palette_index)].is_array())
+                    for (const Json &color : palettes[static_cast<size_t>(palette_index)].as_array())
+                        palette.push_back(color.is_string() ? color.as_string() : std::string());
+            }
+            size = tileset.contains("tile") ? tileset["tile"].as_int() : 16;
+        }
+        tileCanvas->setRowsTarget(rows, palette, size, size);
+
+        const QSignalBlocker blocker(colorCombo);
+        colorCombo->clear();
+        for (std::size_t index = 0; index < palette.size(); ++index)
+        {
+            const QString label = QString("%1 %2").arg(static_cast<int>(index), 2, 10, QChar('0'))
+                                      .arg(QString::fromStdString(palette[index]));
+            colorCombo->addItem(label);
+        }
+        if (colorCombo->count() > 1) colorCombo->setCurrentIndex(1);
+        tileCanvas->setSelectedColor(std::max(1, colorCombo->currentIndex()));
 
         if (!valid)
         {
@@ -241,31 +300,26 @@ namespace aur
         const int new_flags = checked ? (old_flags | bit) : (old_flags & ~bit);
         if (new_flags == old_flags)
             return;
-        // Undoable + dirty (editsweep D1.S5 → D4.S1b): a flag toggle is one
-        // cell diff on the tiles array; QUndoStack owns the history. Consumers
-        // (map collision overlay) repaint via tilesetFlagsChanged.
-        Json tile_before = tile;
-        tile["flags"] = new_flags;
-        auto command = std::make_unique<editor::CellCommand>(QStringLiteral("toggle flag"));
-        editor::RegionKey key;
-        key.kind = editor::RegionKey::TileObjects;
-        key.index = currentTile;
-        command->setRegion(key);
-        command->setDocument(&it->second);
-        command->addDiff(editor::CellDiff{currentTile, tile_before, tile});
-        flag_stack->push(command.release());
+        // Undoable + dirty (editsweep D1.S5 → D4.S1b → D6.S1.2): a flag
+        // toggle is one change to the tile, and the surface's QUndoStack owns
+        // the history, so one Ctrl+Z undoes the last edit whatever it was.
+        // Consumers (map collision overlay) repaint via tilesetFlagsChanged.
+        tileCanvas->applyChange(&tile, QStringLiteral("toggle flag"), [&tile, new_flags](Json &changed) {
+            changed["flags"] = new_flags;
+        });
         emit tilesetFlagsChanged(QString::fromStdString(tsid));
     }
 
     void TilesetEditorPanel::undoFlagChange()
     {
-        if (flag_stack->canUndo())
-        {
-            flag_stack->undo();
-            refreshTileDetail();
-            const std::string tsid = currentTilesetId();
-            emit tilesetFlagsChanged(QString::fromStdString(tsid));
-        }
+        if (!tileCanvas)
+            return;
+        if (!tileCanvas->undoStack()->canUndo())
+            return;
+        tileCanvas->undoStack()->undo();
+        refreshTileDetail();
+        const std::string tsid = currentTilesetId();
+        emit tilesetFlagsChanged(QString::fromStdString(tsid));
     }
 
 } // namespace aur

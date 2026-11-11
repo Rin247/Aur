@@ -36,7 +36,8 @@ OUT_DIR = os.path.join(REPO, "build", "renders")
 # The estate's work area (DESIGN.md 12): 16:9 and 16:10.
 SIZES = [(1280, 690), (1280, 770)]
 # The pages that own a canvas, and the zoom control as a factor of the fit.
-PAGES = [("map", "Map Editor"), ("world", "World"), ("pixel", "Pixel & Sprite Editor")]
+PAGES = [("map", "Map Editor"), ("world", "World"),
+         ("pixel", "Pixel & Sprite Editor"), ("tileset", "Tileset Editor")]
 ZOOM_SWEEP = [0.75, 1.5]
 
 SETTLE = 4.0
@@ -269,6 +270,7 @@ def main():
     if quick:
         shots.append(("map", "Map Editor", (1280, 690), 1.0, False, False))
         shots.append(("sprite", "Pixel & Sprite Editor", (1280, 690), 1.0, True, True))
+        shots.append(("tileset", "Tileset Editor", (1280, 690), 1.0, False, False))
     else:
         for page, tab in PAGES:
             for size in SIZES:

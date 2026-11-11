@@ -19,6 +19,7 @@
 
 #include "aur/project.hpp"
 
+#include "PixelSurface.hpp"
 #include "UndoCommands.hpp"
 
 namespace aur {
@@ -30,11 +31,13 @@ class TilesetEditorPanel : public QWidget {
     QListWidget* tileList = nullptr;
     QLabel* tilePreview = nullptr;
     QLabel* tileNameLabel = nullptr;
+    // D6.S1.2: the tile's pixels are edited on the shared surface, and the
+    // colour picker is the tile's own palette.
+    PixelSurface* tileCanvas = nullptr;
+    QComboBox* colorCombo = nullptr;
     std::array<QCheckBox*, 6> flagChecks {};
     int currentTile = -1;
     bool updatingFlags = false;
-    std::unique_ptr<QUndoStack> flag_stack;
-    std::unique_ptr<editor::SnapshotCommand> pending_flag_command;
 
     void selectTileset(int index);
     void selectTile(int row);

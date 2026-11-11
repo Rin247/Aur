@@ -76,6 +76,9 @@ public:
     void undo();
     void redo();
     void clearHistory();
+    // The stack, for an owner that shares it (the tileset editor's flag
+    // undo shares the pixels' history).
+    QUndoStack* undoStack() { return undo_stack.get(); }
     void copyRows();
     void cutRows();
     void pasteRows();
