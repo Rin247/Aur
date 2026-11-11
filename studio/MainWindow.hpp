@@ -43,6 +43,8 @@ public:
     void setEditorZoom(qreal factor);
     // Puts the pixel editor in sprite mode, for the render sweep.
     void setSpriteMode(bool enabled);
+    // Starts the pixel editor's preview, for the render sweep.
+    void startPreview();
 
 public slots:
     void playProject();

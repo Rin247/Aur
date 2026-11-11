@@ -76,6 +76,7 @@ int main(int argc, char* argv[]) {
     QString tab_name;
     qreal zoom_factor = 0.0;
     bool sprite_mode = false;
+    bool preview = false;
     int window_width = 0;
     int window_height = 0;
     for (int i = 1; i < argc; ++i) {
@@ -86,6 +87,8 @@ int main(int argc, char* argv[]) {
             zoom_factor = QString::fromLocal8Bit(argv[++i]).toDouble();
         } else if (arg == "--sprite") {
             sprite_mode = true;
+        } else if (arg == "--preview") {
+            preview = true;
         } else if (arg == "--size" && i + 1 < argc) {
             const QString size = QString::fromLocal8Bit(argv[++i]).toLower();
             const int x = size.indexOf('x');
@@ -127,6 +130,10 @@ int main(int argc, char* argv[]) {
         QTimer::singleShot(0, &window, [&window, zoom_factor] {
             window.setEditorZoom(zoom_factor);
         });
+    }
+    if (preview) {
+        // After the show, so the page has loaded its sequence.
+        QTimer::singleShot(250, &window, [&window] { window.startPreview(); });
     }
     return app.exec();
 }

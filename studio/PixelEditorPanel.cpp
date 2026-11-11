@@ -497,23 +497,6 @@ PixelEditorPanel::PixelEditorPanel(Project* p, QWidget* parent)
     graphicCombo->setMinimumWidth(200);
     toolbar->addWidget(graphicCombo);
 
-    spriteControls = new QWidget(this);
-    auto* spriteLayout = new QHBoxLayout(spriteControls);
-    spriteLayout->setContentsMargins(0, 0, 0, 0);
-    spriteLayout->setSpacing(4);
-    spriteLayout->addWidget(new QLabel("Direction:", spriteControls));
-    directionCombo = new QComboBox(spriteControls);
-    directionCombo->addItems({"down", "down_right", "right", "up_right",
-                              "up", "up_left", "left", "down_left"});
-    directionCombo->setMinimumWidth(120);
-    spriteLayout->addWidget(directionCombo);
-    spriteLayout->addWidget(new QLabel("Pose:", spriteControls));
-    poseCombo = new QComboBox(spriteControls);
-    poseCombo->addItems({"idle", "walk", "attack"});
-    poseCombo->setMinimumWidth(110);
-    spriteLayout->addWidget(poseCombo);
-    toolbar->addWidget(spriteControls);
-
     toolbar->addSpacing(12);
     toolbar->addWidget(new QLabel("Brush:", this));
     brushCombo = new QComboBox(this);
@@ -561,6 +544,17 @@ PixelEditorPanel::PixelEditorPanel(Project* p, QWidget* parent)
     auto* spriteToolsLayout = new QHBoxLayout(spriteTools);
     spriteToolsLayout->setContentsMargins(6, 0, 6, 0);
     spriteToolsLayout->setSpacing(4);
+    spriteToolsLayout->addWidget(new QLabel("Direction:", spriteTools));
+    directionCombo = new QComboBox(spriteTools);
+    directionCombo->addItems({"down", "down_right", "right", "up_right",
+                              "up", "up_left", "left", "down_left"});
+    directionCombo->setMinimumWidth(130);
+    spriteToolsLayout->addWidget(directionCombo);
+    spriteToolsLayout->addWidget(new QLabel("Pose:", spriteTools));
+    poseCombo = new QComboBox(spriteTools);
+    poseCombo->addItems({"idle", "walk", "attack"});
+    poseCombo->setMinimumWidth(120);
+    spriteToolsLayout->addWidget(poseCombo);
     onionButton = new QPushButton("Onion skin", spriteTools);
     onionButton->setCheckable(true);
     onionButton->setToolTip("Draw the neighbouring frames ghosted behind this one");
@@ -634,6 +628,11 @@ PixelEditorPanel::PixelEditorPanel(Project* p, QWidget* parent)
             if (frame.is_string()) previewFrames.push_back(frame.as_string());
             else if (frame.is_number()) previewFrames.push_back(std::to_string(frame.as_int()));
         }
+        previewFps = animations[animation_id].contains("fps")
+                         ? std::clamp(animations[animation_id]["fps"].as_int(), 1, 60) : 8;
+        previewLoop = !animations[animation_id].contains("loop") ||
+                      !animations[animation_id]["loop"].is_bool() ||
+                      animations[animation_id]["loop"].as_bool();
         previewFrameIndex = 0;
         if (!previewFrames.empty()) {
             const QSignalBlocker blocker(frameCombo);
@@ -653,15 +652,9 @@ PixelEditorPanel::PixelEditorPanel(Project* p, QWidget* parent)
             playAnimationButton->setChecked(false);
             return;
         }
-        const std::string graphic_id = graphicCombo->currentData().toString().toStdString();
-        const std::string animation_id = animationCombo->currentData().toString().toStdString();
-        const Json& animation = project->graphics.at(graphic_id)["anims"][animation_id];
-        const int fps = animation.contains("fps") ? std::clamp(animation["fps"].as_int(), 1, 60) : 8;
-        previewLoop = !animation.contains("loop") || !animation["loop"].is_bool() ||
-                      animation["loop"].as_bool();
         previewFrameIndex = 0;
         playAnimationButton->setText("■ Stop");
-        animationTimer->start(std::max(16, 1000 / fps));
+        animationTimer->start(std::max(16, 1000 / std::max(1, previewFps)));
     });
     connect(animationTimer, &QTimer::timeout, this, [this]() {
         if (previewFrames.empty()) return;
@@ -702,6 +695,12 @@ void PixelEditorPanel::setSpriteMode(bool enabled) {
     const int index = enabled ? 1 : 0;
     if (modeCombo->currentIndex() == index) return;
     modeCombo->setCurrentIndex(index);
+}
+
+void PixelEditorPanel::startPreview() {
+    if (!playAnimationButton) return;
+    if (previewFrames.size() < 2) return;
+    playAnimationButton->setChecked(true);
 }
 
 void PixelEditorPanel::refreshGraphics() {
@@ -771,11 +770,12 @@ void PixelEditorPanel::updateEditorMode(int mode) {
         graphicZoomIndex = zoomCombo->currentIndex();
     }
     graphicLabel->setText(spriteMode ? "Sprite:" : "Graphic:");
-    spriteControls->setVisible(spriteMode);
     spriteTools->setVisible(spriteMode);
     frameCombo->setVisible(spriteMode);
     animationCombo->setVisible(!spriteMode);
-    playAnimationButton->setVisible(!spriteMode);
+    // D5.S1.2: the preview plays in both modes -- a sprite's frames are
+    // never seen moving otherwise.
+    playAnimationButton->setVisible(true);
     if (spriteMode) {
         brushCombo->clear();
         brushCombo->addItems({"Pixel", "8×8 cluster", "Erase 8×8"});
@@ -809,6 +809,14 @@ void PixelEditorPanel::refreshSpriteFrames() {
         poseCombo->currentText().toStdString());
     for (const std::string& frame : frames)
         frameCombo->addItem(QString::fromStdString(frame), QString::fromStdString(frame));
+    // D5.S1.2: the sprite's own sequence is what the preview plays, at the
+    // anim's fps.
+    previewFrames = frames;
+    const auto anim = PixelEditSession::resolve_anim(
+        *project, id, directionCombo->currentText().toStdString(),
+        poseCombo->currentText().toStdString());
+    previewFps = anim.fps > 0 ? anim.fps : 8;
+    previewLoop = anim.loop;
     frameCombo->blockSignals(false);
     if (frameCombo->count() > 0) {
         frameCombo->setCurrentIndex(0);

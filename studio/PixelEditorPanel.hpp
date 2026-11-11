@@ -92,7 +92,6 @@ class PixelEditorPanel : public QWidget {
     QComboBox* graphicCombo = nullptr;
     QComboBox* directionCombo = nullptr;
     QComboBox* poseCombo = nullptr;
-    QWidget* spriteControls = nullptr;
     QComboBox* brushCombo = nullptr;
     QComboBox* zoomCombo = nullptr;
     QComboBox* frameCombo = nullptr;
@@ -105,6 +104,7 @@ class PixelEditorPanel : public QWidget {
     QTimer* animationTimer = nullptr;
     std::vector<std::string> previewFrames;
     int previewFrameIndex = 0;
+    int previewFps = 8;  // the sequence's own fps, or the default
     bool previewLoop = true;
     int graphicBrushIndex = 0;
     int graphicZoomIndex = 0;
@@ -119,6 +119,8 @@ public:
     // D5.S1: sprite mode is the sprite editor's own mode; the render sweep
     // drives it the same way a person does, through the mode combo.
     void setSpriteMode(bool enabled);
+    // Starts the preview of the current sequence.
+    void startPreview();
 
 private:
     void refreshPalette();

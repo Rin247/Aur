@@ -415,6 +415,11 @@ void MainWindow::setSpriteMode(bool enabled) {
         panel->setSpriteMode(enabled);
 }
 
+void MainWindow::startPreview() {
+    for (auto* panel : findChildren<PixelEditorPanel*>())
+        panel->startPreview();
+}
+
 void MainWindow::refreshProjectPanels() {
     for (auto* panel : findChildren<MapEditorPanel*>()) panel->setProject(&project);
     for (auto* panel : findChildren<PixelEditorPanel*>()) panel->setProject(&project);

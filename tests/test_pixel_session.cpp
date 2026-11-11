@@ -160,3 +160,45 @@ void test_direction_token_match()
     const auto down = aur::PixelEditSession::resolve_anim_frames(p, "tok", "down", "idle");
     ASSERT(down.size() == 5);
 }
+
+// D5.S1.2: one owner for the anim a direction/pose pair names. The pose-
+// direction anim wins, then the bare pose, then none; the fps and the loop
+// flag come with it, because the preview plays the sprite's own sequence.
+void test_sprite_anim_resolution()
+{
+    aur::Project p = make_project();
+    Json& g = p.graphics["both"];
+    g = JsonObject{
+        {"w", 2},
+        {"h", 2},
+        {"palette", JsonArray{"#00000000", "#ffffff"}},
+        {"frames", JsonObject{{"a", JsonArray{"10", "01"}}, {"b", JsonArray{"01", "10"}}}},
+        {"anims", JsonObject{
+            {"idle", JsonObject{{"frames", JsonArray{"a"}}, {"fps", 3}, {"loop", false}}},
+            {"walk_down", JsonObject{{"frames", JsonArray{"a", "b"}}, {"fps", 12}}}}},
+    };
+
+    const auto directional =
+        aur::PixelEditSession::resolve_anim(p, "both", "down", "walk");
+    ASSERT(directional.id == "walk_down");
+    ASSERT(directional.fps == 12);
+    ASSERT(directional.loop);  // no loop flag means it loops
+
+    const auto bare = aur::PixelEditSession::resolve_anim(p, "both", "right", "idle");
+    ASSERT(bare.id == "idle");
+    ASSERT(bare.fps == 3);
+    ASSERT(!bare.loop);
+
+    // A pair with no anim names none: the frames stand alone.
+    const auto none = aur::PixelEditSession::resolve_anim(p, "both", "left", "attack");
+    ASSERT(none.id.empty());
+    ASSERT(none.fps == 0);
+
+    // A missing graphic names none either.
+    const auto missing = aur::PixelEditSession::resolve_anim(p, "nope", "down", "idle");
+    ASSERT(missing.id.empty());
+
+    // The frames the pair names come from the same resolution.
+    const auto frames = aur::PixelEditSession::resolve_anim_frames(p, "both", "down", "walk");
+    ASSERT(frames.size() == 2 && frames[0] == "a" && frames[1] == "b");
+}

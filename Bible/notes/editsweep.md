@@ -188,9 +188,16 @@ whole-layer copy; a dense map stroke copies kilobytes per tile.
         pose reads left to right; the skin is on by default in sprite mode.
         The render harness gained the pixel page and `--sprite`, so the
         tools can be looked at.
-  - [ ] D5.S1.2 Live preview in sprite mode: the preview button cycles the
+  - [x] D5.S1.2 Live preview in sprite mode: the preview button cycles the
         sprite's own frame sequence at the animation's fps. Today the button
         is graphic-mode only, so a sprite's frames are never seen moving.
+        **Landed.** `PixelEditSession::resolve_anim` is now the one owner of
+        the anim a direction/pose pair names (the pose-direction anim, then
+        the bare pose, then none), and it carries the fps and the loop flag
+        with it; the frame list, the preview and the frame tools read the
+        same answer. The sprite controls moved to the sprite row, because
+        the graphic toolbar was clipping their labels.
+        `<editsweep-d5s1>`
   - [ ] D5.S1.3 Mirror right→left: the right half of the current frame is
         mirrored onto its left half, as one undoable step.
   - [ ] D5.S1.4 Frame add / duplicate / delete / reorder over the sprite's

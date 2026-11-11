@@ -48,6 +48,36 @@ namespace aur
         return static_cast<int>(palette.size());
     }
 
+    PixelEditSession::Anim PixelEditSession::resolve_anim(
+        const Project &project, const std::string &graphic_id,
+        const std::string &direction, const std::string &pose)
+    {
+        Anim anim;
+        const auto graphic_it = project.graphics.find(graphic_id);
+        if (graphic_it == project.graphics.end())
+            return anim;
+        const Json &graphic = graphic_it->second;
+        const Json &animations = graphic.contains("anims") ? graphic["anims"] : Json();
+        if (!animations.is_object())
+            return anim;
+        const std::string directional_animation = pose + "_" + direction;
+        if (animations.contains(directional_animation))
+            anim.id = directional_animation;
+        else if (animations.contains(pose))
+            anim.id = pose;
+        if (anim.id.empty())
+            return anim;
+        const Json &animation = animations[anim.id];
+        if (animation.is_object())
+        {
+            if (animation.contains("fps") && animation["fps"].is_number())
+                anim.fps = animation["fps"].as_int();
+            if (animation.contains("loop") && animation["loop"].is_bool())
+                anim.loop = animation["loop"].as_bool();
+        }
+        return anim;
+    }
+
     std::vector<std::string> PixelEditSession::resolve_anim_frames(
         const Project &project, const std::string &graphic_id,
         const std::string &direction, const std::string &pose)
@@ -57,22 +87,19 @@ namespace aur
         if (graphic_it == project.graphics.end())
             return frames;
         const Json &graphic = graphic_it->second;
-        const std::string directional_animation = pose + "_" + direction;
-        const Json &animations = graphic.contains("anims") ? graphic["anims"] : Json();
-        const Json *animation = nullptr;
-        if (animations.is_object() && animations.contains(directional_animation))
-            animation = &animations[directional_animation];
-        else if (animations.is_object() && animations.contains(pose))
-            animation = &animations[pose];
-
-        if (animation && (*animation)["frames"].is_array())
+        const Anim anim = resolve_anim(project, graphic_id, direction, pose);
+        if (!anim.id.empty())
         {
-            for (const Json &frame : (*animation)["frames"].as_array())
+            const Json &animation = graphic["anims"][anim.id];
+            if (animation["frames"].is_array())
             {
-                if (frame.is_string())
-                    frames.push_back(frame.as_string());
-                else if (frame.is_number())
-                    frames.push_back(std::to_string(frame.as_int()));
+                for (const Json &frame : animation["frames"].as_array())
+                {
+                    if (frame.is_string())
+                        frames.push_back(frame.as_string());
+                    else if (frame.is_number())
+                        frames.push_back(std::to_string(frame.as_int()));
+                }
             }
         }
         if (frames.empty() && graphic["frames"].is_object())
