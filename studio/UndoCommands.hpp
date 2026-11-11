@@ -13,13 +13,17 @@
 namespace aur::editor
 {
 
-    // One cell's before/after as JSON values: numbers on tile/pixel/flag
-    // arrays, whole objects on the entity array.
+    // One cell's before/after as JSON values: numbers on tile and pixel
+    // arrays, whole objects on the entity and tile arrays.
     struct CellDiff
     {
         int cellIndex = 0; // index into the target array
         Json before;
         Json after;
+        // A map layer is rows of rows, so a cell in one is a (row, col)
+        // pair rather than a single index. Unused by the flat kinds.
+        int row = 0;
+        int col = 0;
     };
 
     // The region a command touches. Editors hand out these keys; the command
@@ -27,23 +31,31 @@ namespace aur::editor
     struct RegionKey
     {
         int kind = 0;  // RegionKind
-        int index = 0; // layer index / frame index / tile index
-        // Nested addressing used by MapLayer only: index is the layer,
-        // row/col the cell. All other kinds address a flat array by cellIndex.
-        int row = 0;
-        int col = 0;
+        int index = 0; // layer index / tile index
 
         enum RegionKind
         {
+            // A map layer, resolved as the WHOLE layer (rows of rows).
+            // A cell in it is addressed by the diff's row/col.
             MapLayer = 0,
+            // The entities array of a map: one cell is one entity object.
             MapEntities = 1,
-            GraphicPixels = 2,
-            TileFlags = 3,
-            // The document pointer IS the target array (used by editors whose
-            // regions are keyed by name, like the pixel frames).
-            Direct = 4
+            // The tiles array of a tileset: one cell is one tile object.
+            TileObjects = 2,
+            // The document pointer IS the target array (used by editors
+            // whose regions are keyed by name, like the pixel frames).
+            Direct = 3
         };
     };
+
+    // The layer names a map document stores, by index. One copy, so the
+    // editor and the undo base cannot disagree about which is which.
+    const char *mapLayerName(int index);
+
+    // Resolves a region to the array its cells live in, or null when the
+    // region is not there, so a stale command cannot crash a resized
+    // document. `direct` is the target for the Direct kind.
+    Json *resolveRegion(const RegionKey &region, Json *document, Json *direct = nullptr);
 
     // One undo command over a set of cells in one region. The document is
     // borrowed, not owned; the owner must outlive the stack.
@@ -64,7 +76,9 @@ namespace aur::editor
         void undo() override { apply(/*after=*/false); }
 
     protected:
-        // Exposed for SnapshotCommand, which resolves the same regions.
+        // The array a region's cells live in, or null when the region is
+        // not there. Exposed for SnapshotCommand, which resolves the same
+        // regions.
         Json *targetArray(const RegionKey &region) const;
 
     private:

@@ -101,6 +101,8 @@ add_executable(aur_studio
     studio/music/GrooveBoxPanel.hpp
     studio/SongHistory.cpp
     studio/MapEditorPanel.cpp
+    studio/MapCanvas.cpp
+    studio/MapEditUndo.cpp
     studio/UndoCommands.cpp
     studio/DatabasePanel.cpp
     studio/ForgePanel.cpp
@@ -211,6 +213,7 @@ add_executable(aur_tests
     tests/test_arpeggiator.cpp
     studio/PixelEditSession.cpp
     studio/UndoCommands.cpp
+    studio/MapEditUndo.cpp
     studio/world/WeatherRender.cpp
     studio/world/WeatherPreviewField.cpp
     studio/SongHistory.cpp

@@ -3,61 +3,59 @@
 namespace aur::editor
 {
 
-    // Resolves the region to a mutable Json array. Out-of-range or missing
-    // regions return null so a stale command cannot crash a resized document.
-    Json *CellCommand::targetArray(const RegionKey &region) const
+    const char *mapLayerName(int index)
     {
-        if (!m_document || !m_document->is_object())
+        switch (index)
+        {
+        case 0: return "ground";
+        case 1: return "objects";
+        case 2: return "above";
+        default: return nullptr;
+        }
+    }
+
+    Json *resolveRegion(const RegionKey &region, Json *document, Json *direct)
+    {
+        if (region.kind == RegionKey::Direct)
+            return direct;
+        if (!document || !document->is_object())
             return nullptr;
         switch (region.kind)
         {
         case RegionKey::MapLayer:
         {
-            // The document is the map object; layers.<name> is rows-of-rows
-            // and the cell is rows[row][col]. index picks the layer name.
-            const char *layerName = region.index == 0 ? "ground"
-                                    : region.index == 1 ? "objects"
-                                                        : "above";
-            if (!m_document->contains("layers"))
+            // The document is the map; layers.<name> is rows of rows and
+            // the whole layer is the region, so a cell is (row, col).
+            const char *layer_name = mapLayerName(region.index);
+            if (!layer_name || !document->contains("layers"))
                 return nullptr;
-            Json &layers = (*m_document)["layers"];
-            if (!layers.is_object() || !layers.contains(layerName))
+            Json &layers = (*document)["layers"];
+            if (!layers.is_object() || !layers.contains(layer_name))
                 return nullptr;
-            Json &layer = layers[layerName];
-            if (!layer.is_array() || region.row >= static_cast<int>(layer.as_array().size()))
-                return nullptr;
-            Json &row = layer[static_cast<size_t>(region.row)];
-            return row.is_array() ? &row : nullptr;
+            Json &layer = layers[layer_name];
+            return layer.is_array() ? &layer : nullptr;
         }
-        case RegionKey::Direct:
-            return const_cast<Json *>(m_direct);
         case RegionKey::MapEntities:
-            return m_document->contains("entities") && (*m_document)["entities"].is_array()
-                       ? &(*m_document)["entities"]
-                       : nullptr;
-        case RegionKey::GraphicPixels:
         {
-            if (!m_document->contains("graphics") || !(*m_document)["graphics"].is_array() ||
-                region.index >= static_cast<int>((*m_document)["graphics"].as_array().size()))
+            if (!document->contains("entities") || !(*document)["entities"].is_array())
                 return nullptr;
-            Json &graphic = (*m_document)["graphics"][static_cast<size_t>(region.index)];
-            return graphic.contains("pixels") && graphic["pixels"].is_array()
-                       ? &graphic["pixels"]
-                       : nullptr;
+            return &(*document)["entities"];
         }
-        case RegionKey::TileFlags:
+        case RegionKey::TileObjects:
         {
-            if (!m_document->contains("tiles") || !(*m_document)["tiles"].is_array() ||
-                region.index >= static_cast<int>((*m_document)["tiles"].as_array().size()))
+            // The document is the tileset; one cell is one tile object.
+            if (!document->contains("tiles") || !(*document)["tiles"].is_array())
                 return nullptr;
-            Json &tile = (*m_document)["tiles"][static_cast<size_t>(region.index)];
-            return tile.contains("flags") && tile["flags"].is_array()
-                       ? &tile["flags"]
-                       : nullptr;
+            return &(*document)["tiles"];
         }
         default:
             return nullptr;
         }
+    }
+
+    Json *CellCommand::targetArray(const RegionKey &region) const
+    {
+        return resolveRegion(region, m_document, m_direct);
     }
 
     void SnapshotCommand::redo()
@@ -75,17 +73,28 @@ namespace aur::editor
     void CellCommand::apply(bool after)
     {
         Json *target = targetArray(m_region);
-        if (!target)
+        if (!target || !target->is_array())
             return;
         for (const CellDiff &diff : m_diffs)
         {
-            // MapLayer addresses a cell inside its resolved row; the others
-            // index the resolved array directly.
-            const int cell = m_region.kind == RegionKey::MapLayer ? m_region.col
-                                                                  : diff.cellIndex;
-            if (cell < 0 || cell >= static_cast<int>(target->as_array().size()))
+            const Json &value = after ? diff.after : diff.before;
+            if (m_region.kind == RegionKey::MapLayer)
+            {
+                // The layer is rows of rows: the cell is (row, col).
+                JsonArray &rows = target->as_array();
+                if (diff.row < 0 || diff.row >= static_cast<int>(rows.size()))
+                    continue;
+                Json &row = rows[static_cast<size_t>(diff.row)];
+                if (!row.is_array() || diff.col < 0 ||
+                    diff.col >= static_cast<int>(row.as_array().size()))
+                    continue;
+                row.as_array()[static_cast<size_t>(diff.col)] = value;
                 continue;
-            target->as_array()[static_cast<size_t>(cell)] = after ? diff.after : diff.before;
+            }
+            JsonArray &cells = target->as_array();
+            if (diff.cellIndex < 0 || diff.cellIndex >= static_cast<int>(cells.size()))
+                continue;
+            cells[static_cast<size_t>(diff.cellIndex)] = value;
         }
     }
 

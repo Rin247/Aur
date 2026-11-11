@@ -246,9 +246,9 @@ namespace aur
         // (map collision overlay) repaint via tilesetFlagsChanged.
         Json tile_before = tile;
         tile["flags"] = new_flags;
-        auto command = std::make_unique<editor::SnapshotCommand>(QStringLiteral("toggle flag"));
+        auto command = std::make_unique<editor::CellCommand>(QStringLiteral("toggle flag"));
         editor::RegionKey key;
-        key.kind = editor::RegionKey::TileFlags;
+        key.kind = editor::RegionKey::TileObjects;
         key.index = currentTile;
         command->setRegion(key);
         command->setDocument(&it->second);

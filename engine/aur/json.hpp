@@ -78,6 +78,19 @@ struct Json {
     bool contains(const std::string& k) const {
         return type == JsonType::Object && o_val.find(k) != o_val.end();
     }
+
+    bool operator==(const Json& other) const {
+        if (type != other.type) return false;
+        switch (type) {
+        case JsonType::Null: return true;
+        case JsonType::Bool: return b_val == other.b_val;
+        case JsonType::Number: return n_val == other.n_val;
+        case JsonType::String: return s_val == other.s_val;
+        case JsonType::Array: return a_val == other.a_val;
+        case JsonType::Object: return o_val == other.o_val;
+        }
+        return false;
+    }
 };
 
 class JsonParser {
