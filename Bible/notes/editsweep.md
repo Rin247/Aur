@@ -93,6 +93,13 @@ whole-layer copy; a dense map stroke copies kilobytes per tile.
       resolution is a deliberate stub until D4.S1b wires the map panel (row
       arrays live under `layers.<name>`, which needs the panel's layer-name
       mapping); entity/pixel/flag regions are fully resolved and tested.
+      **D4.S1a landed** (`2eb32ce`, suite 56/56). D4.S1b next: the map layer is
+      a *rows-of-rows* array (`layers.<name>[row][col]`), so its RegionKey
+      needs the map's `w` to make a row-major cell index resolve through two
+      levels — decide the key shape (nested row/col in `RegionKey`, or a
+      flat index resolved against `map["w"]`) before wiring the 7 push sites
+      in `MapEditorPanel.cpp` (978 lines, `undo_layers`/`redo_layers` deques,
+      push sites at lines 98/229/244/286/342/527/553).
 - [ ] D4.S1b MapCanvasWidget: paint strokes coalesce into one command per
       stroke (cell diffs collected as the pointer moves), entity moves/deletes
       become single commands, the 100-entry cap moves onto QUndoStack's limit.
