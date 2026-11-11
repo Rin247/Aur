@@ -181,9 +181,13 @@ whole-layer copy; a dense map stroke copies kilobytes per tile.
       preview, undo) and its **Sprite** mode is a frame list and a direction
       and pose picker; everything below is what a sprite editor needs to
       draw a walk cycle.
-  - [ ] D5.S1.1 Onion skinning: the canvas draws the previous and the next
+  - [x] D5.S1.1 Onion skinning: the canvas draws the previous and the next
         frame of the sprite's sequence ghosted behind the current one, tinted
         and at a low alpha, with a toggle in the sprite toolbar.
+        **Landed.** The previous frame is warm and the next one cool, so a
+        pose reads left to right; the skin is on by default in sprite mode.
+        The render harness gained the pixel page and `--sprite`, so the
+        tools can be looked at.
   - [ ] D5.S1.2 Live preview in sprite mode: the preview button cycles the
         sprite's own frame sequence at the animation's fps. Today the button
         is graphic-mode only, so a sprite's frames are never seen moving.

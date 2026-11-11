@@ -36,7 +36,7 @@ OUT_DIR = os.path.join(REPO, "build", "renders")
 # The estate's work area (DESIGN.md 12): 16:9 and 16:10.
 SIZES = [(1280, 690), (1280, 770)]
 # The pages that own a canvas, and the zoom control as a factor of the fit.
-PAGES = [("map", "Map Editor"), ("world", "World")]
+PAGES = [("map", "Map Editor"), ("world", "World"), ("pixel", "Pixel & Sprite Editor")]
 ZOOM_SWEEP = [0.75, 1.5]
 
 SETTLE = 4.0
@@ -165,13 +165,15 @@ def distinct_colours(img):
     return 1 << 20 if colours is None else len(colours)
 
 
-def shoot(page, tab, size, zoom):
+def shoot(page, tab, size, zoom, sprite=False):
     """One launch, one capture. Returns the PNG path or None."""
     w, h = size
     out = os.path.join(OUT_DIR, "%s_%dx%d_z%s.png" % (page, w, h, zoom))
     args = [EXE, PROJECT, "--tab", tab, "--size", "%dx%d" % (w, h)]
     if zoom != 1.0:
         args += ["--zoom", str(zoom)]
+    if sprite:
+        args += ["--sprite"]
     proc = subprocess.Popen(args, cwd=os.path.dirname(EXE),
                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     print("render_check: launch pid=%d %s" % (proc.pid, " ".join(args[1:])))
@@ -263,17 +265,20 @@ def main():
     dpi_aware()
     shots = []
     if quick:
-        shots.append(("map", "Map Editor", (1280, 690), 1.0))
+        shots.append(("map", "Map Editor", (1280, 690), 1.0, False))
+        shots.append(("sprite", "Pixel & Sprite Editor", (1280, 690), 1.0, True))
     else:
         for page, tab in PAGES:
             for size in SIZES:
-                shots.append((page, tab, size, 1.0))
+                shots.append((page, tab, size, 1.0, False))
         # The zoom is swept on its own, not crossed with the sizes.
         for zoom in ZOOM_SWEEP:
-            shots.append(("map", "Map Editor", SIZES[0], zoom))
+            shots.append(("map", "Map Editor", SIZES[0], zoom, False))
+        # The sprite page is rendered in sprite mode, where its tools live.
+        shots.append(("sprite", "Pixel & Sprite Editor", SIZES[0], 1.0, True))
     failed = 0
-    for page, tab, size, zoom in shots:
-        if shoot(page, tab, size, zoom) is None:
+    for page, tab, size, zoom, sprite in shots:
+        if shoot(page, tab, size, zoom, sprite) is None:
             failed += 1
     print()
     print("render_check: %d captures in %s - OPEN THE PNGs" % (len(shots) - failed, OUT_DIR))

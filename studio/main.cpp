@@ -75,6 +75,7 @@ int main(int argc, char* argv[]) {
     QString project_path;
     QString tab_name;
     qreal zoom_factor = 0.0;
+    bool sprite_mode = false;
     int window_width = 0;
     int window_height = 0;
     for (int i = 1; i < argc; ++i) {
@@ -83,6 +84,8 @@ int main(int argc, char* argv[]) {
             tab_name = QString::fromLocal8Bit(argv[++i]);
         } else if (arg == "--zoom" && i + 1 < argc) {
             zoom_factor = QString::fromLocal8Bit(argv[++i]).toDouble();
+        } else if (arg == "--sprite") {
+            sprite_mode = true;
         } else if (arg == "--size" && i + 1 < argc) {
             const QString size = QString::fromLocal8Bit(argv[++i]).toLower();
             const int x = size.indexOf('x');
@@ -111,6 +114,7 @@ int main(int argc, char* argv[]) {
     aur::MainWindow window(project_path.toStdString());
     if (!tab_name.isEmpty() && !window.selectTab(tab_name))
         qWarning("Aur Studio: no tab named '%s'", qPrintable(tab_name));
+    if (sprite_mode) window.setSpriteMode(true);
     if (window_width > 0 && window_height > 0) {
         window.resize(window_width, window_height);
         window.show();

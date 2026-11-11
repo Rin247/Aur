@@ -79,6 +79,12 @@ PixelCanvasWidget::PixelCanvasWidget(QWidget* parent) : QWidget(parent) {
     undo_stack = std::make_unique<QUndoStack>(this);
 }
 
+void PixelCanvasWidget::setOnionSkin(const std::vector<std::string>& frames, int current_index) {
+    onion_frames = frames;
+    onion_index = frames.empty() ? -1 : current_index;
+    update();
+}
+
 void PixelCanvasWidget::setGraphic(Project* p, const std::string& id) {
     stroke_pending = false;
     last_paint_pixel = {-1, -1};
@@ -376,6 +382,32 @@ void PixelCanvasWidget::paintEvent(QPaintEvent*) {
         QImage image(data.data(), frame_width, frame_height, QImage::Format_RGBA8888);
         painter.drawImage(image_rect, image);
     }
+    // D5.S1.1: the neighbours of the current frame, ghosted behind it. The
+    // previous frame is warm and the next one cool, so a pose reads left to
+    // right the way a walk cycle does.
+    if (onion_index >= 0 && onion_index < static_cast<int>(onion_frames.size())) {
+        const auto ghost = [&](int index, const QColor& tint) {
+            if (index < 0 || index >= static_cast<int>(onion_frames.size())) return;
+            auto [ghost_width, ghost_height, ghost_data] =
+                frame_rgba(graphic, onion_frames[static_cast<size_t>(index)]);
+            if (ghost_data.empty() || ghost_width <= 0 || ghost_height <= 0) return;
+            QImage tinted(ghost_width, ghost_height, QImage::Format_ARGB32);
+            for (int y = 0; y < ghost_height; ++y) {
+                for (int x = 0; x < ghost_width; ++x) {
+                    const std::size_t offset =
+                        (static_cast<std::size_t>(y) * static_cast<std::size_t>(ghost_width) +
+                         static_cast<std::size_t>(x)) * 4;
+                    tinted.setPixel(x, y, qRgba(tint.red(), tint.green(), tint.blue(),
+                                                ghost_data[offset + 3]));
+                }
+            }
+            painter.setOpacity(0.32);
+            painter.drawImage(image_rect, tinted);
+            painter.setOpacity(1.0);
+        };
+        ghost(onion_index - 1, QColor("#e0685f"));
+        ghost(onion_index + 1, QColor("#5f9fe0"));
+    }
 
     for (int x = 0; x <= width; ++x) {
         const bool major = (x % 8) == 0;
@@ -473,10 +505,12 @@ PixelEditorPanel::PixelEditorPanel(Project* p, QWidget* parent)
     directionCombo = new QComboBox(spriteControls);
     directionCombo->addItems({"down", "down_right", "right", "up_right",
                               "up", "up_left", "left", "down_left"});
+    directionCombo->setMinimumWidth(120);
     spriteLayout->addWidget(directionCombo);
     spriteLayout->addWidget(new QLabel("Pose:", spriteControls));
     poseCombo = new QComboBox(spriteControls);
     poseCombo->addItems({"idle", "walk", "attack"});
+    poseCombo->setMinimumWidth(110);
     spriteLayout->addWidget(poseCombo);
     toolbar->addWidget(spriteControls);
 
@@ -520,6 +554,20 @@ PixelEditorPanel::PixelEditorPanel(Project* p, QWidget* parent)
     toolbar->addWidget(playAnimationButton);
     toolbar->addStretch(1);
     mainLayout->addLayout(toolbar);
+
+    // D5.S1: the sprite tools get their own row; the graphic toolbar is
+    // already full and these controls mean nothing outside sprite mode.
+    spriteTools = new QWidget(this);
+    auto* spriteToolsLayout = new QHBoxLayout(spriteTools);
+    spriteToolsLayout->setContentsMargins(6, 0, 6, 0);
+    spriteToolsLayout->setSpacing(4);
+    onionButton = new QPushButton("Onion skin", spriteTools);
+    onionButton->setCheckable(true);
+    onionButton->setToolTip("Draw the neighbouring frames ghosted behind this one");
+    spriteToolsLayout->addWidget(onionButton);
+    spriteToolsLayout->addStretch(1);
+    mainLayout->addWidget(spriteTools);
+    connect(onionButton, &QPushButton::toggled, this, [this](bool) { updateOnionSkin(); });
 
     auto* splitter = new QSplitter(Qt::Horizontal, this);
     auto* paletteDock = new QWidget(splitter);
@@ -566,6 +614,7 @@ PixelEditorPanel::PixelEditorPanel(Project* p, QWidget* parent)
     connect(frameCombo, &QComboBox::currentIndexChanged, this, [this](int index) {
         if (index >= 0 && !playAnimationButton->isChecked())
             canvas->setFrame(frameCombo->itemData(index).toString().toStdString());
+        updateOnionSkin();
     });
     connect(animationCombo, &QComboBox::currentIndexChanged, this, [this](int index) {
         if (index < 0 || !project || graphicCombo->currentIndex() < 0) return;
@@ -648,6 +697,13 @@ void PixelEditorPanel::setProject(Project* p) {
     refreshGraphics();
 }
 
+void PixelEditorPanel::setSpriteMode(bool enabled) {
+    if (!modeCombo) return;
+    const int index = enabled ? 1 : 0;
+    if (modeCombo->currentIndex() == index) return;
+    modeCombo->setCurrentIndex(index);
+}
+
 void PixelEditorPanel::refreshGraphics() {
     if (!graphicCombo) return;
     const QString previous = graphicCombo->currentData().toString();
@@ -716,6 +772,7 @@ void PixelEditorPanel::updateEditorMode(int mode) {
     }
     graphicLabel->setText(spriteMode ? "Sprite:" : "Graphic:");
     spriteControls->setVisible(spriteMode);
+    spriteTools->setVisible(spriteMode);
     frameCombo->setVisible(spriteMode);
     animationCombo->setVisible(!spriteMode);
     playAnimationButton->setVisible(!spriteMode);
@@ -724,7 +781,11 @@ void PixelEditorPanel::updateEditorMode(int mode) {
         brushCombo->addItems({"Pixel", "8×8 cluster", "Erase 8×8"});
         brushCombo->setToolTip("Brush (keys 1-3)");
         brushCombo->setCurrentIndex(0);
-        zoomCombo->setCurrentIndex(std::max(0, zoomCombo->findData(2)));
+        zoomCombo->setCurrentIndex(0);  // fit: a sprite is small next to a sheet
+        // The onion skin is on by default in sprite mode: a pose is drawn
+        // against its neighbours, not in the dark.
+        onionButton->setChecked(true);
+        updateOnionSkin();
     } else {
         brushCombo->clear();
         brushCombo->addItems({"8×8 Tile", "Pixel", "16×16 Stamp", "Color Picker", "Eraser"});
@@ -753,6 +814,19 @@ void PixelEditorPanel::refreshSpriteFrames() {
         frameCombo->setCurrentIndex(0);
         canvas->setFrame(frameCombo->itemData(0).toString().toStdString());
     }
+    updateOnionSkin();
+}
+
+void PixelEditorPanel::updateOnionSkin() {
+    std::vector<std::string> frames;
+    int index = -1;
+    if (modeCombo->currentIndex() == 1 && onionButton && onionButton->isChecked() &&
+        frameCombo) {
+        for (int i = 0; i < frameCombo->count(); ++i)
+            frames.push_back(frameCombo->itemData(i).toString().toStdString());
+        index = frameCombo->currentIndex();
+    }
+    canvas->setOnionSkin(frames, index);
 }
 
 void PixelEditorPanel::refreshAnimationData() {

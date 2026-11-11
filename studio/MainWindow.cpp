@@ -410,6 +410,11 @@ void MainWindow::setEditorZoom(qreal factor) {
         world->setEditorZoom(factor);
 }
 
+void MainWindow::setSpriteMode(bool enabled) {
+    for (auto* panel : findChildren<PixelEditorPanel*>())
+        panel->setSpriteMode(enabled);
+}
+
 void MainWindow::refreshProjectPanels() {
     for (auto* panel : findChildren<MapEditorPanel*>()) panel->setProject(&project);
     for (auto* panel : findChildren<PixelEditorPanel*>()) panel->setProject(&project);

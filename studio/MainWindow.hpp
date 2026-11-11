@@ -13,6 +13,8 @@
 
 namespace aur {
 
+class PixelEditorPanel;
+
 class MainWindow : public QMainWindow {
     Q_OBJECT
     Project project;
@@ -39,6 +41,8 @@ public:
     // Applies the zoom control to the current page's canvas, as a factor of
     // its fit.
     void setEditorZoom(qreal factor);
+    // Puts the pixel editor in sprite mode, for the render sweep.
+    void setSpriteMode(bool enabled);
 
 public slots:
     void playProject();
