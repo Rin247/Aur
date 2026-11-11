@@ -204,6 +204,31 @@ void test_sprite_anim_resolution()
     ASSERT(frames.size() == 2 && frames[0] == "a" && frames[1] == "b");
 }
 
+// D6.S1.3: a PNG's pixels become rows, and every pixel is snapped to the
+// nearest colour in the tile's palette.
+void test_sprite_png_snap()
+{
+    const std::vector<std::string> palette{"#00000000", "#ff0000ff", "#00ff00ff",
+                                           "#0000ffff"};
+    // 2x2: red, green, blue, transparent.
+    const std::vector<unsigned char> rgba{
+        255, 0, 0, 255,   0, 255, 0, 255,
+        0, 0, 255, 255,   0, 0, 0, 0};
+    const JsonArray rows = aur::editor::snap_rgba_to_rows(rgba, 2, 2, palette);
+    ASSERT(rows.size() == 2);
+    ASSERT(rows[0].as_string() == "12");
+    ASSERT(rows[1].as_string() == "30");
+
+    // A colour that is nearly in the palette snaps to it.
+    const std::vector<unsigned char> near_red{250, 8, 4, 255};
+    const JsonArray near = aur::editor::snap_rgba_to_rows(near_red, 1, 1, palette);
+    ASSERT(near[0].as_string() == "1");
+
+    // An empty palette or an empty image is nothing to snap.
+    ASSERT(aur::editor::snap_rgba_to_rows(rgba, 2, 2, {}).empty());
+    ASSERT(aur::editor::snap_rgba_to_rows({}, 2, 2, palette).empty());
+}
+
 // D5.S1.4: the frame tools over a sprite's sequence. Add, duplicate, remove
 // and move are pure functions over the graphic JSON, so they are pinned
 // without a widget.

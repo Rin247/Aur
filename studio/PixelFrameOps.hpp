@@ -45,4 +45,11 @@ namespace aur::editor
     bool move_frame(Json &graphic, const std::string &anim_id, int index,
                     int delta);
 
+    // The rows a PNG's pixels become: every pixel is snapped to the nearest
+    // colour in the palette, and a transparent pixel becomes the palette's
+    // transparent entry. The bytes are RGBA, row after row.
+    JsonArray snap_rgba_to_rows(const std::vector<unsigned char> &rgba,
+                                 int width, int height,
+                                 const std::vector<std::string> &palette);
+
 } // namespace aur::editor

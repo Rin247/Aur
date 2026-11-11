@@ -10,6 +10,7 @@
 #include <QWidget>
 
 #include <QEvent>
+#include <QImage>
 #include <QMouseEvent>
 #include <QPainter>
 #include <QPointF>
@@ -84,6 +85,13 @@ public:
     void pasteRows();
     // D5.S1.3: mirrors the right half of the target onto its left half.
     void mirrorRightToLeft();
+    // The target as an image, in the palette's colours. A PNG export is this.
+    QImage toImage() const;
+    // Writes the target to a PNG file the person picks.
+    void exportPng();
+    // The palette and the size the surface is working in.
+    const std::vector<std::string>& paletteColors() const { return palette; }
+    int surfaceSize() const { return surface_width; }
 
 signals:
     void colorPicked(int index);

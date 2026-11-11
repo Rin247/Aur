@@ -33,7 +33,8 @@ void add_frame_actions(QHBoxLayout* toolbar, QWidget* scope, PixelCanvasWidget* 
         {"Redo", [canvas]() { canvas->redo(); }},
         {"Copy", [canvas]() { canvas->copyRows(); }},
         {"Cut", [canvas]() { canvas->cutRows(); }},
-        {"Paste", [canvas]() { canvas->pasteRows(); }}
+        {"Paste", [canvas]() { canvas->pasteRows(); }},
+        {"PNG", [canvas]() { canvas->exportPng(); }}
     };
     for (const auto& [label, action] : buttons) {
         auto* button = new QPushButton(label, scope);

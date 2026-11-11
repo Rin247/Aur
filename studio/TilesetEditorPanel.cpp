@@ -1,4 +1,9 @@
 #include "TilesetEditorPanel.hpp"
+
+#include "PixelFrameOps.hpp"
+
+#include <QFileDialog>
+#include <QMessageBox>
 #include "TileTexture.hpp"
 #include <QFormLayout>
 #include <QKeySequence>
@@ -38,6 +43,11 @@ namespace aur
         colorCombo->setToolTip("The colour the brush paints with");
         toolbar->addWidget(new QLabel("Colour:", this));
         toolbar->addWidget(colorCombo);
+        // D6.S1.3: a tile in and out of a PNG.
+        exportButton = new QPushButton("Export PNG", this);
+        toolbar->addWidget(exportButton);
+        importButton = new QPushButton("Import PNG", this);
+        toolbar->addWidget(importButton);
         mainLayout->addLayout(toolbar);
 
         QSplitter *splitter = new QSplitter(Qt::Horizontal, this);
@@ -87,6 +97,8 @@ namespace aur
                 { selectTile(row); });
         connect(colorCombo, &QComboBox::currentIndexChanged, this, [this](int index)
                 { if (index >= 0) tileCanvas->setSelectedColor(index); });
+        connect(exportButton, &QPushButton::clicked, this, &TilesetEditorPanel::exportTilePng);
+        connect(importButton, &QPushButton::clicked, this, &TilesetEditorPanel::importTilePng);
         connect(tileCanvas, &PixelSurface::colorPicked, this, [this](int index)
                 { if (index >= 0 && index < colorCombo->count()) colorCombo->setCurrentIndex(index); });
         connect(tileCanvas, &PixelSurface::painted, this, [this] { refreshTileDetail(); });
@@ -217,13 +229,19 @@ namespace aur
         // palette that tile names.
         Json *rows = nullptr;
         std::vector<std::string> palette;
-        int size = 0;
+        int width = 0;
+        int height = 0;
         if (valid)
         {
             Json &tileset = project->tilesets[currentTilesetId()];
             Json &tile = tileset["tiles"].as_array()[static_cast<size_t>(currentTile)];
             if (tile.contains("rows") && tile["rows"].is_array())
+            {
                 rows = &tile["rows"];
+                height = static_cast<int>(rows->as_array().size());
+                if (height > 0 && rows->as_array()[0].is_string())
+                    width = static_cast<int>(rows->as_array()[0].as_string().size());
+            }
             const int palette_index = tile.contains("pal") ? tile["pal"].as_int() : 0;
             if (tileset.contains("palettes") && tileset["palettes"].is_array())
             {
@@ -233,9 +251,8 @@ namespace aur
                     for (const Json &color : palettes[static_cast<size_t>(palette_index)].as_array())
                         palette.push_back(color.is_string() ? color.as_string() : std::string());
             }
-            size = tileset.contains("tile") ? tileset["tile"].as_int() : 16;
         }
-        tileCanvas->setRowsTarget(rows, palette, size, size);
+        tileCanvas->setRowsTarget(rows, palette, width, height);
 
         const QSignalBlocker blocker(colorCombo);
         colorCombo->clear();
@@ -308,6 +325,61 @@ namespace aur
             changed["flags"] = new_flags;
         });
         emit tilesetFlagsChanged(QString::fromStdString(tsid));
+    }
+
+    void TilesetEditorPanel::exportTilePng()
+    {
+        if (!project || currentTile < 0 || !tileCanvas)
+            return;
+        const QImage image = tileCanvas->toImage();
+        if (image.isNull())
+            return;
+        const QString path = QFileDialog::getSaveFileName(
+            this, "Export tile as PNG", QString(),
+            "PNG images (*.png)");
+        if (path.isEmpty())
+            return;
+        if (!image.save(path, "PNG"))
+            QMessageBox::warning(this, "Export failed",
+                                 QString("Could not write %1").arg(path));
+    }
+
+    void TilesetEditorPanel::importTilePng()
+    {
+        if (!project || currentTile < 0 || !tileCanvas)
+            return;
+        const QString path = QFileDialog::getOpenFileName(
+            this, "Import a PNG into the tile", QString(),
+            "PNG images (*.png)");
+        if (path.isEmpty())
+            return;
+        QImage source(path);
+        if (source.isNull())
+        {
+            QMessageBox::warning(this, "Import failed",
+                                 QString("Could not read %1").arg(path));
+            return;
+        }
+        const int size = tileCanvas->surfaceSize();
+        if (size <= 0)
+            return;
+        const QImage scaled = source.scaled(size, size, Qt::IgnoreAspectRatio,
+                                             Qt::FastTransformation);
+        const QImage rgba = scaled.convertToFormat(QImage::Format_RGBA8888);
+        const std::size_t byte_count = static_cast<std::size_t>(rgba.width()) *
+                                       static_cast<std::size_t>(rgba.height()) * 4;
+        const std::vector<unsigned char> bytes(rgba.constBits(),
+                                               rgba.constBits() + byte_count);
+        const JsonArray rows = editor::snap_rgba_to_rows(bytes, rgba.width(),
+                                                         rgba.height(),
+                                                         tileCanvas->paletteColors());
+        if (rows.empty())
+            return;
+        Json &tile = project->tilesets[currentTilesetId()]["tiles"]
+                         .as_array()[static_cast<size_t>(currentTile)];
+        tileCanvas->applyChange(&tile, QStringLiteral("import png"),
+                                [&rows](Json &changed) { changed["rows"] = rows; });
+        refreshTileDetail();
     }
 
     void TilesetEditorPanel::undoFlagChange()

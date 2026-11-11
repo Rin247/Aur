@@ -35,6 +35,8 @@ class TilesetEditorPanel : public QWidget {
     // colour picker is the tile's own palette.
     PixelSurface* tileCanvas = nullptr;
     QComboBox* colorCombo = nullptr;
+    QPushButton* exportButton = nullptr;
+    QPushButton* importButton = nullptr;
     std::array<QCheckBox*, 6> flagChecks {};
     int currentTile = -1;
     bool updatingFlags = false;
@@ -43,6 +45,8 @@ class TilesetEditorPanel : public QWidget {
     void selectTile(int row);
     void refreshTileDetail();
     void applyFlagChange(int bit, bool checked);
+    void exportTilePng();
+    void importTilePng();
     int currentTilesetTileCount() const;
     std::string currentTilesetId() const;
     int flagsOfCurrentTile() const;

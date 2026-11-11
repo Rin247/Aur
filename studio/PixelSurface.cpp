@@ -5,6 +5,8 @@
 
 #include <QApplication>
 #include <QClipboard>
+#include <QFileDialog>
+#include <QMessageBox>
 
 #include <algorithm>
 #include <cmath>
@@ -170,6 +172,40 @@ namespace aur
         *rows_target = editor::mirror_rows_right_to_left(rows_target->as_array());
         finishUndo();
         update();
+    }
+
+    QImage PixelSurface::toImage() const {
+        if (!rows_target || !rows_target->is_array() || surface_width <= 0 ||
+            surface_height <= 0)
+            return {};
+        QImage image(surface_width, surface_height, QImage::Format_ARGB32);
+        image.fill(Qt::transparent);
+        const auto &rows = rows_target->as_array();
+        for (int y = 0; y < surface_height && y < static_cast<int>(rows.size()); ++y) {
+            const Json &row = rows[static_cast<size_t>(y)];
+            if (!row.is_string()) continue;
+            const std::string &text = row.as_string();
+            for (int x = 0; x < surface_width && x < static_cast<int>(text.size()); ++x) {
+                const int color_index = palette_index(text[static_cast<size_t>(x)]);
+                if (color_index <= 0 || color_index >= static_cast<int>(palette.size())) continue;
+                const Rgb color = hex_to_rgba(palette[static_cast<size_t>(color_index)]);
+                image.setPixelColor(x, y, QColor(color.r, color.g, color.b, color.a));
+            }
+        }
+        return image;
+    }
+
+    void PixelSurface::exportPng() {
+        const QImage image = toImage();
+        if (image.isNull())
+            return;
+        const QString path = QFileDialog::getSaveFileName(
+            this, "Export as PNG", QString("frame.png"), "PNG images (*.png)");
+        if (path.isEmpty())
+            return;
+        if (!image.save(path, "PNG"))
+            QMessageBox::warning(this, "Export failed",
+                                 QString("Could not write %1").arg(path));
     }
 
     void PixelSurface::resizeForSurface() {

@@ -55,6 +55,7 @@ void test_direction_token_match();
 void test_sprite_anim_resolution();
 void test_sprite_frame_mirror();
 void test_sprite_frame_tools();
+void test_sprite_png_snap();
 void test_weather_render();
 void test_weather_preview_field();
 void test_step_sequencer();
@@ -150,6 +151,7 @@ int main(int argc, char** argv) {
     RUN_TEST(test_sprite_anim_resolution);
     RUN_TEST(test_sprite_frame_mirror);
     RUN_TEST(test_sprite_frame_tools);
+    RUN_TEST(test_sprite_png_snap);
     RUN_TEST(test_weather_render);
     RUN_TEST(test_weather_preview_field);
     RUN_TEST(test_step_sequencer);

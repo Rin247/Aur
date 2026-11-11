@@ -1,7 +1,10 @@
 #include "PixelFrameOps.hpp"
 
+#include "aur/gfx.hpp"
+
 #include <string>
 #include <utility>
+#include <vector>
 
 namespace aur::editor
 {
@@ -136,6 +139,60 @@ namespace aur::editor
         if (target < 0 || target >= static_cast<int>(frames.size())) return false;
         std::swap(frames[static_cast<size_t>(index)], frames[static_cast<size_t>(target)]);
         return true;
+    }
+
+    JsonArray snap_rgba_to_rows(const std::vector<unsigned char> &rgba, int width,
+                                 int height, const std::vector<std::string> &palette)
+    {
+        JsonArray rows;
+        if (width <= 0 || height <= 0 || palette.empty()) return rows;
+        // An image that is not there snaps to nothing.
+        if (rgba.size() < static_cast<std::size_t>(width) *
+                              static_cast<std::size_t>(height) * 4)
+            return rows;
+        std::vector<Rgb> rgbs;
+        rgbs.reserve(palette.size());
+        for (const std::string &color : palette)
+            rgbs.push_back(hex_to_rgba(color));
+        static const char kDigits[] = "0123456789ABCDEF";
+        for (int y = 0; y < height; ++y)
+        {
+            std::string row;
+            row.reserve(static_cast<std::size_t>(width));
+            for (int x = 0; x < width; ++x)
+            {
+                const std::size_t offset =
+                    (static_cast<std::size_t>(y) * static_cast<std::size_t>(width) +
+                     static_cast<std::size_t>(x)) * 4;
+                if (offset + 3 >= rgba.size())
+                    break;
+                const int r = rgba[offset];
+                const int g = rgba[offset + 1];
+                const int b = rgba[offset + 2];
+                const int a = rgba[offset + 3];
+                int best = 0;
+                if (a > 0)
+                {
+                    int best_distance = -1;
+                    for (std::size_t index = 1; index < rgbs.size(); ++index)
+                    {
+                        const Rgb &color = rgbs[index];
+                        const int dr = r - color.r;
+                        const int dg = g - color.g;
+                        const int db = b - color.b;
+                        const int distance = dr * dr + dg * dg + db * db;
+                        if (best_distance < 0 || distance < best_distance)
+                        {
+                            best_distance = distance;
+                            best = static_cast<int>(index);
+                        }
+                    }
+                }
+                row.push_back(kDigits[best & 0x0f]);
+            }
+            rows.emplace_back(row);
+        }
+        return rows;
     }
 
 } // namespace aur::editor

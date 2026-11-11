@@ -268,12 +268,19 @@ a tile to a `QImage`, which is exactly what a PNG export needs.
         a flag. The editor opens with the first tile selected, so the canvas
         has something to show.
         `<editsweep-d6s1>`
-  - [ ] D6.S1.3 PNG import and export: export the current tile (or the
+  - [x] D6.S1.3 PNG import and export: export the current tile (or the
         current graphic frame) to a PNG file, and import a PNG into the
         current tile with every pixel snapped to the nearest colour in the
         tile's palette. The snapping is a pure function over the palette, so
         it is tested without a widget.
-  `<editsweep-d6s1>`
+        **Landed.** The tileset editor has Export PNG and Import PNG; the
+        pixel editor has a PNG button beside Copy and Cut. The snapping
+        (`snap_rgba_to_rows`) is a pure function over the RGBA bytes and the
+        palette: a transparent pixel takes the palette's transparent entry
+        and every other pixel takes the nearest colour.
+        `<editsweep-d6s1>`
+  **D6.S1 landed** (all three steps): a tile's pixels are editable, and a
+        tile or a frame goes in and out of a PNG.
 ## Acceptance
 
 - All 13 audited defects fixed and each pinned by a test or an asserted UI
