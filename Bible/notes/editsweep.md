@@ -229,8 +229,30 @@ whole-layer copy; a dense map stroke copies kilobytes per tile.
 
 ### D6 — tile pixel editing (report feature 6)
 
-- [ ] D6.S1 Tile pixel editing via PixelSurface + PNG import/export.
+Audited 2026-11-11. The tileset editor has a tileset picker, a tile list, a
+preview, the name and the gameplay-flag checkboxes — **no way to change a
+tile's pixels**. The data is ready for it: a tile is
+`{name, pal, flags, rows}` where `rows` is an array of row strings of palette
+indices, and the tileset carries `palettes` (an array of palettes of hex
+colours) and `tile` (the tile's size). `make_tileset_tile()` already renders
+a tile to a `QImage`, which is exactly what a PNG export needs.
 
+- [ ] D6.S1 The tile pixel editor, as three steps.
+  - [ ] D6.S1.1 `PixelSurface`: one pixel-editing surface, two editors.
+        The pixel editor's canvas edits "a rows array with a palette"; that
+        is what a tile is too. The surface moves to
+        `studio/PixelSurface.{hpp,cpp}` and the pixel editor's canvas binds
+        it to the current frame. A pure move: no behaviour change, and the
+        render harness and the suite pin it.
+  - [ ] D6.S1.2 The tileset editor's pixel canvas: a `PixelSurface` over the
+        current tile's rows and the tileset's palette, with the paint
+        undoable over the tileset document.
+  - [ ] D6.S1.3 PNG import and export: export the current tile (or the
+        current graphic frame) to a PNG file, and import a PNG into the
+        current tile with every pixel snapped to the nearest colour in the
+        tile's palette. The snapping is a pure function over the palette, so
+        it is tested without a widget.
+  `<editsweep-d6s1>`
 ## Acceptance
 
 - All 13 audited defects fixed and each pinned by a test or an asserted UI
