@@ -12,9 +12,23 @@ namespace aur::editor
         switch (region.kind)
         {
         case RegionKey::MapLayer:
-            // layers.{ground,objects,above}[index] is the row array; slot
-            // distinguishes the layer name, index the row.
-            return nullptr; // wired by the map editor in D4.S1b
+        {
+            // The document is the map object; layers.<name> is rows-of-rows
+            // and the cell is rows[row][col]. index picks the layer name.
+            const char *layerName = region.index == 0 ? "ground"
+                                    : region.index == 1 ? "objects"
+                                                        : "above";
+            if (!m_document->contains("layers"))
+                return nullptr;
+            Json &layers = (*m_document)["layers"];
+            if (!layers.is_object() || !layers.contains(layerName))
+                return nullptr;
+            Json &layer = layers[layerName];
+            if (!layer.is_array() || region.row >= static_cast<int>(layer.as_array().size()))
+                return nullptr;
+            Json &row = layer[static_cast<size_t>(region.row)];
+            return row.is_array() ? &row : nullptr;
+        }
         case RegionKey::MapEntities:
             return m_document->contains("entities") && (*m_document)["entities"].is_array()
                        ? &(*m_document)["entities"]
@@ -51,7 +65,10 @@ namespace aur::editor
             return;
         for (const CellDiff &diff : m_diffs)
         {
-            const int cell = diff.cellIndex;
+            // MapLayer addresses a cell inside its resolved row; the others
+            // index the resolved array directly.
+            const int cell = m_region.kind == RegionKey::MapLayer ? m_region.col
+                                                                  : diff.cellIndex;
             if (cell < 0 || cell >= static_cast<int>(target->as_array().size()))
                 continue;
             target->as_array()[static_cast<size_t>(cell)] = after ? diff.after : diff.before;

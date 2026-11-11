@@ -28,7 +28,10 @@ namespace aur::editor
     {
         int kind = 0;  // RegionKind
         int index = 0; // layer index / frame index / tile index
-        int slot = 0;  // free slot for editors that need a second index
+        // Nested addressing used by MapLayer only: index is the layer,
+        // row/col the cell. All other kinds address a flat array by cellIndex.
+        int row = 0;
+        int col = 0;
 
         enum RegionKind
         {

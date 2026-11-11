@@ -3,6 +3,9 @@
 
 #include <QCoreApplication>
 
+#include <exception>
+#include <iostream>
+
 namespace
 {
     using aur::Json;
@@ -38,6 +41,21 @@ namespace
             {"entities", JsonArray{
                 JsonObject{{"id", "door_0"}, {"x", 3}, {"y", 4}},
                 JsonObject{{"id", "door_1"}, {"x", 8}, {"y", 4}}}}};
+    }
+
+    // Map-shaped fixture: layers.ground is rows-of-rows (3 rows of 4). Rows
+    // are wrapped in an explicit Json or the braces flatten into four scalars.
+    Json mapDocument()
+    {
+        return JsonObject{
+            {"w", 4}, {"h", 3},
+            {"layers", JsonObject{
+                {"ground", JsonArray{
+                    Json(JsonArray{1, 1, 1, 1}),
+                    Json(JsonArray{2, 2, 2, 2}),
+                    Json(JsonArray{3, 3, 3, 3})}},
+                {"objects", JsonArray{
+                    Json(JsonArray{0, 0, 0, 0})}}}}};
     }
 
     void test_pixel_cell_apply_and_restore()
@@ -103,6 +121,64 @@ namespace
         ASSERT(doc["entities"][0]["id"].as_string() == "door_0");
     }
 
+    void test_map_layer_cell_apply_and_restore()
+    {
+        Json doc = mapDocument();
+        CellCommand command(QStringLiteral("paint ground"));
+        command.setDocument(&doc);
+        RegionKey region;
+        region.kind = RegionKey::MapLayer;
+        region.index = 0; // ground
+        region.row = 2;
+        region.col = 1;
+        command.setRegion(region);
+        command.addDiff(CellDiff{0, Json(3), Json(7)}); // cellIndex unused for map layers
+
+        command.redo();
+        ASSERT(doc["layers"]["ground"][2][1].as_int() == 7);
+        // Neighbouring rows and columns untouched.
+        ASSERT(doc["layers"]["ground"][1][1].as_int() == 2);
+        ASSERT(doc["layers"]["ground"][2][0].as_int() == 3);
+
+        command.undo();
+        ASSERT(doc["layers"]["ground"][2][1].as_int() == 3);
+    }
+
+    void test_map_layer_other_layer_names_resolve()
+    {
+        Json doc = mapDocument();
+        CellCommand command(QStringLiteral("paint objects"));
+        command.setDocument(&doc);
+        RegionKey region;
+        region.kind = RegionKey::MapLayer;
+        region.index = 1; // objects
+        region.row = 0;
+        region.col = 2;
+        command.setRegion(region);
+        command.addDiff(CellDiff{0, Json(0), Json(5)});
+
+        command.redo();
+        ASSERT(doc["layers"]["objects"][0][2].as_int() == 5);
+    }
+
+    void test_map_layer_out_of_range_is_safe()
+    {
+        Json doc = mapDocument();
+        CellCommand command(QStringLiteral("nonsense"));
+        command.setDocument(&doc);
+        RegionKey region;
+        region.kind = RegionKey::MapLayer;
+        region.index = 0;
+        region.row = 9; // no such row
+        region.col = 0;
+        command.setRegion(region);
+        command.addDiff(CellDiff{0, Json(0), Json(9)});
+
+        command.redo();
+        command.undo();
+        ASSERT(doc["layers"]["ground"][0][0].as_int() == 1);
+    }
+
     void test_stale_command_over_resized_document_is_safe()
     {
         Json doc = pixelDocument();
@@ -148,6 +224,9 @@ void test_undo_commands()
     test_pixel_cell_apply_and_restore();
     test_flag_cell_apply_and_restore();
     test_entity_row_apply_and_restore();
+    test_map_layer_cell_apply_and_restore();
+    test_map_layer_other_layer_names_resolve();
+    test_map_layer_out_of_range_is_safe();
     test_stale_command_over_resized_document_is_safe();
     test_missing_region_is_a_noop();
 }
