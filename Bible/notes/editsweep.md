@@ -205,8 +205,20 @@ whole-layer copy; a dense map stroke copies kilobytes per tile.
         the right half is mirrored onto the left, so the result is symmetric
         and the mirror of a symmetric frame is itself.
         `<editsweep-d5s1>`
-  - [ ] D5.S1.4 Frame add / duplicate / delete / reorder over the sprite's
+  - [x] D5.S1.4 Frame add / duplicate / delete / reorder over the sprite's
         sequence, each one undoable.
+        **Landed.** The four edits are pure functions over the graphic JSON
+        in `studio/PixelFrameOps.{hpp,cpp}`: add a blank frame, copy a
+        frame's pixels under a new name, take a frame out of the sequence
+        (and out of the graphic when no anim names it), and swap a frame
+        with its neighbour. A structural change is one undoable snapshot of
+        the whole graphic, the way the entity edits take the whole array.
+        `<editsweep-d5s1>`
+  **D5.S1 landed** (all four steps): the sprite editor has the onion skin,
+        a live preview of its own sequence, the mirror, and the frame tools.
+        The render harness renders the sprite page, and the app's `--sprite`
+        and `--preview` flags put it in sprite mode with the preview running,
+        so the tools can be looked at.
   The structural edits are pure functions over the graphic JSON in
   `studio/PixelFrameOps.{hpp,cpp}`, so they are testable without Qt; the
   pixel canvas's undo stack takes the whole graphic as the snapshot for a

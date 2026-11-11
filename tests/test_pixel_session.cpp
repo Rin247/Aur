@@ -204,6 +204,66 @@ void test_sprite_anim_resolution()
     ASSERT(frames.size() == 2 && frames[0] == "a" && frames[1] == "b");
 }
 
+// D5.S1.4: the frame tools over a sprite's sequence. Add, duplicate, remove
+// and move are pure functions over the graphic JSON, so they are pinned
+// without a widget.
+void test_sprite_frame_tools()
+{
+    aur::Project p = make_project();
+    Json &g = p.graphics["sprited"];
+    const std::string anim = "walk_down";
+
+    // A free base is taken as it is; a taken one gets the lowest free suffix.
+    ASSERT(aur::editor::unique_frame_id(g["frames"], "down_9") == "down_9");
+    ASSERT(aur::editor::unique_frame_id(g["frames"], "down_0") == "down_0_2");
+    ASSERT(aur::editor::unique_frame_id(g["frames"], "down_1") == "down_1_2");
+
+    // Add: a blank frame of the graphic's size, at the end of the sequence.
+    std::string added;
+    ASSERT(aur::editor::add_frame(g, anim, "down_0", added));
+    ASSERT(added == "down_0_2");
+    ASSERT(g["frames"].contains(added));
+    ASSERT(g["frames"][added].as_array().size() == 2);
+    ASSERT(g["frames"][added].as_array()[0].as_string() == "..");
+    ASSERT(g["anims"][anim]["frames"].as_array().size() == 3);
+    ASSERT(g["anims"][anim]["frames"].as_array()[2].as_string() == added);
+
+    // Duplicate: the same pixels under a new name, after the source. The
+    // index is where the copy goes.
+    std::string copy;
+    ASSERT(aur::editor::duplicate_frame(g, anim, "down_0", 1, copy));
+    ASSERT(copy == "down_0_3");
+    ASSERT(g["frames"][copy].as_array()[0].as_string() == "10");
+    ASSERT(g["anims"][anim]["frames"].as_array().size() == 4);
+    ASSERT(g["anims"][anim]["frames"].as_array()[1].as_string() == copy);
+
+    // Move: the frame swaps with its neighbour in the sequence.
+    ASSERT(aur::editor::move_frame(g, anim, 0, 1));
+    ASSERT(g["anims"][anim]["frames"].as_array()[0].as_string() == copy);
+    ASSERT(g["anims"][anim]["frames"].as_array()[1].as_string() == "down_0");
+    // A move past the end is refused, and changes nothing.
+    const std::size_t before = g["anims"][anim]["frames"].as_array().size();
+    ASSERT(!aur::editor::move_frame(g, anim, static_cast<int>(before) - 1, 1));
+    ASSERT(g["anims"][anim]["frames"].as_array().size() == before);
+
+    // Remove: out of the sequence, and out of the graphic when no anim names
+    // it any more.
+    ASSERT(aur::editor::remove_frame(g, anim, added));
+    ASSERT(!g["frames"].contains(added));
+    ASSERT(g["anims"][anim]["frames"].as_array().size() == 3);
+    // A frame another anim still names stays in the graphic.
+    Json &other = p.graphics["other"];
+    other = JsonObject{
+        {"w", 2},
+        {"h", 2},
+        {"frames", JsonObject{{"keep", JsonArray{"11", "11"}}}},
+        {"anims", JsonObject{{"idle", JsonObject{{"frames", JsonArray{"keep"}}}}}},
+    };
+    ASSERT(aur::editor::remove_frame(g, anim, "down_0"));
+    ASSERT(!g["frames"].contains("down_0"));
+    ASSERT(other["frames"].contains("keep"));
+}
+
 // D5.S1.3: the mirror copies the right half of a frame onto its left half.
 // The right half is mirrored onto the left, so the result is symmetric
 // about the middle and the mirror of a symmetric frame is itself.

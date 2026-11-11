@@ -175,6 +175,21 @@ void PixelCanvasWidget::mirrorFrameRightToLeft() {
     update();
 }
 
+void PixelCanvasWidget::applyGraphicChange(const QString& label, const std::function<void(Json&)>& change) {
+    if (!project || !project->graphics.contains(graphic_id)) return;
+    Json &graphic = project->graphics[graphic_id];
+    auto command = std::make_unique<editor::SnapshotCommand>(label);
+    editor::RegionKey key;
+    key.kind = editor::RegionKey::Direct;
+    command->setRegion(key);
+    command->setDirect(&graphic);
+    command->setBefore(graphic);
+    change(graphic);
+    command->setAfter(graphic);
+    undo_stack->push(command.release());
+    update();
+}
+
 void PixelCanvasWidget::copyFrame() {
     if (!project || !project->graphics.contains(graphic_id)) return;
     const Json& graphic = project->graphics.at(graphic_id);
@@ -577,10 +592,29 @@ PixelEditorPanel::PixelEditorPanel(Project* p, QWidget* parent)
     mirrorButton = new QPushButton("Mirror ⇄", spriteTools);
     mirrorButton->setToolTip("Copy the right half of the frame onto its left half");
     spriteToolsLayout->addWidget(mirrorButton);
+    // D5.S1.4: the frame tools over the sprite's sequence.
+    addFrameButton = new QPushButton("+ Frame", spriteTools);
+    addFrameButton->setToolTip("Add an empty frame to the sprite");
+    duplicateFrameButton = new QPushButton("Duplicate", spriteTools);
+    duplicateFrameButton->setToolTip("Add a copy of the current frame");
+    deleteFrameButton = new QPushButton("Delete", spriteTools);
+    deleteFrameButton->setToolTip("Remove the current frame from the sprite");
+    moveFrameLeftButton = new QPushButton("◀", spriteTools);
+    moveFrameLeftButton->setToolTip("Move the frame earlier in the sequence");
+    moveFrameRightButton = new QPushButton("▶", spriteTools);
+    moveFrameRightButton->setToolTip("Move the frame later in the sequence");
+    for (QPushButton *button : {addFrameButton, duplicateFrameButton, deleteFrameButton,
+                                moveFrameLeftButton, moveFrameRightButton})
+        spriteToolsLayout->addWidget(button);
     spriteToolsLayout->addStretch(1);
     mainLayout->addWidget(spriteTools);
     connect(onionButton, &QPushButton::toggled, this, [this](bool) { updateOnionSkin(); });
     connect(mirrorButton, &QPushButton::clicked, canvas, &PixelCanvasWidget::mirrorFrameRightToLeft);
+    connect(addFrameButton, &QPushButton::clicked, this, &PixelEditorPanel::addFrame);
+    connect(duplicateFrameButton, &QPushButton::clicked, this, &PixelEditorPanel::duplicateFrame);
+    connect(deleteFrameButton, &QPushButton::clicked, this, &PixelEditorPanel::deleteFrame);
+    connect(moveFrameLeftButton, &QPushButton::clicked, this, [this] { moveFrame(-1); });
+    connect(moveFrameRightButton, &QPushButton::clicked, this, [this] { moveFrame(1); });
 
     auto* splitter = new QSplitter(Qt::Horizontal, this);
     auto* paletteDock = new QWidget(splitter);
@@ -816,6 +850,7 @@ void PixelEditorPanel::updateEditorMode(int mode) {
 }
 
 void PixelEditorPanel::refreshSpriteFrames() {
+    const QString previous = frameCombo->currentData().toString();
     frameCombo->blockSignals(true);
     frameCombo->clear();
     if (!project || graphicCombo->currentIndex() < 0) {
@@ -837,7 +872,13 @@ void PixelEditorPanel::refreshSpriteFrames() {
     previewFps = anim.fps > 0 ? anim.fps : 8;
     previewLoop = anim.loop;
     frameCombo->blockSignals(false);
-    if (frameCombo->count() > 0) {
+    // D5.S1.4: a frame that is still in the sequence keeps the selection, so
+    // adding or duplicating a frame does not jump back to the first.
+    const int previous_index = frameCombo->findData(previous);
+    if (previous_index >= 0) {
+        frameCombo->setCurrentIndex(previous_index);
+        canvas->setFrame(previous.toStdString());
+    } else if (frameCombo->count() > 0) {
         frameCombo->setCurrentIndex(0);
         canvas->setFrame(frameCombo->itemData(0).toString().toStdString());
     }
@@ -854,6 +895,84 @@ void PixelEditorPanel::updateOnionSkin() {
         index = frameCombo->currentIndex();
     }
     canvas->setOnionSkin(frames, index);
+}
+
+std::string PixelEditorPanel::spriteGraphicId() const {
+    if (!graphicCombo || graphicCombo->currentIndex() < 0) return {};
+    return graphicCombo->currentData().toString().toStdString();
+}
+
+std::string PixelEditorPanel::spriteAnimId() const {
+    if (!project) return {};
+    const auto anim = PixelEditSession::resolve_anim(
+        *project, spriteGraphicId(), directionCombo->currentText().toStdString(),
+        poseCombo->currentText().toStdString());
+    return anim.id;
+}
+
+std::string PixelEditorPanel::spriteFrameId() const {
+    if (!frameCombo || frameCombo->currentIndex() < 0) return {};
+    return frameCombo->currentData().toString().toStdString();
+}
+
+void PixelEditorPanel::selectSpriteFrame(const std::string& frame_id) {
+    const int index = frameCombo->findData(QString::fromStdString(frame_id));
+    if (index < 0) return;
+    frameCombo->setCurrentIndex(index);
+    canvas->setFrame(frame_id);
+}
+
+void PixelEditorPanel::addFrame() {
+    if (!project) return;
+    const std::string anim = spriteAnimId();
+    const std::string base = spriteFrameId();
+    std::string new_id;
+    canvas->applyGraphicChange(QStringLiteral("add frame"), [&](Json &graphic) {
+        editor::add_frame(graphic, anim, base, new_id);
+    });
+    refreshSpriteFrames();
+    if (!new_id.empty()) selectSpriteFrame(new_id);
+}
+
+void PixelEditorPanel::duplicateFrame() {
+    if (!project) return;
+    const std::string anim = spriteAnimId();
+    const std::string source = spriteFrameId();
+    if (source.empty()) return;
+    const int index = frameCombo->currentIndex();
+    std::string new_id;
+    canvas->applyGraphicChange(QStringLiteral("duplicate frame"), [&](Json &graphic) {
+        editor::duplicate_frame(graphic, anim, source, index + 1, new_id);
+    });
+    refreshSpriteFrames();
+    if (!new_id.empty()) selectSpriteFrame(new_id);
+}
+
+void PixelEditorPanel::deleteFrame() {
+    if (!project) return;
+    const std::string anim = spriteAnimId();
+    const std::string frame = spriteFrameId();
+    if (frame.empty()) return;
+    canvas->applyGraphicChange(QStringLiteral("delete frame"), [&](Json &graphic) {
+        editor::remove_frame(graphic, anim, frame);
+    });
+    refreshSpriteFrames();
+}
+
+void PixelEditorPanel::moveFrame(int delta) {
+    if (!project) return;
+    const std::string anim = spriteAnimId();
+    const int index = frameCombo->currentIndex();
+    if (anim.empty() || index < 0) return;
+    bool moved = false;
+    canvas->applyGraphicChange(QStringLiteral("move frame"), [&](Json &graphic) {
+        moved = editor::move_frame(graphic, anim, index, delta);
+    });
+    if (!moved) return;
+    refreshSpriteFrames();
+    const int moved_index = index + delta;
+    if (moved_index >= 0 && moved_index < frameCombo->count())
+        frameCombo->setCurrentIndex(moved_index);
 }
 
 void PixelEditorPanel::refreshAnimationData() {

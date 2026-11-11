@@ -16,6 +16,7 @@
 
 #include <QUndoStack>
 
+#include <functional>
 #include <memory>
 
 #include "aur/project.hpp"
@@ -67,6 +68,9 @@ public:
     void setOnionSkin(const std::vector<std::string>& frames, int current_index);
     // D5.S1.3: mirrors the right half of the current frame onto its left.
     void mirrorFrameRightToLeft();
+    // D5.S1.4: a structural change to the graphic (a frame added, moved or
+    // removed), recorded as one undoable snapshot of the whole graphic.
+    void applyGraphicChange(const QString& label, const std::function<void(Json&)>& change);
     void undo();
     void redo();
     void copyFrame();
@@ -104,6 +108,11 @@ class PixelEditorPanel : public QWidget {
     QWidget* spriteTools = nullptr;
     QPushButton* onionButton = nullptr;
     QPushButton* mirrorButton = nullptr;
+    QPushButton* addFrameButton = nullptr;
+    QPushButton* duplicateFrameButton = nullptr;
+    QPushButton* deleteFrameButton = nullptr;
+    QPushButton* moveFrameLeftButton = nullptr;
+    QPushButton* moveFrameRightButton = nullptr;
     QTimer* animationTimer = nullptr;
     std::vector<std::string> previewFrames;
     int previewFrameIndex = 0;
@@ -133,6 +142,16 @@ private:
     void updateEditorMode(int mode);
     // D5.S1.1: the frames the onion skin draws, from the frame list.
     void updateOnionSkin();
+    // D5.S1.4: the frame tools over the sprite's sequence.
+    void addFrame();
+    void duplicateFrame();
+    void deleteFrame();
+    void moveFrame(int delta);
+    // The graphic, the anim and the frame the sprite tools act on.
+    std::string spriteGraphicId() const;
+    std::string spriteAnimId() const;
+    std::string spriteFrameId() const;
+    void selectSpriteFrame(const std::string& frame_id);
 
 protected:
     void resizeEvent(QResizeEvent* event) override;
