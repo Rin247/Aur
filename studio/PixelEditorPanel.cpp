@@ -76,14 +76,14 @@ PixelCanvasWidget::PixelCanvasWidget(QWidget* parent) : QWidget(parent) {
     setMinimumSize(420, 320);
     setMouseTracking(true);
     setBackgroundRole(QPalette::Dark);
+    undo_stack = std::make_unique<QUndoStack>(this);
 }
 
 void PixelCanvasWidget::setGraphic(Project* p, const std::string& id) {
     stroke_pending = false;
     last_paint_pixel = {-1, -1};
     if (project != p || graphic_id != id) {
-        undo_frames.clear();
-        redo_frames.clear();
+        undo_stack->clear();
     }
     project = p;
     graphic_id = id;
@@ -99,14 +99,36 @@ void PixelCanvasWidget::setGraphic(Project* p, const std::string& id) {
     update();
 }
 
+// D4.S1b: the pixel frame is keyed by name, so the command targets the
+// frames[current_frame] array directly (RegionKey::Direct). Undo history is
+// shared across frames: switching frames does not clear the stack.
 void PixelCanvasWidget::pushUndo() {
     if (!project || !project->graphics.contains(graphic_id)) return;
-    const Json& frames = project->graphics.at(graphic_id)["frames"];
+    Json& frames = project->graphics[graphic_id]["frames"];
     if (!frames.is_object() || !frames.contains(current_frame)) return;
-    auto& stack = undo_frames[current_frame];
-    stack.push_back(frames[current_frame]);
-    if (stack.size() > 100) stack.erase(stack.begin());
-    redo_frames[current_frame].clear();
+    Json& rows = frames[current_frame];
+    auto command = std::make_unique<editor::SnapshotCommand>(QStringLiteral("paint pixels"));
+    editor::RegionKey key;
+    key.kind = editor::RegionKey::Direct;
+    command->setRegion(key);
+    command->setDirect(&rows);
+    command->setBefore(rows);
+    pending_open = true;
+    pending_command = std::move(command);
+}
+
+void PixelCanvasWidget::finishUndo() {
+    if (!pending_open || !pending_command || !project ||
+        !project->graphics.contains(graphic_id)) {
+        pending_open = false;
+        pending_command.reset();
+        return;
+    }
+    Json& rows = project->graphics[graphic_id]["frames"][current_frame];
+    pending_command->setAfter(rows);
+    undo_stack->push(pending_command.release());
+    pending_open = false;
+    pending_command.reset();
 }
 
 void PixelCanvasWidget::restoreFrame(const Json& rows) {
@@ -116,26 +138,21 @@ void PixelCanvasWidget::restoreFrame(const Json& rows) {
 }
 
 void PixelCanvasWidget::undo() {
-    auto& stack = undo_frames[current_frame];
-    if (stack.empty() || !project || !project->graphics.contains(graphic_id)) return;
-    redo_frames[current_frame].push_back(project->graphics[graphic_id]["frames"][current_frame]);
-    const Json rows = stack.back();
-    stack.pop_back();
-    restoreFrame(rows);
+    if (undo_stack->canUndo()) {
+        undo_stack->undo();
+        update();
+    }
 }
 
 void PixelCanvasWidget::redo() {
-    auto& stack = redo_frames[current_frame];
-    if (stack.empty() || !project || !project->graphics.contains(graphic_id)) return;
-    undo_frames[current_frame].push_back(project->graphics[graphic_id]["frames"][current_frame]);
-    const Json rows = stack.back();
-    stack.pop_back();
-    restoreFrame(rows);
+    if (undo_stack->canRedo()) {
+        undo_stack->redo();
+        update();
+    }
 }
 
 void PixelCanvasWidget::clearHistory() {
-    undo_frames.clear();
-    redo_frames.clear();
+    undo_stack->clear();
 }
 
 void PixelCanvasWidget::copyFrame() {
@@ -161,6 +178,7 @@ void PixelCanvasWidget::cutFrame() {
         blank.emplace_back(std::string(static_cast<size_t>(graphic["w"].as_int()), '.'));
     }
     restoreFrame(blank);
+    finishUndo();
 }
 
 void PixelCanvasWidget::pasteFrame() {
@@ -190,6 +208,7 @@ void PixelCanvasWidget::pasteFrame() {
     }
     pushUndo();
     restoreFrame(rows);
+    finishUndo();
 }
 
 void PixelCanvasWidget::resizeForGraphic() {
@@ -417,6 +436,10 @@ void PixelCanvasWidget::mouseMoveEvent(QMouseEvent* event) {
         paintStroke(last_paint_pixel, pixel);
         last_paint_pixel = pixel;
     }
+}
+
+void PixelCanvasWidget::mouseReleaseEvent(QMouseEvent* event) {
+    if (event->button() == Qt::LeftButton && pending_open) finishUndo();
 }
 
 void PixelCanvasWidget::leaveEvent(QEvent* event) {

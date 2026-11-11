@@ -13,9 +13,14 @@
 #include <QScrollArea>
 #include <QSize>
 #include <QTimer>
-#include <map>
-#include <vector>
+
+#include <QUndoStack>
+
+#include <memory>
+
 #include "aur/project.hpp"
+
+#include "UndoCommands.hpp"
 
 namespace aur {
 
@@ -30,18 +35,19 @@ class PixelCanvasWidget : public QWidget {
     bool auto_zoom = true;
     QSize available_viewport{1280, 720};
     QPoint hover_pixel{-1, -1};
-    // Per-frame undo history (editsweep D1.S3): history survives frame
-    // switches and animation preview, keyed by frame id. The previous
-    // whole-stack vectors were wiped by setFrame, destroying undo on every
-    // animation tick.
-    std::map<std::string, std::vector<Json>> undo_frames;
-    std::map<std::string, std::vector<Json>> redo_frames;
+    // D4.S1b: one QUndoStack whose commands target the live frame array
+    // (RegionKey::Direct); history survives frame switches and animation
+    // preview, since setFrame no longer touches it.
+    std::unique_ptr<QUndoStack> undo_stack;
+    std::unique_ptr<editor::SnapshotCommand> pending_command;
     QPoint last_paint_pixel{-1, -1};  // previous stroke pixel, for interpolation
     bool stroke_pending = false;      // stroke began; push undo on first real change
+    bool pending_open = false;        // a stroke's snapshot waits for finishUndo
 
     bool paintAt(const QPoint& pixel);  // returns true when pixels changed
     void resizeForGraphic();
     void pushUndo();
+    void finishUndo();
     void restoreFrame(const Json& rows);
 
 public:
@@ -63,6 +69,7 @@ protected:
     void paintEvent(QPaintEvent* event) override;
     void mousePressEvent(QMouseEvent* event) override;
     void mouseMoveEvent(QMouseEvent* event) override;
+    void mouseReleaseEvent(QMouseEvent* event) override;
     void paintStroke(const QPoint& from, const QPoint& to);
     void leaveEvent(QEvent* event) override;
 

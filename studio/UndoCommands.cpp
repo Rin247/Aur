@@ -29,6 +29,8 @@ namespace aur::editor
             Json &row = layer[static_cast<size_t>(region.row)];
             return row.is_array() ? &row : nullptr;
         }
+        case RegionKey::Direct:
+            return const_cast<Json *>(m_direct);
         case RegionKey::MapEntities:
             return m_document->contains("entities") && (*m_document)["entities"].is_array()
                        ? &(*m_document)["entities"]

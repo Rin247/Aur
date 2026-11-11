@@ -38,7 +38,10 @@ namespace aur::editor
             MapLayer = 0,
             MapEntities = 1,
             GraphicPixels = 2,
-            TileFlags = 3
+            TileFlags = 3,
+            // The document pointer IS the target array (used by editors whose
+            // regions are keyed by name, like the pixel frames).
+            Direct = 4
         };
     };
 
@@ -54,6 +57,8 @@ namespace aur::editor
         void setRegion(RegionKey region) { m_region = region; }
         RegionKey region() const { return m_region; }
         void setDocument(Json *document) { m_document = document; }
+        // For kind Direct: the target array itself.
+        void setDirect(Json *target) { m_direct = target; }
 
         void redo() override { apply(/*after=*/true); }
         void undo() override { apply(/*after=*/false); }
@@ -68,6 +73,7 @@ namespace aur::editor
         RegionKey m_region;
         std::vector<CellDiff> m_diffs;
         Json *m_document = nullptr;
+        Json *m_direct = nullptr; // Direct kind: the target array
     };
 
     // A whole-region snapshot command: the transitional form the editors use
