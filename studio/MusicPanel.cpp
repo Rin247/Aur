@@ -1,27 +1,47 @@
 #include "MusicPanel.hpp"
 #include "music/SongLibrary.hpp"
+
 #include "music/VelocityLaneStrip.hpp"
+
 #include "music/ArrangementCanvas.hpp"
+
 #include "music/ScaleSelector.hpp"
+
 #include "aur/audio/midi.hpp"
+
 #include "aur/audio/synth.hpp"
+
 #include "aur/audio/SongDocument.hpp"
+
 #include "aur/audio/Effect.hpp"
 
 #include <QFile>
 #include <QFileDialog>
+
 #include <QFileInfo>
+
 #include <QCompleter>
+
 #include <QFormLayout>
+
 #include <QHeaderView>
+
 #include <QInputDialog>
+
 #include <QMessageBox>
+
 #include <QScrollBar>
+
 #include <QSignalBlocker>
+
 #include <QStringList>
+
 #include <QTimer>
+
 #include <QUrl>
+
 #include <array>
+
 #include <algorithm>
 
 namespace aur
@@ -82,10 +102,7 @@ namespace aur
         if (!song || !pianoRoll || !pianoRoll->canUndo())
             return false;
         pianoRoll->undo();
-        if (project && !currentSongId.isEmpty())
-            project->music[currentSongId.toStdString()] = *song;
-        updateTrackProperties();
-        refreshTracks();
+        commitSongEdit(*song);
         return true;
     }
 
@@ -95,11 +112,16 @@ namespace aur
         if (!song || !pianoRoll || !pianoRoll->canRedo())
             return false;
         pianoRoll->redo();
+        commitSongEdit(*song);
+        return true;
+    }
+
+    void MusicPanel::commitSongEdit(const Json &song)
+    {
         if (project && !currentSongId.isEmpty())
-            project->music[currentSongId.toStdString()] = *song;
+            project->music[currentSongId.toStdString()] = song;
         updateTrackProperties();
         refreshTracks();
-        return true;
     }
 
     void MusicPanel::setProject(Project *p)
@@ -172,6 +194,9 @@ namespace aur
         trackList->setCurrentRow(selectedTrack);
         pianoRoll->setSong(*song, selectedTrack); velocityStrip->setSong(*song, selectedTrack);
         arrangementCanvas->setSong(*song);
+        stepCanvas->setSong(*song);
+        stepCanvas->setSourceTrack(selectedTrack);
+        groovePanel->setSong(*song);
     syncScaleSelector(*song);
         updateTrackProperties();
         updatingControls = false;
@@ -466,19 +491,25 @@ namespace aur
         midiSession->stopOutput();
     }
 
-    void MusicPanel::playArrangement()
+    bool MusicPanel::flattenedArrangement(Json &flat) const
     {
         const Json *song = currentSong();
         if (!song)
-            return;
-        const Json flat = audio::SongDocument::flatten_arrangement(*song);
-        bool any = false;
-        if (flat.contains("tracks") && flat["tracks"].is_array())
-            for (const Json &track : flat["tracks"].as_array())
-                if (track.contains("notes") && track["notes"].is_array() &&
-                    !track["notes"].as_array().empty())
-                    any = true;
-        if (!any)
+            return false;
+        flat = audio::SongDocument::flatten_arrangement(*song);
+        if (!flat.contains("tracks") || !flat["tracks"].is_array())
+            return false;
+        for (const Json &track : flat["tracks"].as_array())
+            if (track.contains("notes") && track["notes"].is_array() &&
+                !track["notes"].as_array().empty())
+                return true;
+        return false;
+    }
+
+    void MusicPanel::playArrangement()
+    {
+        Json flat;
+        if (!flattenedArrangement(flat))
         {
             QMessageBox::information(this, "Arrangement",
                                      "The arrangement is empty — place clips first.");
@@ -494,16 +525,8 @@ namespace aur
     void MusicPanel::exportArrangementMidi()
     {
         const Json *song = currentSong();
-        if (!song)
-            return;
-        const Json flat = audio::SongDocument::flatten_arrangement(*song);
-        bool any = false;
-        if (flat.contains("tracks") && flat["tracks"].is_array())
-            for (const Json &track : flat["tracks"].as_array())
-                if (track.contains("notes") && track["notes"].is_array() &&
-                    !track["notes"].as_array().empty())
-                    any = true;
-        if (!any)
+        Json flat;
+        if (!song || !flattenedArrangement(flat))
         {
             QMessageBox::information(this, "Arrangement MIDI",
                                      "The arrangement is empty — nothing to export.");
@@ -786,39 +809,15 @@ MusicPanel::MusicPanel(Project* p, QWidget* parent)
     midiBar->addWidget(midiStatusLabel, 1);
     layout->addLayout(midiBar);
 
-    // Master FX chain strip (P8.3): keyboard-navigable add/remove/bypass.
-    auto* fxBar = new QHBoxLayout();
-    fxBar->addWidget(new QLabel("Master FX:", this));
-    fxTypeCombo = new QComboBox(this);
-    for (int i = 0; i < int(audio::EffectId::Count); ++i)
-        fxTypeCombo->addItem(audio::effectName(audio::EffectId(i)));
-    fxTypeCombo->setToolTip("Effect to append to the master chain (applies to preview and export).");
-    fxBar->addWidget(fxTypeCombo);
-    fxAddButton = new QPushButton("Add", this);
-    fxBar->addWidget(fxAddButton);
-    fxBypassButton = new QPushButton("Bypass", this);
-    fxBypassButton->setEnabled(false);
-    fxBypassButton->setToolTip("Toggle bypass on the selected chain slot (no DSP, bit-exact).");
-    fxBar->addWidget(fxBypassButton);
-    fxUpButton = new QPushButton("Up", this);
-    fxUpButton->setEnabled(false);
-    fxBar->addWidget(fxUpButton);
-    fxDownButton = new QPushButton("Down", this);
-    fxDownButton->setEnabled(false);
-    fxBar->addWidget(fxDownButton);
-    fxRemoveButton = new QPushButton("Remove", this);
-    fxRemoveButton->setEnabled(false);
-    fxBar->addWidget(fxRemoveButton);
-    fxStatusLabel = new QLabel("No master effects", this);
-    fxStatusLabel->setStyleSheet("color: #aeb8c2;");
-    fxBar->addWidget(fxStatusLabel, 1);
-    layout->addLayout(fxBar);
-
-    // Chain slots list: one row per effect, select to bypass/remove/reorder.
-    fxChainList = new QListWidget(this);
-    fxChainList->setMaximumHeight(88);
-    fxChainList->setToolTip("Master effect chain, top processes first. Select a slot to modify it.");
-    layout->addWidget(fxChainList);
+    // Master FX chain strip (P8.3), now its own widget.
+    fxStrip = new FxChainStrip(this);
+    connect(fxStrip, &FxChainStrip::chainChanged, this, [this]() {
+        Json *song = currentSong();
+        if (!song) return;
+        audio::SongDocument::set_effect_chain(*song, fxStrip->chain());
+        saveCurrentSong(*song);
+    });
+    layout->addWidget(fxStrip);
 
     auto* presetBar = new QHBoxLayout();
     presetBar->addWidget(new QLabel("Quick Compose:", this));
@@ -1039,6 +1038,42 @@ MusicPanel::MusicPanel(Project* p, QWidget* parent)
     arrangeLayout->addWidget(arrangeHint);
     editorTabs->addTab(arrangePage, "Arrangement");
 
+    // Step Sequencer tab: the 128-step grid over the groovebox strip.
+    auto *stepPage = new QWidget(editorTabs);
+    auto *stepLayout = new QVBoxLayout(stepPage);
+    groovePanel = new GrooveBoxPanel(stepPage);
+    groovePanel->setChangeCallback([this](const Json &song) { saveCurrentSong(song); });
+    connect(groovePanel, &GrooveBoxPanel::historyChanged, this, [this]() {
+        emit undoStateChanged(pianoRoll && pianoRoll->canUndo(),
+                              pianoRoll && pianoRoll->canRedo());
+    });
+    groovePanel->setTransportHook([this](bool play) {
+        if (play)
+            playPreview();
+        else
+            stopPreview();
+    });
+    stepLayout->addWidget(groovePanel);
+    stepCanvas = new StepSequencerCanvas(stepPage);
+    stepCanvas->setHistory(&songHistory);
+    stepCanvas->setChangeCallback([this](const Json &song) { saveCurrentSong(song); });
+    stepCanvas->setAuditionHook([this](int pitch, int velocity) {
+        audioOutput->getMixer().audition(pitch, velocity, 2);
+    });
+    connect(stepCanvas, &StepSequencerCanvas::historyChanged, this, [this]() {
+        emit undoStateChanged(pianoRoll && pianoRoll->canUndo(),
+                              pianoRoll && pianoRoll->canRedo());
+    });
+    stepLayout->addWidget(stepCanvas, 1);
+    auto *stepHint = new QLabel(
+        "Step Sequencer — click a cell to toggle it · drag to paint · Ctrl+click accents · "
+        "right-click clears · arrow keys move · Space toggles · Page Up/Down transposes",
+        stepPage);
+    stepHint->setStyleSheet("color: #aeb5c5; padding: 3px;");
+    stepHint->setWordWrap(true);
+    stepLayout->addWidget(stepHint);
+    editorTabs->addTab(stepPage, "Step Sequencer");
+
     splitter->addWidget(editorTabs);
     splitter->setSizes({270, 1300});
     layout->addWidget(splitter, 1);
@@ -1112,6 +1147,7 @@ MusicPanel::MusicPanel(Project* p, QWidget* parent)
         if (Json* song = currentSong()) {
             pianoRoll->setSong(*song, selectedTrack); velocityStrip->setSong(*song, selectedTrack);
         arrangementCanvas->setSong(*song);
+        stepCanvas->setSourceTrack(selectedTrack);
     syncScaleSelector(*song);
             updateTrackProperties();
         }
@@ -1269,59 +1305,8 @@ MusicPanel::MusicPanel(Project* p, QWidget* parent)
     midiSession->refreshDevices(midiInputCombo, midiOutputCombo);
     refreshSongs();
 
-    // Master FX chain strip behaviour (P8.3). All actions rewrite the song's
-    // effects key and rebuild; the audio thread picks the chain up at the next
-    // command boundary.
-    connect(fxAddButton, &QPushButton::clicked, this, [this]() {
-        Json *song = currentSong();
-        if (!song) return;
-        auto chain = currentChain();
-        audio::SongDocument::EffectSlot slot;
-        slot.type = fxTypeCombo->currentText().toStdString();
-        chain.push_back(slot);
-        writeChain(chain);
-        refreshFxChain();
-    });
-    connect(fxRemoveButton, &QPushButton::clicked, this, [this]() {
-        const int row = fxChainList->currentRow();
-        if (row < 0) return;
-        auto chain = currentChain();
-        if (row >= int(chain.size())) return;
-        chain.erase(chain.begin() + row);
-        writeChain(chain);
-        refreshFxChain();
-    });
-    connect(fxBypassButton, &QPushButton::clicked, this, [this]() {
-        const int row = fxChainList->currentRow();
-        if (row < 0) return;
-        auto chain = currentChain();
-        if (row >= int(chain.size())) return;
-        chain[size_t(row)].bypass = !chain[size_t(row)].bypass;
-        writeChain(chain);
-        refreshFxChain();
-    });
-    auto moveSlot = [this](int delta) {
-        const int row = fxChainList->currentRow();
-        if (row < 0) return;
-        const int target = row + delta;
-        auto chain = currentChain();
-        if (target < 0 || target >= int(chain.size())) return;
-        std::swap(chain[size_t(row)], chain[size_t(target)]);
-        writeChain(chain);
-        refreshFxChain();
-        fxChainList->setCurrentRow(target);
-    };
-    connect(fxUpButton, &QPushButton::clicked, this, [moveSlot]() { moveSlot(-1); });
-    connect(fxDownButton, &QPushButton::clicked, this, [moveSlot]() { moveSlot(1); });
-    connect(fxChainList, &QListWidget::itemSelectionChanged, this, [this]() {
-        const int row = fxChainList->currentRow();
-        const bool has = row >= 0;
-        fxBypassButton->setEnabled(has);
-        fxRemoveButton->setEnabled(has);
-        fxUpButton->setEnabled(has && row > 0);
-        fxDownButton->setEnabled(has && row < fxChainList->count() - 1);
-    });
-    // Level/budget readout while playing.
+    // Master FX chain strip behaviour lives in FxChainStrip; the panel feeds
+    // it the song and shows the level readout while playing.
     auto* fxTimer = new QTimer(this);
     connect(fxTimer, &QTimer::timeout, this, [this]() {
         if (!audioOutput->isPlaying()) return;
@@ -1329,8 +1314,7 @@ MusicPanel::MusicPanel(Project* p, QWidget* parent)
         const double l = mixer.chainLevelLeft.load(std::memory_order_relaxed);
         const double r = mixer.chainLevelRight.load(std::memory_order_relaxed);
         const long long budget = mixer.chainBudget.load(std::memory_order_relaxed);
-        fxStatusLabel->setText(QString("post-FX L %1% R %2% | chain cost %3")
-                                   .arg(int(l * 100)).arg(int(r * 100)).arg(budget));
+        fxStrip->updateMeters(l, r, budget);
     });
     fxTimer->start(100);
 }
@@ -1357,20 +1341,8 @@ void MusicPanel::writeChain(const std::vector<audio::SongDocument::EffectSlot> &
 
 void MusicPanel::refreshFxChain()
 {
-    const int selected = fxChainList->currentRow();
-    fxChainList->clear();
-    const auto chain = currentChain();
-    for (const auto &slot : chain)
-    {
-        QString text = QString::fromStdString(slot.type);
-        if (slot.bypass) text += " (bypassed)";
-        fxChainList->addItem(text);
-    }
-    if (chain.empty())
-        fxStatusLabel->setText("No master effects");
-    else
-        fxStatusLabel->setText(QString("%1 effect(s) in the master chain").arg(int(chain.size())));
-    fxChainList->setCurrentRow(std::min<int>(selected, int(chain.size()) - 1));
+    const Json *song = currentSong();
+    fxStrip->setSong(song);
 }
 
 } // namespace aur

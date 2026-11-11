@@ -19,9 +19,8 @@ namespace aur::editor
     void SongHistory::commit_note_edit(Json &song, int trackIndex,
                                        std::string label)
     {
-        // Callers mutate the notes array FIRST, then commit here: this
-        // snapshots the current (post-edit) notes as `after` and expects the
-        // matching `before` to have been captured by begin_note_edit().
+        // Callers mutate the notes array FIRST, then commit here: this snapshots
+        // the current (post-edit) notes as `after`; `before` comes from begin_note_edit().
         SongAction action;
         action.kind = SongAction::Kind::NoteEdit;
         action.track_index = trackIndex;
@@ -56,11 +55,40 @@ namespace aur::editor
         stack_.push_undo(std::move(action));
     }
 
+    void SongHistory::begin_groovebox_edit(Json &song)
+    {
+        pendingGrooveBefore = groovebox_state(song);
+    }
+
+    void SongHistory::commit_groovebox_change(Json &song, std::string label)
+    {
+        SongAction action;
+        action.kind = SongAction::Kind::Groovebox;
+        action.track_index = -1;
+        action.label = std::move(label);
+        action.before = std::move(pendingGrooveBefore);
+        pendingGrooveBefore = Json{};
+        action.after = groovebox_state(song);
+        stack_.push_undo(std::move(action));
+    }
+
+    Json SongHistory::groovebox_state(Json &song)
+    {
+        Json state;
+        state["step_patterns"] = song.contains("step_patterns")
+                                     ? song["step_patterns"]
+                                     : Json(JsonArray{});
+        state["groovebox"] = song.contains("groovebox") ? song["groovebox"] : Json(JsonObject{});
+        return state;
+    }
+
     Json SongHistory::current_state(Json &song, const SongAction &action)
     {
-        return (action.kind == SongAction::Kind::NoteEdit)
-            ? Json(track_notes(song, action.track_index))
-            : Json(song["tracks"][static_cast<size_t>(action.track_index)]);
+        if (action.kind == SongAction::Kind::NoteEdit)
+            return Json(track_notes(song, action.track_index));
+        if (action.kind == SongAction::Kind::Groovebox)
+            return groovebox_state(song);
+        return Json(song["tracks"][static_cast<size_t>(action.track_index)]);
     }
 
     void SongHistory::apply_payload(Json &song, const SongAction &action,
@@ -73,6 +101,14 @@ namespace aur::editor
 
     void SongHistory::apply(Json &song, const SongAction &action)
     {
+        if (action.kind == SongAction::Kind::Groovebox)
+        {
+            if (action.after.contains("step_patterns"))
+                song["step_patterns"] = action.after["step_patterns"];
+            if (action.after.contains("groovebox"))
+                song["groovebox"] = action.after["groovebox"];
+            return;
+        }
         if (action.track_index < 0 ||
             !song.contains("tracks") || !song["tracks"].is_array() ||
             action.track_index >= static_cast<int>(song["tracks"].as_array().size()))

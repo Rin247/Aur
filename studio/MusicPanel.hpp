@@ -2,30 +2,59 @@
 
 #include <QWidget>
 #include <QComboBox>
+
 #include <QListWidget>
+
 #include <QPushButton>
+
 #include <QVBoxLayout>
+
 #include <QHBoxLayout>
+
 #include <QSplitter>
+
 #include <QLabel>
+
 #include <QScrollArea>
+
 #include <QSpinBox>
+
 #include <QLineEdit>
+
 #include <QTabWidget>
+
 #include <QTableWidget>
+
 #include <QString>
+
 #include <functional>
+
 #include <map>
+
 #include "music/MidiSession.hpp"
+
 #include "music/PianoRollCanvas.hpp"
+
 #include "music/VelocityLaneStrip.hpp"
+
 #include "music/ArrangementCanvas.hpp"
-#include "music/ArrangementCanvas.hpp"
+
 #include "music/ScaleSelector.hpp"
+
 #include "music/ClipLauncherStates.hpp"
+
 #include "music/QtAudioOutput.hpp"
+
+#include "music/FxChainStrip.hpp"
+
+#include "music/StepSequencerCanvas.hpp"
+
+#include "music/GrooveBoxPanel.hpp"
+
 #include "SongHistory.hpp"
+
 #include "aur/audio/RealtimeMixer.hpp"
+
 #include "aur/project.hpp"
 
 namespace aur
@@ -65,17 +94,11 @@ namespace aur
         QPushButton *recordMidiButton = nullptr;
         QSpinBox *countInBarsSpin = nullptr;
         QLabel *midiStatusLabel = nullptr;
-        // Master FX chain strip (P8.3). One combo picks the effect type, the
-        // list shows the chain with bypass/remove buttons, and the label shows
-        // post-chain level + CPU budget while playing.
-        QComboBox *fxTypeCombo = nullptr;
-        QListWidget *fxChainList = nullptr;
-        QPushButton *fxAddButton = nullptr;
-        QPushButton *fxBypassButton = nullptr;
-        QPushButton *fxRemoveButton = nullptr;
-        QPushButton *fxUpButton = nullptr;
-        QPushButton *fxDownButton = nullptr;
-        QLabel *fxStatusLabel = nullptr;
+        // Master FX chain strip (P8.3) lives in its own widget.
+        FxChainStrip *fxStrip = nullptr;
+        // Groovebox layer: the 128-step grid and the performance strip.
+        StepSequencerCanvas *stepCanvas = nullptr;
+        GrooveBoxPanel *groovePanel = nullptr;
         audio::QtAudioOutput *audioOutput = nullptr;
         MidiSession *midiSession = nullptr;
         editor::SongHistory songHistory;
@@ -98,12 +121,14 @@ namespace aur
         std::vector<audio::SongDocument::EffectSlot> currentChain() const;
         void writeChain(const std::vector<audio::SongDocument::EffectSlot> &chain);
         void refreshSessionGrid();
+        void refreshGroovebox();
         void toggleClip(int sceneIndex, int trackIndex);
         Json makeScenePreview(int sceneIndex);
         void playPreview(const Json *previewSong = nullptr);
         void stopPreview();
         void playArrangement();
         void exportArrangementMidi();
+        bool flattenedArrangement(Json &flat) const;
         void importMidi();
         void exportMidi();
 
@@ -115,6 +140,7 @@ namespace aur
         void generateQuickSong(const std::string &style);
         bool undoSongEdit();
         bool redoSongEdit();
+        void commitSongEdit(const Json &song);
 
     signals:
         void undoStateChanged(bool canUndo, bool canRedo);

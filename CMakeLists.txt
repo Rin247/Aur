@@ -93,6 +93,12 @@ add_executable(aur_studio
     studio/music/SongLibrary.hpp
     studio/music/QtAudioOutput.cpp
     studio/music/QtAudioOutput.hpp
+    studio/music/FxChainStrip.cpp
+    studio/music/FxChainStrip.hpp
+    studio/music/StepSequencerCanvas.cpp
+    studio/music/StepSequencerCanvas.hpp
+    studio/music/GrooveBoxPanel.cpp
+    studio/music/GrooveBoxPanel.hpp
     studio/SongHistory.cpp
     studio/MapEditorPanel.cpp
     studio/DatabasePanel.cpp
