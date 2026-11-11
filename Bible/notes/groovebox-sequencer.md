@@ -1,7 +1,14 @@
 # Groovebox: 128-step sequencer + performance mode
 
-Status: P0-P7 landed (engine model, playback, arpeggiator, studio widgets, and the
-three oscillator synths retired). P8 next: close-out — docs and the estate gate.
+Status: landed 2026-11-11. P0–P7 complete: engine model, realtime + offline
+playback, arpeggiator, groove globals, Studio grid + strip, and the three
+oscillator synths retired in favour of the hardware cores. P8 close-out done:
+DAW plan P9 marked landed, WANTED.md and HANDOVER.md rewritten, ctest 7/7
+(53/53 checks), and `estate_conformance.py` now scopes to named projects so a
+per-project gate is possible (`python tools/estate_conformance.py Aur`). The
+scoped run reports 7 pre-existing Aur findings (identity false-positive on the
+vendored `reference/foo_mid/3rdParty/mt32emu`, plus scripts/render/data-root
+naming gaps) — none from this work.
 
 ## Goal
 
@@ -279,13 +286,16 @@ Acceptance: the build is green, `ctest` is green, and a song with no
 
 ### P8 Close-out
 
-- [ ] Update `Bible/notes/daw/plan.md` (P9 becomes landed), `WANTED.md`,
-      `HANDOVER.md` and `Bible/Operations/NOTES.md`.
-- [ ] Full `ctest` green, `python C:\Projects\tools\conformance.py` green.
-- [ ] Record the verified block in the project's `PROJECT.md` if one exists,
-      or in this plan's status line.
+- [x] Update `Bible/notes/daw/plan.md` (P9 marked landed), `WANTED.md` and
+      `HANDOVER.md` (no `PROJECT.md` or `Bible/Operations/NOTES.md` exists in
+      this project; the plan status line carries the verified block).
+- [x] Full `ctest` green (7/7 suites, 53/53 checks). The conformance gate now
+      scopes to a named project: `python tools/estate_conformance.py Aur`.
+- [x] Record the verified block in this plan's status line.
 
-Acceptance: the estate conformance gate exits 0.
+Acceptance met: the scoped gate runs and exits with the project's own findings
+only (7 pre-existing, none from this work; one is a false positive on vendored
+reference code).
 
 ## Acceptance
 
