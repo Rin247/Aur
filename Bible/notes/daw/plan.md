@@ -8,8 +8,11 @@ P6.5–P6.7 arrangement placements, canvas, playback/export landed (`259ecb0`,
 `Bible/notes/daw/effects.md` in history. P9 (step sequencer + arpeggiator)
 landed 2026-11-11 under the `groovebox` initiative; the three oscillator
 synths (Gm/Fm/RetroPsg) were retired the same day — the preview path now runs
-through the hardware cores only. Next: P7a GM/GS instrument, with P5
-lane-editor polish remaining. P2 close still awaits the owner GUI soak.
+through the hardware cores only. The P5 remainder closed 2026-11-11: the
+key/scale selector UI and id-stable selection were already landed (`P5.9`,
+`MusicPanel` wires `ScaleSelector`; `NoteIndex` converts index selections to
+stable ids across edits), and `test_note_index.cpp` now covers the mapping.
+Next: P7a GM/GS instrument. P2 close still awaits the owner GUI soak.
 
 Master plan for the Music Studio DAW initiative, seeded from the owner-supplied
 gameplan and corrected by a source audit on 2026-11-06. One note file per major

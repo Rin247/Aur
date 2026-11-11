@@ -43,6 +43,7 @@ void test_song_v2_migration();
 void test_midi_fidelity();
 void test_song_history();
 void test_note_props();
+void test_note_index();
 void test_song_clips();
 void test_automation_lanes();
 void test_clip_launcher();
@@ -132,6 +133,7 @@ int main(int argc, char** argv) {
     RUN_TEST(test_midi_fidelity);
     RUN_TEST(test_song_history);
     RUN_TEST(test_note_props);
+    RUN_TEST(test_note_index);
     RUN_TEST(test_song_clips);
     RUN_TEST(test_automation_lanes);
     RUN_TEST(test_clip_launcher);

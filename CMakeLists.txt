@@ -180,6 +180,7 @@ add_executable(aur_tests
     tests/test_automation_lanes.cpp
     tests/test_clip_launcher.cpp
     tests/test_arrangement.cpp
+    tests/test_note_index.cpp
     tests/test_pixel_session.cpp
     tests/test_weather_render.cpp
     tests/test_step_sequencer.cpp
