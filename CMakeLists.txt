@@ -48,6 +48,7 @@ add_library(aur_engine STATIC
     engine/aur/audio/EffectChain.cpp
     engine/aur/audio/StepSequencer.cpp
     engine/aur/audio/Arpeggiator.cpp
+    engine/aur/audio/Sf2Core.cpp
 )
 target_include_directories(aur_engine PUBLIC engine)
 
@@ -181,6 +182,8 @@ add_executable(aur_tests
     tests/test_clip_launcher.cpp
     tests/test_arrangement.cpp
     tests/test_note_index.cpp
+    tests/Sf2Fixture.cpp
+    tests/test_sf2.cpp
     tests/test_pixel_session.cpp
     tests/test_weather_render.cpp
     tests/test_step_sequencer.cpp
