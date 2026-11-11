@@ -59,29 +59,29 @@ This source-inspection audit records unresolved editor gaps; recheck current cod
 ### One-page asset graph
 ```text
 Project (shared in-memory object in MainWindow)
-â”œâ”€ tilesets.json -> Project::tilesets
-â”‚  â””â”€ tileset: tile size, palettes[], tiles[{name, rows, pal, flags, optional anim/fps}]
-â”‚     â”œâ”€ Tileset Editor: tileset selector + currently unpopulated QListWidget + disconnected flag checkboxes
-â”‚     â”œâ”€ Map Editor: map.layers ground/objects/above store integer tile indices only;
-â”‚     â”‚              tile preview resolves index -> selected map tileset pixels/palette;
-â”‚     â”‚              Collision Overlay asks Project::tile_flags for ground/object indices
-â”‚     â””â”€ Forge: seeded generated tile appended into selected tileset; displays a temporary graphic preview
-â”œâ”€ graphics.json -> Project::graphics
-â”‚  â””â”€ graphic: w/h, frames{frame-id: indexed pixel rows}, palette[<=16], origin, anims{frames,fps,loop}
-â”‚     â”œâ”€ Pixel Editor: selects any graphic; edits frame pixels and locally owns palette/frame/animation selections
-â”‚     â”œâ”€ Sprite Editor: selects character/enemy/animated graphics; derives candidate frames from anims,
-â”‚     â”‚                 direction, pose; locally owns selections and a separate local pixel undo stack
-â”‚     â””â”€ Forge: seeded generation produces character/creature/effect/clothing/prop graphics in this store;
-â”‚              character/enemy/item records link to graphics; generated tiles instead live in tilesets
-â”œâ”€ events.json -> Project::events -> Event Scripting lists event IDs (editor is currently a sample/mock UI)
-â””â”€ maps/*.json -> Project::maps -> entities may contain event command data, but Map Inspector's Event ID
+├─ tilesets.json -> Project::tilesets
+│  └─ tileset: tile size, palettes[], tiles[{name, rows, pal, flags, optional anim/fps}]
+│     ├─ Tileset Editor: tileset selector + currently unpopulated QListWidget + disconnected flag checkboxes
+│     ├─ Map Editor: map.layers ground/objects/above store integer tile indices only;
+│     │              tile preview resolves index -> selected map tileset pixels/palette;
+│     │              Collision Overlay asks Project::tile_flags for ground/object indices
+│     └─ Forge: seeded generated tile appended into selected tileset; displays a temporary graphic preview
+├─ graphics.json -> Project::graphics
+│  └─ graphic: w/h, frames{frame-id: indexed pixel rows}, palette[<=16], origin, anims{frames,fps,loop}
+│     ├─ Pixel Editor: selects any graphic; edits frame pixels and locally owns palette/frame/animation selections
+│     ├─ Sprite Editor: selects character/enemy/animated graphics; derives candidate frames from anims,
+│     │                 direction, pose; locally owns selections and a separate local pixel undo stack
+│     └─ Forge: seeded generation produces character/creature/effect/clothing/prop graphics in this store;
+│              character/enemy/item records link to graphics; generated tiles instead live in tilesets
+├─ events.json -> Project::events -> Event Scripting lists event IDs (editor is currently a sample/mock UI)
+└─ maps/*.json -> Project::maps -> entities may contain event command data, but Map Inspector's Event ID
                     line edit is a hard-coded, unbound sample value (not persisted/validated)
 ```
 
 ### Per-tab A0 findings
 | Tab | (a) State centralization | (b) Existing SNES/data-model support | A0 assessment |
 |---|---|---|---|
-| Tileset Editor | Tileset records live in shared `Project::tilesets`, but current selection is widget-local. Its tile list, flag checkboxes, and rendered tile attributes are not connected to project data. | Tiles include indexed `rows`, per-tile `pal`, gameplay `flags`, optional animation references/FPS; tileset has palettes and tile size. No map-cell palette/priority/H/V-flip record or editable per-tile render attributes found. | **Blank left pane is a UI wiring/feature gap, not empty project data.** `refreshTilesets()` clears `tileList` then only fills the tileset combo. Sylvi contains populated world/terra/cave tile arrays. Existing flag label incorrectly calls gameplay flags â€œSNES Tile Attributes.â€ |
+| Tileset Editor | Tileset records live in shared `Project::tilesets`, but current selection is widget-local. Its tile list, flag checkboxes, and rendered tile attributes are not connected to project data. | Tiles include indexed `rows`, per-tile `pal`, gameplay `flags`, optional animation references/FPS; tileset has palettes and tile size. No map-cell palette/priority/H/V-flip record or editable per-tile render attributes found. | **Blank left pane is a UI wiring/feature gap, not empty project data.** `refreshTilesets()` clears `tileList` then only fills the tileset combo. Sylvi contains populated world/terra/cave tile arrays. Existing flag label incorrectly calls gameplay flags "SNES Tile Attributes." |
 | Sprite Editor | Sprite graphic/frame/palette/direction/pose selection is local to Sprite widgets; graphic rows and palette itself reside in shared graphics JSON. PixelCanvas owns its own current frame, color, and undo/redo state. | Frames, palette, origin, named animations with frame lists/FPS/loop exist. Character generation has eight authored directions; Forge has a mirror helper for derivation. No palette-variant/recolor set, explicit base+H-flip linkage, pivot separate from origin, sort offset, or collision rect contract found. | Indexed frame data is present; selection/history duplicated across Sprite and Pixel rather than a shared edit session. |
 | Pixel Editor | Graphic/frame/animation/palette selection and frame undo history are local. Graphics and frame pixels are shared via the same `Project::graphics` object. | 16-entry palette convention and indexed pixel rows; frame/animation records and FPS. No explicit named sub-palettes, shared palette library, palette swap variants, per-frame delay/strip data, or serialized edit history. Pixel tools already expose 8Ã—8 tile brush, pixel, 16Ã—16 stamp, picker, eraser, frame copy/paste. | 0-index is used as transparent by draw conversion, but UI calls it an indexed palette with no explicit transparency indication. |
 | Map Editor | Map selection/layer/tile and local undo history are widget-local; map tile IDs, layers, entities live in shared `Project::maps`. Tileset gameplay flags are read from shared tilesets through `Project::tile_flags`, so current Collision Overlay is already data-backed (but only flags tiles that exist). | Map cells are plain integers; flags are per tileset tile, not cell attributes. No palette/priority/H/V flips stored per cell. The map rendering path fetches tile pixels and palette from tileset schema. | Has working tile draw path and SOLID/WATER/HURT/SLOW/ENCOUNTER overlay; no event-ID validation/completer. Hard-coded Inspector fields are not wired to entity data. |
@@ -94,7 +94,7 @@ Project (shared in-memory object in MainWindow)
 - Tile-map attributes are incomplete: tileset tile records contain a palette selection (`pal`) and gameplay flags, but map layers hold only integer tile IDs. Priority and H/V flip per map cell are absent. Keep gameplay flags distinct from SNES render attributes.
 - Sprite `origin` is the only observed placement metadata. Frame/animation data supports timelines, while editor playback derives duration from animation FPS; independent per-frame delays were not found. Eight directions may be explicitly authored, but derivable base+flip metadata is absent.
 - Field and world maps both reference project tilesets and use `make_tileset_tile` against the same tileset `tiles[].rows`, `pal`, and `palettes[]` layout for preview. This suggests shared source-tile schema, but the field renderer and world renderer have different consumers/overrides; schema unity should be confirmed by A2 round-trip tests, not asserted as fully proven from this audit.
-- Event registry data exists in `Project::events`; Event Scripting currently lists IDs but is a sample editor with mock commands/validator. Mapâ€™s â€œEvent IDâ€ is a hard-coded `QLineEdit`, not bound to map entity properties or validated against the registry.
+- Event registry data exists in `Project::events`; Event Scripting currently lists IDs but is a sample editor with mock commands/validator. Map's "Event ID" is a hard-coded `QLineEdit`, not bound to map entity properties or validated against the registry.
 
 ### A0 result / gate
 Audit complete; no behavior changes made. A0 exit evidence: the three left-pane clues are directly accounted for by source inspection; both populated tilesets and project store mappings were examined; no test/build run was needed because implementation code/data were not altered. **Stop here. A1 is not authorized by this audit completion unless separately approved.** Track A remains separate from P3 topology and M Music. Modern unlimited layers/features are design-change proposals, not implementation scope.
