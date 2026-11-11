@@ -1,6 +1,7 @@
 # DAW P7a: GM/GS SoundFont instrument — plan
 
-Status: plan written, no code yet. Next step is P0 (safety net).
+Status: P0 landed (`daw-p7a.1`). Next: P1 — the `Sf2Core` adapter gets wired
+into `RealtimeMixer` and `synthesize_preview` as `SynthCoreVoice::Kind::Sf2`.
 
 ## Goal
 
@@ -81,14 +82,17 @@ roughly the right instrument per channel and drums on channel 10.
 
 ### P0 Safety net
 
-- [ ] Vendor `tsf.h` (MIT, licence header kept) and record it in the
-      third-party table.
-- [ ] Generate a tiny test bank in code (a few sine-wave presets, no download)
-      so tests run without a bundled bank.
-- [ ] `test_sf2.cpp`: load the generated bank, render a note, assert nonzero
-      and deterministic.
+- [x] Vendor `tsf.h` (MIT, licence header kept) and record it in the
+      project's vendored-dependency table (`Bible/notes/daw/third-party.md`).
+- [x] Generate a tiny test bank in code (one preset, one looped 440 Hz sine,
+      no download) so tests run without a bundled bank.
+- [x] `test_sf2.cpp`: load the generated bank, render a note, assert nonzero
+      and deterministic (plus note-off silences). Suite 55/55.
 
-Acceptance: build green, `test_sf2` green, no change to any existing test.
+Acceptance met. Two parser lessons recorded for P1's bank work: the pdta
+chunk record sizes are enforced (`shdr` 46/record, `pmod`/`imod` 10, range
+generators pack lo|hi in one u16), and zone bags delimit their gen ranges
+cumulatively — the bag after the last zone must point one past the final gen.
 
 ### P1 Core adapter
 
