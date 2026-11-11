@@ -227,6 +227,15 @@ whole-layer copy; a dense map stroke copies kilobytes per tile.
   sprite mode so the tools can be looked at.
   `<editsweep-d5s1>`
 
+### D7 — the chrome (owner's sketch, 2026-11-11)
+
+- [x] D7.S1 The file menu becomes a hamburger in the title bar, and the
+      project toolbar slots under it. The menu row is gone, so every editor
+      gets that row back for its own toolbars. The hamburger is drawn (three
+      lines) rather than shipped as an asset, and the file commands -- open,
+      save, reload -- keep their shortcuts behind it.
+      `<editsweep-d7s1>`
+
 ### D6 — tile pixel editing (report feature 6)
 
 Audited 2026-11-11. The tileset editor has a tileset picker, a tile list, a

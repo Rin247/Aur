@@ -16,7 +16,7 @@
 #include <QMessageBox>
 #include <QFileDialog>
 #include <QHBoxLayout>
-#include <QMenuBar>
+#include <QMenu>
 #include <QMouseEvent>
 #include <QStyle>
 #include <QStatusBar>
@@ -39,6 +39,28 @@ class StudioChrome final : public QWidget {
     QPoint dragPosition;
     bool dragging = false;
     QToolButton* maximizeButton = nullptr;
+    QMenu* file_menu = nullptr;
+
+    // The hamburger: three lines, drawn rather than shipped as an asset.
+    static QIcon hamburger_icon() {
+        QIcon icon;
+        for (int size : {16, 32}) {
+            QPixmap pixmap(size, size);
+            pixmap.fill(Qt::transparent);
+            QPainter painter(&pixmap);
+            painter.setRenderHint(QPainter::Antialiasing);
+            painter.setPen(QPen(QColor("#c8c0ae"), std::max(1.5, size / 6.0),
+                                Qt::SolidLine, Qt::RoundCap));
+            const int margin = size / 5;
+            const int gap = size / 3;
+            for (int line = 0; line < 3; ++line) {
+                const int y = margin + line * gap;
+                painter.drawLine(margin, y, size - margin, y);
+            }
+            icon.addPixmap(pixmap);
+        }
+        return icon;
+    }
 
 public:
     explicit StudioChrome(QMainWindow* owner) : QWidget(owner), window(owner) {
@@ -49,6 +71,18 @@ public:
         layout->setSpacing(2);
         auto* titleRow = new QHBoxLayout();
         titleRow->setContentsMargins(4, 0, 0, 0);
+        // The file commands live behind a hamburger, so the toolbar can sit
+        // under the title instead of under a menu row.
+        auto* menuButton = new QToolButton(this);
+        menuButton->setIcon(hamburger_icon());
+        menuButton->setToolTip("File");
+        menuButton->setPopupMode(QToolButton::InstantPopup);
+        menuButton->setStyleSheet(
+            "QToolButton { padding: 4px 6px; }"
+            "QToolButton::menu-indicator { image: none; }");
+        file_menu = new QMenu(menuButton);
+        menuButton->setMenu(file_menu);
+        titleRow->addWidget(menuButton);
         auto* titleLabel = new QLabel(owner->windowTitle(), this);
         titleLabel->setObjectName("StudioTitle");
         titleLabel->setAttribute(Qt::WA_TransparentForMouseEvents);
@@ -68,10 +102,6 @@ public:
         close->setStyleSheet("QToolButton:hover { background:#8d3f3f; }");
         titleRow->addWidget(close);
         layout->addLayout(titleRow);
-
-        auto* qtMenuBar = new QMenuBar(this);
-        qtMenuBar->setNativeMenuBar(false);
-        layout->addWidget(qtMenuBar);
         owner->setMenuWidget(this);
         QObject::connect(minimize, &QToolButton::clicked, owner, &QWidget::showMinimized);
         QObject::connect(maximizeButton, &QToolButton::clicked, owner, [owner]() {
@@ -85,9 +115,8 @@ public:
         owner->installEventFilter(this);
     }
 
-    QMenuBar* menuBar() const {
-        return findChild<QMenuBar*>();
-    }
+    // The menu behind the hamburger: the file commands.
+    QMenu* fileMenu() const { return file_menu; }
 
 protected:
     bool eventFilter(QObject* watched, QEvent* event) override {
@@ -145,7 +174,7 @@ MainWindow::MainWindow(const std::string& project_path, QWidget* parent)
     auto* chrome = new StudioChrome(this);
     chromeTitle = chrome->findChild<QLabel*>("StudioTitle");
 
-    QMenu* fileMenu = chrome->menuBar()->addMenu("&File");
+    QMenu* fileMenu = chrome->fileMenu();
     QAction* openAction = fileMenu->addAction("&Open Project…");
     openAction->setShortcut(QKeySequence::Open);
     connect(openAction, &QAction::triggered, this, &MainWindow::openProject);
