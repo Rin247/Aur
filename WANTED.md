@@ -74,3 +74,11 @@
 - **#50 Project tidy audit** (closed 2026-11-06): reference chat relocated to `Bible/Archive/Reference/`, empty duplicate Bible folder removed, tests confirmed under `tests/`, stray root objects removed (`NUL.obj`, MSVC `.obj` leftovers). Root handover keeps the active graphics-backend policy.
 - **#51 WorldPanel refactor** (closed 2026-11-06): all plan steps complete through 7c (`WorldMapCanvas` split). `WorldPanel.cpp` at 917 lines, under the owner's 1,000-line soft cap (+25% overhead rule); build green, both CTest suites pass. Layout documented in `Bible/Operations/NOTES.md`; the plan file was removed with acceptance verified (git history holds the record).
 - **Qt desktop foundation:** Audit AIO/Vulkan/backend behavior, legacy `src/`/`include/` co-location, and toolbar/settings/keybindings after the higher-priority World Map, DAW, and editor asks. Product identity is `Aur`; do not suffix Qt/desktop roles. Stage only; no foundation implementation until the existing queue allows it.
+
+## Conformance findings (2026-11-11)
+
+- **Render harness missing** (QUIRKS 22): no ender_check.py/grab_window.py; 	ests/ is C++ logic only.
+- **No ~/.Aur data root** (15a): the studio has no QSettings/QStandardPaths; add the root and route settings/window state through it.
+- **Frameless without the mechanism** (13.1a): studio/MainWindow.cpp:144 sets FramelessWindowHint but there is no WM_NCCALCSIZE/WM_NCHITTEST — drag, resize, snap and Alt+Space are gone.
+- **Deployed exe missing**: no built Aur Studio.exe; deployed cannot pass until one exists.
+- **Identity**: the app is `Aur Studio` while the folder is Aur — owner decides which is canonical (29).

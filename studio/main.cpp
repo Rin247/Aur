@@ -1,12 +1,14 @@
 #include <QApplication>
 #include <QDir>
 #include <QFileInfo>
+#include <QStyleHints>
 #include "MainWindow.hpp"
 #include "RhiBackend.hpp"
 
 int main(int argc, char* argv[]) {
     aur::editor::configureRhiBackendBeforeApplication();
     QApplication app(argc, argv);
+    app.styleHints()->setColorScheme(Qt::ColorScheme::Dark);
     app.setApplicationName("Aur Studio");
     app.setApplicationDisplayName("Aur Studio");
     app.setOrganizationName("Aur");
