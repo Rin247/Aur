@@ -135,6 +135,25 @@ add_executable(aur_studio
 )
 target_include_directories(aur_studio PRIVATE . studio)
 target_link_libraries(aur_studio PRIVATE aur_engine Qt6::Widgets Qt6::Multimedia Qt6::GuiPrivate Qt6::Concurrent)
+# The app's own icon, from the estate's M3 set (AssetLibrary/Icons/Aur).
+# The PNGs are the window icon (":/icons/aur-icon-256.png"); the .rc carries
+# the .ico for the PE resource section, which is what Explorer draws. Both
+# are listed as sources so CMake compiles them with the right tool.
+qt_add_resources(aur_studio aur_studio_icons
+    PREFIX "/"
+    BASE studio/resources
+    FILES
+        studio/resources/icons/aur-icon-16.png
+        studio/resources/icons/aur-icon-24.png
+        studio/resources/icons/aur-icon-32.png
+        studio/resources/icons/aur-icon-48.png
+        studio/resources/icons/aur-icon-64.png
+        studio/resources/icons/aur-icon-128.png
+        studio/resources/icons/aur-icon-256.png
+)
+if(WIN32)
+    target_sources(aur_studio PRIVATE studio/resources/aur.rc)
+endif()
 qt_add_shaders(aur_studio aur_studio_sculpt_shaders
     PREFIX "/aur/shaders"
     BASE studio/shaders

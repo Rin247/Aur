@@ -1,7 +1,9 @@
 #include <QApplication>
 #include <QDir>
 #include <QFileInfo>
+#include <QIcon>
 #include <QStyleHints>
+#include <QTimer>
 #include "MainWindow.hpp"
 #include "RhiBackend.hpp"
 
@@ -12,6 +14,7 @@ int main(int argc, char* argv[]) {
     app.setApplicationName("Aur Studio");
     app.setApplicationDisplayName("Aur Studio");
     app.setOrganizationName("Aur");
+    app.setWindowIcon(QIcon(QStringLiteral(":/icons/aur-icon-256.png")));
     app.setStyleSheet(R"(
         QWidget {
             background-color: #151a22;

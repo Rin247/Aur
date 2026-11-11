@@ -1,0 +1,5 @@
+; The executable's own icon. setWindowIcon covers the window; only a PE
+; resource section covers what Explorer draws, and that needs an .rc
+; compiled by rc.exe. Listed with the sources so CMake uses the right
+; compiler for it and links the result into the binary.
+IDI_ICON1 ICON "icons/aur.ico"
