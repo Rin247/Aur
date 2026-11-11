@@ -3,23 +3,37 @@
 #include <QWidget>
 #include <QComboBox>
 #include <QListWidget>
+
 #include <QPushButton>
 #include <QLineEdit>
 #include <QSpinBox>
+
 #include <QFormLayout>
 #include <functional>
+
 #include <QVBoxLayout>
 #include <QHBoxLayout>
+
 #include <QSplitter>
 #include <QLabel>
+
 #include <QPainter>
 #include <QMouseEvent>
+
 #include <QEvent>
 #include <QRectF>
+
 #include <QWheelEvent>
 #include <QResizeEvent>
+
 #include <QPointF>
+#include <QUndoStack>
+#include <memory>
+
+#include "UndoCommands.hpp"
+
 #include <map>
+
 #include <vector>
 #include "aur/project.hpp"
 #include "aur/render.hpp"
@@ -52,8 +66,13 @@ public:
     QRectF mapBounds() const;
 
 private:
-    std::vector<std::pair<int, Json>> undo_layers;
-    std::vector<std::pair<int, Json>> redo_layers;
+    std::unique_ptr<QUndoStack> undo_stack;
+    // Regions pushed since the last command was finalized; D4.S1b2 collects
+    // per-cell diffs from these instead of storing whole-layer copies.
+    Json region_before;   // snapshot taken at begin time
+    editor::RegionKey region_key; // where it came from
+    QString region_label; // command text
+    bool region_open = false;
     bool stroke_active = false;
 
     QPoint tileAt(const QPointF& position) const;
@@ -84,6 +103,14 @@ public:
     void zoomOut();
     void undo();
     void redo();
+
+private:
+    // Snapshot undo over QUndoStack (D4.S1b): begin before a region mutation,
+    // finish after it, so the command captures both states.
+    void beginRegionUndo(int layer_index, const QString& label);
+    void finishRegionUndo();
+
+public:
 
 signals:
     void zoomChanged(qreal zoom);

@@ -101,6 +101,7 @@ add_executable(aur_studio
     studio/music/GrooveBoxPanel.hpp
     studio/SongHistory.cpp
     studio/MapEditorPanel.cpp
+    studio/UndoCommands.cpp
     studio/DatabasePanel.cpp
     studio/ForgePanel.cpp
     studio/MusicPanel.cpp

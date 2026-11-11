@@ -1,14 +1,25 @@
 #include "MapEditorPanel.hpp"
+
 #include "TileTexture.hpp"
+
 #include "EditorDefs.hpp"
+
 #include <QKeySequence>
+
 #include <QMessageBox>
+
 #include <QOverload>
+
 #include <QShortcut>
+
 #include <QWheelEvent>
+
 #include <QSignalBlocker>
+
 #include <array>
+
 #include <algorithm>
+
 #include <cmath>
 
 namespace aur {
@@ -16,20 +27,21 @@ namespace aur {
 MapCanvasWidget::MapCanvasWidget(QWidget* parent) : QWidget(parent) {
     setMinimumSize(512, 512);
     setMouseTracking(true);
+    undo_stack = std::make_unique<QUndoStack>(this);
 }
 
 void MapCanvasWidget::setProject(Project* p) {
     project = p;
-    undo_layers.clear();
-    redo_layers.clear();
+    undo_stack->clear();
+    region_open = false;
     tile_cache.clear();
     update();
 }
 
 void MapCanvasWidget::setMap(const std::string& mid) {
     if (current_map != mid) {
-        undo_layers.clear();
-        redo_layers.clear();
+        undo_stack->clear();
+        region_open = false;
     }
     current_map = mid;
     hover_x = -1;
@@ -95,10 +107,9 @@ void MapCanvasWidget::deleteSelectedEntity() {
     auto& entities = map["entities"].as_array();
     if (selected_entity_instance < 0 ||
         selected_entity_instance >= static_cast<int>(entities.size())) return;
-    undo_layers.emplace_back(-1, map["entities"]);
-    if (undo_layers.size() > 100) undo_layers.erase(undo_layers.begin());
-    redo_layers.clear();
+    beginRegionUndo(-1, QStringLiteral("delete entity"));
     entities.erase(entities.begin() + selected_entity_instance);
+    finishRegionUndo();
     selected_entity_instance = -1;
     update();
 }
@@ -226,10 +237,9 @@ void MapCanvasWidget::paintTile(const QPoint& tile) {
         auto& row = rows[static_cast<size_t>(tile.y())].as_array();
         if (tile.x() >= static_cast<int>(row.size()) ||
             row[static_cast<size_t>(tile.x())].as_int() < 0) return;
-        undo_layers.emplace_back(current_layer, map["layers"][layer]);
-        if (undo_layers.size() > 100) undo_layers.erase(undo_layers.begin());
+        beginRegionUndo(current_layer, QStringLiteral("erase tile"));
         row[static_cast<size_t>(tile.x())] = -1;
-        redo_layers.clear();
+        finishRegionUndo();
         update();
         return;
     }
@@ -241,9 +251,9 @@ void MapCanvasWidget::paintTile(const QPoint& tile) {
             selected_entity_index >= static_cast<int>(editor::kEntityKinds.size())) return;
         const char* kind = editor::kEntityKinds[static_cast<size_t>(selected_entity_index)];
         auto& entity_list = entities.as_array();
-        undo_layers.emplace_back(-1, entities);
-        if (undo_layers.size() > 100) undo_layers.erase(undo_layers.begin());
-        redo_layers.clear();
+        beginRegionUndo(-1, selected_entity_instance >= 0
+                                ? QStringLiteral("move entity")
+                                : QStringLiteral("place entity"));
         if (selected_entity_instance >= 0 &&
             selected_entity_instance < static_cast<int>(entity_list.size())) {
             // Move the selected instance (D3.S1).
@@ -264,6 +274,7 @@ void MapCanvasWidget::paintTile(const QPoint& tile) {
             selected_entity_instance = static_cast<int>(entity_list.size()) - 1;
             emit entitySelected(selected_entity_instance);
         }
+        finishRegionUndo();
         update();
         return;
     }
@@ -279,13 +290,10 @@ void MapCanvasWidget::paintTile(const QPoint& tile) {
     auto& row = rows[static_cast<size_t>(tile.y())].as_array();
     if (tile.x() >= static_cast<int>(row.size())) return;
     if (row[static_cast<size_t>(tile.x())].as_int() == selected_tile) return;
-    // Snapshot for the undo stack belongs to the stroke, not the tile: the
-    // press handler pushed the layer already when the stroke began. Dragging
-    // across tiles therefore costs one Undo for the whole stroke.
+    // One undo step per stroke, not per tile (D4.S1b).
     if (!stroke_active) {
-        undo_layers.emplace_back(current_layer, map["layers"][layer]);
-        if (undo_layers.size() > 100) undo_layers.erase(undo_layers.begin());
-        redo_layers.clear();
+        beginRegionUndo(current_layer, QStringLiteral("paint tiles"));
+        stroke_active = true;
     }
     // D2.S1: multi-tile stamps paint a square block row-major from the top-left.
     if (selected_stamp.size() > 1) {
@@ -318,32 +326,55 @@ Json* MapCanvasWidget::editableLayer(int layer_index) {
     return layers.contains(layer) ? &layers[layer] : nullptr;
 }
 
-void MapCanvasWidget::undo() {
-    if (undo_layers.empty() || current_map.empty() || !project ||
-        !project->maps.contains(current_map)) return;
-    const auto [layer_index, snapshot] = undo_layers.back();
+// Snapshots the region before the write; finishRegionUndo() captures it after
+// and pushes. D4.S1b2 replaces the stored whole-region copy with cell diffs.
+void MapCanvasWidget::beginRegionUndo(int layer_index, const QString& label) {
+    if (!project || current_map.empty() || !project->maps.contains(current_map)) return;
     Json* target = layer_index == -1
         ? &project->maps[current_map]["entities"] : editableLayer(layer_index);
     if (!target) return;
-    redo_layers.emplace_back(layer_index, *target);
-    *target = snapshot;
-    undo_layers.pop_back();
-    tile_cache.clear();
-    update();
+    editor::RegionKey key;
+    key.kind = layer_index == -1 ? editor::RegionKey::MapEntities
+                                 : editor::RegionKey::MapLayer;
+    key.index = layer_index;
+    region_key = key;
+    region_label = label;
+    region_before = *target;
+    region_open = true;
+}
+
+void MapCanvasWidget::finishRegionUndo() {
+    if (!region_open || !project || current_map.empty() ||
+        !project->maps.contains(current_map)) {
+        region_open = false;
+        return;
+    }
+    Json* target = region_key.kind == editor::RegionKey::MapEntities
+        ? &project->maps[current_map]["entities"] : editableLayer(region_key.index);
+    region_open = false;
+    if (!target) return;
+    auto command = std::make_unique<editor::SnapshotCommand>(region_label);
+    command->setRegion(region_key);
+    command->setDocument(&project->maps[current_map]);
+    command->setBefore(region_before);
+    command->setAfter(*target);
+    undo_stack->push(command.release());
+}
+
+void MapCanvasWidget::undo() {
+    if (undo_stack->canUndo()) {
+        undo_stack->undo();
+        tile_cache.clear();
+        update();
+    }
 }
 
 void MapCanvasWidget::redo() {
-    if (redo_layers.empty() || current_map.empty() || !project ||
-        !project->maps.contains(current_map)) return;
-    const auto [layer_index, snapshot] = redo_layers.back();
-    Json* target = layer_index == -1
-        ? &project->maps[current_map]["entities"] : editableLayer(layer_index);
-    if (!target) return;
-    undo_layers.emplace_back(layer_index, *target);
-    *target = snapshot;
-    redo_layers.pop_back();
-    tile_cache.clear();
-    update();
+    if (undo_stack->canRedo()) {
+        undo_stack->redo();
+        tile_cache.clear();
+        update();
+    }
 }
 
 void MapCanvasWidget::paintEvent(QPaintEvent*) {
@@ -524,10 +555,8 @@ void MapCanvasWidget::mousePressEvent(QMouseEvent* event) {
             if (hit >= 0) {
                 selected_entity_instance = hit;
                 drag_entity_index = hit;
-                undo_layers.emplace_back(-1,
-                    project->maps[current_map]["entities"]);
-                if (undo_layers.size() > 100) undo_layers.erase(undo_layers.begin());
-                redo_layers.clear();
+                beginRegionUndo(-1, QStringLiteral("move entity"));
+                stroke_active = true; // finishRegionUndo fires at release
                 emit entitySelected(hit);
                 update();
                 event->accept();
@@ -543,16 +572,13 @@ void MapCanvasWidget::mousePressEvent(QMouseEvent* event) {
             return;
         }
         Json* layer = editableLayer(current_layer);
-        // Arm the stroke (and take the layer snapshot) only for the erase
-        // tool. Entity placement and paint push their snapshots inside
-        // paintTile, so a layer snapshot here would double the Undo steps.
+        // Arm the stroke only for the erase tool; paint and entity placement
+        // take their snapshots elsewhere.
         const bool tile_tool = active_tool == 1;
         if (layer && tile.x() >= 0 && tile.y() >= 0 && tile_tool &&
             tile.y() < static_cast<int>(layer->as_array().size()) &&
             tile.x() < static_cast<int>((*layer)[static_cast<size_t>(tile.y())].as_array().size())) {
-            undo_layers.emplace_back(current_layer, *layer);
-            if (undo_layers.size() > 100) undo_layers.erase(undo_layers.begin());
-            redo_layers.clear();
+            beginRegionUndo(current_layer, QStringLiteral("paint tiles"));
             stroke_active = true;
         }
         paintTile(tile);
@@ -583,6 +609,7 @@ void MapCanvasWidget::mouseMoveEvent(QMouseEvent* event) {
 
 void MapCanvasWidget::mouseReleaseEvent(QMouseEvent* event) {
     if (event->button() == Qt::LeftButton) {
+        if (stroke_active) finishRegionUndo();
         stroke_active = false;
         drag_entity_index = -1;
     }
@@ -726,9 +753,8 @@ MapEditorPanel::MapEditorPanel(Project* p, QWidget* parent)
         auto* item = new QListWidgetItem(QString("[Entity] %1").arg(label), entityTypeWidget);
         item->setData(Qt::UserRole, QString::fromLatin1(id));
     }
-    // Tile rows are provided by the shared TilePaletteWidget (D2.S1); the
-    // entity list below it keeps fixed indexes for the selected_entity_kind
-    // split.
+    // Tile rows come from the shared TilePaletteWidget (D2.S1); the entity
+    // list below keeps fixed indexes for the selected_entity_kind split.
     leftLayout->addWidget(entityTypeWidget);
     splitter->addWidget(leftDock);
 

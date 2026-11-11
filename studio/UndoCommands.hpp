@@ -58,13 +58,36 @@ namespace aur::editor
         void redo() override { apply(/*after=*/true); }
         void undo() override { apply(/*after=*/false); }
 
-    private:
+    protected:
+        // Exposed for SnapshotCommand, which resolves the same regions.
         Json *targetArray(const RegionKey &region) const;
+
+    private:
         void apply(bool after);
 
         RegionKey m_region;
         std::vector<CellDiff> m_diffs;
         Json *m_document = nullptr;
+    };
+
+    // A whole-region snapshot command: the transitional form the editors use
+    // while their push sites convert. Stores what the old snapshot deques
+    // stored, but on QUndoStack, so undo ownership, redo clearing and the
+    // entry cap all move across at once.
+    class SnapshotCommand : public CellCommand
+    {
+    public:
+        explicit SnapshotCommand(const QString &text = QString()) : CellCommand(text) {}
+
+        void setBefore(Json before) { m_before = std::move(before); }
+        void setAfter(Json after) { m_after = std::move(after); }
+
+        void redo() override;
+        void undo() override;
+
+    private:
+        Json m_before;
+        Json m_after;
     };
 
 } // namespace aur::editor

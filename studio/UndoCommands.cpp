@@ -58,6 +58,18 @@ namespace aur::editor
         }
     }
 
+    void SnapshotCommand::redo()
+    {
+        if (Json *target = targetArray(region()))
+            *target = m_after;
+    }
+
+    void SnapshotCommand::undo()
+    {
+        if (Json *target = targetArray(region()))
+            *target = m_before;
+    }
+
     void CellCommand::apply(bool after)
     {
         Json *target = targetArray(m_region);
