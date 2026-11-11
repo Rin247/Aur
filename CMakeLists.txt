@@ -128,6 +128,7 @@ add_executable(aur_studio
     studio/RhiBackend.hpp
     studio/PixelEditorPanel.cpp
     studio/PixelEditSession.cpp
+    studio/PixelFrameOps.cpp
     studio/PixelEditSession.hpp
     studio/TilePaletteWidget.cpp
     studio/TilePaletteWidget.hpp
@@ -212,6 +213,7 @@ add_executable(aur_tests
     tests/test_step_sequencer.cpp
     tests/test_arpeggiator.cpp
     studio/PixelEditSession.cpp
+    studio/PixelFrameOps.cpp
     studio/UndoCommands.cpp
     studio/MapEditUndo.cpp
     studio/world/WeatherRender.cpp

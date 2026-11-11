@@ -198,8 +198,13 @@ whole-layer copy; a dense map stroke copies kilobytes per tile.
         same answer. The sprite controls moved to the sprite row, because
         the graphic toolbar was clipping their labels.
         `<editsweep-d5s1>`
-  - [ ] D5.S1.3 Mirror right→left: the right half of the current frame is
+  - [x] D5.S1.3 Mirror right→left: the right half of the current frame is
         mirrored onto its left half, as one undoable step.
+        **Landed.** The mirror is a pure function over a frame's rows in
+        `studio/PixelFrameOps.{hpp,cpp}`, so it is tested without a widget;
+        the right half is mirrored onto the left, so the result is symmetric
+        and the mirror of a symmetric frame is itself.
+        `<editsweep-d5s1>`
   - [ ] D5.S1.4 Frame add / duplicate / delete / reorder over the sprite's
         sequence, each one undoable.
   The structural edits are pure functions over the graphic JSON in

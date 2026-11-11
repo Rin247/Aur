@@ -1,4 +1,6 @@
 #include "PixelEditorPanel.hpp"
+
+#include "PixelFrameOps.hpp"
 #include "PixelEditSession.hpp"
 #include "aur/gfx.hpp"
 
@@ -159,6 +161,18 @@ void PixelCanvasWidget::redo() {
 
 void PixelCanvasWidget::clearHistory() {
     undo_stack->clear();
+}
+
+void PixelCanvasWidget::mirrorFrameRightToLeft() {
+    if (!project || !project->graphics.contains(graphic_id)) return;
+    Json &frames = project->graphics[graphic_id]["frames"];
+    if (!frames.is_object() || !frames.contains(current_frame)) return;
+    Json &rows = frames[current_frame];
+    if (!rows.is_array()) return;
+    pushUndo();
+    rows = editor::mirror_rows_right_to_left(rows.as_array());
+    finishUndo();
+    update();
 }
 
 void PixelCanvasWidget::copyFrame() {
@@ -559,9 +573,14 @@ PixelEditorPanel::PixelEditorPanel(Project* p, QWidget* parent)
     onionButton->setCheckable(true);
     onionButton->setToolTip("Draw the neighbouring frames ghosted behind this one");
     spriteToolsLayout->addWidget(onionButton);
+    // D5.S1.3: a sprite is drawn facing one way and mirrored to the other.
+    mirrorButton = new QPushButton("Mirror ⇄", spriteTools);
+    mirrorButton->setToolTip("Copy the right half of the frame onto its left half");
+    spriteToolsLayout->addWidget(mirrorButton);
     spriteToolsLayout->addStretch(1);
     mainLayout->addWidget(spriteTools);
     connect(onionButton, &QPushButton::toggled, this, [this](bool) { updateOnionSkin(); });
+    connect(mirrorButton, &QPushButton::clicked, canvas, &PixelCanvasWidget::mirrorFrameRightToLeft);
 
     auto* splitter = new QSplitter(Qt::Horizontal, this);
     auto* paletteDock = new QWidget(splitter);

@@ -65,6 +65,8 @@ public:
     // The frames the onion skin draws behind the current one, and where the
     // current frame sits in them. An empty sequence turns the skin off.
     void setOnionSkin(const std::vector<std::string>& frames, int current_index);
+    // D5.S1.3: mirrors the right half of the current frame onto its left.
+    void mirrorFrameRightToLeft();
     void undo();
     void redo();
     void copyFrame();
@@ -101,6 +103,7 @@ class PixelEditorPanel : public QWidget {
     // toolbar does not grow another five controls.
     QWidget* spriteTools = nullptr;
     QPushButton* onionButton = nullptr;
+    QPushButton* mirrorButton = nullptr;
     QTimer* animationTimer = nullptr;
     std::vector<std::string> previewFrames;
     int previewFrameIndex = 0;

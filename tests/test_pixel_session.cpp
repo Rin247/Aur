@@ -1,5 +1,6 @@
 #include "mini_test.hpp"
 #include "PixelEditSession.hpp"
+#include "PixelFrameOps.hpp"
 #include "aur/project.hpp"
 #include "aur/gfx.hpp"
 #include <iostream>
@@ -201,4 +202,38 @@ void test_sprite_anim_resolution()
     // The frames the pair names come from the same resolution.
     const auto frames = aur::PixelEditSession::resolve_anim_frames(p, "both", "down", "walk");
     ASSERT(frames.size() == 2 && frames[0] == "a" && frames[1] == "b");
+}
+
+// D5.S1.3: the mirror copies the right half of a frame onto its left half.
+// The right half is mirrored onto the left, so the result is symmetric
+// about the middle and the mirror of a symmetric frame is itself.
+void test_sprite_frame_mirror()
+{
+    const JsonArray rows{Json("abcd"), Json("wxyz"), Json("....")};
+    const JsonArray mirrored = aur::editor::mirror_rows_right_to_left(rows);
+    ASSERT(mirrored.size() == 3);
+    ASSERT(mirrored[0].as_string() == "dccd");
+    ASSERT(mirrored[1].as_string() == "zyyz");
+    ASSERT(mirrored[2].as_string() == "....");
+
+    // An odd width keeps its middle column.
+    const JsonArray odd{Json("abc")};
+    const JsonArray mirrored_odd = aur::editor::mirror_rows_right_to_left(odd);
+    ASSERT(mirrored_odd[0].as_string() == "cbc");
+
+    // A single column mirrors to itself.
+    const JsonArray single{Json("a")};
+    ASSERT(aur::editor::mirror_rows_right_to_left(single)[0].as_string() == "a");
+
+    // The mirror is its own inverse on a symmetric frame.
+    const JsonArray again = aur::editor::mirror_rows_right_to_left(mirrored);
+    ASSERT(again[0].as_string() == "dccd");
+    ASSERT(again[1].as_string() == "zyyz");
+
+    // A row that is not a string is carried over unchanged.
+    JsonArray mixed{Json("ab"), Json(7)};
+    const JsonArray mirrored_mixed = aur::editor::mirror_rows_right_to_left(mixed);
+    ASSERT(mirrored_mixed.size() == 2);
+    ASSERT(mirrored_mixed[0].as_string() == "bb");
+    ASSERT(mirrored_mixed[1].as_int() == 7);
 }
