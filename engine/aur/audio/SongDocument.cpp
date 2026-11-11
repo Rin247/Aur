@@ -725,5 +725,141 @@ namespace aur
             song["effects"] = JsonObject{{"chain", std::move(slots)}};
         }
 
+        std::vector<StepPattern> SongDocument::step_patterns(const Json &song)
+        {
+            return read_step_patterns(song);
+        }
+
+        const Json *SongDocument::step_pattern_at(const Json &song, int index)
+        {
+            if (index < 0 || !song.contains("step_patterns") ||
+                !song["step_patterns"].is_array() ||
+                index >= static_cast<int>(song["step_patterns"].as_array().size()))
+                return nullptr;
+            const Json &entry = song["step_patterns"][static_cast<size_t>(index)];
+            return entry.is_object() ? &entry : nullptr;
+        }
+
+        Json *SongDocument::step_pattern_at_mut(Json &song, int index)
+        {
+            if (index < 0 || !song.contains("step_patterns") ||
+                !song["step_patterns"].is_array() ||
+                index >= static_cast<int>(song["step_patterns"].as_array().size()))
+                return nullptr;
+            Json &entry = song["step_patterns"][static_cast<size_t>(index)];
+            return entry.is_object() ? &entry : nullptr;
+        }
+
+        namespace
+        {
+            Json pattern_to_json(const StepPattern &pattern)
+            {
+                JsonArray steps;
+                for (const StepCell &cell : pattern.cells)
+                {
+                    JsonObject step{{"step", cell.step},
+                                     {"pitch", cell.pitch},
+                                     {"velocity", cell.velocity}};
+                    if (cell.accent)
+                        step["accent"] = cell.accent;
+                    if (cell.slide)
+                        step["slide"] = cell.slide;
+                    if (cell.ratchet)
+                        step["ratchet"] = cell.ratchet;
+                    if (cell.tie)
+                        step["tie"] = true;
+                    steps.emplace_back(std::move(step));
+                }
+                return JsonObject{{"name", pattern.name},
+                                  {"track", pattern.track},
+                                  {"channel", pattern.channel},
+                                  {"program", pattern.program},
+                                  {"length", pattern.length},
+                                  {"resolution", pattern.resolution},
+                                  {"seed", pattern.seed},
+                                  {"steps", std::move(steps)}};
+            }
+        } // namespace
+
+        void SongDocument::set_step_pattern(Json &song, int index,
+                                            const StepPattern &pattern)
+        {
+            if (!song.contains("step_patterns") || !song["step_patterns"].is_array())
+                song["step_patterns"] = JsonArray{};
+            JsonArray &patterns = song["step_patterns"].as_array();
+            if (index < 0)
+                return;
+            if (index >= static_cast<int>(patterns.size()))
+                patterns.resize(static_cast<size_t>(index) + 1);
+            patterns[static_cast<size_t>(index)] = pattern_to_json(pattern);
+        }
+
+        int SongDocument::add_step_pattern(Json &song, const std::string &name)
+        {
+            if (!song.contains("step_patterns") || !song["step_patterns"].is_array())
+                song["step_patterns"] = JsonArray{};
+            JsonArray &patterns = song["step_patterns"].as_array();
+            StepPattern pattern;
+            pattern.name = name.empty()
+                               ? "Pattern " + std::to_string(patterns.size() + 1)
+                               : name;
+            patterns.emplace_back(pattern_to_json(pattern));
+            return static_cast<int>(patterns.size()) - 1;
+        }
+
+        void SongDocument::remove_step_pattern(Json &song, int index)
+        {
+            if (index < 0 || !song.contains("step_patterns") ||
+                !song["step_patterns"].is_array())
+                return;
+            JsonArray &patterns = song["step_patterns"].as_array();
+            if (index >= static_cast<int>(patterns.size()))
+                return;
+            patterns.erase(patterns.begin() + index);
+            if (patterns.empty())
+                song.as_object().erase("step_patterns");
+        }
+
+        GrooveSettings SongDocument::groove_settings(const Json &song)
+        {
+            return read_groove_settings(song);
+        }
+
+        void SongDocument::set_groove_settings(Json &song, const GrooveSettings &groove)
+        {
+            if (!song.contains("groovebox") || !song["groovebox"].is_object())
+                song["groovebox"] = JsonObject{};
+            Json &box = song["groovebox"];
+            box["swing"] = std::clamp(groove.swing, 0, 100);
+            box["humanize"] = std::clamp(groove.humanize, 0, 100);
+            box["groove"] = std::clamp(groove.groove, -50, 50);
+        }
+
+        std::vector<int> SongDocument::groove_chain(const Json &song)
+        {
+            std::vector<int> chain;
+            if (!song.contains("groovebox") || !song["groovebox"].is_object())
+                return chain;
+            const Json &box = song["groovebox"];
+            if (!box.contains("chain") || !box["chain"].is_array())
+                return chain;
+            for (const Json &index : box["chain"].as_array())
+            {
+                if (index.is_number())
+                    chain.push_back(index.as_int());
+            }
+            return chain;
+        }
+
+        void SongDocument::set_groove_chain(Json &song, const std::vector<int> &chain)
+        {
+            if (!song.contains("groovebox") || !song["groovebox"].is_object())
+                song["groovebox"] = JsonObject{};
+            JsonArray entries;
+            for (int index : chain)
+                entries.emplace_back(index);
+            song["groovebox"]["chain"] = std::move(entries);
+        }
+
     } // namespace audio
 } // namespace aur

@@ -47,6 +47,8 @@ add_library(aur_engine STATIC
     engine/aur/audio/EffectEchoFir.cpp
     engine/aur/audio/EffectRegistry.cpp
     engine/aur/audio/EffectChain.cpp
+    engine/aur/audio/StepSequencer.cpp
+    engine/aur/audio/Arpeggiator.cpp
 )
 target_include_directories(aur_engine PUBLIC engine)
 
@@ -175,6 +177,8 @@ add_executable(aur_tests
     tests/test_arrangement.cpp
     tests/test_pixel_session.cpp
     tests/test_weather_render.cpp
+    tests/test_step_sequencer.cpp
+    tests/test_arpeggiator.cpp
     studio/PixelEditSession.cpp
     studio/world/WeatherRender.cpp
     studio/world/WeatherPreviewField.cpp

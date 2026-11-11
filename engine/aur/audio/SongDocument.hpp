@@ -1,6 +1,7 @@
 #pragma once
 
 #include "aur/json.hpp"
+#include "aur/audio/StepSequencer.hpp"
 
 #include <string>
 #include <vector>
@@ -131,6 +132,22 @@ namespace aur::audio
         };
         static std::vector<EffectSlot> effect_chain(const Json &song);
         static void set_effect_chain(Json &song, const std::vector<EffectSlot> &chain);
+
+        // Step patterns (groovebox). song["step_patterns"] is an array of
+        // pattern objects; a song without the key reads as empty.
+        static std::vector<StepPattern> step_patterns(const Json &song);
+        static const Json *step_pattern_at(const Json &song, int index);
+        static Json *step_pattern_at_mut(Json &song, int index);
+        static int add_step_pattern(Json &song, const std::string &name);
+        static void remove_step_pattern(Json &song, int index);
+        static void set_step_pattern(Json &song, int index, const StepPattern &pattern);
+
+        // Groovebox globals. song["groovebox"] = {swing, humanize, groove,
+        // arp{...}, chain[...]}. Absent key reads as neutral.
+        static GrooveSettings groove_settings(const Json &song);
+        static void set_groove_settings(Json &song, const GrooveSettings &groove);
+        static std::vector<int> groove_chain(const Json &song);
+        static void set_groove_chain(Json &song, const std::vector<int> &chain);
 
     private:
         struct MapPoint
