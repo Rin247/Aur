@@ -182,6 +182,7 @@ add_executable(aur_tests
     tests/test_clip_launcher.cpp
     tests/test_arrangement.cpp
     tests/test_note_index.cpp
+    tests/test_undo_commands.cpp
     tests/Sf2Fixture.cpp
     tests/test_sf2.cpp
     tests/test_pixel_session.cpp
@@ -189,6 +190,7 @@ add_executable(aur_tests
     tests/test_step_sequencer.cpp
     tests/test_arpeggiator.cpp
     studio/PixelEditSession.cpp
+    studio/UndoCommands.cpp
     studio/world/WeatherRender.cpp
     studio/world/WeatherPreviewField.cpp
     studio/SongHistory.cpp

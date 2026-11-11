@@ -88,6 +88,11 @@ whole-layer copy; a dense map stroke copies kilobytes per tile.
       before/after values, and an apply/restore path over a single target JSON
       object. Map cells are tile ints; pixel cells are RGBA bytes; tileset
       cells are flag ints. `<editsweep-d4a>`
+      **Note:** the command base operates on `aur::Json`, not `QJsonObject` —
+      the editors' currency is the project's own variant type. MapLayer
+      resolution is a deliberate stub until D4.S1b wires the map panel (row
+      arrays live under `layers.<name>`, which needs the panel's layer-name
+      mapping); entity/pixel/flag regions are fully resolved and tested.
 - [ ] D4.S1b MapCanvasWidget: paint strokes coalesce into one command per
       stroke (cell diffs collected as the pointer moves), entity moves/deletes
       become single commands, the 100-entry cap moves onto QUndoStack's limit.
