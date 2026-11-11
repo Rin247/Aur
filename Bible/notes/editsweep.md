@@ -83,23 +83,19 @@ region JSON snapshots — `MapCanvasWidget` keeps `undo_layers`/`redo_layers`
 `TilesetEditorPanel` keeps its own flag-undo pair. Every paint stroke pushes a
 whole-layer copy; a dense map stroke copies kilobytes per tile.
 
-- [ ] D4.S1a Shared command base: a `CellCommand`-style `QUndoCommand` holding
+- [x] D4.S1a Shared command base: a `CellCommand`-style `QUndoCommand` holding
       a grid key (layer index / frame index), an affected-cell list with
       before/after values, and an apply/restore path over a single target JSON
       object. Map cells are tile ints; pixel cells are RGBA bytes; tileset
       cells are flag ints. `<editsweep-d4a>`
-      **Note:** the command base operates on `aur::Json`, not `QJsonObject` —
-      the editors' currency is the project's own variant type. MapLayer
-      resolution is a deliberate stub until D4.S1b wires the map panel (row
-      arrays live under `layers.<name>`, which needs the panel's layer-name
-      mapping); entity/pixel/flag regions are fully resolved and tested.
-      **D4.S1a landed** (`2eb32ce`, suite 56/56). D4.S1b next: the map layer is
-      a *rows-of-rows* array (`layers.<name>[row][col]`), so its RegionKey
-      needs the map's `w` to make a row-major cell index resolve through two
-      levels — decide the key shape (nested row/col in `RegionKey`, or a
-      flat index resolved against `map["w"]`) before wiring the 7 push sites
-      in `MapEditorPanel.cpp` (978 lines, `undo_layers`/`redo_layers` deques,
-      push sites at lines 98/229/244/286/342/527/553).
+      **Landed** (`2eb32ce` + `32c3793`, suite 56/56). Operates on `aur::Json`,
+      not `QJsonObject` — the editors' currency. All four regions resolved:
+      MapLayer addresses `layers.<name>[row][col]` through an explicit
+      row/col pair on RegionKey (the map layer is rows-of-rows), the other
+      three address flat arrays by cellIndex. Out-of-range and missing
+      regions are safe no-ops. Fixture lesson: `JsonArray{JsonArray{ints}}`
+      flattens — rows must be wrapped in `Json`. D4.S1b next: wire the 7
+      push sites in `MapEditorPanel.cpp` (978 lines) onto QUndoStack.
 - [ ] D4.S1b MapCanvasWidget: paint strokes coalesce into one command per
       stroke (cell diffs collected as the pointer moves), entity moves/deletes
       become single commands, the 100-entry cap moves onto QUndoStack's limit.
