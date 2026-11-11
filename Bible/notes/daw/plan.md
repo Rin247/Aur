@@ -5,7 +5,10 @@ Status: P3 closed-out; P4.1–P4.3 MIDI device layer + count-in landed
 P5.1 lane accessors (`532de0b`) + P5.2 lane strip (`721e043`) landed.
 P6.5–P6.7 arrangement placements, canvas, playback/export landed (`259ecb0`,
 `91eadea`, `3a7e890`); suite 39/39. P8 effects landed 2026-11-08; see
-`Bible/notes/daw/effects.md` in history. Next: P7a GM/GS instrument, with P5
+`Bible/notes/daw/effects.md` in history. P9 (step sequencer + arpeggiator)
+landed 2026-11-11 under the `groovebox` initiative; the three oscillator
+synths (Gm/Fm/RetroPsg) were retired the same day — the preview path now runs
+through the hardware cores only. Next: P7a GM/GS instrument, with P5
 lane-editor polish remaining. P2 close still awaits the owner GUI soak.
 
 Master plan for the Music Studio DAW initiative, seeded from the owner-supplied
@@ -195,11 +198,19 @@ BRR encode/decode, sample import with loop points, ADSR/GAIN, 8-voice limit,
 echo FIR emulation, hardware-profile warnings. SPC file export and sound
 driver are out of scope (research note only).
 
-### P9 MIDI effects + step sequencer
+### P9 MIDI effects + step sequencer — LANDED 2026-11-11
 
 Arpeggiator (up/down/up-down/random/chord/as-played, rate incl. triplets, gate,
 octave, swing, hold), chord/scale/random/velocity/length effects; 128-step
 clip type compiling to events.
+
+Landed under the `groovebox` initiative (`Bible/notes/groovebox-sequencer.md`):
+`StepSequencer`/`Arpeggiator` in `engine/aur/audio/` compile patterns to
+events consumed by both the realtime mixer and the offline render; Studio
+gains a Step Sequencer tab (128-step grid + groovebox strip). One recorded
+deviation: the sequencer is a song-level `step_patterns` array, not a clip
+type — a song-level pattern plays standalone and can be chained, which a
+clip-internal one cannot.
 
 ### P10 Generator
 

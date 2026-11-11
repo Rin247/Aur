@@ -14,7 +14,15 @@
   device layer + count-in, P5 piano roll through P5.14 ids, P6 through P6.7
   (clips, launcher, scene record, arrangement placements/canvas/playback +
   arrangement MIDI export) all landed; P2 close awaits owner GUI soak; P8
-  effects framework landed (see Closed). Next: P7a GM/GS instrument.
+  effects framework landed (see Closed); P9 step sequencer + arpeggiator
+  landed 2026-11-11 via the groovebox initiative (see below). Next: P7a
+  GM/GS instrument.
+- `Bible/notes/groovebox-sequencer.md` — 128-step sequencer + groovebox
+  initiative. P0–P7 landed 2026-11-11: engine model (`StepSequencer`,
+  `Arpeggiator`), realtime + offline playback, groove globals (swing/
+  humanise/groove), Studio Step Sequencer tab (grid + strip), and the three
+  oscillator synths (`VoiceCore` Gm/Fm/RetroPsg) retired in favour of the
+  hardware cores. Next: P8 close-out (docs + estate gate) — nearly done.
 - `Bible/notes/Aur World Map Agent Work Packages.md` — World Map editor
   work packages WP0–WP6; **WP0 landed** `1d9094a`, **WP1 single-copy view
   landed** `1be483e`, **WP2.S1 starter-UI removal landed** `a9d2726`,

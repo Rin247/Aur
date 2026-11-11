@@ -5,8 +5,44 @@ Revert any active D3D11 backend use; rendering must run on Vulkan or D3D12 only.
 Route backend selection through one shim; startup assert backend in {Vulkan, D3D12};
 headless Null only under RHI_POLICY_HEADLESS=1. See C:\Projects\POLICY.md.
 
+## Groovebox initiative — landed 2026-11-11 (plan: `Bible/notes/groovebox-sequencer.md`)
+
+The 128-step sequencer, the groovebox layer and the oscillator-synth retirement all
+landed. ctest 7/7, 53/53 checks green. Commits `groovebox-p1.1` … `groovebox-p7`.
+
+- **Engine** (`engine/aur/audio/`): `StepSequencer` (pattern model, compiler,
+  swing/humanise/ratchet/accent/chain), `Arpeggiator` (7 modes, 6 rates, gate,
+  octave, deterministic random from the pattern seed), `SongDocument`
+  accessors (`step_patterns`, `groovebox`). Both the realtime mixer and
+  `synthesize_preview` consume the same compiled event list, so the groovebox
+  and the piano roll play through one instrument.
+- **Studio** (`studio/music/`): `StepSequencerCanvas` (128-column grid, one row
+  per pattern; click/drag paint, right-click clear, Ctrl+click accent,
+  arrow-key cursor, Space toggle, Page Up/Down transpose), `GrooveBoxPanel`
+  (swing, humanise, groove, arp mode/rate/gate/octave, pattern list + chain
+  reorder), and `FxChainStrip` extracted out of `MusicPanel` so the panel
+  stops growing. `SongHistory` gained a `Groovebox` action kind that snapshots
+  the song-level keys, so sequencer edits undo like track edits.
+- **Old synths retired**: `engine/aur/audio/VoiceCore.{hpp,cpp}` deleted — the
+  Gm/Fm/RetroPsg oscillator timbres were the oldest and least complete synths.
+  `PreviewSynth` is now `MdFm`/`Spc` only; legacy song ids (`gm`, `fm`,
+  `retro_psg`) fall through to the YM-FM core. The golden, pitch and parity
+  tests for the oscillator path were removed with it; the core-synth versions
+  stay and still pass with their golden hashes unchanged.
+- **Know before you go**: the estate pre-commit hook counts a run of 3+ lines
+  starting with `#`/`//` as a comment block, so `#include` runs get split with
+  blank lines (two includes, a blank, two more). `build/find_comment_blocks.py`
+  and `build/find_dup_blocks.py` are scratch helpers for this; they are not part
+  of the product. A `Json` nested-array literal like `JsonArray{0,60,4,100}`
+  flattens into four numbers — wrap it (`Json(JsonArray{...})`) or notes lose
+  their shape. An `Aur Studio.exe` left running holds the link lock during a
+  build.
+
 ## DAW initiative (active plan: `Bible/notes/daw/plan.md`)
 
+- P9 (step sequencer + arpeggiator) LANDED 2026-11-11 via the groovebox
+  initiative — see the section above. One deviation recorded in the plan: the
+  sequencer is a song-level `step_patterns` array rather than a clip type.
 - P6.5–P6.7 landed 2026-11-07 — the P6 remainder is done. P6.5 (`259ecb0`):
   `SongDocument` arrangement placements (`song["arrangement"]`, sorted
   `{scene, track, step, length}`) with accessors + clamping, and
