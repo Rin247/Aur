@@ -25,7 +25,7 @@ namespace aur
     } // namespace
 
     TilesetEditorPanel::TilesetEditorPanel(Project *p, QWidget *parent)
-        : QWidget(parent), project(p)
+        : QWidget(parent), project(p), flag_stack(std::make_unique<QUndoStack>(this))
     {
         QVBoxLayout *mainLayout = new QVBoxLayout(this);
 
@@ -241,32 +241,31 @@ namespace aur
         const int new_flags = checked ? (old_flags | bit) : (old_flags & ~bit);
         if (new_flags == old_flags)
             return;
-        // Undoable + dirty (editsweep D1.S5): a flag toggle snapshots the old
-        // mask; Ctrl+Z restores it. Consumers (map collision overlay) are told
-        // to repaint via tilesetFlagsChanged.
-        flag_undo.emplace_back(tsid, currentTile, old_flags);
-        if (flag_undo.size() > 100) flag_undo.erase(flag_undo.begin());
+        // Undoable + dirty (editsweep D1.S5 → D4.S1b): a flag toggle is one
+        // cell diff on the tiles array; QUndoStack owns the history. Consumers
+        // (map collision overlay) repaint via tilesetFlagsChanged.
+        Json tile_before = tile;
         tile["flags"] = new_flags;
+        auto command = std::make_unique<editor::SnapshotCommand>(QStringLiteral("toggle flag"));
+        editor::RegionKey key;
+        key.kind = editor::RegionKey::TileFlags;
+        key.index = currentTile;
+        command->setRegion(key);
+        command->setDocument(&it->second);
+        command->addDiff(editor::CellDiff{currentTile, tile_before, tile});
+        flag_stack->push(command.release());
         emit tilesetFlagsChanged(QString::fromStdString(tsid));
     }
 
     void TilesetEditorPanel::undoFlagChange()
     {
-        if (flag_undo.empty() || !project)
-            return;
-        const auto [tsid, tile_index, old_flags] = flag_undo.back();
-        flag_undo.pop_back();
-        const auto it = project->tilesets.find(tsid);
-        if (it == project->tilesets.end() || !it->second.contains("tiles") ||
-            !it->second["tiles"].is_array())
-            return;
-        auto &tiles = it->second["tiles"].as_array();
-        if (tile_index >= static_cast<int>(tiles.size()))
-            return;
-        tiles[static_cast<size_t>(tile_index)]["flags"] = old_flags;
-        if (currentTile == tile_index)
+        if (flag_stack->canUndo())
+        {
+            flag_stack->undo();
             refreshTileDetail();
-        emit tilesetFlagsChanged(QString::fromStdString(tsid));
+            const std::string tsid = currentTilesetId();
+            emit tilesetFlagsChanged(QString::fromStdString(tsid));
+        }
     }
 
 } // namespace aur

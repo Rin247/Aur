@@ -9,9 +9,17 @@
 #include <QHBoxLayout>
 #include <QSplitter>
 #include <QLabel>
+
+#include <QUndoStack>
+
+#include <memory>
+
 #include <vector>
 #include <array>
+
 #include "aur/project.hpp"
+
+#include "UndoCommands.hpp"
 
 namespace aur {
 
@@ -25,8 +33,8 @@ class TilesetEditorPanel : public QWidget {
     std::array<QCheckBox*, 6> flagChecks {};
     int currentTile = -1;
     bool updatingFlags = false;
-    struct FlagSnapshot { std::string tileset_id; int tile; int flags; };
-    std::vector<FlagSnapshot> flag_undo;
+    std::unique_ptr<QUndoStack> flag_stack;
+    std::unique_ptr<editor::SnapshotCommand> pending_flag_command;
 
     void selectTileset(int index);
     void selectTile(int row);
