@@ -1,11 +1,13 @@
 // SynthCores.hpp - preview rendering through the MD/SPC hardware cores.
-// Owns the note-event translation from the song JSON schedule into the cores'
-// MIDI surfaces, used by both synthesize_preview and RealtimeMixer.
+// Owns the note-event translation from the song JSON into the cores.
+
 #pragma once
 
 #include <cstdint>
 #include <vector>
+
 #include "aur/audio/YmFmCore.hpp"
+
 #include "aur/audio/SnesPcmCore.hpp"
 
 namespace aur
@@ -40,9 +42,11 @@ namespace aur
             Kind kind() const { return kind_; }
 
             // Translate scheduled notes into note-on/off events at frame boundaries.
-            // Must be called with events sorted by startFrame; consumeUpTo(frame)
-            // issues all note-ons and note-offs whose frame has arrived.
+            // consumeUpTo(frame) issues the ones whose frame has arrived.
             void setEvents(std::vector<CoreNoteEvent> events);
+            // Adds events to the existing list without disturbing the cursors.
+            // Used by the realtime mixer to slot in audition notes.
+            void appendEvents(std::vector<CoreNoteEvent> events);
             void consumeUpTo(std::int64_t frame);
             void clearEvents();
             // Shifts every stored event frame by `shift` and rewinds the cursors.
@@ -60,6 +64,7 @@ namespace aur
         private:
             void issueNoteOn(const CoreNoteEvent &e);
             void issueNoteOff(const CoreNoteEvent &e);
+            void resetCursors();
 
             Kind kind_ = Kind::MdFm;
             double sampleRate_ = 44100;

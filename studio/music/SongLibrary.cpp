@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <array>
+
 #include <cstdint>
 
 namespace aur
@@ -90,7 +91,7 @@ namespace aur
                 {"bars", 8},
                 {"beats", 4},
                 {"loop_bar", 0},
-                {"preview_synth", "gm"}};
+                {"preview_synth", "md_fm"}};
 
             const int root = style == "Battle" ? 50 : style == "Village" ? 60
                                                                          : 62;

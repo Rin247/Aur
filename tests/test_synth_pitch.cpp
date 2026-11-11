@@ -1,17 +1,14 @@
-// Pitch regression test: every GM patch must render A4 at 440 Hz.
-//
-// Bug (2026-11-07..08): the sawtooth term in the voice DSP mixed radians
-// (voice.phase[0], 0..2pi) with cycles (0..1), so families 5/6 swept the ramp
-// twice per cycle and sounded an octave (or a fifth) high on organ/pad/lead
-// patches — the "MIDI imports sound wrong" report. Zero-crossing measurement
-// cannot catch this reliably (rich timbres double the count), so pitch is
-// estimated by normalised autocorrelation, preferring the shortest lag.
+// Pitch regression test: the sampler core must render the requested note at the
+// right frequency. The GM oscillator family this test covered was retired.
+
 #include "mini_test.hpp"
 #include "aur/audio/synth.hpp"
+
 #include "aur/json.hpp"
 
 #include <cmath>
 #include <string>
+
 #include <vector>
 
 namespace
@@ -51,24 +48,30 @@ namespace
         return 0.0;
     }
 
-    aur::StereoPcm render_patch(int program, int pitch)
+    aur::StereoPcm render_note(int program, int pitch)
     {
         const std::string json =
             "{\"name\":\"Pitch\",\"tempo\":120,\"bars\":4,\"beats\":4,\"tracks\":["
             "{\"name\":\"Lead\",\"channel\":0,\"program\":" + std::to_string(program) +
             ",\"volume\":100,\"pan\":64,\"notes\":[[0," + std::to_string(pitch) + ",64,100]]}]}";
-        return aur::synthesize_preview(aur::parse_json(json), aur::PreviewSynth::Gm, 22050, 10);
+        return aur::synthesize_preview(aur::parse_json(json), aur::PreviewSynth::Spc, 22050, 10);
     }
+
+    // The sampler maps a program onto one of three demo slots: saw, pulse and
+    // snare. The snare is unpitched noise, so it has no measurable pitch.
+    bool slotIsPitched(int program) { return (program % 3) != 2; }
 
 } // namespace
 
-// Every GM program renders its fundamental at the requested note.
+// The sampler's pitched slots render A4 at 440 Hz.
 void test_synth_pitch_all_programs()
 {
     int failures = 0;
     for (int program = 0; program < 128; ++program)
     {
-        const double hz = pitch_hz(render_patch(program, 69).samples, 22050);
+        if (!slotIsPitched(program))
+            continue;
+        const double hz = pitch_hz(render_note(program, 69).samples, 22050);
         if (!(hz > 425.0 && hz < 455.0))
         {
             std::printf("  program %d sounded %.1f Hz (want 440)\n", program, hz);
@@ -76,7 +79,7 @@ void test_synth_pitch_all_programs()
         }
     }
     ASSERT(failures == 0);
-    std::puts("  ok: all 128 GM programs sound A4 at 440 Hz");
+    std::puts("  ok: every pitched sampler slot sounds A4 at 440 Hz");
 }
 
 // Pitch tracks the requested note, so octaves and fifths are not mis-scaled.
@@ -88,7 +91,9 @@ void test_synth_pitch_follows_note()
     {
         for (int program : {0, 19, 40, 48, 56, 80, 96, 112})
         {
-            const double hz = pitch_hz(render_patch(program, c.pitch).samples, 22050);
+            if (!slotIsPitched(program))
+                continue;
+            const double hz = pitch_hz(render_note(program, c.pitch).samples, 22050);
             const double ratio = hz / c.hz;
             ASSERT(ratio > 0.96 && ratio < 1.04);
         }

@@ -1,7 +1,10 @@
 #include "mini_test.hpp"
 #include "aur/audio/StepSequencer.hpp"
+
 #include "aur/audio/SongDocument.hpp"
+
 #include "aur/audio/RealtimeMixer.hpp"
+
 #include "aur/audio/synth.hpp"
 
 #include <cmath>
@@ -48,6 +51,15 @@ namespace
         fields.emplace_back(length);
         fields.emplace_back(velocity);
         return Json(fields);
+    }
+
+    int preview_peak(const Json &song, int bars, int sampleRate = 8000)
+    {
+        aur::StereoPcm pcm = aur::synthesize_preview(song, aur::PreviewSynth::MdFm, sampleRate, bars);
+        int peak = 0;
+        for (int16_t sample : pcm.samples)
+            peak = std::max(peak, std::abs(static_cast<int>(sample)));
+        return peak;
     }
 
     void test_pattern_read_defaults()
@@ -239,11 +251,7 @@ namespace
                                                      JsonObject{{"step", 8},
                                                               {"pitch", 60},
                                                               {"velocity", 110}}});
-        aur::StereoPcm pcm = aur::synthesize_preview(song, aur::PreviewSynth::Gm, 8000, 4);
-        ASSERT(!pcm.samples.empty());
-        int peak = 0;
-        for (int16_t sample : pcm.samples)
-            peak = std::max(peak, std::abs(static_cast<int>(sample)));
+        int peak = preview_peak(song, 4);
         ASSERT(peak > 1000);
     }
 
@@ -277,12 +285,34 @@ namespace
                                {"tempo", 120},
                                {"bars", 1},
                                {"tracks", tracks}};
-        aur::StereoPcm pcm = aur::synthesize_preview(song, aur::PreviewSynth::Gm, 8000, 4);
-        ASSERT(!pcm.samples.empty());
-        int peak = 0;
-        for (int16_t sample : pcm.samples)
-            peak = std::max(peak, std::abs(static_cast<int>(sample)));
+        int peak = preview_peak(song, 4);
         ASSERT(peak > 1000);
+    }
+
+    void test_pattern_humanize_is_deterministic_across_runs()
+    {
+        Json song = pattern_song(16, 4, JsonArray{JsonObject{{"step", 0},
+                                                              {"pitch", 60},
+                                                              {"velocity", 110}},
+                                                     JsonObject{{"step", 4},
+                                                              {"pitch", 62},
+                                                              {"velocity", 90}}});
+        Json pattern = song["step_patterns"][0];
+        pattern["humanize_timing"] = 0.5;
+        pattern["humanize_velocity"] = 0.5;
+        aur::StereoPcm a = aur::synthesize_preview(song, aur::PreviewSynth::MdFm, 8000, 2);
+        aur::StereoPcm b = aur::synthesize_preview(song, aur::PreviewSynth::MdFm, 8000, 2);
+        ASSERT(a.samples.size() == b.samples.size());
+        bool identical = true;
+        for (size_t i = 0; i < a.samples.size(); ++i)
+        {
+            if (a.samples[i] != b.samples[i])
+            {
+                identical = false;
+                break;
+            }
+        }
+        ASSERT(identical);
     }
 } // namespace
 
@@ -301,4 +331,5 @@ void test_step_sequencer()
     test_pattern_song_renders_audible_output();
     test_realtime_mixer_renders_pattern();
     test_mixer_without_patterns_is_unchanged();
+    test_pattern_humanize_is_deterministic_across_runs();
 }

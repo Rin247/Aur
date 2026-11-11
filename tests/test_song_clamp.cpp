@@ -1,10 +1,13 @@
 #include "mini_test.hpp"
 #include "aur/audio/midi.hpp"
+
 #include "aur/audio/synth.hpp"
 
 #include <cstdint>
 #include <cstddef>
+
 #include <string>
+
 #include <vector>
 
 namespace {
@@ -18,15 +21,14 @@ aur::Json song_with_note_at(int step) {
 
 } // namespace
 
-// The preview synth and MIDI export both clamped note steps to 546 (65535/120),
-// silently truncating songs past ~bar 35 even though the UI allows 128 bars.
-// Fixed in the DAW P0 commit; this test pins the fix.
+// The preview synth and MIDI export both clamped note steps to 546, truncating
+// songs past ~bar 35. Fixed in the DAW P0 commit; this test pins the fix.
 void test_song_clamp_regression() {
     constexpr int kBeyondClamp = 600; // bar 38 at 16 steps/bar, past the old clamp
 
     const aur::Json song = song_with_note_at(kBeyondClamp);
 
-    const aur::StereoPcm pcm = aur::synthesize_preview(song, aur::PreviewSynth::Gm, 8000, 600);
+    const aur::StereoPcm pcm = aur::synthesize_preview(song, aur::PreviewSynth::MdFm, 8000, 600);
     // The buffer must span at least ~19 bars past the old clamp point so the
     // note has room to land, regardless of the engine's step-to-seconds ratio.
     ASSERT(pcm.samples.size() >= static_cast<std::size_t>(600 * 8000 / 8));

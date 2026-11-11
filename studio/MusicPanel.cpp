@@ -186,8 +186,11 @@ namespace aur
         tempo->setValue(clampedInt((*song)["tempo"], 120, 30, 240));
         const QString synthId = (*song)["preview_synth"].is_string()
                                     ? QString::fromStdString((*song)["preview_synth"].as_string())
-                                    : "gm";
-        previewSynth->setCurrentIndex(std::max(0, previewSynth->findData(synthId)));
+                                    : "md_fm";
+        // A retired oscillator id ("gm", "fm", "retro_psg") is not in the list
+        // any more, so the song falls back to the first core.
+        const int synthIndex = previewSynth->findData(synthId);
+        previewSynth->setCurrentIndex(synthIndex >= 0 ? synthIndex : 0);
         selectedTrack = 0;
         refreshTracks();
         refreshFxChain();
@@ -757,13 +760,10 @@ MusicPanel::MusicPanel(Project* p, QWidget* parent)
     tempo->setSuffix(" BPM");
     songBar->addWidget(tempo);
     previewSynth = new QComboBox(this);
-    previewSynth->addItem("GM-style instruments", "gm");
-    previewSynth->addItem("FM (6-op style)", "fm");
-    previewSynth->addItem("Retro PSG", "retro_psg");
     previewSynth->addItem("Mega Drive FM", "md_fm");
     previewSynth->addItem("SPC sampler", "spc");
     previewSynth->setToolTip(
-        "Built-in GM patch-family synthesis. MIDI output sends the selected bank and program to a connected GM/GS device.");
+        "The preview instrument. MIDI output sends the selected bank and program to a connected GM/GS device.");
     songBar->addWidget(new QLabel("Preview:", this));
     songBar->addWidget(previewSynth);
     playButton = new QPushButton("Play Preview", this);
@@ -1105,7 +1105,7 @@ MusicPanel::MusicPanel(Project* p, QWidget* parent)
         while (project->music.contains(id)) id = base + "_" + std::to_string(suffix++);
         project->music[id] = JsonObject{
             {"name", name.trimmed().toStdString()}, {"tempo", 120}, {"bars", 8},
-            {"beats", 4}, {"loop_bar", 0}, {"preview_synth", "gm"},
+            {"beats", 4}, {"loop_bar", 0}, {"preview_synth", "md_fm"},
             {"tracks", JsonArray{}}
         };
         refreshSongs();

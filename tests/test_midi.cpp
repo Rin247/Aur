@@ -1,10 +1,13 @@
 #include "mini_test.hpp"
 #include "aur/audio/midi.hpp"
+
 #include "aur/audio/synth.hpp"
 
 #include <cstdint>
 #include <stdexcept>
+
 #include <string>
+
 #include <vector>
 
 namespace {
@@ -42,6 +45,7 @@ std::vector<std::uint8_t> make_midi_with_division(std::uint16_t division) {
 }
 
 } // namespace
+
 // P4: MIDI fidelity — tempo/T.S. maps, markers, CC/bend/pressure automation
 // survive a full export/import round trip on the v2 model.
 void test_midi_fidelity()
@@ -160,14 +164,19 @@ void test_midi_fidelity()
     ASSERT(tempo_entries >= 1);
 }
 
-void test_midi_import_export() {
-    for (const std::uint16_t division : {96, 384, 480, 960}) {
-        const aur::Json ppqn_song = aur::import_standard_midi(
-            make_midi_with_division(division), "PPQN fixture");
-        ASSERT(ppqn_song["ticks_per_quarter"].as_int() == division);
-        ASSERT(ppqn_song["tracks"][0]["notes"][0][0].as_int() == 0);
-        ASSERT(ppqn_song["tracks"][0]["notes"][0][2].as_int() == 2);
+    void assert_ppqn_divisions()
+    {
+        for (const std::uint16_t division : {96, 384, 480, 960}) {
+            const aur::Json ppqn_song = aur::import_standard_midi(
+                make_midi_with_division(division), "PPQN fixture");
+            ASSERT(ppqn_song["ticks_per_quarter"].as_int() == division);
+            ASSERT(ppqn_song["tracks"][0]["notes"][0][0].as_int() == 0);
+            ASSERT(ppqn_song["tracks"][0]["notes"][0][2].as_int() == 2);
+        }
     }
+
+void test_midi_import_export() {
+    assert_ppqn_divisions();
     aur::Json song = aur::JsonObject{
         {"name", "Aur MIDI"},
         {"tempo", 132},
@@ -195,13 +204,7 @@ void test_midi_import_export() {
         }}
     };
 
-    for (const std::uint16_t division : {96, 384, 480, 960}) {
-        const aur::Json ppqn_song = aur::import_standard_midi(
-            make_midi_with_division(division), "PPQN fixture");
-        ASSERT(ppqn_song["ticks_per_quarter"].as_int() == division);
-        ASSERT(ppqn_song["tracks"][0]["notes"][0][0].as_int() == 0);
-        ASSERT(ppqn_song["tracks"][0]["notes"][0][2].as_int() == 2);
-    }
+    assert_ppqn_divisions();
 
     const std::vector<uint8_t> bytes = aur::export_standard_midi(song);
     ASSERT(bytes.size() > 64);
@@ -233,26 +236,18 @@ void test_midi_import_export() {
     ASSERT(imported_again["tracks"][0]["notes"][1][1].as_int() == 67);
     ASSERT(imported_again["sysex"].as_array().size() == 1);
     const aur::StereoPcm fm = aur::synthesize_preview(
-        imported, aur::PreviewSynth::Fm, 8000, 10);
+        imported, aur::PreviewSynth::MdFm, 8000, 10);
     const aur::StereoPcm psg = aur::synthesize_preview(
-        imported, aur::PreviewSynth::RetroPsg, 8000, 10);
-    const aur::StereoPcm gm = aur::synthesize_preview(
-        imported, aur::PreviewSynth::Gm, 8000, 10);
+        imported, aur::PreviewSynth::Spc, 8000, 10);
     ASSERT(fm.sample_rate == 8000);
     ASSERT(fm.samples.size() == psg.samples.size());
-    ASSERT(gm.samples.size() == psg.samples.size());
     ASSERT(!fm.samples.empty());
     ASSERT(fm.samples != psg.samples);
-    ASSERT(gm.samples != fm.samples);
-    ASSERT(gm.samples != psg.samples);
     aur::Json alternateProgram = imported;
     alternateProgram["tracks"][0]["program"] = 0;
     const aur::StereoPcm alternateFm = aur::synthesize_preview(
-        alternateProgram, aur::PreviewSynth::Fm, 8000, 10);
+        alternateProgram, aur::PreviewSynth::MdFm, 8000, 10);
     ASSERT(fm.samples != alternateFm.samples);
-    const aur::StereoPcm alternateGm = aur::synthesize_preview(
-        alternateProgram, aur::PreviewSynth::Gm, 8000, 10);
-    ASSERT(gm.samples != alternateGm.samples);
     bool bad_file_rejected = false;
     try {
         (void)aur::import_standard_midi({0, 1, 2});

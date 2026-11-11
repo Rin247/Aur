@@ -1,5 +1,6 @@
 #include "mini_test.hpp"
 #include "aur/audio/OfflineRenderJob.hpp"
+
 #include "aur/audio/synth.hpp"
 
 #include <chrono>
@@ -48,11 +49,11 @@ void test_offline_render_job()
 
     // Success path: threaded result matches the synchronous render.
     const aur::StereoPcm expected = aur::synthesize_preview(
-        song, aur::PreviewSynth::Gm, 8000, 30);
+        song, aur::PreviewSynth::MdFm, 8000, 30);
 
     aur::audio::OfflineRenderJob job;
     double lastProgress = 0.0;
-    job.start(song, aur::PreviewSynth::Gm, 8000, 30,
+    job.start(song, aur::PreviewSynth::MdFm, 8000, 30,
               [&](double f)
               { lastProgress = f; });
     ASSERT(job.running() || job.finished());
@@ -66,7 +67,7 @@ void test_offline_render_job()
 
     // Cancel path: a long render is abandoned; takeResult is empty.
     aur::audio::OfflineRenderJob longJob;
-    longJob.start(cancel_song(), aur::PreviewSynth::Gm, 44100, 600);
+    longJob.start(cancel_song(), aur::PreviewSynth::MdFm, 44100, 600);
     longJob.cancel();
     ASSERT(wait_finished(longJob, 30000));
     ASSERT(longJob.takeResult().samples.empty());

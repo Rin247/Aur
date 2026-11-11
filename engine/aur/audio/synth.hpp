@@ -2,13 +2,18 @@
 
 #include "aur/json.hpp"
 #include <atomic>
+
 #include <cstdint>
+
 #include <functional>
+
 #include <vector>
 
 namespace aur {
 
-enum class PreviewSynth : int { Gm = 0, Fm = 1, RetroPsg = 2, MdFm = 3, Spc = 4 };
+// The preview instruments. The three oscillator synths that came first (Gm, Fm,
+// RetroPsg) were retired; their song ids now fall through to the YM-FM core.
+enum class PreviewSynth : int { MdFm = 0, Spc = 1 };
 
 struct StereoPcm {
     int sample_rate = 44100;

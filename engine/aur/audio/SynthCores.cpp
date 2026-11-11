@@ -29,16 +29,20 @@ namespace aur
 
         } // namespace
 
+        void SynthCoreVoice::resetCursors()
+        {
+            eventCursor_ = 0;
+            pendingOffs_.clear();
+            offIndex_.clear();
+            offCursor_ = 0;
+            nextEventIndex_ = 0;
+        }
+
         void SynthCoreVoice::setup(Kind kind, double sampleRate)
         {
             kind_ = kind;
             sampleRate_ = sampleRate;
-            events_.clear();
-            pendingOffs_.clear();
-            offIndex_.clear();
-            eventCursor_ = 0;
-            offCursor_ = 0;
-            nextEventIndex_ = 0;
+            clearEvents();
             fm_ = YmFmCore{};
             spc_ = SnesPcmCore{};
             fm_.init(sampleRate);
@@ -58,21 +62,23 @@ namespace aur
                           return a.startFrame < b.startFrame;
                       });
             events_ = std::move(events);
-            eventCursor_ = 0;
-            pendingOffs_.clear();
-            offIndex_.clear();
-            offCursor_ = 0;
-            nextEventIndex_ = 0;
+            resetCursors();
+        }
+
+        void SynthCoreVoice::appendEvents(std::vector<CoreNoteEvent> events)
+        {
+            if (events.empty())
+                return;
+            events_.insert(events_.end(), events.begin(), events.end());
+            std::stable_sort(events_.begin(), events_.end(),
+                             [](const CoreNoteEvent &a, const CoreNoteEvent &b)
+                             { return a.startFrame < b.startFrame; });
         }
 
         void SynthCoreVoice::clearEvents()
         {
             events_.clear();
-            pendingOffs_.clear();
-            offIndex_.clear();
-            eventCursor_ = 0;
-            offCursor_ = 0;
-            nextEventIndex_ = 0;
+            resetCursors();
         }
 
         void SynthCoreVoice::rebaseEvents(std::int64_t shift)
@@ -82,11 +88,7 @@ namespace aur
                 e.startFrame += shift;
                 e.endFrame += shift;
             }
-            eventCursor_ = 0;
-            pendingOffs_.clear();
-            offIndex_.clear();
-            offCursor_ = 0;
-            nextEventIndex_ = 0;
+            resetCursors();
         }
 
         void SynthCoreVoice::issueNoteOn(const CoreNoteEvent &e)

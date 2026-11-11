@@ -1,6 +1,7 @@
 # Groovebox: 128-step sequencer + performance mode
 
-Status: P0 audit done; next step is P1 (engine step-sequencer model).
+Status: P0-P7 landed (engine model, playback, arpeggiator, studio widgets, and the
+three oscillator synths retired). P8 next: close-out — docs and the estate gate.
 
 ## Goal
 
@@ -65,7 +66,7 @@ Read against the source, not from memory:
 - **There is no step sequencer anywhere.** Grep for "step_pattern" / "128"
   over `engine/` and `studio/` returns nothing.
 - `RealtimeMixer::schedule()` reads only the scalar `tempo` and the note
-  arrays. `synthesize_preview` does the same. The tempo map is *not* honoured
+  arrays. `synthesize_preview` does the same. The tempo map is _not_ honoured
   at playback, which the WM1.8 work package already flagged.
 
 ## Hazards found
@@ -99,18 +100,18 @@ Read against the source, not from memory:
 
 New engine files (all Qt-free, in `engine/aur/audio/`):
 
-| file | responsibility |
-|---|---|
-| `StepSequencer.hpp/.cpp` | pattern model, compile to events, swing/timing |
-| `Arpeggiator.hpp/.cpp` | arp modes, rates, gate, octave, chord modes |
-| `GrooveBox.hpp/.cpp` | groovebox global settings (swing, ratchet, humanise) |
+| file                     | responsibility                                       |
+| ------------------------ | ---------------------------------------------------- |
+| `StepSequencer.hpp/.cpp` | pattern model, compile to events, swing/timing       |
+| `Arpeggiator.hpp/.cpp`   | arp modes, rates, gate, octave, chord modes          |
+| `GrooveBox.hpp/.cpp`     | groovebox global settings (swing, ratchet, humanise) |
 
 New studio files (Qt side, in `studio/music/`):
 
-| file | responsibility |
-|---|---|
-| `StepSequencerCanvas.hpp/.cpp` | the 128-step grid widget |
-| `GrooveBoxPanel.hpp/.cpp` | the performance strip (swing, arp, chain) |
+| file                           | responsibility                            |
+| ------------------------------ | ----------------------------------------- |
+| `StepSequencerCanvas.hpp/.cpp` | the 128-step grid widget                  |
+| `GrooveBoxPanel.hpp/.cpp`      | the performance strip (swing, arp, chain) |
 
 Song document additions (`SongDocument`):
 
@@ -119,24 +120,32 @@ Song document additions (`SongDocument`):
   "step_patterns": [
     {
       "name": "Pattern 1",
-      "track": 0,              // which song track this pattern plays
-      "channel": 9,            // MIDI channel (9 = drums)
+      "track": 0, // which song track this pattern plays
+      "channel": 9, // MIDI channel (9 = drums)
       "program": 0,
-      "length": 128,           // steps in the pattern (1..128)
-      "resolution": 4,         // steps per sequencer cell (1,2,4,8,16)
-      "seed": 12345,           // deterministic seed for randomisers
-      "steps": [               // sparse: only non-empty cells are stored
-        { "step": 0, "pitch": 36, "velocity": 110, "accent": 1,
-          "slide": 0, "ratchet": 0, "tie": false }
-      ]
-    }
+      "length": 128, // steps in the pattern (1..128)
+      "resolution": 4, // steps per sequencer cell (1,2,4,8,16)
+      "seed": 12345, // deterministic seed for randomisers
+      "steps": [
+        // sparse: only non-empty cells are stored
+        {
+          "step": 0,
+          "pitch": 36,
+          "velocity": 110,
+          "accent": 1,
+          "slide": 0,
+          "ratchet": 0,
+          "tie": false,
+        },
+      ],
+    },
   ],
   "groovebox": {
-    "swing": 0,            // 0..100, percent of the second half delayed
-    "humanize": 0,         // 0..100, deterministic timing jitter
+    "swing": 0, // 0..100, percent of the second half delayed
+    "humanize": 0, // 0..100, deterministic timing jitter
     "arp": { "mode": "off", "rate": 4, "gate": 80, "octave": 1 },
-    "chain": [0, 1]        // pattern indices played in order
-  }
+    "chain": [0, 1], // pattern indices played in order
+  },
 }
 ```
 
@@ -147,7 +156,7 @@ Song document additions (`SongDocument`):
 - [x] Audit the engine, the song document and the studio layer against the
       DAW plan; record the verified gaps in this file.
 - [x] Confirm the baseline builds and the suite is green before any change.
-- [ ] Add regression tests that pin the current behaviour of a song with no
+- [x] Add regression tests that pin the current behaviour of a song with no
       `step_patterns` key (bit-identical render, same PCM hash).
 
 Acceptance: baseline `ctest` is 7/7 green; the audit notes above are in this
@@ -155,19 +164,19 @@ file.
 
 ### P1 Step-sequencer engine model
 
-- [ ] `StepSequencer.hpp/.cpp`: the pattern struct, the pattern reader over
+- [x] `StepSequencer.hpp/.cpp`: the pattern struct, the pattern reader over
       `song["step_patterns"]`, and the compiler that turns a pattern into a
       sorted event list (`step`, `pitch`, `velocity`, `length`).
-- [ ] Swing: a compiled pattern's odd cells are delayed by
+- [x] Swing: a compiled pattern's odd cells are delayed by
       `swing · (cell/2)` of a cell; swing is a groovebox global.
-- [ ] Humanise: a deterministic per-step jitter derived from the pattern
+- [x] Humanise: a deterministic per-step jitter derived from the pattern
       seed, scaled by the humanise amount.
-- [ ] Ratchet: a step with `ratchet = n` fires n times inside its cell.
-- [ ] Accent: a step with `accent` scales its velocity.
-- [ ] `SongDocument` accessors: `step_patterns()`, `step_pattern_at()`,
+- [x] Ratchet: a step with `ratchet = n` fires n times inside its cell.
+- [x] Accent: a step with `accent` scales its velocity.
+- [x] `SongDocument` accessors: `step_patterns()`, `step_pattern_at()`,
       `set_step_pattern()`, plus `groovebox()` / `set_groovebox()`.
-- [ ] `SongDocument::migrate` leaves a song without the keys untouched.
-- [ ] Tests: compile a known pattern, assert the event list; assert swing
+- [x] `SongDocument::migrate` leaves a song without the keys untouched.
+- [x] Tests: compile a known pattern, assert the event list; assert swing
       shifts the odd cells; assert ratchet multiplies; assert humanise is
       deterministic for a given seed and differs between seeds.
 
@@ -176,16 +185,16 @@ compiles to zero events.
 
 ### P2 Sequencer playback in the engine
 
-- [ ] `RealtimeMixer`: compile the patterns at the song swap and schedule
+- [x] `RealtimeMixer`: compile the patterns at the song swap and schedule
       their voices alongside the note voices. The compile happens in
       `schedule()` (the command boundary), never inside the per-frame loop.
-- [ ] Fix the unsorted `upcoming` deque while the mixer is being touched:
+- [x] Fix the unsorted `upcoming` deque while the mixer is being touched:
       sort by start frame at build time so later tracks are not dropped.
-- [ ] `synthesize_preview`: render the compiled pattern events too, so the
+- [x] `synthesize_preview`: render the compiled pattern events too, so the
       offline export matches the live preview.
-- [ ] The pattern's length drives the song's loop length when the song has
+- [x] The pattern's length drives the song's loop length when the song has
       no arrangement placements, so a 128-step pattern loops as written.
-- [ ] Tests: realtime/offline parity for a pattern-bearing song; a pattern
+- [x] Tests: realtime/offline parity for a pattern-bearing song; a pattern
       that starts on step 0 in a later track is audible.
 
 Acceptance: parity within 5e-04 relative; the new pattern tests green; the
@@ -193,56 +202,82 @@ existing golden PCM hashes unchanged for songs without patterns.
 
 ### P3 Arpeggiator
 
-- [ ] `Arpeggiator.hpp/.cpp`: modes `off, up, down, updown, random, chord,
-      asplayed`; rates 1/4, 1/8, 1/8T, 1/16, 1/16T, 1/32; gate 1..100 %;
+- [x] `Arpeggiator.hpp/.cpp`: modes `off, up, down, updown, random, chord,
+    asplayed`; rates 1/4, 1/8, 1/8T, 1/16, 1/16T, 1/32; gate 1..100 %;
       octave span 0..3; hold.
-- [ ] The arpeggiator turns a held chord (or a pattern's pitches) into a
+- [x] The arpeggiator turns a held chord (or a pattern's pitches) into a
       note stream that is compiled into the same event list as the pattern.
-- [ ] Random mode uses the pattern seed so it is deterministic.
-- [ ] Tests: each mode over a known chord yields the expected pitch order;
+- [x] Random mode uses the pattern seed so it is deterministic.
+- [x] Tests: each mode over a known chord yields the expected pitch order;
       the gate ratio changes the note length; random mode is reproducible.
 
 Acceptance: `tests/test_arpeggiator.cpp` green.
 
 ### P4 Groovebox globals
 
-- [ ] `GrooveBox.hpp/.cpp`: swing, humanise, master groove (a fixed
+- [x] `GrooveBox.hpp/.cpp`: swing, humanise, master groove (a fixed
       velocity/timing offset), and the chain (pattern order).
-- [ ] `SongDocument::groovebox()` / `set_groovebox()` with defaults.
-- [ ] The chain plays pattern A for its length, then pattern B, then loops.
-- [ ] Tests: the chain order produces the expected merged event sequence;
+- [x] `SongDocument::groovebox()` / `set_groovebox()` with defaults.
+- [x] The chain plays pattern A for its length, then pattern B, then loops.
+- [x] Tests: the chain order produces the expected merged event sequence;
       defaults read as neutral.
 
 Acceptance: `tests/test_groovebox.cpp` green.
 
 ### P5 Studio: the 128-step grid
 
-- [ ] `StepSequencerCanvas`: a painted grid, one row per pattern, 128
+- [x] `StepSequencerCanvas`: a painted grid, one row per pattern, 128
       columns, cells drawn by state (empty / on / accent / slide / ratchet).
-- [ ] Click toggles a cell; drag paints; right-click clears; the pitch of a
+- [x] Click toggles a cell; drag paints; right-click clears; the pitch of a
       cell comes from the selected track's instrument or from a per-pattern
       pitch column.
-- [ ] Keyboard: arrow keys move the cursor, Space toggles, Delete clears,
+- [x] Keyboard: arrow keys move the cursor, Space toggles, Delete clears,
       Page Up/Down change the pitch.
-- [ ] Undo: every edit goes through `SongHistory`'s track-snapshot path.
-- [ ] The canvas is a new file; `MusicPanel.cpp` gains only wiring.
+- [x] Undo: every edit goes through `SongHistory`'s track-snapshot path.
+- [x] The canvas is a new file; `MusicPanel.cpp` gains only wiring.
 
 Acceptance: the widget builds; the panel shows a "Step Sequencer" tab.
 
 ### P6 Studio: the groovebox performance strip
 
-- [ ] `GrooveBoxPanel`: swing, humanise, arp mode/rate/gate/octave, chain
+- [x] `GrooveBoxPanel`: swing, humanise, arp mode/rate/gate/octave, chain
       order, pattern length, and a Play/Stop pair bound to the mixer.
-- [ ] A "Perform" strip with the pattern's mute/solo buttons.
-- [ ] The strip is keyboard-navigable and every action is reachable without
+- [x] A "Perform" strip with the pattern's mute/solo buttons.
+- [x] The strip is keyboard-navigable and every action is reachable without
       a pointer.
-- [ ] `MusicPanel` wires the panel to the mixer and to the song document;
+- [x] `MusicPanel` wires the panel to the mixer and to the song document;
       the file does not grow past its current size (extraction if needed).
 
 Acceptance: the panel builds; changing swing changes the audible timing in
 the offline render.
 
-### P7 Close-out
+### P7 Retire the three oscillator synths
+
+The GM/FM/RetroPSG oscillators in `engine/aur/audio/VoiceCore.hpp/.cpp` are the
+oldest synths in the engine and the least complete: no filter, no velocity
+layers, no per-part sends, and three hand-written waveforms that approximate
+GM families by index arithmetic. The hardware cores (YM-FM, SPC) replaced them.
+
+- [x] Delete `engine/aur/audio/VoiceCore.hpp` and `.cpp`; drop them from
+      `CMakeLists.txt`.
+- [x] `PreviewSynth` keeps `MdFm` and `Spc` only. `Gm`, `Fm` and `RetroPsg`
+      are removed, and their song ids (`gm`, `fm`, `retro_psg`) fall through to
+      the YM-FM core so old songs still play.
+- [x] `RealtimeMixer`: the oscillator voice list goes away. Every track's
+      notes become `CoreNoteEvent`s for the single `SynthCoreVoice`, so the
+      mixer has one rendering path.
+- [x] `synth.cpp`: the oscillator render loop goes away; `synthesize_preview`
+      always renders through the core path.
+- [x] The step-sequencer events join the same core event list, so the
+      groovebox plays through the same instrument as the piano roll.
+- [x] `MusicPanel`: the preview-synth dropdown lists the cores only.
+- [x] Tests: the golden hash, pitch and parity tests for the removed synths
+      go with them; the core-synth versions stay.
+
+Acceptance: the build is green, `ctest` is green, and a song with no
+`preview_synth` key still renders.
+
+### P8 Close-out
 
 - [ ] Update `Bible/notes/daw/plan.md` (P9 becomes landed), `WANTED.md`,
       `HANDOVER.md` and `Bible/Operations/NOTES.md`.

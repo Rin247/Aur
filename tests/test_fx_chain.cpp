@@ -1,13 +1,16 @@
 // P8.2 contract tests: the master effect chain is additive over the song JSON
-// (absent "effects" key = bit-identical old path) and offline preview and the
-// realtime mixer agree through the same chain.
+// (absent "effects" key = the old path) and both render paths agree.
+
 #include "mini_test.hpp"
 #include "aur/audio/synth.hpp"
+
 #include "aur/audio/RealtimeMixer.hpp"
+
 #include "aur/audio/SongDocument.hpp"
 
 #include <cmath>
 #include <string>
+
 #include <vector>
 
 namespace
@@ -58,11 +61,11 @@ namespace
 void test_fx_chain_absent_key_unchanged()
 {
     const aur::Json song = plain_song();
-    const aur::StereoPcm pcm = aur::synthesize_preview(song, aur::PreviewSynth::Gm, 8000, 30);
+    const aur::StereoPcm pcm = aur::synthesize_preview(song, aur::PreviewSynth::MdFm, 8000, 30);
     ASSERT(pcm.samples.size() > 0);
     // Golden-style pin: deterministic and non-trivial.
     const std::uint64_t h = fnv1a(pcm.samples);
-    const aur::StereoPcm again = aur::synthesize_preview(song, aur::PreviewSynth::Gm, 8000, 30);
+    const aur::StereoPcm again = aur::synthesize_preview(song, aur::PreviewSynth::MdFm, 8000, 30);
     ASSERT(fnv1a(again.samples) == h);
     ASSERT(h != 0);
     std::puts("  ok: absent effects key renders deterministically (old path)");
@@ -72,10 +75,10 @@ void test_fx_chain_absent_key_unchanged()
 void test_fx_chain_empty_is_noop()
 {
     aur::Json song = plain_song();
-    const aur::StereoPcm without = aur::synthesize_preview(song, aur::PreviewSynth::Gm, 8000, 30);
+    const aur::StereoPcm without = aur::synthesize_preview(song, aur::PreviewSynth::MdFm, 8000, 30);
     aur::audio::SongDocument::set_effect_chain(song, {});
     ASSERT(!song.contains("effects"));
-    const aur::StereoPcm with = aur::synthesize_preview(song, aur::PreviewSynth::Gm, 8000, 30);
+    const aur::StereoPcm with = aur::synthesize_preview(song, aur::PreviewSynth::MdFm, 8000, 30);
     ASSERT(fnv1a(with.samples) == fnv1a(without.samples));
     std::puts("  ok: empty chain round-trips to no key and renders identically");
 }
@@ -84,12 +87,12 @@ void test_fx_chain_empty_is_noop()
 void test_fx_chain_changes_audio_and_skips_unknown()
 {
     aur::Json song = plain_song();
-    const aur::StereoPcm dry = aur::synthesize_preview(song, aur::PreviewSynth::Gm, 8000, 30);
+    const aur::StereoPcm dry = aur::synthesize_preview(song, aur::PreviewSynth::MdFm, 8000, 30);
     // Ceiling at -40 dB (param -4000, range now -1200..0 is -12 dB, so clamp
     // to -1200 = -12 dB) — deep enough to catch this quiet render.
     add_chain(song, "Limiter", false, {{0, -1200}});
     add_chain(song, "Not A Real Effect", false, {});
-    const aur::StereoPcm wet = aur::synthesize_preview(song, aur::PreviewSynth::Gm, 8000, 30);
+    const aur::StereoPcm wet = aur::synthesize_preview(song, aur::PreviewSynth::MdFm, 8000, 30);
     ASSERT(wet.samples.size() == dry.samples.size());
     double peak_dry = 0, peak_wet = 0;
     for (size_t i = 0; i < wet.samples.size(); i += 2)
@@ -106,9 +109,9 @@ void test_fx_chain_changes_audio_and_skips_unknown()
 void test_fx_chain_bypass_slot_is_transparent()
 {
     aur::Json song = plain_song();
-    const aur::StereoPcm dry = aur::synthesize_preview(song, aur::PreviewSynth::Gm, 8000, 30);
+    const aur::StereoPcm dry = aur::synthesize_preview(song, aur::PreviewSynth::MdFm, 8000, 30);
     add_chain(song, "Limiter", true, {{0, -1200}});
-    const aur::StereoPcm bypassed = aur::synthesize_preview(song, aur::PreviewSynth::Gm, 8000, 30);
+    const aur::StereoPcm bypassed = aur::synthesize_preview(song, aur::PreviewSynth::MdFm, 8000, 30);
     ASSERT(fnv1a(bypassed.samples) == fnv1a(dry.samples));
     std::puts("  ok: bypassed slot is bit-exact transparent");
 }
@@ -119,15 +122,13 @@ void test_fx_chain_realtime_parity()
     aur::Json song = plain_song();
     add_chain(song, "Limiter", false, {{0, -1200}});
     constexpr int rate = 8000;
-    // One bar (16 steps): the realtime mixer loops at bars*16 steps, and the
-    // offline preview does not loop; comparing past the wrap would differ
-    // legitimately (limiter state continues across loops live). One bar fits
-    // entirely before the first wrap, so both paths see identical history.
+    // One bar (16 steps): the realtime mixer loops at bars*16 steps, the offline
+    // preview does not; one bar fits before the first wrap, so both paths agree.
     song["tracks"].as_array().clear();
     song["tracks"].as_array().emplace_back(aur::parse_json(
         "{\"name\":\"L\",\"channel\":0,\"program\":48,\"volume\":127,\"pan\":64,"
         "\"notes\":[[0,60,8,127],[4,64,8,127],[8,67,8,127],[12,72,4,127]]}"));
-    const aur::StereoPcm offline = aur::synthesize_preview(song, aur::PreviewSynth::Gm, rate, 30);
+    const aur::StereoPcm offline = aur::synthesize_preview(song, aur::PreviewSynth::MdFm, rate, 30);
     const int frames = std::min(static_cast<int>(offline.samples.size() / 2),
                                 16 * rate * 60 / (120 * 4));
     aur::audio::RealtimeMixer mixer;

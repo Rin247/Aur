@@ -27,7 +27,6 @@ add_library(aur_engine STATIC
     engine/aur/audio/midi.cpp
     engine/aur/audio/synth.cpp
     engine/aur/audio/SynthCores.cpp
-    engine/aur/audio/VoiceCore.cpp
     engine/aur/audio/RealtimeMixer.cpp
     engine/aur/audio/SongDocument.cpp
     engine/aur/audio/OfflineRenderJob.cpp

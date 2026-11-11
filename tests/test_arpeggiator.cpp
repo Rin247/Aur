@@ -1,5 +1,6 @@
 #include "mini_test.hpp"
 #include "aur/audio/Arpeggiator.hpp"
+
 #include "aur/audio/SongDocument.hpp"
 
 #include <algorithm>
