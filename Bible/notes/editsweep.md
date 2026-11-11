@@ -101,6 +101,14 @@ whole-layer copy; a dense map stroke copies kilobytes per tile.
       become single commands, the 100-entry cap moves onto QUndoStack's limit.
       Behaviour pins: one undo per stroke, redo restores exactly, entity id
       preserved. `<editsweep-d4b>`
+      **Decision (2026-11-11):** D4.S1b lands in two moves. First a
+      `SnapshotCommand` (region key + before/after region copies) on
+      QUndoStack — this converts undo ownership, the redo-clear discipline and
+      the 100-entry cap in one step, and the 7 push sites stay mechanical.
+      Per-cell diffs then follow per site as D4.S1b2, each a small mechanical
+      change over a proven stack. Rationale: converting 7 sites to per-cell
+      diffs in one pass risks a half-landed state; a snapshot is what the
+      current code stores anyway, so the first move is behaviour-preserving.
 - [ ] D4.S1c PixelEditorPanel: history keyed by frame — switching frames does
       not clear history; a stroke is one command of pixel diffs. `<editsweep-d4c>`
 - [ ] D4.S1d TilesetEditorPanel: flag edits become cell commands (one per
