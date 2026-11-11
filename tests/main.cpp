@@ -53,6 +53,8 @@ void test_pixel_session();
 void test_direction_token_match();
 void test_weather_render();
 void test_weather_preview_field();
+void test_step_sequencer();
+void test_arpeggiator();
 
 int main(int argc, char** argv) {
     // Allow a focused run without the memory-heavy full generator sweep.
@@ -142,6 +144,8 @@ int main(int argc, char** argv) {
     RUN_TEST(test_direction_token_match);
     RUN_TEST(test_weather_render);
     RUN_TEST(test_weather_preview_field);
+    RUN_TEST(test_step_sequencer);
+    RUN_TEST(test_arpeggiator);
 
     std::cout << "\nResults: " << g_tests_passed << " passed, " << g_tests_failed << " failed.\n";
     return g_tests_failed > 0 ? 1 : 0;

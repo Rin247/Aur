@@ -1,6 +1,7 @@
 #include "aur/audio/RealtimeMixer.hpp"
 #include "aur/audio/SynthCores.hpp"
 #include "aur/audio/SongDocument.hpp"
+#include "aur/audio/StepSequencer.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -95,6 +96,11 @@ namespace aur
                     buildChainFromTypes(double(sampleRate), types, params, masterChain);
                 else
                     masterChain = EffectChain{};
+                // The scratch must be sized here or the realtime chain never
+                // runs: render() only processes when the scratch covers the
+                // whole callback block.
+                chainScratchL.assign(static_cast<size_t>(sampleRate), 0.f);
+                chainScratchR.assign(static_cast<size_t>(sampleRate), 0.f);
             }
             if (coreSynth)
             {
@@ -152,7 +158,10 @@ namespace aur
                 return;
             }
             if (!song.contains("tracks") || !song["tracks"].is_array())
+            {
+                schedulePatternVoices(song, baseFrame);
                 return;
+            }
             for (const Json &track : song["tracks"].as_array())
             {
                 if (!track.contains("notes") || !track["notes"].is_array())
@@ -187,10 +196,44 @@ namespace aur
                     lastStep = std::max(lastStep, step + length);
                 }
             }
+            schedulePatternVoices(song, baseFrame);
+            lastStep = std::max(lastStep, patternLastStep);
             loopSteps = lastStep;
             nextWrapFrame = baseFrame +
                 static_cast<std::int64_t>(lastStep * framesPerStep);
             loopVoices = std::vector<Voice>(upcoming.begin(), upcoming.end());
+            // The activation loop below stops at the first voice whose start
+            // is in the future, so the queue must be sorted by start frame.
+            std::stable_sort(loopVoices.begin(), loopVoices.end(),
+                             [](const Voice &a, const Voice &b)
+                             { return a.start < b.start; });
+            upcoming.assign(loopVoices.begin(), loopVoices.end());
+        }
+
+        void RealtimeMixer::schedulePatternVoices(const Json &song, std::int64_t baseFrame)
+        {
+            patternLastStep = 0;
+            const auto events = compile_chain(song);
+            if (events.empty())
+                return;
+            const double framesPerStep = sampleRate * 60.0 / (bpm * 4.0);
+            for (const StepEvent &event : events)
+            {
+                const double startStep = std::max(0.0, event.step);
+                Voice voice;
+                voice.start = baseFrame + static_cast<std::int64_t>(startStep * framesPerStep);
+                voice.end = voice.start +
+                    static_cast<std::int64_t>(std::max(0.1, event.length) * framesPerStep);
+                voice.pitch = std::clamp(event.pitch, 0, 127);
+                voice.frequency = 440.0 * std::pow(2.0, (voice.pitch - 69) / 12.0);
+                voice.amplitude = 0.14 * event.velocity / 127.0;
+                voice.pan = 0.5;
+                voice.program = std::clamp(event.program, 0, 127);
+                voice.drum = event.channel == 9;
+                upcoming.push_back(voice);
+                patternLastStep = std::max(patternLastStep,
+                                           static_cast<int>(std::ceil(startStep + event.length)));
+            }
         }
 
         void RealtimeMixer::render(float *out, int frames)
@@ -220,6 +263,11 @@ namespace aur
                     upcoming.push_back(v);
                 }
                 pendingAuditions.clear();
+                // Auditions land at the head of the queue; re-sort so the
+                // activation loop below never stops early.
+                std::stable_sort(upcoming.begin(), upcoming.end(),
+                                 [](const Voice &a, const Voice &b)
+                                 { return a.start < b.start; });
             }
 
             const double framesPerStep = sampleRate * 60.0 / (bpm * 4.0);
@@ -303,6 +351,11 @@ namespace aur
                         upcoming.push_back(v);
                     }
                     nextWrapFrame += loopFrames;
+                    // The wrapped voices are appended, so the queue must be
+                    // re-sorted before the activation scan below.
+                    std::stable_sort(upcoming.begin(), upcoming.end(),
+                                     [](const Voice &a, const Voice &b)
+                                     { return a.start < b.start; });
                     for (auto it = upcoming.begin();
                          it != upcoming.end() && it->start <= frameCounter + 1;)
                     {

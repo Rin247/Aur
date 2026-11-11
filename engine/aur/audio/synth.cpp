@@ -1,6 +1,7 @@
 #include "aur/audio/synth.hpp"
 #include "aur/audio/EffectChain.hpp"
 #include "aur/audio/SongDocument.hpp"
+#include "aur/audio/StepSequencer.hpp"
 #include "aur/audio/SynthCores.hpp"
 #include "aur/audio/VoiceCore.hpp"
 
@@ -68,8 +69,28 @@ namespace aur
                 }
                 ++trackIndex;
             }
+            // Step patterns ride the same core path, so a pattern-bearing
+            // song exports through the hardware core too.
+            for (const aur::audio::StepEvent &pattern : aur::audio::compile_chain(song))
+            {
+                aur::audio::CoreNoteEvent event;
+                event.startFrame = static_cast<std::int64_t>(
+                    std::max(0.0, pattern.step) * framesPerStep);
+                event.endFrame = event.startFrame + static_cast<std::int64_t>(
+                    std::max(0.1, pattern.length) * framesPerStep);
+                event.track = pattern.track;
+                event.pitch = std::clamp(pattern.pitch, 0, 127);
+                event.velocity = std::clamp(pattern.velocity, 1, 127);
+                event.pan = 64;
+                event.program = std::clamp(pattern.program, 0, 127);
+                events.push_back(event);
+            }
             if (events.empty())
                 throw std::runtime_error("Song has no notes to synthesize.");
+            std::stable_sort(events.begin(), events.end(),
+                             [](const aur::audio::CoreNoteEvent &a,
+                                const aur::audio::CoreNoteEvent &b)
+                             { return a.startFrame < b.startFrame; });
             core.setEvents(std::move(events));
 
             StereoPcm output;
@@ -160,6 +181,27 @@ namespace aur
                 voices.push_back(voice);
                 last_step = std::max(last_step, step + length);
             }
+        }
+        // Step-sequencer patterns contribute the same voice list as the
+        // track notes, so the offline render and the live mixer agree.
+        const auto patternEvents = audio::compile_chain(song);
+        for (const audio::StepEvent &event : patternEvents)
+        {
+            const int start = static_cast<int>(
+                std::max(0.0, event.step) * sample_rate * 60.0 / (bpm * 4.0));
+            const int end = start + static_cast<int>(
+                std::max(0.1, event.length) * sample_rate * 60.0 / (bpm * 4.0));
+            audio::Voice voice;
+            voice.start = start;
+            voice.end = std::max(end, start + 1);
+            voice.frequency = 440.0 * std::pow(2.0, (event.pitch - 69) / 12.0);
+            voice.amplitude = 0.14 * event.velocity / 127.0;
+            voice.pan = 0.5;
+            voice.program = std::clamp(event.program, 0, 127);
+            voice.pitch = std::clamp(event.pitch, 0, 127);
+            voice.drum = event.channel == 9;
+            voices.push_back(voice);
+            last_step = std::max(last_step, static_cast<int>(std::ceil(event.step + event.length)));
         }
         if (voices.empty())
             throw std::runtime_error("Song has no notes to synthesize.");

@@ -9,6 +9,7 @@
 #include "aur/audio/VoiceCore.hpp"
 #include "aur/audio/SynthCores.hpp"
 #include "aur/audio/EffectChain.hpp"
+#include "aur/audio/StepSequencer.hpp"
 #include "aur/json.hpp"
 
 namespace aur
@@ -74,6 +75,7 @@ namespace aur
 
         private:
             void schedule(const Json &song, std::int64_t baseFrame);
+            void schedulePatternVoices(const Json &song, std::int64_t baseFrame);
 
             int sampleRate = 44100;
             Timbre timbre = Timbre::Gm;
@@ -100,6 +102,7 @@ namespace aur
             std::int64_t nextWrapFrame = 0;
             int bpm = 120;
             int loopSteps = 0;             // song length in steps; 0 = no loop
+            int patternLastStep = 0;       // last step covered by the step patterns
             std::vector<Voice> loopVoices; // template voices for loop restarts
         };
 
