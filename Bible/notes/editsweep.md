@@ -72,8 +72,34 @@ audit's own order (tile picker, entity selection, undo rewrite).
 
 ### D4 — undo rewrite (report structural 1)
 
-- [ ] D4.S1 QUndoStack with per-cell diff commands across all three panels;
-      pixel history keyed by frame. `<editsweep-d4>`
+Status: D4.S1 in progress (plan refined 2026-11-11 against the source; no code
+yet).
+
+Current shape (verified): all three panels hand-roll undo as deques of whole-
+region JSON snapshots — `MapCanvasWidget` keeps `undo_layers`/`redo_layers`
+(≤100 entries, `(layer_index, layer JSON)` pairs, entities stored under
+`layer_index == -1`), `PixelEditorPanel` keeps `undo_frames`/`redo_frames`
+(per-frame whole-frame snapshots, cleared on `setFrame`), and
+`TilesetEditorPanel` keeps its own flag-undo pair. Every paint stroke pushes a
+whole-layer copy; a dense map stroke copies kilobytes per tile.
+
+- [ ] D4.S1a Shared command base: a `CellCommand`-style `QUndoCommand` holding
+      a grid key (layer index / frame index), an affected-cell list with
+      before/after values, and an apply/restore path over a single target JSON
+      object. Map cells are tile ints; pixel cells are RGBA bytes; tileset
+      cells are flag ints. `<editsweep-d4a>`
+- [ ] D4.S1b MapCanvasWidget: paint strokes coalesce into one command per
+      stroke (cell diffs collected as the pointer moves), entity moves/deletes
+      become single commands, the 100-entry cap moves onto QUndoStack's limit.
+      Behaviour pins: one undo per stroke, redo restores exactly, entity id
+      preserved. `<editsweep-d4b>`
+- [ ] D4.S1c PixelEditorPanel: history keyed by frame — switching frames does
+      not clear history; a stroke is one command of pixel diffs. `<editsweep-d4c>`
+- [ ] D4.S1d TilesetEditorPanel: flag edits become cell commands (one per
+      checkbox toggle batch), sharing the same base. `<editsweep-d4d>`
+- [ ] D4.S1e Tests: a Qt-free command-core test pinning apply/restore over
+      diffs (map, pixel and flag shapes) in `tests/`, registered in CMake and
+      main.cpp; suite green. `<editsweep-d4e>`
 
 ### D5+ — sprite studio (report feature 5) etc.
 
