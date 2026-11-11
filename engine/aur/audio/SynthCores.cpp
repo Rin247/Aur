@@ -43,6 +43,15 @@ namespace aur
             kind_ = kind;
             sampleRate_ = sampleRate;
             clearEvents();
+            if (kind_ == Kind::Sf2)
+            {
+                // A missing bank renders silence (P7a contract: never a different
+                // instrument); the mixer's owner decides whether to warn.
+                if (!sf2_)
+                    sf2_ = std::make_unique<Sf2Core>();
+                sf2_->setup(sampleRate);
+                return;
+            }
             fm_ = YmFmCore{};
             spc_ = SnesPcmCore{};
             fm_.init(sampleRate);
@@ -52,6 +61,13 @@ namespace aur
             {
                 fm_.setGlobalParam(YmParam::MasterGain, 60);
             }
+        }
+
+        bool SynthCoreVoice::setSf2Bank(const std::uint8_t *data, std::size_t size)
+        {
+            if (kind_ != Kind::Sf2 || !sf2_)
+                return false;
+            return sf2_->loadBank(data, size);
         }
 
         void SynthCoreVoice::setEvents(std::vector<CoreNoteEvent> events)

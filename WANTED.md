@@ -6,10 +6,6 @@
 - `C:\Projects\Bible\notes\project-handoff-prep.md` — audit-only reconciliation. This plan is not an Aur implementation priority; keep the open owner queue below first.
 - `C:\Projects\Bible\notes\qt-desktop-foundation.md` — P0 audit only; AIO/Vulkan, source/header map, naming, and toolbar/settings/keybindings. Preserve Aur's higher-priority map/DAW/editor requests.
 
-- `Bible/notes/editsweep.md` — editor defect sweep; D1 (all 13 audited bugs)
-  landed `1e5fce9`, D2.S1 tile palette widget landed `07fd68f`, D3.S1 entity
-  selection/multiples/inspector landed `218ba11`; ctest 7/7. Next: D4.S1
-  QUndoStack rewrite.
 - `Bible/notes/daw/` — Music Studio DAW initiative (P1, P3, P4.1–P4.3 MIDI
   device layer + count-in, P5 piano roll through P5.14 ids — P5 remainder
   closed 2026-11-11, see below — P6 through P6.7 (clips, launcher, scene
@@ -17,8 +13,12 @@
   all landed; P2 close awaits owner GUI soak; P8 effects framework landed
   (see Closed); P9 step sequencer + arpeggiator landed 2026-11-11 via the
   groovebox initiative (see below). Next: P7a GM/GS instrument — plan at
-  `Bible/notes/daw/gm-gs.md` (P0 landed `daw-p7a.1`: tsf.h vendored, generated
-  test bank loads and renders, 55/55; next P1 — mixer + offline wiring).
+  `Bible/notes/daw/gm-gs.md` (P0 landed `daw-p7a.1`; **P1 deferred by owner
+  2026-11-11** — parked mid-wiring, exact resume point recorded in the plan).
+- `Bible/notes/editsweep.md` — editor defect sweep; D1 (all 13 audited bugs)
+  landed `1e5fce9`, D2.S1 tile palette widget landed `07fd68f`, D3.S1 entity
+  selection/multiples/inspector landed `218ba11`; ctest 7/7. Next: D4.S1
+  QUndoStack rewrite — the current top of the queue.
 - `Bible/notes/groovebox-sequencer.md` — 128-step sequencer + groovebox
   initiative. P0–P7 landed 2026-11-11: engine model (`StepSequencer`,
   `Arpeggiator`), realtime + offline playback, groove globals (swing/

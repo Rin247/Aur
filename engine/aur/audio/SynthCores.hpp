@@ -4,11 +4,16 @@
 #pragma once
 
 #include <cstdint>
+
+#include <memory>
+
 #include <vector>
 
 #include "aur/audio/YmFmCore.hpp"
 
 #include "aur/audio/SnesPcmCore.hpp"
+
+#include "aur/audio/Sf2Core.hpp"
 
 namespace aur
 {
@@ -35,10 +40,15 @@ namespace aur
             enum class Kind : int
             {
                 MdFm = 0,
-                Spc = 1
+                Spc = 1,
+                Sf2 = 2
             };
 
             void setup(Kind kind, double sampleRate);
+
+            // Hands the Sf2 kind its bank (off the audio thread, before setup);
+            // other kinds ignore it. Without a bank the Sf2 kind renders silence.
+            bool setSf2Bank(const std::uint8_t *data, std::size_t size);
             Kind kind() const { return kind_; }
 
             // Translate scheduled notes into note-on/off events at frame boundaries.
@@ -76,6 +86,7 @@ namespace aur
             size_t nextEventIndex_ = 0;
             YmFmCore fm_;
             SnesPcmCore spc_;
+            std::unique_ptr<Sf2Core> sf2_;
         };
 
     } // namespace audio

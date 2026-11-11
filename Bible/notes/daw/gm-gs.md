@@ -1,7 +1,16 @@
 # DAW P7a: GM/GS SoundFont instrument — plan
 
-Status: P0 landed (`daw-p7a.1`). Next: P1 — the `Sf2Core` adapter gets wired
-into `RealtimeMixer` and `synthesize_preview` as `SynthCoreVoice::Kind::Sf2`.
+Status: P0 landed (`daw-p7a.1`), **P1 deferred by owner 2026-11-11** — the SF2
+/GM/GS instrument is parked before any mixer wiring. What exists: `tsf.h`
+vendored, `Sf2Core` (load/setup/note/control/render), the generated test bank
+(`tests/Sf2Fixture.*`), `SynthCoreVoice::Kind::Sf2` + `setSf2Bank()` declared
+and dispatched in `SynthCores.cpp` (setup/issueNoteOn… not yet dispatched:
+`issueNoteOn/Off`, `renderFrame`, `reset` still route only to fm_/spc_, and
+`SynthCores.cpp` does not call `sf2_->programChange`/`channelBank`), the four
+test_sf2 cases green, suite 55/55. Next when resumed: finish the Sf2 dispatch
+in `SynthCores.cpp`, then `RealtimeMixer::coreKindForSong` +
+`synthesize_preview` wiring, then the parity test. The rest of this plan is
+unaffected.
 
 ## Goal
 
