@@ -87,12 +87,14 @@
 ## Conformance findings (2026-11-11)
 
 - **No ~/.Aur data root** (15a): the studio has no QSettings/QStandardPaths; add the root and route settings/window state through it.
-- **Frameless without the mechanism** (13.1a): studio/MainWindow.cpp:144 sets FramelessWindowHint but there is no WM_NCCALCSIZE/WM_NCHITTEST — drag, resize, snap and Alt+Space are gone.
-- **Deployed exe missing**: no built Aur Studio.exe; deployed cannot pass until one exists.
-- **Render harness** (closed 2026-11-11): `tests/render_check.py` renders the
-  Map Editor and World pages at both estate sizes and sweeps the zoom as a
-  control; the PNGs land in `build/renders/` and AGENTS.md says to open them.
+- **Identity**: the app is `Aur Studio` while the folder is Aur — owner decides which is canonical (29). This also makes the "deployed" row UNKNOWN, because the checker looks for `Aur.exe`.
 - **App icon** (closed 2026-11-11): Aur's mark is a pixel globe from the
   estate's single generator (`AssetLibrary/Icons`), installed as
   `studio/resources/icons/` with a PE resource (`.rc`) so Explorer draws it.
-- **Identity**: the app is `Aur Studio` while the folder is Aur — owner decides which is canonical (29).
+- **Render harness** (closed 2026-11-11): `tests/render_check.py` renders the
+  Map Editor, World, Pixel & Sprite Editor and Tileset Editor pages at both
+  estate sizes and sweeps the zoom as a control; the PNGs land in
+  `build/renders/` and AGENTS.md says to open them.
+- **Frameless mechanism** (closed 2026-11-12): `WM_NCCALCSIZE` gives the
+  client area the whole window, so the chrome reaches the screen edge and
+  the edge resize in `WM_NCHITTEST` is the app's own.

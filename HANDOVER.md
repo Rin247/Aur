@@ -52,8 +52,11 @@ binding that points it at a frame. The tileset editor has the canvas, the
 tile's own palette as the colour picker, and Export PNG / Import PNG (every
 imported pixel snapped to the nearest palette colour, a pure function).
 
-**D7.S1, the chrome, landed**: the file menu is a hamburger in the title bar
-and the project toolbar slots under it, so every editor gets that row back.
+**D7.S1 and D7.S2, the chrome, landed**: the file menu is a hamburger in the
+title bar and the project toolbar slots under it, so every editor gets that
+row back; and `WM_NCCALCSIZE` gives the client area the whole window, so the
+chrome reaches the screen edge and there is no OS border to drag (the edge
+resize was already there in `WM_NCHITTEST`).
 
 Next open phase: none in the editsweep — D5, D6 and D7 are closed. The
 owner's queue is in `WANTED.md`.
@@ -88,7 +91,8 @@ owner's queue is in `WANTED.md`.
   pre-existing, and it needs splitting. `studio/world/WorldMapCanvas.cpp`
   (934) and `studio/WorldPanel.cpp` (928) are under the soft cap. The map
   editor was split into `studio/MapCanvas.*` (664) and
-  `studio/MapEditorPanel.*` (439).
+  `studio/MapEditorPanel.*`, and the pixel editor's canvas is
+  `studio/PixelSurface.*` with `studio/PixelCanvas.*` as its binding.
 - **A `Json` nested-array literal flattens**: `JsonArray{0,60,4,100}` becomes
   four numbers. Wrap it (`Json(JsonArray{...})`) or notes lose their shape.
 - The estate pre-commit hook counts a run of 3+ lines starting with `#`/`//`
