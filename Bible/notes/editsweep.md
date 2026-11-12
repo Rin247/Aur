@@ -296,6 +296,30 @@ a tile to a `QImage`, which is exactly what a PNG export needs.
         `<editsweep-d6s1>`
   **D6.S1 landed** (all three steps): a tile's pixels are editable, and a
         tile or a frame goes in and out of a PNG.
+### D9 - the studio's own tools: scrolling and volume (owner reports 2026-11-12)
+
+Audited 2026-11-12. Two things a person expects from a studio and does not
+get:
+
+- **The DAW does not scroll.** The session grid is a table and scrolls; the
+  piano roll is in a scroll area; the **arrangement timeline is a painted
+  canvas with no scroll offset**, so a song wider or taller than the window
+  cannot be reached.
+- **There is no master volume**, in the DAW or in the playtest. The mixer
+  has a master effect chain but no gain, and the **playtest has no audio at
+  all**: the engine's `Game` is visual, so the game the studio authors plays
+  silent while the DAW previews its music.
+
+- [ ] D9.S1 The arrangement timeline scrolls: it is sized to its content and
+      put in a scroll area, so the bars and the tracks beyond the window are
+      reachable.
+- [ ] D9.S2 A master volume: the mixer gains a master gain (the GUI thread
+      sets it, the audio thread reads it), the DAW has a slider beside the
+      master effects, and the value is the song's `master_volume`.
+- [ ] D9.S3 The playtest's sound is the gap behind the volume: the game
+      plays the song through the same mixer the DAW previews with.
+      `<editsweep-d9s1>`
+
 ## Acceptance
 
 - All 13 audited defects fixed and each pinned by a test or an asserted UI
