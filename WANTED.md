@@ -86,8 +86,13 @@
 
 ## Conformance findings (2026-11-11)
 
-- **No ~/.Aur data root** (15a): the studio has no QSettings/QStandardPaths; add the root and route settings/window state through it.
-- **Identity**: the app is `Aur Studio` while the folder is Aur — owner decides which is canonical (29). This also makes the "deployed" row UNKNOWN, because the checker looks for `Aur.exe`.
+- **Identity** (closed 2026-11-12, owner's decision): the app is **Aur**.
+  The executable is `Aur.exe`, the project() is `Aur`, the window title is
+  `Aur`, and the AIO scripts name `Aur.exe`. The identity, exe-name and
+  deployed rows pass.
+- **No ~/.Aur data root** (closed 2026-11-12): the data root is `~/.Aur`,
+  with the leading dot, and the settings file lives in it. The window's
+  geometry and the page it was on are restored from there.
 - **App icon** (closed 2026-11-11): Aur's mark is a pixel globe from the
   estate's single generator (`AssetLibrary/Icons`), installed as
   `studio/resources/icons/` with a PE resource (`.rc`) so Explorer draws it.

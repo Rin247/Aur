@@ -251,3 +251,22 @@
   bar and the project toolbar slots under it, so every editor gets that row
   back. The hamburger is drawn (three lines) rather than shipped as an
   asset.
+
+## The app is Aur, and it has a data root (2026-11-12)
+
+- **The owner decided the identity: the app is `Aur`.** The executable is
+  `Aur.exe`, the `project()` is `Aur`, the window title is `Aur`, and the
+  AIO scripts name `Aur.exe`. The identity, exe-name and deployed rows
+  pass now. The old "Aur Studio" strings were in `main.cpp`, `MainWindow.cpp`,
+  `CMakeLists.txt`, the AIO scripts, the render harness and
+  `.codegpt-game.json`.
+- **The data root is `~/.Aur`**, with the leading dot, and the settings file
+  lives in it (`studio/AurPaths.*`). The window's geometry and the page it
+  was on are restored from there; a size or a page asked for on the command
+  line wins over the saved one, which is how the render sweep holds a fixed
+  size, and a geometry saved on another machine is not restored if it would
+  put the window off-screen.
+- **The pixel canvases fit the space they are given.** The fit was a 720p
+  target, so a small image was drawn much larger than the pane that holds
+  it and the canvas was cut off. The fit is now the viewport's size; the
+  tile editor's canvas is in a scroll area like the pixel editor's.

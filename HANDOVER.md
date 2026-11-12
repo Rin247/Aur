@@ -76,7 +76,8 @@ owner's queue is in `WANTED.md`.
 
 ## Still open (owner)
 
-- **Identity**: the app is `Aur Studio` while the folder is Aur (§29).
+- **Identity**: the app is **Aur** (owner's decision, 2026-11-12): the
+  executable is `Aur.exe` and the internal identity is `Aur` (§29).
 - **No `~/.Aur` data root** (§15a): no QSettings/QStandardPaths yet.
 - **Frameless mechanism** (§13.1a): `MainWindow` sets `FramelessWindowHint`
   and answers `WM_NCHITTEST`, but there is no `WM_NCCALCSIZE`, so drag,
@@ -99,7 +100,7 @@ owner's queue is in `WANTED.md`.
   as a comment block, so `#include` runs get split with blank lines. Bypass
   with `git -c core.hooksPath=/nonexistent commit` only when the *diff* is
   clean.
-- An `Aur Studio.exe` left running holds the link lock during a build.
+- An `Aur.exe` left running holds the link lock during a build.
 - Build from PowerShell with the compiler environment in the same command:
 
 ```powershell
