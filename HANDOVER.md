@@ -77,6 +77,11 @@ through the same device the DAW previews with, so swapping tabs stops
 the other (owner, 2026-11-12). The MIDI file transfer moved out of
 `MusicPanel.cpp` in the same pass, so the panel stopped growing.
 
+**The platformer engine has its modes** (`Bible/notes/platformer.md`):
+the top-down field is one mode and a platformer is another, chosen by
+the map's `mode`, and the rules are a pure function of the hero's state
+and the tile flags. The shipped field's rule is unchanged.
+
 **D15, the world map's time and weather parity, landed**: the weather
 pick belongs to the engine now (`weather_for_slot`), the runtime calls it
 and so does the editor, and the World header answers "what does the game

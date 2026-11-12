@@ -101,12 +101,12 @@ committed on its own.
 
 ### P1 The movement modes
 
-- [ ] P1.1 `movement`: the modes (`topdown` and `platformer`), the
+- [x] P1.1 `movement`: the modes (`topdown` and `platformer`), the
   hero's body and its velocity, and the mode that owns the probe.
-- [ ] P1.2 The field scene picks its mode from the map's `mode`, and
+- [x] P1.2 The field scene picks its mode from the map's `mode`, and
   the top-down path is unchanged: the same speed, the same centre probe,
   the same feel.
-- [ ] P1.3 The test: the top-down movement moves as it did (the same
+- [x] P1.3 The test: the top-down movement moves as it did (the same
   positions after the same inputs), and the platformer's falls.
 
 Acceptance: ctest green; the top-down test pins today's behaviour, so
@@ -171,6 +171,10 @@ camera, and to `platformer-p1` for the mode split.
   map and the hero in both modes; what changes is how the hero moves and
   how the camera follows. A separate scene would duplicate the whole
   map drawing for one set of rules.
+- **The body settles by less than a pixel.** The collision catches the
+  falling hero a step after the landing, so the resting place is a
+  fraction below the floor. The test measures the settle instead of
+  pretending it is exact.
 - **The physics are a pure function.** The hero's state and the tile
   flags go in, the new state comes out: that is what makes the rules
   testable without a widget, and the field's movement is already close

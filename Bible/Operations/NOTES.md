@@ -310,6 +310,12 @@
   of 690 (`DESIGN.md` 12), so the app could not be shown at the floor and
   every capture was 45 px short at the bottom. The floor is now the
   minimum, and the captures hold the whole window.
+- **The engine's movement is now a mode.** The field's rule -- four
+  directions, one speed, a centre probe -- is the top-down mode, byte for
+  byte; a platformer map gets gravity, a jump with a variable height and
+  a body swept per axis. The rules live in `engine/aur/movement.*` and
+  the cameras in `engine/aur/camera.*`, and both are pure functions, so
+  the tests need no widget.
 - **The engine has one movement.** The field moves a hero on four
   directions at a fixed 148 px/s and probes the tile flags at the hero's
   centre: there is no velocity, no gravity, no jump and no body. The

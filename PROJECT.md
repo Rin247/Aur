@@ -80,6 +80,10 @@ twenty-two PNGs.
   Map Editor, Tileset Editor, World, Sprite Editor, Character Forge,
   Database, Events and DAW -- one name per page, and the class and its
   files carry the same name.
+- **The engine has movement modes.** The top-down field is one of them
+  and a platformer is another, chosen by the map's `mode`. The rules are
+  a pure function of the hero's state and the tile flags, so they are
+  tested without a widget -- and the shipped field's rule is unchanged.
 - **The world map answers the game's weather.** The pick belongs to the
   engine (`weather_for_slot`): the runtime rolls it and so does the editor,
   so the day, the hour and the map's climate in the World header answer

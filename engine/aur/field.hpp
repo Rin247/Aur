@@ -2,6 +2,8 @@
 
 #include "json.hpp"
 #include "game.hpp"
+#include "camera.hpp"
+#include "movement.hpp"
 #include "autotile.hpp"
 #include "project.hpp"
 #include "world_topology.hpp"
@@ -27,6 +29,9 @@ public:
     int W = 0, H = 0;
     bool wraps_x = false;
     std::vector<std::vector<int>> flags;
+    // The map's mode: the top-down field, or a platformer's rules.
+    MovementMode mode = MovementMode::TopDown;
+    MoveRules rules;
     Hero hero;
     double cam_x = 0, cam_y = 0;
     double t = 0.0;
@@ -38,6 +43,8 @@ public:
         H = m["h"].as_int();
         wraps_x = wraps_world_x(m);
         flags = game->project->collision(m);
+        mode = m["mode"].is_string() && m["mode"].as_string() == "platformer"
+                   ? MovementMode::Platformer : MovementMode::TopDown;
         double hx = (W / 2.0 + 0.5) * field_tile_size;
         double hy = (H / 2.0 + 1.0) * field_tile_size - 1.0;
         if (!spawn.empty() && m.contains("entities") && m["entities"].is_array()) {
@@ -67,6 +74,23 @@ public:
         return flags[ty][tx];
     }
 
+    MoveWorld world() const {
+        MoveWorld w;
+        w.flags = &flags;
+        w.width = W;
+        w.height = H;
+        w.wraps_x = wraps_x;
+        w.tile_size = field_tile_size;
+        return w;
+    }
+
+    Body body() const {
+        Body b;
+        b.x = hero.x;
+        b.y = hero.y;
+        return b;
+    }
+
     void update(double dt, InputState& inp) override {
         t += dt;
         double ax = 0, ay = 0;
@@ -74,8 +98,7 @@ public:
         if (inp.held.count("right")) ax += 1;
         if (inp.held.count("up")) ay -= 1;
         if (inp.held.count("down")) ay += 1;
-        double spd = 148.0;
-        double len = std::hypot(ax, ay);
+        const double len = std::hypot(ax, ay);
         hero.moving = (len > 0);
         if (hero.moving) {
             double nx = ax / len, ny = ay / len;
@@ -86,21 +109,32 @@ public:
             } else {
                 hero.dir = ay > 0 ? "down" : "up";
             }
-            double nxp = hero.x + nx * spd * dt;
-            if (!(tile_flags(nxp, hero.y) & (SOLID | WATER))) hero.x = nxp;
-            double nyp = hero.y + ny * spd * dt;
-            if (!(tile_flags(hero.x, nyp) & (SOLID | WATER))) hero.y = nyp;
             hero.t += dt;
         } else {
             hero.t = 0.0;
         }
-        double vw = game->layout.w, vh = game->layout.h;
-        double mw = W * field_tile_size, mh = H * field_tile_size;
-        double tx = wraps_x ? hero.x - vw / 2.0
-            : (mw > vw) ? std::max(0.0, std::min(mw - vw, hero.x - vw / 2.0))
-                        : (mw - vw) / 2.0;
-        double ty = (mh > vh) ? std::max(0.0, std::min(mh - vh, hero.y - 24.0 - vh / 2.0)) : (mh - vh) / 2.0;
-        cam_x = tx; cam_y = ty;
+
+        Body b = body();
+        const MoveWorld w = world();
+        if (mode == MovementMode::Platformer) {
+            // The jump is up or confirm: a platformer's "up" is the jump.
+            const bool jump_pressed =
+                inp.pressed.count("confirm") > 0 || inp.pressed.count("up") > 0;
+            const bool jump_held =
+                inp.held.count("confirm") > 0 || inp.held.count("up") > 0;
+            movePlatformer(b, w, rules, ax, jump_pressed, jump_held, dt);
+        } else {
+            moveTopDown(b, w, ax, ay, rules.speed, dt);
+        }
+        hero.x = b.x;
+        hero.y = b.y;
+
+        const double vw = game->layout.w, vh = game->layout.h;
+        const Camera camera = mode == MovementMode::Platformer
+                                  ? platformerCamera(b, w, vw, vh, 48.0, Camera{cam_x, cam_y})
+                                  : fieldCamera(b, w, vw, vh);
+        cam_x = camera.x;
+        cam_y = camera.y;
     }
 
     void draw(Renderer& r) override {

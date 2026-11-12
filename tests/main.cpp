@@ -38,6 +38,7 @@ void test_fx_chain_bypass_slot_is_transparent();
 void test_fx_chain_realtime_parity();
 void test_realtime_parity_core_synths();
 void test_bestiary_record();
+void test_movement_modes();
 void test_master_volume();
 void test_offline_render_job();
 void test_song_v1_contract();
@@ -137,6 +138,7 @@ int main(int argc, char** argv) {
     RUN_TEST(test_fx_chain_realtime_parity);
     RUN_TEST(test_realtime_parity_core_synths);
     RUN_TEST(test_bestiary_record);
+    RUN_TEST(test_movement_modes);
     RUN_TEST(test_master_volume);
     RUN_TEST(test_offline_render_job);
     RUN_TEST(test_song_v1_contract);

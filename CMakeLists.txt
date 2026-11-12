@@ -18,6 +18,10 @@ add_library(aur_engine STATIC
     engine/aur/gfx.cpp
     engine/aur/project.cpp
     engine/aur/autotile.cpp
+    engine/aur/movement.cpp
+    engine/aur/movement.hpp
+    engine/aur/camera.cpp
+    engine/aur/camera.hpp
     engine/aur/clock.cpp
     engine/aur/forge.cpp
     engine/aur/worldgen.cpp
@@ -236,6 +240,7 @@ add_executable(aur_tests
     tests/test_sf2.cpp
     tests/test_pixel_session.cpp
     tests/test_bestiary_data.cpp
+    tests/test_movement.cpp
     tests/test_weather_render.cpp
     tests/test_step_sequencer.cpp
     tests/test_arpeggiator.cpp

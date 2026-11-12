@@ -1,0 +1,108 @@
+#include "mini_test.hpp"
+
+#include "aur/camera.hpp"
+#include "aur/movement.hpp"
+#include "aur/project.hpp"
+
+#include <cmath>
+#include <vector>
+
+namespace
+{
+    // A map of solid ground at the bottom, open air above.
+    std::vector<std::vector<int>> ground_map(int width, int height)
+    {
+        std::vector<std::vector<int>> flags(height, std::vector<int>(width, 0));
+        for (int x = 0; x < width; ++x)
+            flags[static_cast<size_t>(height - 1)][static_cast<size_t>(x)] = aur::SOLID;
+        return flags;
+    }
+} // namespace
+
+// The movement rules: the top-down field is unchanged, and a platformer
+// falls, lands and jumps.
+void test_movement_modes()
+{
+    using namespace aur;
+
+    // --- the top-down field: today's rule, unchanged ---
+    const std::vector<std::vector<int>> open_map = ground_map(20, 20);
+    MoveWorld world;
+    world.flags = &open_map;
+    world.width = 20;
+    world.height = 20;
+    world.tile_size = 16;
+
+    Body body;
+    body.x = 5 * 16 + 8;
+    body.y = 5 * 16 + 8;
+    moveTopDown(body, world, 1, 0, 148.0, 1.0 / 60.0);
+    // 148 px per second, a sixtieth of a second.
+    ASSERT(std::abs(body.x - (5 * 16 + 8 + 148.0 / 60.0)) < 0.001);
+    ASSERT(body.y == 5 * 16 + 8);
+
+    // The top-down field does not fall.
+    moveTopDown(body, world, 0, 0, 148.0, 1.0 / 60.0);
+    ASSERT(body.y == 5 * 16 + 8);
+
+    // --- the platformer: it falls ---
+    MoveRules rules;
+    const std::vector<std::vector<int>> ground = ground_map(20, 20);
+    MoveWorld platform;
+    platform.flags = &ground;
+    platform.width = 20;
+    platform.height = 20;
+    platform.tile_size = 16;
+
+    Body jumper;
+    jumper.x = 5 * 16 + 8;
+    jumper.y = 2 * 16 + 8;
+    jumper.half_width = 4;
+    jumper.half_height = 8;
+    const double start_y = jumper.y;
+    for (int frame = 0; frame < 10; ++frame)
+        movePlatformer(jumper, platform, rules, 0, false, false, 1.0 / 60.0);
+    ASSERT(jumper.y > start_y);          // it fell
+    ASSERT(!jumper.on_ground);           // and it is still falling
+
+    // It lands on the ground: the floor stops it.
+    for (int frame = 0; frame < 240 && !jumper.on_ground; ++frame)
+        movePlatformer(jumper, platform, rules, 0, false, false, 1.0 / 60.0);
+    ASSERT(jumper.on_ground);
+    ASSERT(jumper.vy == 0.0);
+
+    // And it stays there.
+    const double resting = jumper.y;
+    for (int frame = 0; frame < 30; ++frame)
+        movePlatformer(jumper, platform, rules, 0, false, false, 1.0 / 60.0);
+    // The body settles by less than a pixel: the collision catches it
+    // a step after the landing.
+    ASSERT(std::abs(jumper.y - resting) < 1.0);
+
+    // A jump: it leaves the ground and comes back.
+    movePlatformer(jumper, platform, rules, 0, true, true, 1.0 / 60.0);
+    ASSERT(!jumper.on_ground);
+    ASSERT(jumper.vy < 0);
+    double highest = jumper.y;
+    for (int frame = 0; frame < 240; ++frame)
+    {
+        movePlatformer(jumper, platform, rules, 0, false, false, 1.0 / 60.0);
+        highest = std::min(highest, jumper.y);
+    }
+    ASSERT(highest < resting);           // it went up
+    ASSERT(jumper.on_ground);            // and it came back
+
+    // The jump's height: letting go early cuts the rise.
+    Body short_jump = jumper;
+    movePlatformer(short_jump, platform, rules, 0, true, true, 1.0 / 60.0);
+    for (int frame = 0; frame < 6; ++frame)
+        movePlatformer(short_jump, platform, rules, 0, false, false, 1.0 / 60.0);
+    const double short_height = resting - short_jump.y;
+
+    Body full_jump = jumper;
+    movePlatformer(full_jump, platform, rules, 0, true, true, 1.0 / 60.0);
+    for (int frame = 0; frame < 6; ++frame)
+        movePlatformer(full_jump, platform, rules, 0, false, true, 1.0 / 60.0);
+    const double full_height = resting - full_jump.y;
+    ASSERT(short_height < full_height);
+}
