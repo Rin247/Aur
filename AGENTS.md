@@ -127,3 +127,9 @@ them. Update or delete the tests for moved code in the same change.
 
 Record the new layout and the reason for the split in `Bible/`, never in code comments. At the
 start of any task, check the size of every file you will touch; at the end, check again.
+
+## Shared working tree (estate rule)
+
+Several harnesses and agents work this tree, so a dirty working tree and an unpushed commit are
+normal: push what is not pushed. A roadblock is audited and recorded in `WANTED.md`/`HANDOVER.md`
+before work moves on. Authority: root `AGENTS.md` 53.
