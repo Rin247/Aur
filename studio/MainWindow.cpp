@@ -372,17 +372,26 @@ void MainWindow::updateStudioTitle() {
 // person and not the machine. A size asked for on the command line wins
 // over the saved one, and a geometry saved on another machine is not
 // restored if it would put the window off-screen.
+//
+// The app opens maximized, which is how it has always opened: the state it
+// remembers is whether the window was maximized, so a person who works in a
+// smaller window gets that window back and everybody else gets the screen.
 void MainWindow::restoreWindowState(bool restore_geometry, bool restore_tab) {
     QSettings settings(aur::settingsPath(), QSettings::IniFormat);
     if (restore_geometry) {
-        const QByteArray geometry = settings.value("window/geometry").toByteArray();
-        if (!geometry.isEmpty()) {
-            restoreGeometry(geometry);
-            const QScreen *screen = QGuiApplication::primaryScreen();
-            const QRect available = screen ? screen->availableGeometry() : QRect();
-            if (!available.isEmpty() && !available.contains(frameGeometry())) {
-                resize(1600, 1000);
-                move(available.center() - rect().center());
+        const bool maximized = settings.value("window/maximized", true).toBool();
+        if (maximized) {
+            showMaximized();
+        } else {
+            const QByteArray geometry = settings.value("window/geometry").toByteArray();
+            if (!geometry.isEmpty()) {
+                restoreGeometry(geometry);
+                const QScreen *screen = QGuiApplication::primaryScreen();
+                const QRect available = screen ? screen->availableGeometry() : QRect();
+                if (!available.isEmpty() && !available.contains(frameGeometry())) {
+                    resize(1600, 1000);
+                    move(available.center() - rect().center());
+                }
             }
         }
     }
@@ -393,9 +402,13 @@ void MainWindow::restoreWindowState(bool restore_geometry, bool restore_tab) {
 }
 
 void MainWindow::closeEvent(QCloseEvent* event) {
-    QSettings settings(aur::settingsPath(), QSettings::IniFormat);
-    settings.setValue("window/geometry", saveGeometry());
-    settings.setValue("window/tab", tabs ? tabs->currentIndex() : 0);
+    if (save_window_state) {
+        QSettings settings(aur::settingsPath(), QSettings::IniFormat);
+        settings.setValue("window/maximized", isMaximized());
+        if (!isMaximized())
+            settings.setValue("window/geometry", saveGeometry());
+        settings.setValue("window/tab", tabs ? tabs->currentIndex() : 0);
+    }
     QMainWindow::closeEvent(event);
 }
 

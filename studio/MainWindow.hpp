@@ -29,6 +29,7 @@ class MainWindow : public QMainWindow {
     QAction* playAction = nullptr;
     QAction* pauseAction = nullptr;
     QAction* stopAction = nullptr;
+    bool save_window_state = true;
 
     void refreshProjectPanels();
     std::string projectSignature() const;
@@ -39,6 +40,10 @@ public:
     // Restores the window's geometry and page from the data root. A caller
     // that asks for a size or a page passes false for it.
     void restoreWindowState(bool restore_geometry = true, bool restore_tab = true);
+    // Whether the window's state is written when it closes. The render
+    // sweep turns it off, so a capture run does not overwrite the state the
+    // person left behind.
+    void setSaveWindowState(bool enabled) { save_window_state = enabled; }
     // Selects a tab by title or index. Returns false when there is no such
     // tab, so a script can say so instead of capturing the wrong page.
     bool selectTab(const QString& name_or_index);

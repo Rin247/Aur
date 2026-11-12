@@ -101,10 +101,19 @@ owner's queue is in `WANTED.md`.
   with `git -c core.hooksPath=/nonexistent commit` only when the *diff* is
   clean.
 - An `Aur.exe` left running holds the link lock during a build.
+- **The build entry point is `AIO.bat`** (the project's `build.bat` and
+  `compile.bat` were retired when the AIO family landed). The estate's
+  `C:\Dev\build.bat` also works and finds `build\Release\Aur.exe`.
 - Build from PowerShell with the compiler environment in the same command:
 
 ```powershell
 cmd /c 'call "C:\Program Files\Microsoft Visual Studio\18\Community\Common7\Tools\VsDevCmd.bat" -arch=x64 >nul && cmake --build C:\Projects\Aur\build\Release --target aur_tests aur_studio --parallel 8'
+```
+
+or, with the project's own entry point:
+
+```powershell
+cd C:\Projects\Aur; cmd /c "AIO.bat build windows Release"
 ```
 
 - Tests: `C:\Dev\Qt\Tools\CMake_64\bin\ctest.exe --test-dir C:\Projects\Aur\build\Release --timeout 300`.

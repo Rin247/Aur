@@ -170,7 +170,7 @@ def shoot(page, tab, size, zoom, sprite=False, preview=False):
     """One launch, one capture. Returns the PNG path or None."""
     w, h = size
     out = os.path.join(OUT_DIR, "%s_%dx%d_z%s.png" % (page, w, h, zoom))
-    args = [EXE, PROJECT, "--tab", tab, "--size", "%dx%d" % (w, h)]
+    args = [EXE, PROJECT, "--tab", tab, "--size", "%dx%d" % (w, h), "--no-state"]
     if zoom != 1.0:
         args += ["--zoom", str(zoom)]
     if sprite:

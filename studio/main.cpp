@@ -77,6 +77,7 @@ int main(int argc, char* argv[]) {
     qreal zoom_factor = 0.0;
     bool sprite_mode = false;
     bool preview = false;
+    bool no_state = false;
     int window_width = 0;
     int window_height = 0;
     for (int i = 1; i < argc; ++i) {
@@ -89,6 +90,8 @@ int main(int argc, char* argv[]) {
             sprite_mode = true;
         } else if (arg == "--preview") {
             preview = true;
+        } else if (arg == "--no-state") {
+            no_state = true;
         } else if (arg == "--size" && i + 1 < argc) {
             const QString size = QString::fromLocal8Bit(argv[++i]).toLower();
             const int x = size.indexOf('x');
@@ -116,9 +119,15 @@ int main(int argc, char* argv[]) {
     }
     aur::MainWindow window(project_path.toStdString());
     // The window's state comes from the data root, unless the command line
-    // asked for a size or a page: then the command line wins.
+    // asked for a size or a page: then the command line wins. A run that
+    // must not touch the state at all says --no-state.
     const bool sized = window_width > 0 && window_height > 0;
-    window.restoreWindowState(!sized, tab_name.isEmpty());
+    if (no_state) {
+        window.setSaveWindowState(false);
+        window.restoreWindowState(false, false);
+    } else {
+        window.restoreWindowState(!sized, tab_name.isEmpty());
+    }
     if (!tab_name.isEmpty() && !window.selectTab(tab_name))
         qWarning("Aur: no tab named '%s'", qPrintable(tab_name));
     if (sprite_mode) window.setSpriteMode(true);
