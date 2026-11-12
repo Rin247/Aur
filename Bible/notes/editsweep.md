@@ -314,10 +314,11 @@ get:
       put in a scroll area, so the bars and the tracks beyond the window are
       reachable.
 - [ ] D9.S2 A master volume: the mixer gains a master gain (the GUI thread
-      sets it, the audio thread reads it), the DAW has a slider beside the
-      master effects, and the value is the song's `master_volume`.
+      sets it, the audio thread reads it), and the DAW has a slider beside
+      the master effects.
 - [ ] D9.S3 The playtest's sound is the gap behind the volume: the game
-      plays the song through the same mixer the DAW previews with.
+      plays the current map's song, and the two pages share **one** device,
+      so swapping tabs stops the other (owner, 2026-11-12).
       `<editsweep-d9s1>`
 
 ## Acceptance
@@ -339,6 +340,11 @@ Phase commits; revert per `editsweep-d4` tag.
   rewrite.
 - A test fixture is part of the contract. When the fixture does not match the
   document, the test pins a fiction and the code under it is wrong.
+- **The master volume is the studio's, not the song's** (owner, 2026-11-12:
+  "if you swap tabs the other stops"). One number, saved in the data root,
+  moved from the DAW or from the playtest, and it moves both: a per-song
+  fader would fight the shared device, because the two pages play different
+  songs through the same mixer.
 - Entity strokes stay on the whole-array snapshot while layer strokes moved to
   per-cell diffs: an entity insert shifts every later index, so an
   index-addressed diff cannot restore the array.
