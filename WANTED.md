@@ -15,6 +15,9 @@
   groovebox initiative (see below). Next: P7a GM/GS instrument — plan at
   `Bible/notes/daw/gm-gs.md` (P0 landed `daw-p7a.1`; **P1 deferred by owner
   2026-11-11** — parked mid-wiring, exact resume point recorded in the plan).
+- `Bible/notes/platformer.md` — the platformer engine: the movement
+  modes, the tile physics and the cameras. P0 (the audit) done; P1 (the
+  modes) is next.
 - `Bible/notes/bestiary.md` — the Bestiary: the Database page's
   creatures tab, with the record layer, the editor and the portrait.
   P0 (the audit) done; P1 (the Qt-free record layer) is next.
@@ -59,10 +62,18 @@
 ## Open
 
 - **Qt desktop foundation** — Audit AIO/Vulkan behavior, legacy source/header layout, professional toolbars/settings/keybindings, and canonical `Aur` artifact identity; do not suffix its app name with Qt/desktop roles. Preserve the higher-priority active Aur queue.
-- **Implement SNES-style platformer games and metroidvanias** — build SNES-style platformer and metroidvania game support into the engine. Large: needs its own plan file (engine movement modes, tile physics, room/camera model) before any code.
 
 
 ## Closed
+
+- **Implement SNES-style platformer games and metroidvanias** (plan
+  `Bible/notes/platformer.md`; P0 done, the audit): the engine moves a
+  hero on a top-down field -- four directions, one speed, a centre
+  probe, no gravity and no jump. The plan splits the movement into
+  modes, gives the platformer gravity, a jump, a body and a sideways
+  camera, and leaves the shipped field byte for byte as it is. The maps
+  are already the rooms and the exits are already the doors, so what is
+  missing is the rules and the camera, not a room model.
 
 - **Time and weather functions for the world map** (closed 2026-11-12,
   `Bible/notes/editsweep.md` D15): the weather pick belongs to the engine

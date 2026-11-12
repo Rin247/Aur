@@ -310,6 +310,11 @@
   of 690 (`DESIGN.md` 12), so the app could not be shown at the floor and
   every capture was 45 px short at the bottom. The floor is now the
   minimum, and the captures hold the whole window.
+- **The engine has one movement.** The field moves a hero on four
+  directions at a fixed 148 px/s and probes the tile flags at the hero's
+  centre: there is no velocity, no gravity, no jump and no body. The
+  platformer's plan (Bible/notes/platformer.md) splits the movement into
+  modes rather than into scenes, so the shipped field stays as it is.
 - **The weather pick belongs to the engine.** The runtime rolled it
   inside `WeatherSystem::roll`, the studio had a second copy of the
   weighted table (with no callers), and the editor had neither: it drew a
