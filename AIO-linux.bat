@@ -12,7 +12,7 @@ rem    deploy  stage the binary and its Qt libraries into build\Linux\Dist
 rem ============================================================================
 set "AIO_APP=Aur"
 set "AIO_FAMILY=cmake"
-set "AIO_EXE=Aur Studio.exe"
+set "AIO_EXE=Aur.exe"
 set "AIO_CMAKE_DIR=."
 set "AIO_CMAKE_PRESETS=1"
 set "AIO_CMAKE_QT=1"

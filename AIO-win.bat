@@ -9,7 +9,7 @@ rem  Exit 0 pass, 1 fail, 3 not implemented for this project.
 rem ============================================================================
 set "AIO_APP=Aur"
 set "AIO_FAMILY=cmake"
-set "AIO_EXE=Aur Studio.exe"
+set "AIO_EXE=Aur.exe"
 set "AIO_CMAKE_DIR=."
 set "AIO_CMAKE_PRESETS=1"
 set "AIO_CMAKE_QT=1"
@@ -153,7 +153,7 @@ if errorlevel 1 (
 rem  A Qt app that has not been deployed cannot start: 0xC0000135 STATUS_DLL_NOT_FOUND,
 rem  and the configure, the link and the suite all pass on the way to it.
 rem  The exe is the stamped AIO_EXE, not the project name: a project whose
-rem  executable is named differently (Aur's "Aur Studio.exe") is not found by
+rem  executable is named differently is not found by
 rem  the project name, and the deploy failed in silence.
 if "%AIO_CMAKE_QT%"=="1" call :aio_win_deploy_runtime
 if errorlevel 1 exit /b 1

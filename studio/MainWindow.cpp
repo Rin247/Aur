@@ -98,7 +98,7 @@ public:
         titleRow->addWidget(maximizeButton);
         auto* close = new QToolButton(this);
         close->setIcon(style()->standardIcon(QStyle::SP_TitleBarCloseButton));
-        close->setToolTip("Close Aur Studio");
+        close->setToolTip("Close Aur");
         close->setStyleSheet("QToolButton:hover { background:#8d3f3f; }");
         titleRow->addWidget(close);
         layout->addLayout(titleRow);
@@ -301,7 +301,6 @@ MainWindow::MainWindow(const std::string& project_path, QWidget* parent)
     // Keyboard Shortcuts (F5 Play; Ctrl+S is the File-menu action)
     QShortcut* f5Shortcut = new QShortcut(QKeySequence(Qt::Key_F5), this);
     connect(f5Shortcut, &QShortcut::activated, this, &MainWindow::playProject);
-
 }
 
 void MainWindow::saveProject() {
@@ -361,7 +360,7 @@ std::string MainWindow::projectSignature() const {
 }
 
 void MainWindow::updateStudioTitle() {
-    const QString title = "Aur Studio";
+    const QString title = "Aur";
     setWindowTitle(title);
     if (chromeTitle) chromeTitle->setText(title);
 }

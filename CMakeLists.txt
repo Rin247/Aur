@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.21)
-project(AurStudio VERSION 1.0.0 LANGUAGES CXX)
+project(Aur VERSION 1.0.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -64,7 +64,7 @@ target_link_libraries(aur_game PRIVATE aur_engine Qt6::Widgets Qt6::Multimedia)
 add_executable(aur_mcp tools/mcp_main.cpp)
 target_link_libraries(aur_mcp PRIVATE aur_engine)
 
-# Aur Studio executable (IDE / Editors)
+# Aur executable (IDE / Editors)
 add_library(aur_editor_common STATIC
     studio/SongHistory.cpp
 )
@@ -74,6 +74,7 @@ target_link_libraries(aur_editor_common PUBLIC aur_engine)
 add_executable(aur_studio
     studio/main.cpp
     studio/MainWindow.cpp
+    studio/AurPaths.cpp
     studio/GameView.cpp
     studio/MidiDeviceIo.cpp
     studio/MidiDeviceIo.hpp
@@ -173,7 +174,7 @@ qt_add_shaders(aur_studio aur_studio_sculpt_shaders
 if(WIN32)
     target_link_libraries(aur_studio PRIVATE winmm)
 endif()
-set_target_properties(aur_studio PROPERTIES OUTPUT_NAME "Aur Studio")
+set_target_properties(aur_studio PROPERTIES OUTPUT_NAME "Aur")
 
 # Tests
 enable_testing()

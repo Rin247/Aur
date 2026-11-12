@@ -11,8 +11,8 @@ int main(int argc, char* argv[]) {
     aur::editor::configureRhiBackendBeforeApplication();
     QApplication app(argc, argv);
     app.styleHints()->setColorScheme(Qt::ColorScheme::Dark);
-    app.setApplicationName("Aur Studio");
-    app.setApplicationDisplayName("Aur Studio");
+    app.setApplicationName("Aur");
+    app.setApplicationDisplayName("Aur");
     app.setOrganizationName("Aur");
     app.setWindowIcon(QIcon(QStringLiteral(":/icons/aur-icon-256.png")));
     app.setStyleSheet(R"(
@@ -116,7 +116,7 @@ int main(int argc, char* argv[]) {
     }
     aur::MainWindow window(project_path.toStdString());
     if (!tab_name.isEmpty() && !window.selectTab(tab_name))
-        qWarning("Aur Studio: no tab named '%s'", qPrintable(tab_name));
+        qWarning("Aur: no tab named '%s'", qPrintable(tab_name));
     if (sprite_mode) window.setSpriteMode(true);
     if (window_width > 0 && window_height > 0) {
         window.resize(window_width, window_height);

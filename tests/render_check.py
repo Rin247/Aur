@@ -29,7 +29,7 @@ from collections import Counter
 from PIL import Image, ImageGrab
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-EXE = os.path.join(REPO, "build", "Release", "Aur Studio.exe")
+EXE = os.path.join(REPO, "build", "Release", "Aur.exe")
 PROJECT = os.path.join(REPO, "projects", "sylvi")
 OUT_DIR = os.path.join(REPO, "build", "renders")
 
