@@ -1,4 +1,4 @@
-﻿#include "WorldClimateOverlays.hpp"
+#include "WorldClimateOverlays.hpp"
 #include "aur/clock.hpp"
 #include "aur/game.hpp"
 #include "aur/world_topology.hpp"

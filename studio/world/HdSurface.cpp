@@ -1,4 +1,4 @@
-﻿#include "HdSurface.hpp"
+#include "HdSurface.hpp"
 #include "WorldMapHelpers.hpp"
 #include "aur/world_topology.hpp"
 #include <QColor>

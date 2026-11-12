@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 #include "aur/json.hpp"
 #include "aur/project.hpp"

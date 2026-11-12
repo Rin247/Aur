@@ -1,4 +1,4 @@
-﻿#include "WorldPanel.hpp"
+#include "WorldPanel.hpp"
 #include "RhiBackend.hpp"
 #include "TileTexture.hpp"
 #include "WorldSettingsPanel.hpp"

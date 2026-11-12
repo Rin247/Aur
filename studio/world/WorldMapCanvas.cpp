@@ -1,4 +1,4 @@
-﻿#include "world/WorldMapCanvas.hpp"
+#include "world/WorldMapCanvas.hpp"
 #include "RhiBackend.hpp"
 #include "TileTexture.hpp"
 #include "world/HdSurface.hpp"

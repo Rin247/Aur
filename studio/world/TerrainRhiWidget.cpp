@@ -1,4 +1,4 @@
-﻿#include "TerrainRhiWidget.hpp"
+#include "TerrainRhiWidget.hpp"
 #include "RhiBackend.hpp"
 #include "aur/clock.hpp"
 #include "aur/game.hpp"
