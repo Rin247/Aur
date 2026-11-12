@@ -6,6 +6,7 @@
 #include <QListWidget>
 
 #include <QPushButton>
+#include <QSlider>
 
 #include <QVBoxLayout>
 
@@ -60,6 +61,8 @@
 namespace aur
 {
 
+    class SharedAudio;
+
     class MusicPanel : public QWidget
     {
         Q_OBJECT
@@ -100,6 +103,7 @@ namespace aur
         StepSequencerCanvas *stepCanvas = nullptr;
         GrooveBoxPanel *groovePanel = nullptr;
         audio::QtAudioOutput *audioOutput = nullptr;
+        SharedAudio *shared = nullptr;
         MidiSession *midiSession = nullptr;
         editor::SongHistory songHistory;
         QString currentSongId;
@@ -126,6 +130,7 @@ namespace aur
         Json makeScenePreview(int sceneIndex);
         void playPreview(const Json *previewSong = nullptr);
         void stopPreview();
+        void hideEvent(QHideEvent *event) override;
         void playArrangement();
         void exportArrangementMidi();
         bool flattenedArrangement(Json &flat) const;
@@ -133,7 +138,8 @@ namespace aur
         void exportMidi();
 
     public:
-        explicit MusicPanel(Project *project = nullptr, QWidget *parent = nullptr);
+        explicit MusicPanel(Project *project = nullptr, SharedAudio *shared = nullptr,
+                           QWidget *parent = nullptr);
         ~MusicPanel() override;
         void setProject(Project *p);
         void refreshSongs();

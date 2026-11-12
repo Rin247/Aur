@@ -1,5 +1,6 @@
 #include "MainWindow.hpp"
 #include "AurPaths.hpp"
+#include "SharedAudio.hpp"
 #include "MapEditorPanel.hpp"
 #include "DatabasePanel.hpp"
 #include "ForgePanel.hpp"
@@ -204,6 +205,9 @@ protected:
 MainWindow::MainWindow(const std::string& project_path, QWidget* parent)
     : QMainWindow(parent), project(Project::load(project_path)), project_path(project_path) {
     saved_signature = projectSignature();
+    // One audio device for the app: the DAW's preview and the playtest's
+    // music share it, so swapping tabs stops the other.
+    sharedAudio = new SharedAudio(this);
     updateStudioTitle();
     resize(1600, 1000);
     setMinimumSize(1280, 690);
@@ -285,7 +289,7 @@ MainWindow::MainWindow(const std::string& project_path, QWidget* parent)
     addTab(new ForgePanel(&project, this), "Character Forge");
     addTab(new DatabasePanel(&project, this), "Database");
     addTab(new EventPanel(&project, this), "Event Scripting");
-    addTab(new MusicPanel(&project, this), "DAW");
+    addTab(new MusicPanel(&project, sharedAudio, this), "DAW");
     // World & Time Settings is baked into the World tab (WANTED #3).
 
     auto installEditorMenu = [this](QWidget* canvas, const std::function<void()>& undo,

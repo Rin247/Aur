@@ -200,8 +200,11 @@ namespace aur
                 coreVoice->consumeUpTo(frameCounter);
                 float cl = 0.f, cr = 0.f;
                 coreVoice->renderFrame(cl, cr);
-                const float l = static_cast<float>(std::clamp(cl, -0.95f, 0.95f));
-                const float r = static_cast<float>(std::clamp(cr, -0.95f, 0.95f));
+                // The master volume is applied after the clip, so a quiet mix
+                // stays quiet instead of clipping.
+                const float gain = masterGain.load(std::memory_order_relaxed);
+                const float l = static_cast<float>(std::clamp(cl, -0.95f, 0.95f)) * gain;
+                const float r = static_cast<float>(std::clamp(cr, -0.95f, 0.95f)) * gain;
                 out[2 * i] = l;
                 out[2 * i + 1] = r;
                 peakLeft = std::max(peakLeft, std::abs(static_cast<double>(l)));

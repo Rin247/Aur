@@ -16,6 +16,7 @@
 namespace aur {
 
 class SpriteEditorPanel;
+class SharedAudio;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT
@@ -25,6 +26,7 @@ class MainWindow : public QMainWindow {
     QTabBar* tabs = nullptr;
     QStackedWidget* tabStack = nullptr;
     GameView* gameView = nullptr;
+    SharedAudio* sharedAudio = nullptr;
     QLabel* chromeTitle = nullptr;
     QAction* saveAction = nullptr;
     QAction* reloadAction = nullptr;

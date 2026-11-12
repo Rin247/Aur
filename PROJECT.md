@@ -71,6 +71,8 @@ twelve PNGs.
   the leading dot, and the settings file lives in it.
 - **The DAW scrolls.** The arrangement timeline is sized to its content and sits in a scroll
   area, so the bars and the tracks beyond the window are reachable.
+- **The studio has one master volume.** The mixer's master gain is the app's, saved in `~/.Aur`,
+  and the DAW has a slider for it beside the master effects.
 - **The app has an icon.** Aur's mark is a pixel globe from the estate's single generator
   (`AssetLibrary/Icons`), installed as `studio/resources/icons/` with a PE resource so Explorer
   draws it.
@@ -106,6 +108,9 @@ twelve PNGs.
 - **The pixel editor is the sprite editor** (owner, 2026-11-12): `studio/SpriteEditorPanel.*` and
   `studio/SpriteCanvas.*`. The pixel-level modules keep their names, because they are about
   pixels.
+- **The master volume is the studio's, not a song's** (owner, 2026-11-12). One number in the
+  data root, moved from the DAW or from the playtest, and it moves both: the two pages play
+  different songs through one device, so a per-song fader would fight the shared mixer.
 - **The world's margin colour is written by the terrain shader**, so the shader and the CPU path
   have to agree on it; both are `#171b20`.
 

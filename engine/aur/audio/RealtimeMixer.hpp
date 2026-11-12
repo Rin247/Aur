@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <atomic>
 #include <cstdint>
 
@@ -56,6 +57,18 @@ namespace aur
             // Applied at the command boundary; ignored when idle-safe.
             void audition(int pitch, int velocity = 90, int lengthSteps = 2);
 
+            // GUI thread: the master volume, 0..1 (1 is the mixer's own
+            // level). The audio thread reads it, so it can move while the
+            // song plays.
+            void setMasterVolume(float gain)
+            {
+                masterGain.store(std::clamp(gain, 0.0f, 1.0f), std::memory_order_relaxed);
+            }
+            float masterVolume() const
+            {
+                return masterGain.load(std::memory_order_relaxed);
+            }
+
             // Audio thread: fill interleaved stereo frames. No locks, no allocation.
             void render(float *out, int frames);
 
@@ -90,6 +103,9 @@ namespace aur
             // song's "effects" key; empty chain = untouched samples.
             EffectChain masterChain;
             std::vector<float> chainScratchL, chainScratchR;
+
+            // The master volume, read by the audio thread every callback.
+            std::atomic<float> masterGain{1.0f};
 
             // Audio-thread state (touched only inside render / command boundary).
             std::int64_t frameCounter = 0;

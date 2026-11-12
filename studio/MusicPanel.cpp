@@ -1,4 +1,6 @@
 #include "MusicPanel.hpp"
+#include "SharedAudio.hpp"
+#include "music/MasterVolumeStrip.hpp"
 #include "music/SongLibrary.hpp"
 #include "music/SongTransfer.hpp"
 
@@ -31,6 +33,7 @@
 
 #include <QMessageBox>
 
+#include <QHideEvent>
 #include <QScrollBar>
 #include <QSlider>
 
@@ -510,6 +513,16 @@ namespace aur
         midiSession->stopOutput();
     }
 
+    void MusicPanel::hideEvent(QHideEvent *event)
+    {
+        // The page on screen holds the device: leaving the DAW stops the
+        // preview, so the playtest's music is not played over it.
+        stopPreview();
+        if (playButton)
+            playButton->setText("Play Preview");
+        QWidget::hideEvent(event);
+    }
+
     bool MusicPanel::flattenedArrangement(Json &flat) const
     {
         const Json *song = currentSong();
@@ -613,9 +626,12 @@ const std::array<const char*, 128>& gmInstrumentNames() {
 
 } // namespace
 
-MusicPanel::MusicPanel(Project* p, QWidget* parent)
+MusicPanel::MusicPanel(Project* p, SharedAudio* sharedAudio, QWidget* parent)
     : QWidget(parent), project(p) {
-    audioOutput = new audio::QtAudioOutput(this);
+    // The DAW and the playtest share one device, so the preview cannot be
+    // played over the game.
+    shared = sharedAudio ? sharedAudio : new SharedAudio(this);
+    audioOutput = &shared->output();
     midiSession = new MidiSession(this);
     midiSession->attachClock(&audioOutput->getMixer().playheadFrames,
                              &audioOutput->getMixer().playheadBpm,
@@ -747,6 +763,10 @@ MusicPanel::MusicPanel(Project* p, QWidget* parent)
     midiStatusLabel->setStyleSheet("color: #aeb8c2;");
     midiBar->addWidget(midiStatusLabel, 1);
     layout->addLayout(midiBar);
+
+    // The master volume, beside the master effects (D9.S2). It is the
+    // studio's, not the song's: the playtest moves the same number.
+    layout->addWidget(new MasterVolumeStrip(shared, QStringLiteral("Master volume:"), this));
 
     // Master FX chain strip (P8.3), now its own widget.
     fxStrip = new FxChainStrip(this);

@@ -66,3 +66,55 @@ void test_realtime_parity_core_synths()
         ASSERT(rel < 0.0005);
     }
 }
+
+// The master volume: the GUI thread sets it, the audio thread reads it, and
+// the mix is scaled by it. A song's own volume is not a second number.
+void test_master_volume()
+{
+    constexpr int rate = 8000;
+    constexpr int frames = 800;
+
+    aur::audio::RealtimeMixer mixer;
+    mixer.setSampleRate(rate);
+    mixer.loadSong(parity_song());
+    std::vector<float> full(static_cast<size_t>(frames) * 2, 0.0f);
+    mixer.render(full.data(), frames);
+
+    double full_energy = 0.0;
+    for (float sample : full)
+        full_energy += static_cast<double>(sample) * sample;
+    ASSERT(full_energy > 0.0);
+
+    // Half the volume is half the energy, and the mix is not silent.
+    aur::audio::RealtimeMixer half;
+    half.setSampleRate(rate);
+    half.setMasterVolume(0.5f);
+    half.loadSong(parity_song());
+    std::vector<float> quiet(static_cast<size_t>(frames) * 2, 0.0f);
+    half.render(quiet.data(), frames);
+
+    double quiet_energy = 0.0;
+    for (float sample : quiet)
+        quiet_energy += static_cast<double>(sample) * sample;
+    std::printf("  master volume full=%g half=%g\n", full_energy, quiet_energy);
+    ASSERT(std::abs(quiet_energy / full_energy - 0.25) < 0.001);
+
+    // Zero is silence.
+    aur::audio::RealtimeMixer muted;
+    muted.setSampleRate(rate);
+    muted.setMasterVolume(0.0f);
+    muted.loadSong(parity_song());
+    std::vector<float> silence(static_cast<size_t>(frames) * 2, 0.0f);
+    muted.render(silence.data(), frames);
+    for (float sample : silence)
+        ASSERT(sample == 0.0f);
+
+    // The gain is clamped to 0..1, and it can move while the song plays.
+    aur::audio::RealtimeMixer moving;
+    moving.setSampleRate(rate);
+    moving.loadSong(parity_song());
+    moving.setMasterVolume(2.0f);
+    ASSERT(moving.masterVolume() == 1.0f);
+    moving.setMasterVolume(-1.0f);
+    ASSERT(moving.masterVolume() == 0.0f);
+}

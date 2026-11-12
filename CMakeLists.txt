@@ -76,6 +76,8 @@ add_executable(aur_studio
     studio/MainWindow.cpp
     studio/AurPaths.cpp
     studio/GameView.cpp
+    studio/SharedAudio.cpp
+    studio/SharedAudio.hpp
     studio/MidiDeviceIo.cpp
     studio/MidiDeviceIo.hpp
     studio/music/MidiSession.cpp
@@ -102,6 +104,8 @@ add_executable(aur_studio
     studio/music/GrooveBoxPanel.hpp
     studio/music/SongTransfer.cpp
     studio/music/SongTransfer.hpp
+    studio/music/MasterVolumeStrip.cpp
+    studio/music/MasterVolumeStrip.hpp
     studio/SongHistory.cpp
     studio/MapEditorPanel.cpp
     studio/MapCanvas.cpp

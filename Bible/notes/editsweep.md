@@ -313,7 +313,7 @@ get:
 - [x] D9.S1 The arrangement timeline scrolls: it is sized to its content and
       put in a scroll area, so the bars and the tracks beyond the window are
       reachable.
-- [ ] D9.S2 A master volume: the mixer gains a master gain (the GUI thread
+- [x] D9.S2 A master volume: the mixer gains a master gain (the GUI thread
       sets it, the audio thread reads it), and the DAW has a slider beside
       the master effects.
 - [ ] D9.S3 The playtest's sound is the gap behind the volume: the game
