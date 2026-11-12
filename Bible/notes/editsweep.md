@@ -374,6 +374,40 @@ characters, the NPCs and the enemies alike, and they are all creatures.
       (`studio/CreatureForgePanel.*`).
       `<editsweep-d14s1>`
 
+### D15 - the world map's time and weather parity (owner, 2026-11-12)
+
+Audited 2026-11-12. The world map answers a different question from the
+game.
+
+- **The runtime rolls one kind per slot.** `WeatherSystem::roll` takes
+  the clock's day and the hour divided by `interval_hours`, seeds an
+  mt19937 with `seed + day * 100 + slot`, and picks from the climate's
+  profile (engine/aur/clock.cpp).
+- **The editor keeps its own hour** -- a time edit in the World header,
+  with no day -- and its own weather. Its "Climate" entry draws a
+  *field*: a spatial mix across the map's climates, which is an authoring
+  view, not the game's answer.
+- **A third copy of the weighted pick sits in the studio**
+  (`studio/world/WorldMapHelpers.cpp`'s `climate_weather`) and has no
+  callers at all.
+- **The runtime's own overrides are in the playtest's debug menu** (F2):
+  day, hour, minute, the climate, the weather state and a lock. The
+  editor has none of that.
+
+- [ ] D15.S1 The engine owns the pick: a pure
+      `weather_for_slot(settings, climate, seed, day, slot_hour)` that
+      `WeatherSystem::roll` calls, and the studio's dead copy goes. The
+      runtime's behaviour does not change.
+- [ ] D15.S2 The editor answers the game: the World header gets the day
+      and keeps the hour, and the weather's first entry is "as the game
+      rolls it" -- the kind the runtime rolls at that day and hour, from
+      the map's climate. A forced kind stays a forced kind (the runtime's
+      manual override), and the climate mix stays as the authoring view.
+- [ ] D15.S3 The proof: a test pins that the editor's answer and the
+      runtime's answer are the same pick, and the World page's capture
+      shows the new controls.
+      `<editsweep-d15s1>`
+
 ## Acceptance
 
 - All 13 audited defects fixed and each pinned by a test or an asserted UI
