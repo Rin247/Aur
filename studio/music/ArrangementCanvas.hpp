@@ -31,6 +31,7 @@ namespace aur
         void setChangeCallback(std::function<void(const Json &)> callback);
 
         int canvasHeight() const;
+        int canvasWidth() const;
         int stepAt(const QPoint &pos) const;
         int rowAt(const QPoint &pos) const;
 

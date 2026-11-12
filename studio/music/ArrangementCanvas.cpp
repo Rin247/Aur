@@ -34,7 +34,9 @@ namespace aur
         song = value;
         selectedStep = -1;
         selectedTrack = -1;
-        setMinimumHeight(canvasHeight());
+        // The canvas is as big as its content, so a scroll area can reach
+        // the bars and the tracks beyond the window.
+        setMinimumSize(canvasWidth(), canvasHeight());
         update();
     }
 
@@ -60,6 +62,14 @@ namespace aur
                              ? static_cast<int>(song["tracks"].as_array().size())
                              : 0;
         return rulerHeight + std::max(minRows, rows) * rowHeight + kTempoLaneHeight + 8;
+    }
+
+    int ArrangementCanvas::canvasWidth() const
+    {
+        const int bars = song.contains("bars") && song["bars"].is_number()
+                             ? std::max(1, song["bars"].as_int())
+                             : 1;
+        return kRowLabelWidth + bars * 16 * kStepWidth + 24;
     }
 
     int ArrangementCanvas::stepAt(const QPoint &pos) const

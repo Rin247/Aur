@@ -206,7 +206,7 @@ MainWindow::MainWindow(const std::string& project_path, QWidget* parent)
     saved_signature = projectSignature();
     updateStudioTitle();
     resize(1600, 1000);
-    setMinimumSize(1280, 720);
+    setMinimumSize(1280, 690);
     setWindowFlags(windowFlags() | Qt::FramelessWindowHint);
     auto* chrome = new StudioChrome(this);
     chromeTitle = chrome->findChild<QLabel*>("StudioTitle");
@@ -395,6 +395,10 @@ std::string MainWindow::projectSignature() const {
 void MainWindow::addTab(QWidget* page, const QString& title) {
     tabStack->addWidget(page);
     tabs->addTab(title);
+}
+
+void MainWindow::setDawTab(const QString &name) {
+    if (auto* panel = findChild<MusicPanel*>()) panel->selectEditorTab(name);
 }
 
 void MainWindow::updateStudioTitle() {

@@ -74,6 +74,7 @@ int main(int argc, char* argv[]) {
     )");
     QString project_path;
     QString tab_name;
+    QString daw_tab_name;
     qreal zoom_factor = 0.0;
     bool sprite_mode = false;
     bool preview = false;
@@ -86,6 +87,8 @@ int main(int argc, char* argv[]) {
             tab_name = QString::fromLocal8Bit(argv[++i]);
         } else if (arg == "--zoom" && i + 1 < argc) {
             zoom_factor = QString::fromLocal8Bit(argv[++i]).toDouble();
+        } else if (arg == "--daw-tab" && i + 1 < argc) {
+            daw_tab_name = QString::fromLocal8Bit(argv[++i]);
         } else if (arg == "--sprite") {
             sprite_mode = true;
         } else if (arg == "--preview") {
@@ -130,6 +133,7 @@ int main(int argc, char* argv[]) {
     }
     if (!tab_name.isEmpty() && !window.selectTab(tab_name))
         qWarning("Aur: no tab named '%s'", qPrintable(tab_name));
+    if (!daw_tab_name.isEmpty()) window.setDawTab(daw_tab_name);
     if (sprite_mode) window.setSpriteMode(true);
     if (window_width > 0 && window_height > 0) {
         window.resize(window_width, window_height);

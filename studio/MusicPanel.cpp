@@ -207,6 +207,20 @@ namespace aur
         updatingControls = false;
     }
 
+    void MusicPanel::selectEditorTab(const QString &name)
+    {
+        if (!editorTabs)
+            return;
+        for (int index = 0; index < editorTabs->count(); ++index)
+        {
+            if (editorTabs->tabText(index) == name)
+            {
+                editorTabs->setCurrentIndex(index);
+                return;
+            }
+        }
+    }
+
     void MusicPanel::refreshTracks()
     {
         const QSignalBlocker blocker(trackList);
@@ -944,14 +958,18 @@ MusicPanel::MusicPanel(Project* p, QWidget* parent)
     arrangeToolbar->addWidget(exportArrangeButton);
     arrangeToolbar->addStretch();
     arrangeLayout->addLayout(arrangeToolbar);
-    arrangementCanvas = new ArrangementCanvas(arrangePage);
+    auto *arrangeScroll = new QScrollArea(arrangePage);
+    arrangeScroll->setWidgetResizable(false);
+    arrangeScroll->setFrameShape(QFrame::NoFrame);
+    arrangementCanvas = new ArrangementCanvas(arrangeScroll);
+    arrangeScroll->setWidget(arrangementCanvas);
     arrangementCanvas->setHistory(&songHistory);
     arrangementCanvas->setChangeCallback([this](const Json &song) { saveCurrentSong(song); });
     connect(arrangementCanvas, &ArrangementCanvas::historyChanged, this, [this]() {
         emit undoStateChanged(pianoRoll && pianoRoll->canUndo(),
                               pianoRoll && pianoRoll->canRedo());
     });
-    arrangeLayout->addWidget(arrangementCanvas, 1);
+    arrangeLayout->addWidget(arrangeScroll, 1);
     connect(playArrangeButton, &QPushButton::clicked, this,
             [this]() { playArrangement(); });
     connect(exportArrangeButton, &QPushButton::clicked, this,

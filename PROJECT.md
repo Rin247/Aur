@@ -69,22 +69,24 @@ twelve PNGs.
   viewport, which is the only place that knows it.
 - **The app opens maximized** and remembers the page it was on. The data root is `~/.Aur`, with
   the leading dot, and the settings file lives in it.
+- **The DAW scrolls.** The arrangement timeline is sized to its content and sits in a scroll
+  area, so the bars and the tracks beyond the window are reachable.
 - **The app has an icon.** Aur's mark is a pixel globe from the estate's single generator
   (`AssetLibrary/Icons`), installed as `studio/resources/icons/` with a PE resource so Explorer
   draws it.
+- **The window's minimum is the estate's floor** (1280×690, `DESIGN.md` §12). It was 720, which
+  is larger than the floor, so the app could not be shown at it, and every capture was 45 px
+  short at the bottom.
 
 ## Open defects
 
-1. **The DAW does not scroll.** The session grid, the arrangement and the piano roll are painted
-   canvases with no scroll offset, so a song longer than the window cannot be reached. (Owner
-   report, 2026-11-12.)
-2. **`studio/MusicPanel.cpp` is 1,348 lines**, over the owner's hard ceiling of ~1,250 and
-   pre-existing. It needs splitting, and the split is where the DAW's scrolling belongs.
-3. **The world map's time and weather preview does not share the runtime's clock.** The editor
+1. **`studio/MusicPanel.cpp` is 1,311 lines**, over the owner's hard ceiling of ~1,250 and
+   pre-existing. It needs splitting; the MIDI file transfer moved out in this pass.
+2. **The world map's time and weather preview does not share the runtime's clock.** The editor
    keeps its own hour and its own forced weather, while the game rolls the project's calendar and
    the climate profile. What the editor shows is not always what the game will show.
    (`Bible/notes/editsweep.md`, the next phase.)
-4. **`studio/world/WorldMapCanvas.cpp` (934) and `studio/WorldPanel.cpp` (928)** are over the
+3. **`studio/world/WorldMapCanvas.cpp` (934) and `studio/WorldPanel.cpp` (928)** are over the
    750-line soft limit and pre-existing. The map editor and the pixel editor were split for this
    reason; these two are not.
 

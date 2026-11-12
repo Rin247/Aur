@@ -310,7 +310,7 @@ get:
   all**: the engine's `Game` is visual, so the game the studio authors plays
   silent while the DAW previews its music.
 
-- [ ] D9.S1 The arrangement timeline scrolls: it is sized to its content and
+- [x] D9.S1 The arrangement timeline scrolls: it is sized to its content and
       put in a scroll area, so the bars and the tracks beyond the window are
       reachable.
 - [ ] D9.S2 A master volume: the mixer gains a master gain (the GUI thread
