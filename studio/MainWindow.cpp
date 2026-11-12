@@ -370,6 +370,15 @@ bool MainWindow::nativeEvent(const QByteArray& eventType, void* message, qintptr
 #ifdef Q_OS_WIN
     if (eventType == "windows_generic_MSG") {
         const auto* native_message = static_cast<MSG*>(message);
+        if (native_message->message == WM_NCCALCSIZE && native_message->wParam) {
+            // The frame is the app's own chrome: the client area is the whole
+            // window, so the title row reaches the screen edge and the
+            // window has no OS border to drag.
+            auto* params = reinterpret_cast<NCCALCSIZE_PARAMS*>(native_message->lParam);
+            params->rgrc[0] = params->rgrc[2];
+            *result = 0;
+            return true;
+        }
         if (native_message->message == WM_GETMINMAXINFO) {
             auto* limits = reinterpret_cast<MINMAXINFO*>(native_message->lParam);
             const HMONITOR monitor = MonitorFromWindow(

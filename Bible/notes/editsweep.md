@@ -235,6 +235,12 @@ whole-layer copy; a dense map stroke copies kilobytes per tile.
       lines) rather than shipped as an asset, and the file commands -- open,
       save, reload -- keep their shortcuts behind it.
       `<editsweep-d7s1>`
+  - [x] D7.S2 The frame is the app's own: `WM_NCCALCSIZE` gives the client
+      area the whole window, so the chrome reaches the screen edge and the
+      window has no OS border to drag. The edge resize was already there
+      (`WM_NCHITTEST` answers `HTLEFT` and its corners); what was missing
+      was the other half of the pair.
+      `<editsweep-d7s2>`
 
 ### D6 — tile pixel editing (report feature 6)
 
