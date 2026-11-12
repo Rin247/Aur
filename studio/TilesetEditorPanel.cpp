@@ -56,12 +56,15 @@ namespace aur
         splitter->addWidget(tileList);
 
         // D6.S1.2: the tile's pixels, on the surface the pixel editor uses.
+        // The canvas fits the space it is given, so a tile is never cut off.
         tileCanvas = new PixelSurface(this);
         tileCanvas->setBrushMode(1);  // one pixel at a time
-        // A tile is small next to a sheet: the fit zoom would blow a 16x16
-        // tile up to the size of a window.
-        tileCanvas->setZoomScale(16);
-        splitter->addWidget(tileCanvas);
+        canvasScroll = new QScrollArea(splitter);
+        canvasScroll->setWidgetResizable(false);
+        canvasScroll->setAlignment(Qt::AlignCenter);
+        canvasScroll->setFrameShape(QFrame::NoFrame);
+        canvasScroll->setWidget(tileCanvas);
+        splitter->addWidget(canvasScroll);
 
         QWidget *inspector = new QWidget(this);
         QVBoxLayout *inspectorLayout = new QVBoxLayout(inspector);
@@ -392,6 +395,13 @@ namespace aur
         refreshTileDetail();
         const std::string tsid = currentTilesetId();
         emit tilesetFlagsChanged(QString::fromStdString(tsid));
+    }
+
+    void TilesetEditorPanel::resizeEvent(QResizeEvent *event)
+    {
+        QWidget::resizeEvent(event);
+        if (canvasScroll && tileCanvas)
+            tileCanvas->setAvailableViewportSize(canvasScroll->viewport()->size());
     }
 
 } // namespace aur

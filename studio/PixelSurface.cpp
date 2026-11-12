@@ -211,9 +211,13 @@ namespace aur
     void PixelSurface::resizeForSurface() {
         if (surface_width <= 0 || surface_height <= 0) return;
         if (auto_zoom) {
-            const int target_width = std::max(1280, available_viewport.width());
-            const int target_height = std::max(720, available_viewport.height());
-            const int height_scale = (target_height + surface_height - 1) / surface_height;
+            // Fit: the content fills the space the canvas was given, and the
+            // canvas is the size of that space, so nothing is cut off and
+            // nothing is empty. The margin is the space around the image.
+            constexpr int margin = 48;
+            const int target_width = std::max(1, available_viewport.width() - margin);
+            const int target_height = std::max(1, available_viewport.height() - margin);
+            const int height_scale = target_height / surface_height;
             const int width_scale = target_width / surface_width;
             zoom_scale = std::clamp(std::min(height_scale, width_scale), 1, 64);
         }

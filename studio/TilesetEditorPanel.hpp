@@ -9,6 +9,7 @@
 #include <QHBoxLayout>
 #include <QSplitter>
 #include <QLabel>
+#include <QScrollArea>
 
 #include <QUndoStack>
 
@@ -34,6 +35,7 @@ class TilesetEditorPanel : public QWidget {
     // D6.S1.2: the tile's pixels are edited on the shared surface, and the
     // colour picker is the tile's own palette.
     PixelSurface* tileCanvas = nullptr;
+    QScrollArea* canvasScroll = nullptr;
     QComboBox* colorCombo = nullptr;
     QPushButton* exportButton = nullptr;
     QPushButton* importButton = nullptr;
@@ -56,6 +58,9 @@ public:
     void setProject(Project* p);
     void refreshTilesets();
     void undoFlagChange();
+
+protected:
+    void resizeEvent(QResizeEvent* event) override;
 
 signals:
     // A tile flag changed; consumers (map collision overlay) repaint.

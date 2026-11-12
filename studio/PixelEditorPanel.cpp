@@ -91,7 +91,7 @@ PixelEditorPanel::PixelEditorPanel(Project* p, QWidget* parent)
     toolbar->addSpacing(12);
     toolbar->addWidget(new QLabel("Zoom:", this));
     zoomCombo = new QComboBox(this);
-    zoomCombo->addItem("Fit 720p", 0);
+    zoomCombo->addItem("Fit", 0);
     zoomCombo->addItem("1×", 1);
     zoomCombo->addItem("2×", 2);
     zoomCombo->addItem("4×", 4);
