@@ -106,7 +106,12 @@ seventeen PNGs.
    keeps its own hour and its own forced weather, while the game rolls the project's calendar and
    the climate profile. What the editor shows is not always what the game will show.
    (`Bible/notes/editsweep.md`, the next phase.)
-3. **`studio/world/WorldMapCanvas.cpp` (934) and `studio/WorldPanel.cpp` (928)** are over the
+3. **The Database page's other tabs are stubs.** Six of the seven tabs
+   are a list and a form of empty fields, with no load, no save and no
+   selection handling -- they look editable and are not. The Bestiary
+   (`Bible/notes/bestiary.md`) replaces the "Enemies" one; the rest are
+   open.
+4. **`studio/world/WorldMapCanvas.cpp` (934) and `studio/WorldPanel.cpp` (928)** are over the
    750-line soft limit and pre-existing. The map editor and the pixel editor were split for this
    reason; these two are not.
 

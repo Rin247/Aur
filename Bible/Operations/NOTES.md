@@ -310,6 +310,11 @@
   of 690 (`DESIGN.md` 12), so the app could not be shown at the floor and
   every capture was 45 px short at the bottom. The floor is now the
   minimum, and the captures hold the whole window.
+- **The Database page's six non-race tabs are stubs**: a list and a form
+  of empty fields, with no load, no save and no selection handling. The
+  Bestiary (Bible/notes/bestiary.md) replaces one of them with a real
+  editor; the rest stay stubs until they are built, and saying so is
+  better than a form that looks editable and is not.
 - **The Event Scripting page is Events**: the tab, the panel's label, and
   the class and its files (`studio/EventsPanel.*`) with it, so one name
   says one thing.
