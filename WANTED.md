@@ -24,7 +24,11 @@
   world's black bars — with the render harness that proves them. **D5.S1 (the
   sprite studio) landed**: onion skinning, a live preview of the sprite's own
   sequence, the mirror, and the frame tools (add, duplicate, delete, reorder).
-  Next: D6.S1 (tile pixel editing via PixelSurface + PNG import/export).
+  **D6.S1 (tile pixel editing) landed**: one pixel surface for two editors,
+  the tileset editor's canvas, and PNG in and out. **D7.S1 landed**: the file
+  menu is a hamburger and the toolbar moved up a row. Next: the owner queue
+  below — the world map's time and weather parity, and the platformer engine
+  (which needs its own plan).
 - `Bible/notes/groovebox-sequencer.md` — 128-step sequencer + groovebox
   initiative. P0–P7 landed 2026-11-11: engine model (`StepSequencer`,
   `Arpeggiator`), realtime + offline playback, groove globals (swing/

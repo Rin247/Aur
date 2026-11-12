@@ -225,3 +225,29 @@
   deploy failed and the failure was unchecked, so the build reported OK over
   a tree that could not start. The template now deploys the stamped
   `%AIO_EXE%` and reports a failed deploy.
+
+## One pixel surface, two editors, and PNG in and out (2026-11-12, D6.S1)
+
+- **A tile is a graphic's frame.** A tile is `{name, pal, flags, rows}`
+  where `rows` is an array of row strings of palette indices; a frame is the
+  same shape. The pixel editor's canvas edited "a rows array with a
+  palette", so the canvas became `studio/PixelSurface` (it owns the brush,
+  the zoom, the undo and the painting) and `studio/PixelCanvas` is the
+  binding that points it at a frame. The canvas lost 447 lines and the
+  tileset editor got the same surface instead of a second copy.
+- **The tileset editor's canvas**: the colour picker is the tile's own
+  palette (`tile.pal` into the tileset's `palettes`), and the flag toggles
+  moved onto the surface's stack, so one Ctrl+Z undoes the last edit whether
+  it was a pixel or a flag.
+- **A tile's rows live in a `std::vector`, so a pointer into one moves if
+  the vector grows.** The surface's undo commands hold that pointer. The
+  tileset editor never adds a tile, so it cannot happen today; a tile
+  editor that does must re-bind the surface's target.
+- **PNG in and out.** `snap_rgba_to_rows` snaps every pixel of an imported
+  image to the nearest colour in the palette; a transparent pixel takes the
+  palette's transparent entry. It is a pure function over the RGBA bytes
+  and the palette, so it is tested without a widget.
+- **The chrome**: the file commands live behind a hamburger in the title
+  bar and the project toolbar slots under it, so every editor gets that row
+  back. The hamburger is drawn (three lines) rather than shipped as an
+  asset.

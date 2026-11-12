@@ -45,8 +45,18 @@ clipping their labels. The structural edits are pure functions over the
 graphic JSON in `studio/PixelFrameOps.{hpp,cpp}`, so they are tested without
 a widget.
 
-Next open phase: D6.S1 (tile pixel editing via PixelSurface + PNG
-import/export).
+**D6.S1, tile pixel editing, landed** (three commits): `studio/PixelSurface`
+is the one pixel-editing surface — it edits "a rows array with a palette",
+which is a graphic's frame and a tile — and `studio/PixelCanvas` is the
+binding that points it at a frame. The tileset editor has the canvas, the
+tile's own palette as the colour picker, and Export PNG / Import PNG (every
+imported pixel snapped to the nearest palette colour, a pure function).
+
+**D7.S1, the chrome, landed**: the file menu is a hamburger in the title bar
+and the project toolbar slots under it, so every editor gets that row back.
+
+Next open phase: none in the editsweep — D5, D6 and D7 are closed. The
+owner's queue is in `WANTED.md`.
 
 ## Active plans
 
