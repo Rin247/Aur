@@ -100,6 +100,8 @@ add_executable(aur_studio
     studio/music/StepSequencerCanvas.hpp
     studio/music/GrooveBoxPanel.cpp
     studio/music/GrooveBoxPanel.hpp
+    studio/music/SongTransfer.cpp
+    studio/music/SongTransfer.hpp
     studio/SongHistory.cpp
     studio/MapEditorPanel.cpp
     studio/MapCanvas.cpp

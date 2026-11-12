@@ -1,5 +1,6 @@
 #include "MusicPanel.hpp"
 #include "music/SongLibrary.hpp"
+#include "music/SongTransfer.hpp"
 
 #include "music/VelocityLaneStrip.hpp"
 
@@ -31,6 +32,7 @@
 #include <QMessageBox>
 
 #include <QScrollBar>
+#include <QSlider>
 
 #include <QSignalBlocker>
 
@@ -535,71 +537,18 @@ namespace aur
                                      "The arrangement is empty — nothing to export.");
             return;
         }
-        const QString path = QFileDialog::getSaveFileName(
-            this, "Export Arrangement MIDI",
-            QString::fromStdString((*song)["name"].is_string()
-                                       ? (*song)["name"].as_string()
-                                       : "arrangement") + " arrangement.mid",
-            "MIDI files (*.mid)");
-        if (path.isEmpty())
-            return;
-        try
-        {
-            const std::vector<uint8_t> data = export_standard_midi(flat);
-            QFile file(path);
-            if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate))
-            {
-                QMessageBox::warning(this, "Arrangement MIDI", file.errorString());
-                return;
-            }
-            file.write(reinterpret_cast<const char *>(data.data()),
-                       static_cast<qint64>(data.size()));
-        }
-        catch (const std::exception &error)
-        {
-            QMessageBox::warning(this, "Arrangement MIDI",
-                                 QString::fromStdString(error.what()));
-        }
+        const QString name = (*song)["name"].is_string()
+                                 ? QString::fromStdString((*song)["name"].as_string())
+                                 : QStringLiteral("arrangement");
+        music::exportArrangementMidiFile(this, flat, name);
     }
 
     void MusicPanel::importMidi()
     {
-        if (!project)
-            return;
-        const QString path = QFileDialog::getOpenFileName(
-            this, "Import Standard MIDI File", {}, "MIDI files (*.mid *.midi)");
-        if (path.isEmpty())
-            return;
-
-        QFile file(path);
-        if (!file.open(QIODevice::ReadOnly))
-        {
-            QMessageBox::warning(this, "MIDI Import", file.errorString());
-            return;
-        }
-        const QByteArray bytes = file.readAll();
-        std::vector<uint8_t> midiBytes;
-        midiBytes.reserve(static_cast<size_t>(bytes.size()));
-        for (char byte : bytes)
-            midiBytes.push_back(static_cast<uint8_t>(byte));
-        try
-        {
-            Json song = import_standard_midi(
-                midiBytes, QFileInfo(path).completeBaseName().toStdString());
-            const std::string base = music::songIdFromName(
-                QString::fromStdString(song["name"].as_string()));
-            std::string id = base;
-            int suffix = 2;
-            while (project->music.contains(id))
-                id = base + "_" + std::to_string(suffix++);
-            project->music[id] = std::move(song);
+        music::importMidiFile(this, project, [this](const std::string &id) {
             refreshSongs();
             selectSong(QString::fromStdString(id));
-        }
-        catch (const std::exception &error)
-        {
-            QMessageBox::warning(this, "MIDI Import", QString::fromStdString(error.what()));
-        }
+        });
     }
 
     void MusicPanel::exportMidi()
@@ -610,36 +559,7 @@ namespace aur
             QMessageBox::information(this, "MIDI Export", "Select a song to export.");
             return;
         }
-        const QString title = (*song)["name"].is_string()
-                                  ? QString::fromStdString((*song)["name"].as_string())
-                                  : currentSongId;
-        const QString path = QFileDialog::getSaveFileName(
-            this, "Export Standard MIDI File", title + ".mid", "MIDI files (*.mid)");
-        if (path.isEmpty())
-            return;
-
-        try
-        {
-            const std::vector<uint8_t> data = export_standard_midi(*song);
-            QFile file(path);
-            if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate))
-            {
-                QMessageBox::warning(this, "MIDI Export", file.errorString());
-                return;
-            }
-            const qint64 written = file.write(
-                reinterpret_cast<const char *>(data.data()), static_cast<qint64>(data.size()));
-            if (written != static_cast<qint64>(data.size()))
-            {
-                QMessageBox::warning(this, "MIDI Export",
-                                     file.errorString().isEmpty() ? "Could not write the complete MIDI file."
-                                                                  : file.errorString());
-            }
-        }
-        catch (const std::exception &error)
-        {
-            QMessageBox::warning(this, "MIDI Export", QString::fromStdString(error.what()));
-        }
+        music::exportMidiFile(this, *song, currentSongId);
     }
 
 namespace {
