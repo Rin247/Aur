@@ -77,6 +77,12 @@ through the same device the DAW previews with, so swapping tabs stops
 the other (owner, 2026-11-12). The MIDI file transfer moved out of
 `MusicPanel.cpp` in the same pass, so the panel stopped growing.
 
+**D15, the world map's time and weather parity, landed**: the weather
+pick belongs to the engine now (`weather_for_slot`), the runtime calls it
+and so does the editor, and the World header answers "what does the game
+show then?" -- the day, the hour and the map's climate. A forced kind is
+the runtime's manual override.
+
 **The Bestiary landed** (`Bible/notes/bestiary.md`): the Database page's
 "Enemies" stub is the "Bestiary" tab -- the creatures, their record and
 their artwork. The record layer is Qt-free and tested; the fields the

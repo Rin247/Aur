@@ -59,11 +59,18 @@
 ## Open
 
 - **Qt desktop foundation** — Audit AIO/Vulkan behavior, legacy source/header layout, professional toolbars/settings/keybindings, and canonical `Aur` artifact identity; do not suffix its app name with Qt/desktop roles. Preserve the higher-priority active Aur queue.
-- **Time and weather functions for the world map** — the World Map editor needs time-of-day and weather preview/function parity with the rest of the editor (World & Time Settings defines calendar, seasons, eras, and climate profiles; the map canvas already previews temperature/equator/poles and forced weather). Close the gap so time/weather authoring on the map matches the project settings and the in-game debug menu's runtime overrides.
 - **Implement SNES-style platformer games and metroidvanias** — build SNES-style platformer and metroidvania game support into the engine. Large: needs its own plan file (engine movement modes, tile physics, room/camera model) before any code.
 
 
 ## Closed
+
+- **Time and weather functions for the world map** (closed 2026-11-12,
+  `Bible/notes/editsweep.md` D15): the weather pick belongs to the engine
+  (`weather_for_slot`), the runtime calls it and so does the editor, and
+  the World header answers "what does the game show then?" -- the day, the
+  hour, and the kind the runtime rolls at that slot. A forced kind is the
+  runtime's manual override, and the climate mix stays as the authoring
+  view.
 
 - **A Bestiary** (closed 2026-11-12, plan `Bible/notes/bestiary.md`): the
   Database page's "Enemies" stub is the "Bestiary" tab now -- the

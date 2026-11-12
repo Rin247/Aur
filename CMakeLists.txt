@@ -133,6 +133,8 @@ add_executable(aur_studio
     studio/world/WorldMapHelpers.cpp
     studio/world/MapView.cpp
     studio/world/TerrainRhiWidget.cpp
+    studio/world/TimeWeatherBar.cpp
+    studio/world/TimeWeatherBar.hpp
     studio/world/WorldWeatherOverlay.cpp
     studio/world/WeatherRender.cpp
     studio/world/WeatherPreviewField.cpp

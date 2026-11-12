@@ -60,6 +60,7 @@ void test_sprite_frame_tools();
 void test_sprite_png_snap();
 void test_weather_render();
 void test_weather_preview_field();
+void test_weather_slot_parity();
 void test_step_sequencer();
 void test_arpeggiator();
 
@@ -158,6 +159,7 @@ int main(int argc, char** argv) {
     RUN_TEST(test_sprite_png_snap);
     RUN_TEST(test_weather_render);
     RUN_TEST(test_weather_preview_field);
+    RUN_TEST(test_weather_slot_parity);
     RUN_TEST(test_step_sequencer);
     RUN_TEST(test_arpeggiator);
 

@@ -103,7 +103,7 @@ public:
     double real_time = 0.0;
     Renderer layout;
 
-    explicit Game(Project* project, int seed = 1)
+    explicit Game(Project* project, int seed = DEFAULT_WEATHER_SEED)
         : project(project), clock(project_clock(project)), weather(seed) {
         state["switches"] = JsonObject{};
         state["vars"] = JsonObject{};

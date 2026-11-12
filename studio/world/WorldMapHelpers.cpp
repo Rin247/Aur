@@ -1,5 +1,7 @@
 #include "WorldMapHelpers.hpp"
 
+#include "aur/clock.hpp"
+
 #include <algorithm>
 #include <cctype>
 #include <initializer_list>
@@ -72,42 +74,16 @@ namespace aur::world
         return "structures";
     }
 
-    std::string climate_weather(const Project *project, const std::string &climate,
-                                uint32_t roll)
-    {
+    std::string rolled_weather(const Project *project, const Json &map, int day, int hour) {
         if (!project) return "clear";
-        const auto& meta_fields = project->meta;
-        const auto weather_it = meta_fields.find("weather");
-        if (weather_it == meta_fields.end()) return "clear";
-        const Json &weather_settings = weather_it->second;
-        if (!weather_settings.is_object()) return "clear";
-        const auto& weather_fields = weather_settings.as_object();
-        const auto profiles_it = weather_fields.find("profiles");
-        if (profiles_it == weather_fields.end()) return "clear";
-        const Json &profiles = profiles_it->second;
-        if (!profiles.is_object()) return "clear";
-        const auto& profile_map = profiles.as_object();
-        const auto profile_it = profile_map.find(climate);
-        const auto temperate_it = profile_map.find("temperate");
-        const Json* profile = profile_it != profile_map.end() ? &profile_it->second : nullptr;
-        if ((!profile || !profile->is_object()) && temperate_it != profile_map.end()) {
-            profile = &temperate_it->second;
-        }
-        if (!profile || !profile->is_object()) return "clear";
-
-        int total_weight = 0;
-        for (const auto& [_, weight] : profile->as_object()) {
-            if (weight.is_number() && weight.as_int() > 0) total_weight += weight.as_int();
-        }
-        if (total_weight <= 0) return "clear";
-
-        int selection = static_cast<int>(roll % static_cast<uint32_t>(total_weight));
-        for (const auto& [weather, weight] : profile->as_object()) {
-            if (!weight.is_number() || weight.as_int() <= 0) continue;
-            selection -= weight.as_int();
-            if (selection < 0) return weather;
-        }
-        return "clear";
+        static const Json empty;
+        const auto entry = project->meta.find("weather");
+        const Json &settings = entry != project->meta.end() ? entry->second : empty;
+        const int interval = settings.contains("interval_hours") && settings["interval_hours"].is_number()
+                                 ? std::max(1, settings["interval_hours"].as_int()) : 3;
+        const std::string climate = map["climate"].is_string() ? map["climate"].as_string()
+                                                               : std::string("temperate");
+        return aur::weather_for_slot(settings, climate, DEFAULT_WEATHER_SEED, day, hour / interval);
     }
 
 } // namespace aur::world

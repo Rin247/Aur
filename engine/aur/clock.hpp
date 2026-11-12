@@ -99,6 +99,16 @@ public:
     }
 };
 
+// The weather a climate's profile gives at a slot: the same pick the
+// runtime makes, so the editor's preview and the game agree. The slot is
+// the clock's day and the hour divided by the interval.
+std::string weather_for_slot(const Json &settings, const std::string &climate,
+                             int seed, int day, int slot_hour);
+
+// The weather's seed when nobody names one. The game and the editor
+// share it, so the preview and the game roll the same weather.
+constexpr int DEFAULT_WEATHER_SEED = 1;
+
 class WeatherSystem {
 public:
     int seed;

@@ -310,6 +310,17 @@
   of 690 (`DESIGN.md` 12), so the app could not be shown at the floor and
   every capture was 45 px short at the bottom. The floor is now the
   minimum, and the captures hold the whole window.
+- **The weather pick belongs to the engine.** The runtime rolled it
+  inside `WeatherSystem::roll`, the studio had a second copy of the
+  weighted table (with no callers), and the editor had neither: it drew a
+  spatial field, which is an authoring view and not the game's answer.
+  `weather_for_slot` is now the one pick, and the test pins that the
+  editor's answer and the runtime's are the same.
+- **A header with more controls than the floor can hold cuts its buttons
+  in half.** The World header did at 1280: the map's own line moved to the
+  map combo's tooltip, the page's title label went, and two buttons lost
+  words. The time and weather controls moved into their own widget
+  (`studio/world/TimeWeatherBar.*`) so the bar keeps its width.
 - **A widget that is a tab's page has to fill it.** The Bestiary
   editor was added as a page with no layout, so it was sized to its hint
   and the form sat in a third of the window. The page needed a layout of

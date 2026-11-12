@@ -394,16 +394,16 @@ game.
   day, hour, minute, the climate, the weather state and a lock. The
   editor has none of that.
 
-- [ ] D15.S1 The engine owns the pick: a pure
+- [x] D15.S1 The engine owns the pick: a pure
       `weather_for_slot(settings, climate, seed, day, slot_hour)` that
       `WeatherSystem::roll` calls, and the studio's dead copy goes. The
       runtime's behaviour does not change.
-- [ ] D15.S2 The editor answers the game: the World header gets the day
+- [x] D15.S2 The editor answers the game: the World header gets the day
       and keeps the hour, and the weather's first entry is "as the game
       rolls it" -- the kind the runtime rolls at that day and hour, from
       the map's climate. A forced kind stays a forced kind (the runtime's
       manual override), and the climate mix stays as the authoring view.
-- [ ] D15.S3 The proof: a test pins that the editor's answer and the
+- [x] D15.S3 The proof: a test pins that the editor's answer and the
       runtime's answer are the same pick, and the World page's capture
       shows the new controls.
       `<editsweep-d15s1>`
@@ -443,7 +443,13 @@ Phase commits; revert per `editsweep-d4` tag.
   changes. The zoom is a factor of the canvas's own fit, which makes 1.0 the
   fit view and 0.75 / 1.5 the zoom sweep.
 - The harness sets per-monitor DPI awareness v2 before it launches anything,
-  and the app inherits it. A capture is then 1.5x the logical size on this
-  machine, and the window rect is read in physical pixels; reading it from a
-  DPI-unaware process reports logical pixels and makes the same window look
-  two different sizes.
+- The editor's weather answers the game, and the header had to give way
+  for it. The World header had more controls than the estate's floor could
+  hold -- the buttons were cut in half at 1280 -- so the map's own line
+  moved to the map combo's tooltip, the page's title label went (the tab
+  names the page), the layers button lost two words and the generate
+  button lost its ellipsis.
+- The time and weather controls moved into their own widget
+  (`studio/world/TimeWeatherBar.*`): the day, the hour and the kind, with
+  the pick inside. The panel keeps the map and the tools.
+- The world's margin colour is written by the terrain shader

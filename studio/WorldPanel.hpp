@@ -9,6 +9,12 @@
 #include "world/WorldGenerationJob.hpp"
 #include "world/WorldMapCanvas.hpp"
 
+namespace aur {
+namespace world {
+class TimeWeatherBar;
+}
+}
+
 class QComboBox;
 class QLabel;
 class QListWidget;
@@ -34,12 +40,11 @@ class WorldPanel : public QWidget {
     QListWidget* biomeList = nullptr;
     QListWidget* nodeList = nullptr;
     WorldMapCanvasWidget* mapCanvas = nullptr;
-    QLabel* mapInfo = nullptr;
     QSpinBox* zoomSpin = nullptr;
     QComboBox* weatherCombo = nullptr;
     QPushButton* newBiomeButton = nullptr;
     QPushButton* generateWorldButton = nullptr;
-    QTimeEdit* timeOfDayEdit = nullptr;
+    world::TimeWeatherBar* timeWeather = nullptr;
     world::WorldGenerationJob* generation_job = nullptr;
     QPushButton* addLocationButton = nullptr;
     QPushButton* addExitButton = nullptr;
@@ -56,6 +61,7 @@ public:
 private:
     void selectMap(const std::string& map_id);
     void refreshMapContents();
+
     void filterTerrainTiles();
     void createBiome();
     void createWorldEntity(const QPoint& tile, WorldTool tool);

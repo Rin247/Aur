@@ -80,6 +80,11 @@ twenty-two PNGs.
   Map Editor, Tileset Editor, World, Sprite Editor, Character Forge,
   Database, Events and DAW -- one name per page, and the class and its
   files carry the same name.
+- **The world map answers the game's weather.** The pick belongs to the
+  engine (`weather_for_slot`): the runtime rolls it and so does the editor,
+  so the day, the hour and the map's climate in the World header answer
+  "what does the game show then?". A forced kind is the runtime's manual
+  override.
 - **The world map has no starter locations.** The world map shipped three
   markers -- western_harbor, eastern_capital and southern_ruins -- that
   pointed at places on an old seed. A new world seed has no entities at
@@ -107,21 +112,17 @@ twenty-two PNGs.
 
 1. **`studio/MusicPanel.cpp` is 1,311 lines**, over the owner's hard ceiling of ~1,250 and
    pre-existing. It needs splitting; the MIDI file transfer moved out in this pass.
-2. **The world map's time and weather preview does not share the runtime's clock.** The editor
-   keeps its own hour and its own forced weather, while the game rolls the project's calendar and
-   the climate profile. What the editor shows is not always what the game will show.
-   (`Bible/notes/editsweep.md`, the next phase.)
-3. **The Database page's other tabs are stubs.** Six of the seven tabs
+2. **The Database page's other tabs are stubs.** Six of the seven tabs
    are a list and a form of empty fields, with no load, no save and no
    selection handling -- they look editable and are not. The Bestiary
    replaces the "Enemies" one; the rest (Actors, Classes, Items,
    Weapons, Skills) are open.
-4. **Three of the seven creatures have no artwork.** `bandit`,
+3. **Three of the seven creatures have no artwork.** `bandit`,
    `bandit_archer` and `bandit_boss` name graphics the project does not
    have, so the Bestiary's portrait says so for them. The game's own
    renderer draws a default graphic instead, which is worse: the creature
    in the game is not the creature the record names.
-5. **`studio/world/WorldMapCanvas.cpp` (934) and `studio/WorldPanel.cpp` (928)** are over the
+4. **`studio/world/WorldMapCanvas.cpp` (934) and `studio/WorldPanel.cpp` (928)** are over the
    750-line soft limit and pre-existing. The map editor and the pixel editor were split for this
    reason; these two are not.
 

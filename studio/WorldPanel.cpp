@@ -6,6 +6,7 @@
 #include "world/WorldMapHelpers.hpp"
 #include "world/MapView.hpp"
 #include "world/TerrainRhiWidget.hpp"
+#include "world/TimeWeatherBar.hpp"
 #include "world/WorldWeatherOverlay.hpp"
 #include "world/WorldClimateOverlays.hpp"
 #include "world/WorldMarkerOverlays.hpp"
@@ -68,13 +69,13 @@ WorldPanel::WorldPanel(Project* p, QWidget* parent)
     layout->setSpacing(8);
 
     auto* header = new QHBoxLayout();
-    auto* title = new QLabel("WORLD MAP", this);
+    auto* title = new QLabel(this);
     title->setStyleSheet("font-size: 15px; font-weight: 700; color: #e8edf2; letter-spacing: 1px;");
     header->addWidget(title);
     header->addSpacing(14);
     header->addWidget(new QLabel("Map:", this));
     mapCombo = new QComboBox(this);
-    mapCombo->setMinimumWidth(220);
+    mapCombo->setMinimumWidth(150);
     header->addWidget(mapCombo);
     header->addSpacing(12);
     header->addWidget(new QLabel("Tool:", this));
@@ -94,11 +95,15 @@ WorldPanel::WorldPanel(Project* p, QWidget* parent)
     zoomSpin->setSingleStep(25);
     zoomSpin->setValue(100);
     zoomSpin->setSuffix("%");
+    zoomSpin->setMaximumWidth(96);
     header->addWidget(zoomSpin);
     auto* fitButton = new QPushButton("Fit", this);
     header->addWidget(fitButton);
     auto* overlayButton = new QToolButton(this);
-    overlayButton->setText("Climate layers");
+    overlayButton->setText("Layers");
+    overlayButton->setToolTip(
+        "The layers to draw over the map: temperature, wind, currents, weather, day/night "
+        "lighting and contours.");
     overlayButton->setPopupMode(QToolButton::InstantPopup);
     auto* overlayMenu = new QMenu(overlayButton);
     QAction* temperatureAction = overlayMenu->addAction("Temperature / equator / poles");
@@ -124,32 +129,15 @@ WorldPanel::WorldPanel(Project* p, QWidget* parent)
     QAction* simulationAction = overlayMenu->addAction("Run simulation");
     simulationAction->setCheckable(true);
     overlayButton->setMenu(overlayMenu);
-    header->addWidget(new QLabel("Weather:", this));
-    weatherCombo = new QComboBox(this);
-    weatherCombo->addItem("Climate", "climate");
-    weatherCombo->addItem("Clear", "clear");
-    weatherCombo->addItem("Cloudy", "cloudy");
-    weatherCombo->addItem("Rain", "rain");
-    weatherCombo->addItem("Snow", "snow");
-    weatherCombo->addItem("Storm", "storm");
-    weatherCombo->addItem("Fog", "fog");
-    weatherCombo->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
-    weatherCombo->setMinimumContentsLength(7);
-    weatherCombo->setToolTip(
-        "Preview a climate-driven weather mix or force a weather condition on the world map.");
-    timeOfDayEdit = new QTimeEdit(QTime(8, 0), this);
-    timeOfDayEdit->setDisplayFormat("HH:mm");
-    timeOfDayEdit->setToolTip("Preview world lighting and terrain shading at this local time.");
     header->addWidget(overlayButton);
-    header->addWidget(weatherCombo);
-    header->addWidget(new QLabel("Time:", this));
-    header->addWidget(timeOfDayEdit);
+    header->addWidget(new QLabel("Weather:", this));
+    timeWeather = new world::TimeWeatherBar(project, this);
+    header->addWidget(timeWeather);
     header->addStretch(1);
-    generateWorldButton = new QPushButton(QStringLiteral("Generate new world\u2026"), this);
+    generateWorldButton = new QPushButton(QStringLiteral("New world"), this);
+    generateWorldButton->setToolTip(
+        "Generate a new world: a fresh seed, a new map, and the terrain to match.");
     header->addWidget(generateWorldButton);
-    mapInfo = new QLabel(this);
-    mapInfo->setStyleSheet("color: #aeb8c2;");
-    header->addWidget(mapInfo);
     layout->addLayout(header);
 
     auto* splitter = new QSplitter(Qt::Horizontal, this);
@@ -354,12 +342,10 @@ WorldPanel::WorldPanel(Project* p, QWidget* parent)
             [this](bool enabled) { mapCanvas->setOverlay(WorldOverlay::Currents, enabled); });
     connect(weatherAction, &QAction::toggled, mapCanvas,
             [this](bool enabled) { mapCanvas->setOverlay(WorldOverlay::Weather, enabled); });
-    connect(weatherCombo, &QComboBox::currentIndexChanged, this,
-            [this, weatherAction](int index) {
-                const std::string weather =
-                    weatherCombo->itemData(index).toString().toStdString();
-                mapCanvas->setWeatherType(weather);
-                if (weather != "climate" && !weatherAction->isChecked()) {
+    connect(timeWeather, &world::TimeWeatherBar::weatherChanged, this,
+            [this, weatherAction](const QString& kind) {
+                mapCanvas->setWeatherType(kind.toStdString());
+                if (!weatherAction->isChecked()) {
                     weatherAction->setChecked(true);
                 }
             });
@@ -371,13 +357,12 @@ WorldPanel::WorldPanel(Project* p, QWidget* parent)
             &WorldMapCanvasWidget::setRepeatWorldView);
     connect(simulationAction, &QAction::toggled, mapCanvas,
             &WorldMapCanvasWidget::setSimulationRunning);
-    connect(timeOfDayEdit, &QTimeEdit::timeChanged, this, [this](const QTime& time) {
-        mapCanvas->setTimeOfDay(time.hour(), time.minute());
+    connect(timeWeather, &world::TimeWeatherBar::timeChanged, this, [this](int hour, int minute) {
+        mapCanvas->setTimeOfDay(hour, minute);
     });
     connect(mapCanvas, &WorldMapCanvasWidget::timeOfDayChanged, this,
             [this](int hour, int minute) {
-                const QSignalBlocker blocker(timeOfDayEdit);
-                timeOfDayEdit->setTime(QTime(hour, minute));
+                timeWeather->setTime(hour, minute);
             });
     connect(mapCanvas, &WorldMapCanvasWidget::zoomChanged, this, [this](qreal zoom) {
         const QSignalBlocker blocker(zoomSpin);
@@ -573,7 +558,7 @@ void WorldPanel::refreshGraph() {
         tilePalette->clear();
         biomeList->clear();
         nodeList->clear();
-        mapInfo->setText("No world maps in project");
+        mapCombo->setToolTip("No world maps in project");
     }
 }
 
@@ -596,7 +581,7 @@ void WorldPanel::refreshMapContents() {
     editNodeButton->setEnabled(false);
     deleteNodeButton->setEnabled(false);
     if (!project || current_map.empty() || !project->maps.contains(current_map)) {
-        mapInfo->clear();
+        mapCombo->setToolTip("");
         return;
     }
 
@@ -610,7 +595,7 @@ void WorldPanel::refreshMapContents() {
         info += QString(QStringLiteral(" \u00b7 HD \u00b7 %1")).arg(QString::fromStdString(
             map["worldgen"]["topology"].as_string()));
     }
-    mapInfo->setText(info);
+    mapCombo->setToolTip(info);
 
     const auto tileset = project->tilesets.find(tileset_id);
     if (tileset != project->tilesets.end()) {

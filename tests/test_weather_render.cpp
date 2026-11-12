@@ -1,4 +1,8 @@
 #include "mini_test.hpp"
+
+#include "aur/clock.hpp"
+#include "aur/project.hpp"
+#include "world/WorldMapHelpers.hpp"
 #include "world/WeatherRender.hpp"
 #include "world/WeatherPreviewField.hpp"
 #include "aur/project.hpp"
@@ -151,4 +155,36 @@ void test_weather_preview_field()
     // Invalid maps give an invalid field instead of crashing.
     const WeatherField empty = make_preview_field(&project, aur::JsonObject{}, "rain", 1u, 0.0);
     ASSERT(!empty.valid());
+}
+
+// The weather the game rolls and the weather the editor shows are one
+// answer: the same slot, the same pick.
+void test_weather_slot_parity()
+{
+    aur::Project project;
+    aur::Json map = aur::Json(aur::JsonObject{});
+    map["climate"] = "temperate";
+
+    aur::GameClock morning;
+    morning.set_time(9.0, 0.0);
+    aur::WeatherSystem weather(aur::DEFAULT_WEATHER_SEED);
+    weather.roll(morning, "temperate", project.meta["weather"]);
+    ASSERT(weather.target ==
+           aur::world::rolled_weather(&project, map, morning.day(), morning.hour()));
+
+    aur::GameClock evening;
+    evening.set_time(20.0, 0.0);
+    aur::WeatherSystem later(aur::DEFAULT_WEATHER_SEED);
+    later.roll(evening, "temperate", project.meta["weather"]);
+    ASSERT(later.target ==
+           aur::world::rolled_weather(&project, map, evening.day(), evening.hour()));
+
+    // The day is part of the slot: another day is another answer.
+    aur::GameClock next_day;
+    next_day.set_time(9.0, 0.0);
+    next_day.advance(24.0);
+    aur::WeatherSystem tomorrow(aur::DEFAULT_WEATHER_SEED);
+    tomorrow.roll(next_day, "temperate", project.meta["weather"]);
+    ASSERT(tomorrow.target ==
+           aur::world::rolled_weather(&project, map, next_day.day(), next_day.hour()));
 }

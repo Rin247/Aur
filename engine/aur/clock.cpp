@@ -45,16 +45,9 @@ void WeatherSystem::roll(const GameClock& clock, const std::string& climate) {
     roll(clock, climate, Json{});
 }
 
-void WeatherSystem::roll(const GameClock& clock, const std::string& climate, const Json& settings) {
-    if (settings.contains("interval_hours") && settings["interval_hours"].is_number()) {
-        interval = std::max(1, settings["interval_hours"].as_int());
-    }
-    int slot_hour = clock.hour() / std::max(1, interval);
-    std::pair<int, int> current_slot = {clock.day(), slot_hour};
-    if (current_slot == slot_cache) return;
-    slot_cache = current_slot;
-
-    std::mt19937 rng(seed + clock.day() * 100 + slot_hour);
+std::string weather_for_slot(const Json& settings, const std::string& climate,
+                             int seed, int day, int slot_hour) {
+    std::mt19937 rng(seed + day * 100 + slot_hour);
     std::string new_weather = "clear";
     const Json& profiles = settings["profiles"];
     const Json* profile = profiles.is_object() && profiles.contains(climate)
@@ -90,6 +83,20 @@ void WeatherSystem::roll(const GameClock& clock, const std::string& climate, con
         else if (r < 7) new_weather = "cloudy";
         else new_weather = "rain";
     }
+    return new_weather;
+}
+
+void WeatherSystem::roll(const GameClock& clock, const std::string& climate, const Json& settings) {
+    if (settings.contains("interval_hours") && settings["interval_hours"].is_number()) {
+        interval = std::max(1, settings["interval_hours"].as_int());
+    }
+    int slot_hour = clock.hour() / std::max(1, interval);
+    std::pair<int, int> current_slot = {clock.day(), slot_hour};
+    if (current_slot == slot_cache) return;
+    slot_cache = current_slot;
+
+    const std::string new_weather =
+        weather_for_slot(settings, climate, seed, clock.day(), slot_hour);
 
     if (new_weather != target) {
         kind = target;
