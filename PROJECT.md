@@ -116,7 +116,12 @@ twenty-two PNGs.
    selection handling -- they look editable and are not. The Bestiary
    replaces the "Enemies" one; the rest (Actors, Classes, Items,
    Weapons, Skills) are open.
-4. **`studio/world/WorldMapCanvas.cpp` (934) and `studio/WorldPanel.cpp` (928)** are over the
+4. **Three of the seven creatures have no artwork.** `bandit`,
+   `bandit_archer` and `bandit_boss` name graphics the project does not
+   have, so the Bestiary's portrait says so for them. The game's own
+   renderer draws a default graphic instead, which is worse: the creature
+   in the game is not the creature the record names.
+5. **`studio/world/WorldMapCanvas.cpp` (934) and `studio/WorldPanel.cpp` (928)** are over the
    750-line soft limit and pre-existing. The map editor and the pixel editor were split for this
    reason; these two are not.
 
