@@ -58,16 +58,17 @@
 
 ## Open
 
-- **A Bestiary** (owner, 2026-11-12: "we need a Bestiary, I guess we
-  could expand on the database"): the Database page lists the creatures
-  and shows an empty form, so the enemies are the one kind of record in
-  the project that cannot be edited. Plan at `Bible/notes/bestiary.md`.
 - **Qt desktop foundation** — Audit AIO/Vulkan behavior, legacy source/header layout, professional toolbars/settings/keybindings, and canonical `Aur` artifact identity; do not suffix its app name with Qt/desktop roles. Preserve the higher-priority active Aur queue.
 - **Time and weather functions for the world map** — the World Map editor needs time-of-day and weather preview/function parity with the rest of the editor (World & Time Settings defines calendar, seasons, eras, and climate profiles; the map canvas already previews temperature/equator/poles and forced weather). Close the gap so time/weather authoring on the map matches the project settings and the in-game debug menu's runtime overrides.
 - **Implement SNES-style platformer games and metroidvanias** — build SNES-style platformer and metroidvania game support into the engine. Large: needs its own plan file (engine movement modes, tile physics, room/camera model) before any code.
 
 
 ## Closed
+
+- **A Bestiary** (closed 2026-11-12, plan `Bible/notes/bestiary.md`): the
+  Database page's "Enemies" stub is the "Bestiary" tab now -- the
+  creatures, their record and their artwork. The record layer is Qt-free
+  and tested; the fields the editor does not show are carried through.
 
 - **DAW P8 effects framework** (closed 2026-11-08, plan `daw/effects.md`,
   all phases): `IEffect` + registry + 10 built-ins (EQ, SVF, compressor,

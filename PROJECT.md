@@ -14,9 +14,10 @@
 - `C:\Dev\Qt\Tools\CMake_64\bin\ctest.exe --test-dir build\Release --timeout 300` — 7 of 7
   suites passed, 2026-11-12.
 - `python tools\conformance.py --project Aur` — all 9 checks clean, 2026-11-12.
-- `python tests\render_check.py` — 17 captures written to `build/renders/`, 2026-11-12. The pages
-  are Map Editor, World, Sprite Editor, Tileset Editor, DAW and Playtest, at both estate sizes,
-  plus the zoom sweep, the sprite preview and the DAW's arrangement. **A render asserts that a
+- `python tests\render_check.py` — 22 captures written to `build/renders/`, 2026-11-12. The pages
+  are Map Editor, World, Sprite Editor, Tileset Editor, DAW, Creature Forge, Database and
+  Playtest, at both estate sizes, plus the zoom sweep, the sprite preview, the DAW's
+  arrangement and the Bestiary. **A render asserts that a
   surface did not crash, not that it looks right: open the PNGs.**
 - `cmd /c "AIO.bat build windows Release"` — built and deployed, 2026-11-12.
 
@@ -47,7 +48,7 @@ runtime is deployed beside the exe by the build; without it the exe exits
 estate's `C:\Dev\build.bat build Aur` does the same thing and finds the same exe.
 
 **Desktop, viable.** Yes: it built, it launched, the suite passed, and the render sweep wrote
-seventeen PNGs.
+twenty-two PNGs.
 
 ## What works
 
@@ -71,6 +72,10 @@ seventeen PNGs.
   the leading dot, and the settings file lives in it.
 - **The DAW scrolls.** The arrangement timeline is sized to its content and sits in a scroll
   area, so the bars and the tracks beyond the window are reachable.
+- **The Database page has a Bestiary.** The creatures are edited where
+  their records live: the list, the record, the artwork, and the fields
+  the editor does not show carried through. The other tabs of that page
+  are still stubs, and say so.
 - **The pages are named for what they are.** The tab bar reads Playtest,
   Map Editor, Tileset Editor, World, Sprite Editor, Character Forge,
   Database, Events and DAW -- one name per page, and the class and its
@@ -109,8 +114,8 @@ seventeen PNGs.
 3. **The Database page's other tabs are stubs.** Six of the seven tabs
    are a list and a form of empty fields, with no load, no save and no
    selection handling -- they look editable and are not. The Bestiary
-   (`Bible/notes/bestiary.md`) replaces the "Enemies" one; the rest are
-   open.
+   replaces the "Enemies" one; the rest (Actors, Classes, Items,
+   Weapons, Skills) are open.
 4. **`studio/world/WorldMapCanvas.cpp` (934) and `studio/WorldPanel.cpp` (928)** are over the
    750-line soft limit and pre-existing. The map editor and the pixel editor were split for this
    reason; these two are not.

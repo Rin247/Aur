@@ -77,6 +77,11 @@ through the same device the DAW previews with, so swapping tabs stops
 the other (owner, 2026-11-12). The MIDI file transfer moved out of
 `MusicPanel.cpp` in the same pass, so the panel stopped growing.
 
+**The Bestiary landed** (`Bible/notes/bestiary.md`): the Database page's
+"Enemies" stub is the "Bestiary" tab -- the creatures, their record and
+their artwork. The record layer is Qt-free and tested; the fields the
+editor does not show are carried through.
+
 **D11 to D13 landed**: the Character Forge's preview fits its pane (it
 scaled its sprite to at most 8x), the world map's three starter locations
 are gone (they pointed at a seed that has been re-seeded), and the Event

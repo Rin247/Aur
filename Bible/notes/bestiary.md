@@ -1,6 +1,7 @@
 # The Bestiary: plan
 
-Status: P0 done (the audit). Next: P1, the data layer.
+Status: P1, P2 and P3 done (2026-11-12). The Bestiary edits the
+creatures and shows their artwork.
 
 ## Goal
 
@@ -91,10 +92,10 @@ committed on its own.
 
 ### P1 The record layer (Qt-free)
 
-- [ ] P1.1 `BestiaryData`: the fields a creature shows (the ones the
+- [x] P1.1 `BestiaryData`: the fields a creature shows (the ones the
   editor owns), the defaults for a new one, and the add and the remove.
   Unknown fields are carried through untouched.
-- [ ] P1.2 The test: a new creature has a name and a full set of
+- [x] P1.2 The test: a new creature has a name and a full set of
   numbers; a creature that is edited keeps the fields the editor does
   not show; a removed creature is gone.
 
@@ -102,23 +103,30 @@ Acceptance: ctest green; the layer needs no widget and the test says so.
 
 ### P2 The editor
 
-- [ ] P2.1 The Bestiary tab: the list of the creatures on the left, the
+- [x] P2.1 The Bestiary tab: the list of the creatures on the left, the
   form on the right, and the portrait above it.
-- [ ] P2.2 The form writes: the name, the artwork, the numbers and the
+- [x] P2.2 The form writes: the name, the artwork, the numbers and the
   AI, and the record is saved when a field changes.
-- [ ] P2.3 Add and remove, with the ids the project uses.
+- [x] P2.3 Add and remove, with the ids the project uses.
 
 Acceptance: the tab replaces the "Enemies" stub; a creature's numbers can
 be edited and come back after a reload.
 
 ### P3 The proof
 
-- [ ] P3.1 The Database page joins the render matrix, and the capture
+- [x] P3.1 The Database page joins the render matrix, and the capture
   shows the Bestiary with a creature and its portrait.
-- [ ] P3.2 `PROJECT.md`, `WANTED.md` and `Bible/Operations/NOTES.md` carry
+- [x] P3.2 `PROJECT.md`, `WANTED.md` and `Bible/Operations/NOTES.md` carry
   the state, and the queue's row is closed.
 
 Acceptance: the PNG is opened and shows the editor; the gate is clean.
+
+**Landed 2026-11-12.** `studio/bestiary/` holds the three modules: the
+record layer (Qt-free, with the test), the editor and the portrait. The
+Database page's "Enemies" stub is the "Bestiary" tab now. The capture
+shows the editor with a creature; the bandit has no artwork in the
+project, so the portrait says so, and the artwork path itself is pinned
+by the test.
 
 ## Acceptance
 
@@ -142,7 +150,13 @@ Phase commits; revert to the tag `bestiary-p2` for the editor and
 - **The data layer is Qt-free** and tested without a widget: the
   record shape is the engine's, and a test that needs a widget is a test
   that cannot be run in the suite.
-- **The other six tabs stay as they are.** They are stubs, and the plan
+- **The artwork lookup asks whether the project has the graphic**, not
+  what the project returns for that id: `Project::graphic` hands back a
+  default graphic for an id it does not have, and a default is not the
+  creature's picture.
+- **The page's own tabs are reachable from the command line** (`--sub-tab`),
+  so the sweep can capture one: the Bestiary is a capture of its own.
+- The other six tabs stay as they are. They are stubs, and the plan
   records that; building five more editors is a bigger piece of work
   than the Bestiary, and pretending they work would be worse than
   saying so.

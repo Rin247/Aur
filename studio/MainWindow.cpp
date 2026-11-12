@@ -401,8 +401,12 @@ void MainWindow::addTab(QWidget* page, const QString& title) {
     tabs->addTab(title);
 }
 
-void MainWindow::setDawTab(const QString &name) {
-    if (auto* panel = findChild<MusicPanel*>()) panel->selectEditorTab(name);
+void MainWindow::setSubTab(const QString& name) {
+    if (!tabs || !tabStack) return;
+    QWidget* page = tabStack->widget(tabs->currentIndex());
+    if (!page) return;
+    // The pages that have tabs of their own answer this one.
+    QMetaObject::invokeMethod(page, "selectPageTab", Q_ARG(QString, name));
 }
 
 void MainWindow::updateStudioTitle() {

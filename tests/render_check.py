@@ -39,6 +39,7 @@ SIZES = [(1280, 690), (1280, 770)]
 PAGES = [("map", "Map Editor"), ("world", "World"),
          ("pixel", "Sprite Editor"), ("tileset", "Tileset Editor"),
          ("daw", "DAW"), ("forge", "Creature Forge"),
+         ("database", "Database"),
          ("playtest", "\u25b6 Playtest")]
 ZOOM_SWEEP = [0.75, 1.5]
 
@@ -168,7 +169,7 @@ def distinct_colours(img):
     return 1 << 20 if colours is None else len(colours)
 
 
-def shoot(page, tab, size, zoom, sprite=False, preview=False, daw_tab=None):
+def shoot(page, tab, size, zoom, sprite=False, preview=False, sub_tab=None):
     """One launch, one capture. Returns the PNG path or None."""
     w, h = size
     out = os.path.join(OUT_DIR, "%s_%dx%d_z%s.png" % (page, w, h, zoom))
@@ -179,8 +180,8 @@ def shoot(page, tab, size, zoom, sprite=False, preview=False, daw_tab=None):
         args += ["--sprite"]
     if preview:
         args += ["--preview"]
-    if daw_tab:
-        args += ["--daw-tab", daw_tab]
+    if sub_tab:
+        args += ["--sub-tab", sub_tab]
     proc = subprocess.Popen(args, cwd=os.path.dirname(EXE),
                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     print("render_check: launch pid=%d %s" % (proc.pid, " ".join(args[1:])))
@@ -288,11 +289,13 @@ def main():
         shots.append(("sprite_preview", "Sprite Editor", SIZES[0], 1.0, True, True))
         # The DAW's arrangement timeline is the page that has to scroll.
         shots.append(("daw_arrangement", "DAW", SIZES[0], 1.0, False, False, "Arrangement"))
+        # The Bestiary is a tab of the Database page.
+        shots.append(("bestiary", "Database", SIZES[0], 1.0, False, False, "Bestiary"))
     failed = 0
     for shot in shots:
         page, tab, size, zoom, sprite, preview = shot[:6]
-        daw_tab = shot[6] if len(shot) > 6 else None
-        if shoot(page, tab, size, zoom, sprite, preview, daw_tab) is None:
+        sub_tab = shot[6] if len(shot) > 6 else None
+        if shoot(page, tab, size, zoom, sprite, preview, sub_tab) is None:
             failed += 1
     print()
     print("render_check: %d captures in %s - OPEN THE PNGs" % (len(shots) - failed, OUT_DIR))

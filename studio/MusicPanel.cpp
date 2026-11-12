@@ -211,7 +211,7 @@ namespace aur
         updatingControls = false;
     }
 
-    void MusicPanel::selectEditorTab(const QString &name)
+    void MusicPanel::selectPageTab(const QString &name)
     {
         if (!editorTabs)
             return;

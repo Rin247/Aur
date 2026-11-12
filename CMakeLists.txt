@@ -120,6 +120,12 @@ add_executable(aur_studio
     studio/MapEditUndo.cpp
     studio/UndoCommands.cpp
     studio/DatabasePanel.cpp
+    studio/bestiary/BestiaryData.cpp
+    studio/bestiary/BestiaryData.hpp
+    studio/bestiary/BestiaryEditor.cpp
+    studio/bestiary/BestiaryEditor.hpp
+    studio/bestiary/CreaturePortrait.cpp
+    studio/bestiary/CreaturePortrait.hpp
     studio/CreatureForgePanel.cpp
     studio/MusicPanel.cpp
     studio/WorldPanel.cpp
@@ -143,6 +149,7 @@ add_executable(aur_studio
     studio/RhiBackend.hpp
     studio/SpriteEditorPanel.cpp
     studio/PixelEditSession.cpp
+    studio/bestiary/BestiaryData.cpp
     studio/PixelFrameOps.cpp
     studio/PixelSurface.cpp
     studio/SpriteCanvas.cpp
@@ -226,10 +233,12 @@ add_executable(aur_tests
     tests/Sf2Fixture.cpp
     tests/test_sf2.cpp
     tests/test_pixel_session.cpp
+    tests/test_bestiary_data.cpp
     tests/test_weather_render.cpp
     tests/test_step_sequencer.cpp
     tests/test_arpeggiator.cpp
     studio/PixelEditSession.cpp
+    studio/bestiary/BestiaryData.cpp
     studio/PixelFrameOps.cpp
     studio/UndoCommands.cpp
     studio/MapEditUndo.cpp

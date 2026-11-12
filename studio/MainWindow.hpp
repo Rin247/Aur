@@ -60,8 +60,8 @@ public:
     void setSpriteMode(bool enabled);
     // Starts the pixel editor's preview, for the render sweep.
     void startPreview();
-    // Shows one of the DAW's own tabs, for the render sweep.
-    void setDawTab(const QString &name);
+    // Shows one of the current page's own tabs, for the render sweep.
+    void setSubTab(const QString &name);
 
 public slots:
     void playProject();

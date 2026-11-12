@@ -310,6 +310,10 @@
   of 690 (`DESIGN.md` 12), so the app could not be shown at the floor and
   every capture was 45 px short at the bottom. The floor is now the
   minimum, and the captures hold the whole window.
+- **A widget that is a tab's page has to fill it.** The Bestiary
+  editor was added as a page with no layout, so it was sized to its hint
+  and the form sat in a third of the window. The page needed a layout of
+  its own.
 - **The Database page's six non-race tabs are stubs**: a list and a form
   of empty fields, with no load, no save and no selection handling. The
   Bestiary (Bible/notes/bestiary.md) replaces one of them with a real

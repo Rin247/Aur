@@ -156,7 +156,7 @@ namespace aur
         bool redoSongEdit();
         void commitSongEdit(const Json &song);
         // Shows one of the DAW's own tabs (the render sweep uses it).
-        void selectEditorTab(const QString &name);
+        Q_INVOKABLE void selectPageTab(const QString &name);
 
     signals:
         void undoStateChanged(bool canUndo, bool canRedo);

@@ -1,5 +1,7 @@
 #include "DatabasePanel.hpp"
 
+#include "bestiary/BestiaryEditor.hpp"
+
 #include <QFormLayout>
 #include <QMessageBox>
 #include <QPushButton>
@@ -62,7 +64,8 @@ DatabasePanel::DatabasePanel(Project* p, QWidget* parent)
     dbTabs->addTab(createCategoryView("actors", {"Name", "Char Graphic", "Level", "HP", "MP", "Str", "Def"}), "Actors");
     dbTabs->addTab(createCategoryView("classes", {"Class Name", "Primary Stat", "HP Growth", "MP Growth"}), "Classes");
     dbTabs->addTab(createRaceEditor(), "Races");
-    dbTabs->addTab(createCategoryView("enemies", {"Enemy Name", "HP", "Power", "XP Drop", "Gold Drop"}), "Enemies");
+    bestiaryEditor = new bestiary::BestiaryEditor(project, this);
+    dbTabs->addTab(bestiaryEditor, "Bestiary");
     dbTabs->addTab(createCategoryView("items", {"Item Name", "Type", "Value", "Cost"}), "Items");
     dbTabs->addTab(createCategoryView("weapons", {"Weapon Name", "Might", "Reach", "Cost"}), "Weapons");
     dbTabs->addTab(createCategoryView("skills", {"Skill Name", "MP Cost", "Power", "Radius"}), "Skills");
@@ -133,7 +136,8 @@ QWidget* DatabasePanel::createRaceEditor() {
     splitter->addWidget(rightPane);
     splitter->setStretchFactor(0, 0);
     splitter->setStretchFactor(1, 1);
-    splitter->setSizes({240, 760});
+    // The list keeps its width; the editor takes the rest of the page.
+    leftPane->setMaximumWidth(420);
 
     connect(raceList, &QListWidget::currentRowChanged, this, [this](int) {
         loadSelectedRace();
@@ -159,8 +163,19 @@ QWidget* DatabasePanel::createRaceEditor() {
     return splitter;
 }
 
+void DatabasePanel::selectPageTab(const QString& name) {
+    if (!dbTabs) return;
+    for (int index = 0; index < dbTabs->count(); ++index) {
+        if (dbTabs->tabText(index) == name) {
+            dbTabs->setCurrentIndex(index);
+            return;
+        }
+    }
+}
+
 void DatabasePanel::setProject(Project* p) {
     project = p;
+    if (bestiaryEditor) bestiaryEditor->setProject(p);
     refreshData();
 }
 
