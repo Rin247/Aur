@@ -271,7 +271,7 @@ MainWindow::MainWindow(const std::string& project_path, QWidget* parent)
     connect(tabs, &QTabBar::currentChanged, tabStack, &QStackedWidget::setCurrentIndex);
     chrome->addTitleWidget(tabs);
     gameView = new GameView(project_path, this);
-    addTab(gameView, "▶ Playtest View");
+    addTab(gameView, "▶ Playtest");
     auto* mapEditor = new MapEditorPanel(&project, this);
     addTab(mapEditor, "Map Editor");
     auto* tilesetEditor = new TilesetEditorPanel(&project, this);
@@ -285,7 +285,7 @@ MainWindow::MainWindow(const std::string& project_path, QWidget* parent)
     addTab(new ForgePanel(&project, this), "Character Forge");
     addTab(new DatabasePanel(&project, this), "Database");
     addTab(new EventPanel(&project, this), "Event Scripting");
-    addTab(new MusicPanel(&project, this), "Music Studio");
+    addTab(new MusicPanel(&project, this), "DAW");
     // World & Time Settings is baked into the World tab (WANTED #3).
 
     auto installEditorMenu = [this](QWidget* canvas, const std::function<void()>& undo,
