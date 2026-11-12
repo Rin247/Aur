@@ -210,19 +210,20 @@ namespace aur
 
     void PixelSurface::resizeForSurface() {
         if (surface_width <= 0 || surface_height <= 0) return;
+        // The margin around the image: the readout sits under it.
+        constexpr int margin = 24;
         if (auto_zoom) {
             // Fit: the content fills the space the canvas was given, and the
             // canvas is the size of that space, so nothing is cut off and
             // nothing is empty. The margin is the space around the image.
-            constexpr int margin = 48;
-            const int target_width = std::max(1, available_viewport.width() - margin);
-            const int target_height = std::max(1, available_viewport.height() - margin);
+            const int target_width = std::max(1, available_viewport.width() - margin * 2);
+            const int target_height = std::max(1, available_viewport.height() - margin * 2);
             const int height_scale = target_height / surface_height;
             const int width_scale = target_width / surface_width;
             zoom_scale = std::clamp(std::min(height_scale, width_scale), 1, 64);
         }
-        resize(std::max(420, surface_width * zoom_scale + 48),
-               std::max(320, surface_height * zoom_scale + 48));
+        resize(std::max(420, surface_width * zoom_scale + margin * 2),
+               std::max(320, surface_height * zoom_scale + margin * 2));
     }
 
     void PixelSurface::setSelectedColor(int idx) {
@@ -347,7 +348,7 @@ namespace aur
             return;
         }
 
-        constexpr int origin = 24;
+        constexpr int origin = 24;  // the readout sits under the image
         const QRect image_rect(origin, origin, surface_width * zoom_scale, surface_height * zoom_scale);
         const QColor checker_light("#e8eaed");
         const QColor checker_dark("#cbd1d7");

@@ -255,8 +255,7 @@ WorldPanel::WorldPanel(Project* p, QWidget* parent)
     mapTabLayout->addWidget(splitter, 1);
     mapTabLayout->addWidget(footer);
     worldTabs->addTab(mapTab, "World Map");
-    worldTabs->addTab(new WorldSettingsPanel(project, worldTabs),
-                      "Time & World Settings");
+    worldTabs->addTab(new WorldSettingsPanel(project, worldTabs), "Settings");
     layout->addWidget(worldTabs, 1);
 
     generation_job = new world::WorldGenerationJob(this, this);

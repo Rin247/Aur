@@ -52,11 +52,16 @@ binding that points it at a frame. The tileset editor has the canvas, the
 tile's own palette as the colour picker, and Export PNG / Import PNG (every
 imported pixel snapped to the nearest palette colour, a pure function).
 
-**D7.S1 and D7.S2, the chrome, landed**: the file menu is a hamburger in the
-title bar and the project toolbar slots under it, so every editor gets that
-row back; and `WM_NCCALCSIZE` gives the client area the whole window, so the
-chrome reaches the screen edge and there is no OS border to drag (the edge
-resize was already there in `WM_NCHITTEST`).
+**D7.S1 to D7.S3, the chrome, landed**: the file menu is a hamburger in the
+title bar, the project's buttons are icon buttons beside it, and the tab bar
+sits in the same row (the pages are a stack below it), so the two rows the
+editors were losing are gone. `WM_NCCALCSIZE` gives the client area the
+whole window, so the chrome reaches the screen edge and there is no OS border
+to drag (the edge resize was already there in `WM_NCHITTEST`). Every canvas
+fits the space it is given: the map, the world and the pixel surface scale to
+the pane with a small margin.
+
+The world's second tab is "Settings" (it was "Time & World Settings").
 
 Next open phase: none in the editsweep — D5, D6 and D7 are closed. The
 owner's queue is in `WANTED.md`.

@@ -102,19 +102,29 @@ PixelEditorPanel::PixelEditorPanel(Project* p, QWidget* parent)
     zoomCombo->addItem("64×", 64);
     toolbar->addWidget(zoomCombo);
     toolbar->addSpacing(12);
-    toolbar->addWidget(new QLabel("Frame:", this));
+    frameLabel = new QLabel("Frame:", this);
+    toolbar->addWidget(frameLabel);
     frameCombo = new QComboBox(this);
     frameCombo->setMinimumWidth(110);
     toolbar->addWidget(frameCombo);
-    toolbar->addWidget(new QLabel("Animation:", this));
-    animationCombo = new QComboBox(this);
-    animationCombo->setMinimumWidth(130);
-    toolbar->addWidget(animationCombo);
-    playAnimationButton = new QPushButton("▶ Preview", this);
-    playAnimationButton->setCheckable(true);
-    toolbar->addWidget(playAnimationButton);
     toolbar->addStretch(1);
     mainLayout->addLayout(toolbar);
+
+    // The frame and animation row: the toolbar is full, and a squeezed combo
+    // is an empty one -- which looks like the editor has no frames.
+    frameRow = new QWidget(this);
+    auto* frameRowLayout = new QHBoxLayout(frameRow);
+    frameRowLayout->setContentsMargins(6, 0, 6, 0);
+    frameRowLayout->setSpacing(4);
+    frameRowLayout->addWidget(new QLabel("Animation:", frameRow));
+    animationCombo = new QComboBox(frameRow);
+    animationCombo->setMinimumWidth(150);
+    frameRowLayout->addWidget(animationCombo);
+    playAnimationButton = new QPushButton("▶ Preview", frameRow);
+    playAnimationButton->setCheckable(true);
+    frameRowLayout->addWidget(playAnimationButton);
+    frameRowLayout->addStretch(1);
+    mainLayout->addWidget(frameRow);
 
     // D5.S1: the sprite tools get their own row; the graphic toolbar is
     // already full and these controls mean nothing outside sprite mode.
@@ -277,6 +287,9 @@ PixelEditorPanel::PixelEditorPanel(Project* p, QWidget* parent)
     });
     connect(paletteWidget, &QListWidget::currentRowChanged, this,
             [this](int row) { if (row >= 0) canvas->setSelectedColor(row); });
+    // The canvas fits the space the scroll area gives it, and that space is
+    // only known after the layout runs.
+    canvasScroll->viewport()->installEventFilter(this);
     connect(canvas, &PixelCanvasWidget::colorPicked, this, [this](int index) {
         if (paletteWidget && index < paletteWidget->count()) paletteWidget->setCurrentRow(index);
     });
@@ -373,7 +386,9 @@ void PixelEditorPanel::updateEditorMode(int mode) {
     }
     graphicLabel->setText(spriteMode ? "Sprite:" : "Graphic:");
     spriteTools->setVisible(spriteMode);
+    frameRow->setVisible(!spriteMode);
     frameCombo->setVisible(spriteMode);
+    frameLabel->setVisible(spriteMode);
     animationCombo->setVisible(!spriteMode);
     // D5.S1.2: the preview plays in both modes -- a sprite's frames are
     // never seen moving otherwise.
@@ -582,6 +597,12 @@ void PixelEditorPanel::refreshPalette() {
                                ? graphicCombo->currentData().toString().toStdString()
                                : std::string();
     PixelEditSession::fill_palette(paletteWidget, *project, id);
+}
+
+bool PixelEditorPanel::eventFilter(QObject* watched, QEvent* event) {
+    if (watched == canvasScroll->viewport() && event->type() == QEvent::Resize)
+        canvas->setAvailableViewportSize(canvasScroll->viewport()->size());
+    return QWidget::eventFilter(watched, event);
 }
 
 void PixelEditorPanel::resizeEvent(QResizeEvent* event) {

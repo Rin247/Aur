@@ -64,6 +64,7 @@ namespace aur
         canvasScroll->setAlignment(Qt::AlignCenter);
         canvasScroll->setFrameShape(QFrame::NoFrame);
         canvasScroll->setWidget(tileCanvas);
+        canvasScroll->viewport()->installEventFilter(this);
         splitter->addWidget(canvasScroll);
 
         QWidget *inspector = new QWidget(this);
@@ -395,6 +396,13 @@ namespace aur
         refreshTileDetail();
         const std::string tsid = currentTilesetId();
         emit tilesetFlagsChanged(QString::fromStdString(tsid));
+    }
+
+    bool TilesetEditorPanel::eventFilter(QObject *watched, QEvent *event)
+    {
+        if (watched == canvasScroll->viewport() && event->type() == QEvent::Resize)
+            tileCanvas->setAvailableViewportSize(canvasScroll->viewport()->size());
+        return QWidget::eventFilter(watched, event);
     }
 
     void TilesetEditorPanel::resizeEvent(QResizeEvent *event)

@@ -117,8 +117,8 @@ void MapCanvasWidget::applyFit() {
     const int map_width = map["w"].as_int();
     const int map_height = map["h"].as_int();
     if (map_width <= 0 || map_height <= 0) return;
-    const qreal fit = std::min((width() - 44.0) / (map_width * field_tile_size),
-                               (height() - 44.0) / (map_height * field_tile_size));
+    const qreal fit = std::min((width() - 12.0) / (map_width * field_tile_size),
+                               (height() - 12.0) / (map_height * field_tile_size));
     zoom_factor = std::clamp(fit, 0.05, 16.0);
     pan_offset = {};
     constrainCamera();

@@ -103,7 +103,7 @@ namespace aur::studio
         {
             if (spec.map_width <= 0 || spec.map_height <= 0)
                 return 1.0;
-            constexpr qreal padding = 24.0;
+            constexpr qreal padding = 8.0;
             return std::min((widget.width() - padding * 2) /
                                 (spec.map_width * spec.source_tile_size),
                             (widget.height() - padding * 2) /

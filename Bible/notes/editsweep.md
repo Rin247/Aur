@@ -241,6 +241,15 @@ whole-layer copy; a dense map stroke copies kilobytes per tile.
       (`WM_NCHITTEST` answers `HTLEFT` and its corners); what was missing
       was the other half of the pair.
       `<editsweep-d7s2>`
+  - [x] D7.S3 One control cluster and canvases that hug their space. The
+      project's buttons became icon buttons in the title row beside the
+      hamburger, the tab bar moved into the title row too (the pages are a
+      stack below), and the two rows the editors were losing are gone. Every
+      canvas now fits the space it is given: the map, the world and the pixel
+      surface all scale to the pane with a small margin, and the pixel
+      surface learns the pane's size from the scroll area's viewport, which
+      is the only place that knows it.
+      `<editsweep-d7s3>`
 
 ### D6 — tile pixel editing (report feature 6)
 

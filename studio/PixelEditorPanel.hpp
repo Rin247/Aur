@@ -36,6 +36,8 @@ class PixelEditorPanel : public QWidget {
     QComboBox* brushCombo = nullptr;
     QComboBox* zoomCombo = nullptr;
     QComboBox* frameCombo = nullptr;
+    QLabel* frameLabel = nullptr;
+    QWidget* frameRow = nullptr;
     QComboBox* animationCombo = nullptr;
     QPushButton* playAnimationButton = nullptr;
     // D5.S1: the sprite-mode tools live in their own row, so the graphic
@@ -90,6 +92,7 @@ private:
 
 protected:
     void resizeEvent(QResizeEvent* event) override;
+    bool eventFilter(QObject* watched, QEvent* event) override;
 };
 
 } // namespace aur

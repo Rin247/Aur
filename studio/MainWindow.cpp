@@ -43,6 +43,9 @@ class StudioChrome final : public QWidget {
     bool dragging = false;
     QToolButton* maximizeButton = nullptr;
     QMenu* file_menu = nullptr;
+    QWidget* project_buttons = nullptr;
+    QHBoxLayout* titleRow = nullptr;
+    QHBoxLayout* projectLayout = nullptr;
 
     // The hamburger: three lines, drawn rather than shipped as an asset.
     static QIcon hamburger_icon() {
@@ -72,7 +75,7 @@ public:
         auto* layout = new QVBoxLayout(this);
         layout->setContentsMargins(8, 4, 8, 0);
         layout->setSpacing(2);
-        auto* titleRow = new QHBoxLayout();
+        titleRow = new QHBoxLayout();
         titleRow->setContentsMargins(4, 0, 0, 0);
         // The file commands live behind a hamburger, so the toolbar can sit
         // under the title instead of under a menu row.
@@ -90,9 +93,13 @@ public:
         titleLabel->setObjectName("StudioTitle");
         titleLabel->setAttribute(Qt::WA_TransparentForMouseEvents);
         titleRow->addWidget(titleLabel);
+        project_buttons = new QWidget(this);
+        projectLayout = new QHBoxLayout(project_buttons);
+        projectLayout->setContentsMargins(4, 0, 4, 0);
+        projectLayout->setSpacing(2);
+        titleRow->addWidget(project_buttons);
         titleRow->addStretch();
-        auto* minimize = new QToolButton(this);
-        minimize->setIcon(style()->standardIcon(QStyle::SP_TitleBarMinButton));
+        auto* minimize = new QToolButton(this);        minimize->setIcon(style()->standardIcon(QStyle::SP_TitleBarMinButton));
         minimize->setToolTip("Minimize");
         titleRow->addWidget(minimize);
         maximizeButton = new QToolButton(this);
@@ -120,6 +127,33 @@ public:
 
     // The menu behind the hamburger: the file commands.
     QMenu* fileMenu() const { return file_menu; }
+
+    // The project's actions, as icon buttons beside the hamburger. One
+    // control cluster in the title row is the estate's rule, and it gives the
+    // editor a row back.
+    void setProjectActions(const QList<QAction*>& actions) {
+        for (QAction* action : actions) {
+            auto* button = new QToolButton(this);
+            button->setDefaultAction(action);
+            button->setToolButtonStyle(Qt::ToolButtonIconOnly);
+            button->setIconSize(QSize(16, 16));
+            button->setStyleSheet("QToolButton { padding: 4px 6px; }");
+            projectLayout->addWidget(button);
+        }
+    }
+
+    // The tab bar, in the title row beside the buttons.
+    void addTitleWidget(QWidget* widget) {
+        // After the project buttons and before the stretch.
+        titleRow->insertWidget(3, widget);
+    }
+
+    // The project buttons, icon-only or with their text.
+    void setCompactButtons(bool compact) {
+        for (QToolButton *button : project_buttons->findChildren<QToolButton*>())
+            button->setToolButtonStyle(compact ? Qt::ToolButtonIconOnly
+                                               : Qt::ToolButtonTextBesideIcon);
+    }
 
 protected:
     bool eventFilter(QObject* watched, QEvent* event) override {
@@ -187,75 +221,71 @@ MainWindow::MainWindow(const std::string& project_path, QWidget* parent)
     fileMenu->addSeparator();
     reloadAction = fileMenu->addAction("&Reload from Disk");
     connect(reloadAction, &QAction::triggered, this, &MainWindow::reloadProject);
-    auto* toolbar = new QToolBar("Project", this);
-    toolbar->setObjectName("ProjectToolbar");
-    toolbar->setMovable(false);
-    toolbar->setFloatable(false);
-    toolbar->setAllowedAreas(Qt::TopToolBarArea | Qt::BottomToolBarArea);
-    toolbar->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
-    toolbar->setIconSize(QSize(16, 16));
-    addToolBar(Qt::TopToolBarArea, toolbar);
-
-    auto addToolbarAction = [this, toolbar](const QString& text, const QString& shortText,
-                                             const QString& tip, const QIcon& icon,
-                                             const std::function<void()>& callback) {
-        QAction* action = toolbar->addAction(icon, text);
-        action->setText(text);
+    // The project's actions are icon buttons in the title row, beside the
+    // hamburger: one control cluster, and the editor gets the row back.
+    QList<QAction*> project_actions;
+    bool compact_buttons = true;
+    auto addProjectAction = [this, &project_actions](const QString& text, const QString& shortText,
+                                   const QString& tip, const QIcon& icon,
+                                   const std::function<void()>& callback) {
+        QAction* action = new QAction(icon, text, this);
         action->setIconText(shortText);
         action->setToolTip(tip);
         connect(action, &QAction::triggered, this, callback);
+        project_actions.append(action);
         return action;
     };
-    QAction* saveToolbarAction = addToolbarAction("Save Project", "Save", "Save project (Ctrl+S)",
+    QAction* saveToolbarAction = addProjectAction("Save Project", "Save", "Save project (Ctrl+S)",
                      style()->standardIcon(QStyle::SP_DialogSaveButton),
                      [this]() { saveProject(); });
     connect(saveToolbarAction, &QAction::triggered, saveAction, [this]() {
         saveAction->trigger();
     });
-    QAction* reloadToolbarAction = addToolbarAction("Reload Agent Changes", "Reload", "Reload agent changes from disk",
+    QAction* reloadToolbarAction = addProjectAction("Reload Agent Changes", "Reload", "Reload agent changes from disk",
                      style()->standardIcon(QStyle::SP_BrowserReload),
                      [this]() { reloadProject(); });
     connect(reloadToolbarAction, &QAction::triggered, reloadAction, [this]() {
         reloadAction->trigger();
     });
-    toolbar->addSeparator();
-    addToolbarAction("Play Project", "Play", "Play project (F5)",
+    addProjectAction("Play Project", "Play", "Play project (F5)",
                      style()->standardIcon(QStyle::SP_MediaPlay),
                      [this]() { playProject(); });
-    addToolbarAction("Pause", "Pause", "Pause project",
+    addProjectAction("Pause", "Pause", "Pause project",
                      style()->standardIcon(QStyle::SP_MediaPause),
                      [this]() { pauseProject(); });
-    addToolbarAction("Stop", "Stop", "Stop project",
+    addProjectAction("Stop", "Stop", "Stop project",
                      style()->standardIcon(QStyle::SP_MediaStop),
                      [this]() { stopProject(); });
-    toolbar->setStyleSheet(
-        "QToolBar#ProjectToolbar { spacing: 4px; padding: 4px; }"
-        "QToolBar#ProjectToolbar QToolButton { padding: 4px 8px; }" );
+    chrome->setProjectActions(project_actions);
     auto* compactToolbarShortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Alt | Qt::Key_T), this);
-    connect(compactToolbarShortcut, &QShortcut::activated, this, [toolbar]() {
-        toolbar->setToolButtonStyle(toolbar->toolButtonStyle() == Qt::ToolButtonTextBesideIcon
-            ? Qt::ToolButtonIconOnly : Qt::ToolButtonTextBesideIcon);
+    connect(compactToolbarShortcut, &QShortcut::activated, this, [chrome, &compact_buttons]() {
+        chrome->setCompactButtons(!compact_buttons);
+        compact_buttons = !compact_buttons;
     });
-    toolbar->setToolTip("Ctrl+Alt+T toggles compact toolbar buttons");
+    chrome->setToolTip("Ctrl+Alt+T toggles the project buttons' text");
 
-    // Main Tabbed Editor Workspace
-    tabs = new QTabWidget(this);
+    // Main Tabbed Editor Workspace: the tab bar sits in the title row
+    // beside the project's buttons, and the pages are the stack below.
+    tabs = new QTabBar(this);
+    tabStack = new QStackedWidget(this);
+    connect(tabs, &QTabBar::currentChanged, tabStack, &QStackedWidget::setCurrentIndex);
+    chrome->addTitleWidget(tabs);
     gameView = new GameView(project_path, this);
-    tabs->addTab(gameView, "▶ Playtest View");
+    addTab(gameView, "▶ Playtest View");
     auto* mapEditor = new MapEditorPanel(&project, this);
-    tabs->addTab(mapEditor, "Map Editor");
+    addTab(mapEditor, "Map Editor");
     auto* tilesetEditor = new TilesetEditorPanel(&project, this);
-    tabs->addTab(tilesetEditor, "Tileset Editor");
+    addTab(tilesetEditor, "Tileset Editor");
     // Flag edits in the tileset editor invalidate the map editor's tile cache
     // and repaint its collision overlay (editsweep D1.S5).
     connect(tilesetEditor, &TilesetEditorPanel::tilesetFlagsChanged,
             mapEditor, &MapEditorPanel::onTilesetChanged);
-    tabs->addTab(new WorldPanel(&project, this), "World");
-    tabs->addTab(new PixelEditorPanel(&project, this), "Pixel & Sprite Editor");
-    tabs->addTab(new ForgePanel(&project, this), "Character Forge");
-    tabs->addTab(new DatabasePanel(&project, this), "Database");
-    tabs->addTab(new EventPanel(&project, this), "Event Scripting");
-    tabs->addTab(new MusicPanel(&project, this), "Music Studio");
+    addTab(new WorldPanel(&project, this), "World");
+    addTab(new PixelEditorPanel(&project, this), "Pixel & Sprite Editor");
+    addTab(new ForgePanel(&project, this), "Character Forge");
+    addTab(new DatabasePanel(&project, this), "Database");
+    addTab(new EventPanel(&project, this), "Event Scripting");
+    addTab(new MusicPanel(&project, this), "Music Studio");
     // World & Time Settings is baked into the World tab (WANTED #3).
 
     auto installEditorMenu = [this](QWidget* canvas, const std::function<void()>& undo,
@@ -280,7 +310,7 @@ MainWindow::MainWindow(const std::string& project_path, QWidget* parent)
                 [canvas, menu](const QPoint& point) { menu->popup(canvas->mapToGlobal(point)); });
     };
     for (int index = 0; index < tabs->count(); ++index) {
-        QWidget* page = tabs->widget(index);
+        QWidget* page = tabStack->widget(index);
         if (auto* mapCanvas = page->findChild<MapCanvasWidget*>()) {
             installEditorMenu(mapCanvas,
                 [mapCanvas]() { mapCanvas->undo(); },
@@ -299,7 +329,7 @@ MainWindow::MainWindow(const std::string& project_path, QWidget* parent)
         }
     }
 
-    setCentralWidget(tabs);
+    setCentralWidget(tabStack);
 
     // Keyboard Shortcuts (F5 Play; Ctrl+S is the File-menu action)
     QShortcut* f5Shortcut = new QShortcut(QKeySequence(Qt::Key_F5), this);
@@ -360,6 +390,11 @@ std::string MainWindow::projectSignature() const {
         {"parts", project.parts}, {"biomes", project.biomes}, {"maps", project.maps},
         {"music", project.music}
     }));
+}
+
+void MainWindow::addTab(QWidget* page, const QString& title) {
+    tabStack->addWidget(page);
+    tabs->addTab(title);
 }
 
 void MainWindow::updateStudioTitle() {
@@ -487,7 +522,7 @@ bool MainWindow::selectTab(const QString& name_or_index) {
 
 void MainWindow::setEditorZoom(qreal factor) {
     if (!tabs) return;
-    QWidget* page = tabs->widget(tabs->currentIndex());
+    QWidget* page = tabStack->widget(tabs->currentIndex());
     if (auto* map_editor = qobject_cast<MapEditorPanel*>(page))
         map_editor->setEditorZoom(factor);
     else if (auto* world = qobject_cast<WorldPanel*>(page))
@@ -538,7 +573,7 @@ void MainWindow::reloadProject() {
 void MainWindow::playProject() {
     if (tabs && gameView) {
         gameView->syncProject(project);
-        tabs->setCurrentWidget(gameView);
+        tabs->setCurrentIndex(tabStack->indexOf(gameView));
         gameView->setFocus();
     }
 }

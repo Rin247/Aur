@@ -1,7 +1,8 @@
 #pragma once
 
 #include <QMainWindow>
-#include <QTabWidget>
+#include <QTabBar>
+#include <QStackedWidget>
 #include <QToolBar>
 #include <QPushButton>
 #include <QLabel>
@@ -21,7 +22,8 @@ class MainWindow : public QMainWindow {
     Project project;
     std::string project_path;
     std::string saved_signature;
-    QTabWidget* tabs = nullptr;
+    QTabBar* tabs = nullptr;
+    QStackedWidget* tabStack = nullptr;
     GameView* gameView = nullptr;
     QLabel* chromeTitle = nullptr;
     QAction* saveAction = nullptr;
@@ -34,6 +36,8 @@ class MainWindow : public QMainWindow {
     void refreshProjectPanels();
     std::string projectSignature() const;
     void updateStudioTitle();
+    // Adds a page to the stack and a tab for it.
+    void addTab(QWidget* page, const QString& title);
 
 public:
     explicit MainWindow(const std::string& project_path = "projects/sylvi", QWidget* parent = nullptr);

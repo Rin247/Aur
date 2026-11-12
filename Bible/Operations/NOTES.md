@@ -270,3 +270,18 @@
   target, so a small image was drawn much larger than the pane that holds
   it and the canvas was cut off. The fit is now the viewport's size; the
   tile editor's canvas is in a scroll area like the pixel editor's.
+
+## One control cluster, and canvases that hug their space (2026-11-12)
+
+- **The project's buttons are icon buttons in the title row**, beside the
+  hamburger, and the tab bar is in the same row: the pages are a
+  `QStackedWidget` below it. The two rows the editors were losing are gone,
+  and the chrome is one control cluster, which is the estate's rule.
+- **The pixel surface learns its room from the scroll area's viewport**, and
+  only from there: a viewport measured once is measured before the layout
+  has run, so the fit collapsed to 1x and the sprite was drawn at a pixel
+  per pixel in a small box in the middle of the pane. An event filter on the
+  viewport is what tells the surface how much room it has.
+- **Every canvas fits the space it is given**: the map's fit margin is 12,
+  the world's padding is 8, and the pixel surface's margin is the 24 its
+  readout needs.
