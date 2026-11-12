@@ -8,6 +8,7 @@
 #include <QAction>
 #include <QByteArray>
 #include <QMessageBox>
+#include <QCloseEvent>
 #include "aur/project.hpp"
 #include "GameView.hpp"
 
@@ -35,6 +36,9 @@ class MainWindow : public QMainWindow {
 
 public:
     explicit MainWindow(const std::string& project_path = "projects/sylvi", QWidget* parent = nullptr);
+    // Restores the window's geometry and page from the data root. A caller
+    // that asks for a size or a page passes false for it.
+    void restoreWindowState(bool restore_geometry = true, bool restore_tab = true);
     // Selects a tab by title or index. Returns false when there is no such
     // tab, so a script can say so instead of capturing the wrong page.
     bool selectTab(const QString& name_or_index);
@@ -56,6 +60,7 @@ public slots:
 
 protected:
     bool nativeEvent(const QByteArray& eventType, void* message, qintptr* result) override;
+    void closeEvent(QCloseEvent* event) override;
 };
 
 } // namespace aur

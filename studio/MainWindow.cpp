@@ -1,4 +1,5 @@
 #include "MainWindow.hpp"
+#include "AurPaths.hpp"
 #include "MapEditorPanel.hpp"
 #include "DatabasePanel.hpp"
 #include "ForgePanel.hpp"
@@ -9,6 +10,8 @@
 #include "TilesetEditorPanel.hpp"
 #include "WorldSettingsPanel.hpp"
 #include <QLabel>
+#include <QApplication>
+#include <QSettings>
 #include <QShortcut>
 #include <QMenu>
 #include <QIcon>
@@ -363,6 +366,37 @@ void MainWindow::updateStudioTitle() {
     const QString title = "Aur";
     setWindowTitle(title);
     if (chromeTitle) chromeTitle->setText(title);
+}
+
+// The window's state lives in the data root (~/.Aur), so it follows the
+// person and not the machine. A size asked for on the command line wins
+// over the saved one, and a geometry saved on another machine is not
+// restored if it would put the window off-screen.
+void MainWindow::restoreWindowState(bool restore_geometry, bool restore_tab) {
+    QSettings settings(aur::settingsPath(), QSettings::IniFormat);
+    if (restore_geometry) {
+        const QByteArray geometry = settings.value("window/geometry").toByteArray();
+        if (!geometry.isEmpty()) {
+            restoreGeometry(geometry);
+            const QScreen *screen = QGuiApplication::primaryScreen();
+            const QRect available = screen ? screen->availableGeometry() : QRect();
+            if (!available.isEmpty() && !available.contains(frameGeometry())) {
+                resize(1600, 1000);
+                move(available.center() - rect().center());
+            }
+        }
+    }
+    if (restore_tab) {
+        const int tab = settings.value("window/tab", -1).toInt();
+        if (tabs && tab >= 0 && tab < tabs->count()) tabs->setCurrentIndex(tab);
+    }
+}
+
+void MainWindow::closeEvent(QCloseEvent* event) {
+    QSettings settings(aur::settingsPath(), QSettings::IniFormat);
+    settings.setValue("window/geometry", saveGeometry());
+    settings.setValue("window/tab", tabs ? tabs->currentIndex() : 0);
+    QMainWindow::closeEvent(event);
 }
 
 bool MainWindow::nativeEvent(const QByteArray& eventType, void* message, qintptr* result) {

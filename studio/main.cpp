@@ -115,6 +115,10 @@ int main(int argc, char* argv[]) {
         }
     }
     aur::MainWindow window(project_path.toStdString());
+    // The window's state comes from the data root, unless the command line
+    // asked for a size or a page: then the command line wins.
+    const bool sized = window_width > 0 && window_height > 0;
+    window.restoreWindowState(!sized, tab_name.isEmpty());
     if (!tab_name.isEmpty() && !window.selectTab(tab_name))
         qWarning("Aur: no tab named '%s'", qPrintable(tab_name));
     if (sprite_mode) window.setSpriteMode(true);
