@@ -15,7 +15,7 @@
 
 namespace aur {
 
-class PixelEditorPanel;
+class SpriteEditorPanel;
 
 class MainWindow : public QMainWindow {
     Q_OBJECT

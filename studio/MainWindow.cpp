@@ -5,7 +5,7 @@
 #include "ForgePanel.hpp"
 #include "MusicPanel.hpp"
 #include "WorldPanel.hpp"
-#include "PixelEditorPanel.hpp"
+#include "SpriteEditorPanel.hpp"
 #include "EventPanel.hpp"
 #include "TilesetEditorPanel.hpp"
 #include "WorldSettingsPanel.hpp"
@@ -281,7 +281,7 @@ MainWindow::MainWindow(const std::string& project_path, QWidget* parent)
     connect(tilesetEditor, &TilesetEditorPanel::tilesetFlagsChanged,
             mapEditor, &MapEditorPanel::onTilesetChanged);
     addTab(new WorldPanel(&project, this), "World");
-    addTab(new PixelEditorPanel(&project, this), "Pixel & Sprite Editor");
+    addTab(new SpriteEditorPanel(&project, this), "Sprite Editor");
     addTab(new ForgePanel(&project, this), "Character Forge");
     addTab(new DatabasePanel(&project, this), "Database");
     addTab(new EventPanel(&project, this), "Event Scripting");
@@ -404,32 +404,15 @@ void MainWindow::updateStudioTitle() {
 }
 
 // The window's state lives in the data root (~/.Aur), so it follows the
-// person and not the machine. A size asked for on the command line wins
-// over the saved one, and a geometry saved on another machine is not
-// restored if it would put the window off-screen.
+// person and not the machine: the page it was on.
 //
-// The app opens maximized, which is how it has always opened: the state it
-// remembers is whether the window was maximized, so a person who works in a
-// smaller window gets that window back and everybody else gets the screen.
+// The window itself is not restored. It opens maximized, which is how it has
+// always opened, and a geometry saved on another machine can be wider than
+// the screen -- which is how the app ended up opening with its own window
+// buttons off the edge.
 void MainWindow::restoreWindowState(bool restore_geometry, bool restore_tab) {
+    Q_UNUSED(restore_geometry);
     QSettings settings(aur::settingsPath(), QSettings::IniFormat);
-    if (restore_geometry) {
-        const bool maximized = settings.value("window/maximized", true).toBool();
-        if (maximized) {
-            showMaximized();
-        } else {
-            const QByteArray geometry = settings.value("window/geometry").toByteArray();
-            if (!geometry.isEmpty()) {
-                restoreGeometry(geometry);
-                const QScreen *screen = QGuiApplication::primaryScreen();
-                const QRect available = screen ? screen->availableGeometry() : QRect();
-                if (!available.isEmpty() && !available.contains(frameGeometry())) {
-                    resize(1600, 1000);
-                    move(available.center() - rect().center());
-                }
-            }
-        }
-    }
     if (restore_tab) {
         const int tab = settings.value("window/tab", -1).toInt();
         if (tabs && tab >= 0 && tab < tabs->count()) tabs->setCurrentIndex(tab);
@@ -439,9 +422,6 @@ void MainWindow::restoreWindowState(bool restore_geometry, bool restore_tab) {
 void MainWindow::closeEvent(QCloseEvent* event) {
     if (save_window_state) {
         QSettings settings(aur::settingsPath(), QSettings::IniFormat);
-        settings.setValue("window/maximized", isMaximized());
-        if (!isMaximized())
-            settings.setValue("window/geometry", saveGeometry());
         settings.setValue("window/tab", tabs ? tabs->currentIndex() : 0);
     }
     QMainWindow::closeEvent(event);
@@ -530,18 +510,18 @@ void MainWindow::setEditorZoom(qreal factor) {
 }
 
 void MainWindow::setSpriteMode(bool enabled) {
-    for (auto* panel : findChildren<PixelEditorPanel*>())
+    for (auto* panel : findChildren<SpriteEditorPanel*>())
         panel->setSpriteMode(enabled);
 }
 
 void MainWindow::startPreview() {
-    for (auto* panel : findChildren<PixelEditorPanel*>())
+    for (auto* panel : findChildren<SpriteEditorPanel*>())
         panel->startPreview();
 }
 
 void MainWindow::refreshProjectPanels() {
     for (auto* panel : findChildren<MapEditorPanel*>()) panel->setProject(&project);
-    for (auto* panel : findChildren<PixelEditorPanel*>()) panel->setProject(&project);
+    for (auto* panel : findChildren<SpriteEditorPanel*>()) panel->setProject(&project);
     for (auto* panel : findChildren<TilesetEditorPanel*>()) panel->setProject(&project);
     for (auto* panel : findChildren<ForgePanel*>()) panel->setProject(&project);
     for (auto* panel : findChildren<DatabasePanel*>()) panel->setProject(&project);

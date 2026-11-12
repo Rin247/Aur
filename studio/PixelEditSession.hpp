@@ -14,7 +14,7 @@ namespace aur
     // (pixmerge P1): one definition of palette listing and anim frame-id
     // resolution instead of the previous per-panel copies. Pure functions
     // over the project JSON — no Qt state of its own beyond the widget fill
-    // helpers. The canvas (PixelCanvasWidget) stays the sole edit surface.
+    // helpers. The canvas (SpriteCanvasWidget) stays the sole edit surface.
     class PixelEditSession
     {
     public:

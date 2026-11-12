@@ -127,11 +127,11 @@ add_executable(aur_studio
     studio/WorldModel.hpp
     studio/RhiBackend.cpp
     studio/RhiBackend.hpp
-    studio/PixelEditorPanel.cpp
+    studio/SpriteEditorPanel.cpp
     studio/PixelEditSession.cpp
     studio/PixelFrameOps.cpp
     studio/PixelSurface.cpp
-    studio/PixelCanvas.cpp
+    studio/SpriteCanvas.cpp
     studio/PixelEditSession.hpp
     studio/TilePaletteWidget.cpp
     studio/TilePaletteWidget.hpp

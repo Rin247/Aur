@@ -17,7 +17,7 @@ namespace aur {
 // The pixel editor's canvas: the surface, bound to a graphic's frame. The
 // surface knows nothing about graphics; this binding knows which frame is
 // being edited and which graphic it belongs to.
-class PixelCanvasWidget : public PixelSurface {
+class SpriteCanvasWidget : public PixelSurface {
     Q_OBJECT
     Project* project = nullptr;
     std::string graphic_id;
@@ -26,7 +26,7 @@ class PixelCanvasWidget : public PixelSurface {
     void bindSurface();
 
 public:
-    explicit PixelCanvasWidget(QWidget* parent = nullptr);
+    explicit SpriteCanvasWidget(QWidget* parent = nullptr);
     void setGraphic(Project* p, const std::string& id);
     void setFrame(const std::string& frame);
     // The frames the onion skin draws behind the current one.

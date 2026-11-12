@@ -37,7 +37,7 @@ OUT_DIR = os.path.join(REPO, "build", "renders")
 SIZES = [(1280, 690), (1280, 770)]
 # The pages that own a canvas, and the zoom control as a factor of the fit.
 PAGES = [("map", "Map Editor"), ("world", "World"),
-         ("pixel", "Pixel & Sprite Editor"), ("tileset", "Tileset Editor")]
+         ("pixel", "Sprite Editor"), ("tileset", "Tileset Editor")]
 ZOOM_SWEEP = [0.75, 1.5]
 
 SETTLE = 4.0
@@ -269,7 +269,7 @@ def main():
     shots = []
     if quick:
         shots.append(("map", "Map Editor", (1280, 690), 1.0, False, False))
-        shots.append(("sprite", "Pixel & Sprite Editor", (1280, 690), 1.0, True, True))
+        shots.append(("sprite", "Sprite Editor", (1280, 690), 1.0, True, True))
         shots.append(("tileset", "Tileset Editor", (1280, 690), 1.0, False, False))
     else:
         for page, tab in PAGES:
@@ -280,8 +280,8 @@ def main():
             shots.append(("map", "Map Editor", SIZES[0], zoom, False, False))
         # The sprite page is rendered in sprite mode, where its tools live,
         # and once with the preview running.
-        shots.append(("sprite", "Pixel & Sprite Editor", SIZES[0], 1.0, True, False))
-        shots.append(("sprite_preview", "Pixel & Sprite Editor", SIZES[0], 1.0, True, True))
+        shots.append(("sprite", "Sprite Editor", SIZES[0], 1.0, True, False))
+        shots.append(("sprite_preview", "Sprite Editor", SIZES[0], 1.0, True, True))
     failed = 0
     for page, tab, size, zoom, sprite, preview in shots:
         if shoot(page, tab, size, zoom, sprite, preview) is None:

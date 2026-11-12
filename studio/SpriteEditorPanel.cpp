@@ -1,6 +1,6 @@
-#include "PixelEditorPanel.hpp"
+#include "SpriteEditorPanel.hpp"
 
-#include "PixelCanvas.hpp"
+#include "SpriteCanvas.hpp"
 
 #include "PixelFrameOps.hpp"
 #include "PixelEditSession.hpp"
@@ -27,7 +27,7 @@ QColor palette_color(const Json& color) {
     return {rgba.r, rgba.g, rgba.b, rgba.a};
 }
 
-void add_frame_actions(QHBoxLayout* toolbar, QWidget* scope, PixelCanvasWidget* canvas) {
+void add_frame_actions(QHBoxLayout* toolbar, QWidget* scope, SpriteCanvasWidget* canvas) {
     const std::pair<QString, std::function<void()>> buttons[] = {
         {"Undo", [canvas]() { canvas->undo(); }},
         {"Redo", [canvas]() { canvas->redo(); }},
@@ -58,7 +58,7 @@ void add_frame_actions(QHBoxLayout* toolbar, QWidget* scope, PixelCanvasWidget* 
 
 } // namespace
 
-PixelEditorPanel::PixelEditorPanel(Project* p, QWidget* parent)
+SpriteEditorPanel::SpriteEditorPanel(Project* p, QWidget* parent)
     : QWidget(parent), project(p) {
     auto* mainLayout = new QVBoxLayout(this);
     auto* toolbar = new QHBoxLayout();
@@ -168,10 +168,10 @@ PixelEditorPanel::PixelEditorPanel(Project* p, QWidget* parent)
     spriteToolsLayout->addStretch(1);
     mainLayout->addWidget(spriteTools);
     connect(onionButton, &QPushButton::toggled, this, [this](bool) { updateOnionSkin(); });
-    connect(mirrorButton, &QPushButton::clicked, canvas, &PixelCanvasWidget::mirrorRightToLeft);
-    connect(addFrameButton, &QPushButton::clicked, this, &PixelEditorPanel::addFrame);
-    connect(duplicateFrameButton, &QPushButton::clicked, this, &PixelEditorPanel::duplicateFrame);
-    connect(deleteFrameButton, &QPushButton::clicked, this, &PixelEditorPanel::deleteFrame);
+    connect(mirrorButton, &QPushButton::clicked, canvas, &SpriteCanvasWidget::mirrorRightToLeft);
+    connect(addFrameButton, &QPushButton::clicked, this, &SpriteEditorPanel::addFrame);
+    connect(duplicateFrameButton, &QPushButton::clicked, this, &SpriteEditorPanel::duplicateFrame);
+    connect(deleteFrameButton, &QPushButton::clicked, this, &SpriteEditorPanel::deleteFrame);
     connect(moveFrameLeftButton, &QPushButton::clicked, this, [this] { moveFrame(-1); });
     connect(moveFrameRightButton, &QPushButton::clicked, this, [this] { moveFrame(1); });
 
@@ -188,7 +188,7 @@ PixelEditorPanel::PixelEditorPanel(Project* p, QWidget* parent)
     canvasScroll->setWidgetResizable(false);
     canvasScroll->setAlignment(Qt::AlignCenter);
     canvasScroll->setFrameShape(QFrame::NoFrame);
-    canvas = new PixelCanvasWidget();
+    canvas = new SpriteCanvasWidget();
     canvasScroll->setWidget(canvas);
     splitter->addWidget(canvasScroll);
     splitter->setSizes({250, 950});
@@ -290,7 +290,7 @@ PixelEditorPanel::PixelEditorPanel(Project* p, QWidget* parent)
     // The canvas fits the space the scroll area gives it, and that space is
     // only known after the layout runs.
     canvasScroll->viewport()->installEventFilter(this);
-    connect(canvas, &PixelCanvasWidget::colorPicked, this, [this](int index) {
+    connect(canvas, &SpriteCanvasWidget::colorPicked, this, [this](int index) {
         if (paletteWidget && index < paletteWidget->count()) paletteWidget->setCurrentRow(index);
     });
 
@@ -299,26 +299,26 @@ PixelEditorPanel::PixelEditorPanel(Project* p, QWidget* parent)
     refreshGraphics();
 }
 
-void PixelEditorPanel::setProject(Project* p) {
+void SpriteEditorPanel::setProject(Project* p) {
     project = p;
     if (canvas) canvas->clearHistory();
     refreshGraphics();
 }
 
-void PixelEditorPanel::setSpriteMode(bool enabled) {
+void SpriteEditorPanel::setSpriteMode(bool enabled) {
     if (!modeCombo) return;
     const int index = enabled ? 1 : 0;
     if (modeCombo->currentIndex() == index) return;
     modeCombo->setCurrentIndex(index);
 }
 
-void PixelEditorPanel::startPreview() {
+void SpriteEditorPanel::startPreview() {
     if (!playAnimationButton) return;
     if (previewFrames.size() < 2) return;
     playAnimationButton->setChecked(true);
 }
 
-void PixelEditorPanel::refreshGraphics() {
+void SpriteEditorPanel::refreshGraphics() {
     if (!graphicCombo) return;
     const QString previous = graphicCombo->currentData().toString();
     graphicCombo->blockSignals(true);
@@ -365,7 +365,7 @@ void PixelEditorPanel::refreshGraphics() {
     }
 }
 
-void PixelEditorPanel::selectGraphic(const std::string& id) {
+void SpriteEditorPanel::selectGraphic(const std::string& id) {
     if (!project || !project->graphics.contains(id)) return;
     if (animationTimer) animationTimer->stop();
     if (playAnimationButton) {
@@ -378,7 +378,7 @@ void PixelEditorPanel::selectGraphic(const std::string& id) {
     else refreshAnimationData();
 }
 
-void PixelEditorPanel::updateEditorMode(int mode) {
+void SpriteEditorPanel::updateEditorMode(int mode) {
     const bool spriteMode = mode == 1;
     if (spriteMode) {
         graphicBrushIndex = brushCombo->currentIndex();
@@ -413,7 +413,7 @@ void PixelEditorPanel::updateEditorMode(int mode) {
     refreshGraphics();
 }
 
-void PixelEditorPanel::refreshSpriteFrames() {
+void SpriteEditorPanel::refreshSpriteFrames() {
     const QString previous = frameCombo->currentData().toString();
     frameCombo->blockSignals(true);
     frameCombo->clear();
@@ -449,7 +449,7 @@ void PixelEditorPanel::refreshSpriteFrames() {
     updateOnionSkin();
 }
 
-void PixelEditorPanel::updateOnionSkin() {
+void SpriteEditorPanel::updateOnionSkin() {
     std::vector<std::string> frames;
     int index = -1;
     if (modeCombo->currentIndex() == 1 && onionButton && onionButton->isChecked() &&
@@ -461,12 +461,12 @@ void PixelEditorPanel::updateOnionSkin() {
     canvas->setOnionSkin(frames, index);
 }
 
-std::string PixelEditorPanel::spriteGraphicId() const {
+std::string SpriteEditorPanel::spriteGraphicId() const {
     if (!graphicCombo || graphicCombo->currentIndex() < 0) return {};
     return graphicCombo->currentData().toString().toStdString();
 }
 
-std::string PixelEditorPanel::spriteAnimId() const {
+std::string SpriteEditorPanel::spriteAnimId() const {
     if (!project) return {};
     const auto anim = PixelEditSession::resolve_anim(
         *project, spriteGraphicId(), directionCombo->currentText().toStdString(),
@@ -474,19 +474,19 @@ std::string PixelEditorPanel::spriteAnimId() const {
     return anim.id;
 }
 
-std::string PixelEditorPanel::spriteFrameId() const {
+std::string SpriteEditorPanel::spriteFrameId() const {
     if (!frameCombo || frameCombo->currentIndex() < 0) return {};
     return frameCombo->currentData().toString().toStdString();
 }
 
-void PixelEditorPanel::selectSpriteFrame(const std::string& frame_id) {
+void SpriteEditorPanel::selectSpriteFrame(const std::string& frame_id) {
     const int index = frameCombo->findData(QString::fromStdString(frame_id));
     if (index < 0) return;
     frameCombo->setCurrentIndex(index);
     canvas->setFrame(frame_id);
 }
 
-void PixelEditorPanel::addFrame() {
+void SpriteEditorPanel::addFrame() {
     if (!project) return;
     const std::string anim = spriteAnimId();
     const std::string base = spriteFrameId();
@@ -498,7 +498,7 @@ void PixelEditorPanel::addFrame() {
     if (!new_id.empty()) selectSpriteFrame(new_id);
 }
 
-void PixelEditorPanel::duplicateFrame() {
+void SpriteEditorPanel::duplicateFrame() {
     if (!project) return;
     const std::string anim = spriteAnimId();
     const std::string source = spriteFrameId();
@@ -512,7 +512,7 @@ void PixelEditorPanel::duplicateFrame() {
     if (!new_id.empty()) selectSpriteFrame(new_id);
 }
 
-void PixelEditorPanel::deleteFrame() {
+void SpriteEditorPanel::deleteFrame() {
     if (!project) return;
     const std::string anim = spriteAnimId();
     const std::string frame = spriteFrameId();
@@ -523,7 +523,7 @@ void PixelEditorPanel::deleteFrame() {
     refreshSpriteFrames();
 }
 
-void PixelEditorPanel::moveFrame(int delta) {
+void SpriteEditorPanel::moveFrame(int delta) {
     if (!project) return;
     const std::string anim = spriteAnimId();
     const int index = frameCombo->currentIndex();
@@ -539,7 +539,7 @@ void PixelEditorPanel::moveFrame(int delta) {
         frameCombo->setCurrentIndex(moved_index);
 }
 
-void PixelEditorPanel::refreshAnimationData() {
+void SpriteEditorPanel::refreshAnimationData() {
     if (!frameCombo || !animationCombo) return;
     if (animationTimer) animationTimer->stop();
     if (playAnimationButton) {
@@ -588,7 +588,7 @@ void PixelEditorPanel::refreshAnimationData() {
     }
 }
 
-void PixelEditorPanel::refreshPalette() {
+void SpriteEditorPanel::refreshPalette() {
     if (!project) {
         paletteWidget->clear();
         return;
@@ -599,13 +599,13 @@ void PixelEditorPanel::refreshPalette() {
     PixelEditSession::fill_palette(paletteWidget, *project, id);
 }
 
-bool PixelEditorPanel::eventFilter(QObject* watched, QEvent* event) {
+bool SpriteEditorPanel::eventFilter(QObject* watched, QEvent* event) {
     if (watched == canvasScroll->viewport() && event->type() == QEvent::Resize)
         canvas->setAvailableViewportSize(canvasScroll->viewport()->size());
     return QWidget::eventFilter(watched, event);
 }
 
-void PixelEditorPanel::resizeEvent(QResizeEvent* event) {
+void SpriteEditorPanel::resizeEvent(QResizeEvent* event) {
     QWidget::resizeEvent(event);
     if (canvas && canvasScroll) {
         canvas->setAvailableViewportSize(canvasScroll->viewport()->size());

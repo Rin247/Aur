@@ -743,7 +743,7 @@ MusicPanel::MusicPanel(Project* p, QWidget* parent)
     auto* songBar = new QHBoxLayout();
     songBar->addWidget(new QLabel("Song:", this));
     songCombo = new QComboBox(this);
-    songCombo->setMinimumWidth(220);
+    songCombo->setMinimumWidth(150);
     songBar->addWidget(songCombo);
     auto* newSongButton = new QPushButton("New", this);
     auto* deleteSongButton = new QPushButton("Delete", this);
@@ -752,6 +752,7 @@ MusicPanel::MusicPanel(Project* p, QWidget* parent)
     songBar->addSpacing(12);
     songBar->addWidget(new QLabel("Title:", this));
     songName = new QLineEdit(this);
+    songName->setMinimumWidth(80);
     songName->setMaximumWidth(200);
     songBar->addWidget(songName);
     songBar->addWidget(new QLabel("Tempo:", this));
@@ -768,8 +769,12 @@ MusicPanel::MusicPanel(Project* p, QWidget* parent)
     songBar->addWidget(previewSynth);
     playButton = new QPushButton("Play Preview", this);
     auto* stopButton = new QPushButton("Stop", this);
-    auto* importMidiButton = new QPushButton("Import MIDI…", this);
-    auto* exportMidiButton = new QPushButton("Export MIDI…", this);
+    auto* importMidiButton = new QPushButton(this);
+    importMidiButton->setIcon(style()->standardIcon(QStyle::SP_DialogOpenButton));
+    importMidiButton->setToolTip("Import MIDI…");
+    auto* exportMidiButton = new QPushButton(this);
+    exportMidiButton->setIcon(style()->standardIcon(QStyle::SP_DialogSaveButton));
+    exportMidiButton->setToolTip("Export MIDI…");
     songBar->addWidget(playButton);
     songBar->addWidget(stopButton);
     songBar->addWidget(importMidiButton);
@@ -780,14 +785,14 @@ MusicPanel::MusicPanel(Project* p, QWidget* parent)
     auto* midiBar = new QHBoxLayout();
     midiBar->addWidget(new QLabel("MIDI In:", this));
     midiInputCombo = new QComboBox(this);
-    midiInputCombo->setMinimumWidth(180);
+    midiInputCombo->setMinimumWidth(120);
     midiBar->addWidget(midiInputCombo);
     midiInputButton = new QPushButton("Connect", this);
     midiBar->addWidget(midiInputButton);
     midiBar->addSpacing(8);
     midiBar->addWidget(new QLabel("MIDI Out:", this));
     midiOutputCombo = new QComboBox(this);
-    midiOutputCombo->setMinimumWidth(180);
+    midiOutputCombo->setMinimumWidth(120);
     midiBar->addWidget(midiOutputCombo);
     midiOutputButton = new QPushButton("Connect", this);
     midiBar->addWidget(midiOutputButton);

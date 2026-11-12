@@ -92,23 +92,12 @@ owner's queue is in `WANTED.md`.
 
 ## Know before you go
 
-- **File-size baseline** (owner's rule: soft ~1,000, hard ~1,250):
-  `studio/MusicPanel.cpp` is 1,348 lines — over the hard ceiling,
-  pre-existing, and it needs splitting. `studio/world/WorldMapCanvas.cpp`
-  (934) and `studio/WorldPanel.cpp` (928) are under the soft cap. The map
-  editor was split into `studio/MapCanvas.*` (664) and
-  `studio/MapEditorPanel.*`, and the pixel editor's canvas is
-  `studio/PixelSurface.*` with `studio/PixelCanvas.*` as its binding.
-- **A `Json` nested-array literal flattens**: `JsonArray{0,60,4,100}` becomes
-  four numbers. Wrap it (`Json(JsonArray{...})`) or notes lose their shape.
-- The estate pre-commit hook counts a run of 3+ lines starting with `#`/`//`
-  as a comment block, so `#include` runs get split with blank lines. Bypass
-  with `git -c core.hooksPath=/nonexistent commit` only when the *diff* is
-  clean.
-- An `Aur.exe` left running holds the link lock during a build.
-- **The build entry point is `AIO.bat`** (the project's `build.bat` and
-  `compile.bat` were retired when the AIO family landed). The estate's
-  `C:\Dev\build.bat` also works and finds `build\Release\Aur.exe`.
+- **The state, the decisions and the open defects are in `PROJECT.md`.** This file is the
+  pointer. The older history is `Bible/Operations/NOTES.md` and the plan in flight is
+  `Bible/notes/editsweep.md`.
+- The build entry point is `AIO.bat` (the project's `build.bat` and `compile.bat` were retired
+  when the AIO family landed). The estate's `C:\Dev\build.bat` also works and finds
+  `build\Release\Aur.exe`.
 - Build from PowerShell with the compiler environment in the same command:
 
 ```powershell
@@ -122,9 +111,4 @@ cd C:\Projects\Aur; cmd /c "AIO.bat build windows Release"
 ```
 
 - Tests: `C:\Dev\Qt\Tools\CMake_64\bin\ctest.exe --test-dir C:\Projects\Aur\build\Release --timeout 300`.
-- The world terrain runs on the GPU through `TerrainRhiWidget`; the margin
-  colour around the map is written by the shader (`studio/shaders/
-  world_sculpt.frag`), so it and the CPU path have to agree — both are
-  `#171b20` now.
-- `scripts/` is not a folder here: the harness is `tests/render_check.py`,
-  and `tools/` is gitignored.
+- An `Aur.exe` left running holds the link lock during a build.

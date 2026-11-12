@@ -1,13 +1,13 @@
-#include "PixelCanvas.hpp"
+#include "SpriteCanvas.hpp"
 
 #include <algorithm>
 
 namespace aur
 {
 
-    PixelCanvasWidget::PixelCanvasWidget(QWidget* parent) : PixelSurface(parent) {}
+    SpriteCanvasWidget::SpriteCanvasWidget(QWidget* parent) : PixelSurface(parent) {}
 
-    void PixelCanvasWidget::bindSurface() {
+    void SpriteCanvasWidget::bindSurface() {
         if (!project || !project->graphics.contains(graphic_id)) {
             setRowsTarget(nullptr, {}, 0, 0);
             return;
@@ -23,7 +23,7 @@ namespace aur
         setRowsTarget(rows, colors, graphic["w"].as_int(), graphic["h"].as_int());
     }
 
-    void PixelCanvasWidget::setGraphic(Project* p, const std::string& id) {
+    void SpriteCanvasWidget::setGraphic(Project* p, const std::string& id) {
         resetStroke();
         if (project != p || graphic_id != id)
             clearHistory();
@@ -41,7 +41,7 @@ namespace aur
         update();
     }
 
-    void PixelCanvasWidget::setFrame(const std::string& frame) {
+    void SpriteCanvasWidget::setFrame(const std::string& frame) {
         if (!project || !project->graphics.contains(graphic_id)) return;
         const Json &frames = project->graphics.at(graphic_id)["frames"];
         if (!frames.is_object() || !frames.contains(frame) || !frames[frame].is_array()) return;
@@ -52,7 +52,7 @@ namespace aur
         update();
     }
 
-    void PixelCanvasWidget::setOnionSkin(const std::vector<std::string>& frames,
+    void SpriteCanvasWidget::setOnionSkin(const std::vector<std::string>& frames,
                                          int current_index) {
         std::vector<const Json*> rows;
         if (project && project->graphics.contains(graphic_id)) {
@@ -65,7 +65,7 @@ namespace aur
         PixelSurface::setOnionSkin(rows, current_index);
     }
 
-    void PixelCanvasWidget::applyGraphicChange(const QString& label,
+    void SpriteCanvasWidget::applyGraphicChange(const QString& label,
                                                const std::function<void(Json&)>& change) {
         if (!project || !project->graphics.contains(graphic_id)) return;
         applyChange(&project->graphics[graphic_id], label, change);

@@ -3,6 +3,8 @@
 
 > First boot: read `HANDOVER.md`, `WANTED.md`, then every active plan. Preserve the ordered WANTED queue and continue autonomously at its highest-priority unchecked item. Repository guidance: [Bible/Operations/Agent Guide.md](Bible/Operations/Agent%20Guide.md).
 
+> `PROJECT.md` holds the verified state, the decisions and the open defects. `HANDOVER.md` is the pointer; `Bible/` is the history.
+
 
 ## Self-repair (Bible)
 

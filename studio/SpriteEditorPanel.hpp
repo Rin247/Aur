@@ -20,12 +20,12 @@
 
 #include "aur/project.hpp"
 
-#include "PixelCanvas.hpp"
+#include "SpriteCanvas.hpp"
 #include "UndoCommands.hpp"
 
 namespace aur {
 
-class PixelEditorPanel : public QWidget {
+class SpriteEditorPanel : public QWidget {
     Q_OBJECT
     Project* project = nullptr;
     QComboBox* modeCombo = nullptr;
@@ -58,11 +58,11 @@ class PixelEditorPanel : public QWidget {
     int graphicBrushIndex = 0;
     int graphicZoomIndex = 0;
     QListWidget* paletteWidget = nullptr;
-    PixelCanvasWidget* canvas = nullptr;
+    SpriteCanvasWidget* canvas = nullptr;
     QScrollArea* canvasScroll = nullptr;
 
 public:
-    explicit PixelEditorPanel(Project* project = nullptr, QWidget* parent = nullptr);
+    explicit SpriteEditorPanel(Project* project = nullptr, QWidget* parent = nullptr);
     void setProject(Project* p);
     void refreshGraphics();
     // D5.S1: sprite mode is the sprite editor's own mode; the render sweep
