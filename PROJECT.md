@@ -14,10 +14,10 @@
 - `C:\Dev\Qt\Tools\CMake_64\bin\ctest.exe --test-dir build\Release --timeout 300` — 7 of 7
   suites passed, 2026-11-12.
 - `python tools\conformance.py --project Aur` — all 9 checks clean, 2026-11-12.
-- `python tests\render_check.py` — 12 captures written to `build/renders/`, 2026-11-12. The pages
-  are Map Editor, World, Sprite Editor and Tileset Editor, at both estate sizes, plus the zoom
-  sweep and the sprite preview. **A render asserts that a surface did not crash, not that it looks
-  right: open the PNGs.**
+- `python tests\render_check.py` — 17 captures written to `build/renders/`, 2026-11-12. The pages
+  are Map Editor, World, Sprite Editor, Tileset Editor, DAW and Playtest, at both estate sizes,
+  plus the zoom sweep, the sprite preview and the DAW's arrangement. **A render asserts that a
+  surface did not crash, not that it looks right: open the PNGs.**
 - `cmd /c "AIO.bat build windows Release"` — built and deployed, 2026-11-12.
 
 ## What this is
@@ -47,7 +47,7 @@ runtime is deployed beside the exe by the build; without it the exe exits
 estate's `C:\Dev\build.bat build Aur` does the same thing and finds the same exe.
 
 **Desktop, viable.** Yes: it built, it launched, the suite passed, and the render sweep wrote
-twelve PNGs.
+seventeen PNGs.
 
 ## What works
 
@@ -71,8 +71,26 @@ twelve PNGs.
   the leading dot, and the settings file lives in it.
 - **The DAW scrolls.** The arrangement timeline is sized to its content and sits in a scroll
   area, so the bars and the tracks beyond the window are reachable.
+- **The pages are named for what they are.** The tab bar reads Playtest,
+  Map Editor, Tileset Editor, World, Sprite Editor, Character Forge,
+  Database, Events and DAW -- one name per page, and the class and its
+  files carry the same name.
+- **The world map has no starter locations.** The world map shipped three
+  markers -- western_harbor, eastern_capital and southern_ruins -- that
+  pointed at places on an old seed. A new world seed has no entities at
+  all, so they meant nothing; the spawn stays.
+- **The Character Forge's preview fits its pane**, like the map, the world
+  and the pixel surface. It scaled its sprite to at most 8x, so a 48x64
+  character sat in the middle of a large box.
+- **The DAW's transport is play/pause and stop, as icons.** The play button
+  holds the playback still and picks it up where it was; the stop rewinds it.
+  The glyphs are drawn in the app's own colour, because the style's media
+  icons are black on a dark button.
 - **The studio has one master volume.** The mixer's master gain is the app's, saved in `~/.Aur`,
   and the DAW has a slider for it beside the master effects.
+- **The playtest plays the map's song, on request.** The map's `music` names a song in the
+  project, and the playtest plays it through the same device the DAW previews with. The sound is
+  opt-in -- a "Play sound" button in the corner -- and leaving the tab stops it.
 - **The app has an icon.** Aur's mark is a pixel globe from the estate's single generator
   (`AssetLibrary/Icons`), installed as `studio/resources/icons/` with a PE resource so Explorer
   draws it.
@@ -108,6 +126,12 @@ twelve PNGs.
 - **The pixel editor is the sprite editor** (owner, 2026-11-12): `studio/SpriteEditorPanel.*` and
   `studio/SpriteCanvas.*`. The pixel-level modules keep their names, because they are about
   pixels.
+- **One audio device for the app** (owner, 2026-11-12: "if you swap tabs the other stops"). The
+  DAW's preview and the playtest's music share one `QtAudioOutput` (`studio/SharedAudio`), so the
+  two cannot play over each other: the page on screen holds the device, and the other falls silent.
+- **The playtest's sound is opt-in.** A studio that makes noise on its own is a studio nobody
+  wants to open, so the game plays silent until the corner's button is pressed. The chrome's play
+  button asks for the sound with the game.
 - **The master volume is the studio's, not a song's** (owner, 2026-11-12). One number in the
   data root, moved from the DAW or from the playtest, and it moves both: the two pages play
   different songs through one device, so a per-song fader would fight the shared mixer.

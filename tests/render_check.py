@@ -38,7 +38,8 @@ SIZES = [(1280, 690), (1280, 770)]
 # The pages that own a canvas, and the zoom control as a factor of the fit.
 PAGES = [("map", "Map Editor"), ("world", "World"),
          ("pixel", "Sprite Editor"), ("tileset", "Tileset Editor"),
-         ("daw", "DAW")]
+         ("daw", "DAW"), ("forge", "Creature Forge"),
+         ("playtest", "\u25b6 Playtest")]
 ZOOM_SWEEP = [0.75, 1.5]
 
 SETTLE = 4.0

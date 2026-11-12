@@ -3,6 +3,7 @@
 #include "music/MasterVolumeStrip.hpp"
 #include "music/SongLibrary.hpp"
 #include "music/SongTransfer.hpp"
+#include "music/TransportIcon.hpp"
 
 #include "music/VelocityLaneStrip.hpp"
 
@@ -501,16 +502,48 @@ namespace aur
         }
 
         stopPreview();
+        lastPlayedSong = *selectedSong;
         audioOutput->getMixer().resetPlayback();
         audioOutput->getMixer().loadSong(*selectedSong);
         audioOutput->start(audio::QtAudioOutput::kSampleRate);
         midiSession->startOutput(*selectedSong, currentSongId);
+        setTransport(Transport::Playing);
+    }
+
+    void MusicPanel::pausePreview()
+    {
+        // The place is kept: the mixer's playhead stops with the sink.
+        midiOutputWasOn = midiSession->outputActive();
+        audioOutput->stop();
+        midiSession->stopOutput();
+        setTransport(Transport::Paused);
+    }
+
+    void MusicPanel::resumePreview()
+    {
+        audioOutput->start(audio::QtAudioOutput::kSampleRate);
+        if (midiOutputWasOn)
+            midiSession->startOutput(lastPlayedSong, currentSongId);
+        setTransport(Transport::Playing);
     }
 
     void MusicPanel::stopPreview()
     {
         audioOutput->stop();
         midiSession->stopOutput();
+        audioOutput->getMixer().resetPlayback();
+        setTransport(Transport::Stopped);
+    }
+
+    void MusicPanel::setTransport(Transport state)
+    {
+        transport = state;
+        if (!playButton)
+            return;
+        const bool playing = state == Transport::Playing;
+        playButton->setIcon(music::transportIcon(playing ? music::TransportGlyph::Pause
+                                                          : music::TransportGlyph::Play));
+        playButton->setToolTip(playing ? "Pause the playback" : "Play the song");
     }
 
     void MusicPanel::hideEvent(QHideEvent *event)
@@ -518,8 +551,6 @@ namespace aur
         // The page on screen holds the device: leaving the DAW stops the
         // preview, so the playtest's music is not played over it.
         stopPreview();
-        if (playButton)
-            playButton->setText("Play Preview");
         QWidget::hideEvent(event);
     }
 
@@ -552,6 +583,7 @@ namespace aur
         audioOutput->getMixer().loadSong(flat);
         audioOutput->start(audio::QtAudioOutput::kSampleRate);
         midiSession->startOutput(flat, currentSongId);
+        setTransport(Transport::Playing);
     }
 
     void MusicPanel::exportArrangementMidi()
@@ -717,8 +749,13 @@ MusicPanel::MusicPanel(Project* p, SharedAudio* sharedAudio, QWidget* parent)
         "The preview instrument. MIDI output sends the selected bank and program to a connected GM/GS device.");
     songBar->addWidget(new QLabel("Preview:", this));
     songBar->addWidget(previewSynth);
-    playButton = new QPushButton("Play Preview", this);
-    auto* stopButton = new QPushButton("Stop", this);
+    // The transport is icons: the style's own, so there is nothing to draw.
+    playButton = new QPushButton(this);
+    playButton->setIcon(music::transportIcon(music::TransportGlyph::Play));
+    playButton->setToolTip("Play the song");
+    auto* stopButton = new QPushButton(this);
+    stopButton->setIcon(music::transportIcon(music::TransportGlyph::Stop));
+    stopButton->setToolTip("Stop and rewind");
     auto* importMidiButton = new QPushButton(this);
     importMidiButton->setIcon(style()->standardIcon(QStyle::SP_DialogOpenButton));
     importMidiButton->setToolTip("Import MIDI…");
@@ -1233,13 +1270,14 @@ MusicPanel::MusicPanel(Project* p, SharedAudio* sharedAudio, QWidget* parent)
     connect(villageButton, &QPushButton::clicked, this,
             [this]() { generateQuickSong("Village"); });
     connect(playButton, &QPushButton::clicked, this, [this]() {
-        playPreview();
-        playButton->setText("Playing…");
+        if (transport == Transport::Playing)
+            pausePreview();
+        else if (transport == Transport::Paused)
+            resumePreview();
+        else
+            playPreview();
     });
-    connect(stopButton, &QPushButton::clicked, this, [this]() {
-        stopPreview();
-        playButton->setText("Play Preview");
-    });
+    connect(stopButton, &QPushButton::clicked, this, [this]() { stopPreview(); });
     connect(midiInputButton, &QPushButton::clicked, this,
             [this]() { midiSession->toggleInput(midiInputCombo, midiInputButton); });
     connect(midiOutputButton, &QPushButton::clicked, this,

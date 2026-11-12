@@ -26,9 +26,11 @@
   sequence, the mirror, and the frame tools (add, duplicate, delete, reorder).
   **D6.S1 (tile pixel editing) landed**: one pixel surface for two editors,
   the tileset editor's canvas, and PNG in and out. **D7.S1 landed**: the file
-  menu is a hamburger and the toolbar moved up a row. Next: the owner queue
-  below — the world map's time and weather parity, and the platformer engine
-  (which needs its own plan).
+  menu is a hamburger and the toolbar moved up a row. **D9 landed**: the
+  arrangement timeline scrolls, the studio has one master volume, and the
+  playtest plays the map's song through the one device the DAW previews
+  with. Next: the owner queue below — the world map's time and weather
+  parity, and the platformer engine (which needs its own plan).
 - `Bible/notes/groovebox-sequencer.md` — 128-step sequencer + groovebox
   initiative. P0–P7 landed 2026-11-11: engine model (`StepSequencer`,
   `Arpeggiator`), realtime + offline playback, groove globals (swing/
@@ -96,10 +98,29 @@
 - **App icon** (closed 2026-11-11): Aur's mark is a pixel globe from the
   estate's single generator (`AssetLibrary/Icons`), installed as
   `studio/resources/icons/` with a PE resource (`.rc`) so Explorer draws it.
-- **Render harness** (closed 2026-11-11): `tests/render_check.py` renders the
-  Map Editor, World, Pixel & Sprite Editor and Tileset Editor pages at both
-  estate sizes and sweeps the zoom as a control; the PNGs land in
-  `build/renders/` and AGENTS.md says to open them.
+- **Render harness** (closed 2026-11-11, extended 2026-11-12):
+  `tests/render_check.py` renders the Map Editor, World, Sprite Editor,
+  Tileset Editor, DAW and Playtest pages at both estate sizes, sweeps the
+  zoom as a control, and opens the DAW's own tabs (`--daw-tab`); the PNGs
+  land in `build/renders/` and AGENTS.md says to open them.
+- **The Event Scripting page is Events** (closed 2026-11-12): the tab,
+  the panel's label, and the class and its files with it
+  (`studio/EventsPanel.*`).
+- **The default map's starter locations go** (closed 2026-11-12): the
+  world map shipped western_harbor, eastern_capital and southern_ruins,
+  markers on a map that has since been re-seeded. A new world seed has no
+  entities at all, so they meant nothing. The spawn stays.
+- **The Character Forge's preview fits** (closed 2026-11-12): the preview
+  scaled its sprite to at most 8x, so a 48x64 character sat in the middle
+  of a large pane. It fits the pane now, like every other canvas.
+- **The DAW's transport is play/pause and stop** (closed 2026-11-12): the
+  "Play Preview" text button became a play/pause toggle that keeps the
+  place, the stop rewinds, and both are icons drawn in the app's colour.
+- **Master volume in the DAW and the playtest** (closed 2026-11-12): the
+  mixer's master gain is the studio's, saved in `~/.Aur`, and one control
+  (`studio/music/MasterVolumeStrip`) moves it from either page. The
+  playtest plays the current map's song on request through the same device
+  the DAW previews with, so swapping tabs stops the other.
 - **Frameless mechanism** (closed 2026-11-12): `WM_NCCALCSIZE` gives the
   client area the whole window, so the chrome reaches the screen edge and
   the edge resize in `WM_NCHITTEST` is the app's own.

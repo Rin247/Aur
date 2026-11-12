@@ -66,6 +66,8 @@ namespace aur
     class MusicPanel : public QWidget
     {
         Q_OBJECT
+        // The transport: stopped, playing, or paused with its place kept.
+        enum class Transport { Stopped, Playing, Paused };
         Project *project = nullptr;
         QComboBox *songCombo = nullptr;
         QListWidget *trackList = nullptr;
@@ -111,6 +113,9 @@ namespace aur
         int selectedScene = -1;
         int activeScene = -1;
         bool updatingControls = false;
+        Transport transport = Transport::Stopped;
+        bool midiOutputWasOn = false;
+        Json lastPlayedSong;
 
         int clampedInt(const Json &value, int fallback, int low, int high) const;
         Json *currentSong();
@@ -122,6 +127,7 @@ namespace aur
         void updateTrackProperty(const char *key, int value);
         void beginTrackEdit();
         void refreshFxChain();
+        void setTransport(Transport state);
         std::vector<audio::SongDocument::EffectSlot> currentChain() const;
         void writeChain(const std::vector<audio::SongDocument::EffectSlot> &chain);
         void refreshSessionGrid();
@@ -129,6 +135,8 @@ namespace aur
         void toggleClip(int sceneIndex, int trackIndex);
         Json makeScenePreview(int sceneIndex);
         void playPreview(const Json *previewSong = nullptr);
+        void pausePreview();
+        void resumePreview();
         void stopPreview();
         void hideEvent(QHideEvent *event) override;
         void playArrangement();

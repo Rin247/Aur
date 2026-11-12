@@ -2,6 +2,8 @@
 
 #include <QWidget>
 #include <QPainter>
+#include <QPushButton>
+#include <QSlider>
 #include <QTimer>
 #include <QPaintEvent>
 #include <QKeyEvent>
@@ -10,6 +12,8 @@
 #include "aur/render.hpp"
 
 namespace aur {
+
+class SharedAudio;
 
 class QtRenderer : public Renderer {
 public:
@@ -52,19 +56,34 @@ class GameView : public QWidget {
     QTimer timer;
     InputState input_state;
     bool debugHud = false;
+    SharedAudio* shared = nullptr;
+    QWidget* audioOverlay = nullptr;
+    QPushButton* soundButton = nullptr;
+    std::string songMapId;
+    bool pageVisible = false;
+    bool soundOn = false;
+
+    // The sound of the map the game is on, through the studio's one device.
+    void syncSong();
+    void buildAudioOverlay();
 
 public:
-    explicit GameView(const std::string& project_path, QWidget* parent = nullptr);
+    explicit GameView(const std::string& project_path, QWidget* parent = nullptr,
+                      SharedAudio* shared = nullptr);
     void reloadProject();
     void loadProject(const std::string& project_path);
     void setProject(const Project& source);
     void syncProject(const Project& source);
     void openDebugMenu();
+    // Plays the map's song, for the chrome's play button.
+    void setSound(bool on);
 
 protected:
     void paintEvent(QPaintEvent* event) override;
     void keyPressEvent(QKeyEvent* event) override;
     void keyReleaseEvent(QKeyEvent* event) override;
+    void showEvent(QShowEvent* event) override;
+    void hideEvent(QHideEvent* event) override;
 };
 
 } // namespace aur

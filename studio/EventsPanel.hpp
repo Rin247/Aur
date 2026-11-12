@@ -14,14 +14,14 @@
 
 namespace aur {
 
-class EventPanel : public QWidget {
+class EventsPanel : public QWidget {
     Q_OBJECT
     Project* project = nullptr;
     QListWidget* eventList = nullptr;
     QListWidget* commandList = nullptr;
 
 public:
-    explicit EventPanel(Project* project = nullptr, QWidget* parent = nullptr);
+    explicit EventsPanel(Project* project = nullptr, QWidget* parent = nullptr);
     void setProject(Project* p);
     void refreshEvents();
 };

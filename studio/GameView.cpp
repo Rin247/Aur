@@ -1,6 +1,8 @@
+#include "SharedAudio.hpp"
 #include "GameView.hpp"
 #include "aur/gfx.hpp"
 #include "TileTexture.hpp"
+#include "music/MasterVolumeStrip.hpp"
 
 #include <QCheckBox>
 #include <QComboBox>
@@ -221,8 +223,9 @@ void QtRenderer::ui_text(int x, int y, const std::string& text, const std::tuple
     painter->drawText(x, y + 12, QString::fromStdString(text));
 }
 
-GameView::GameView(const std::string& project_path, QWidget* parent)
+GameView::GameView(const std::string& project_path, QWidget* parent, SharedAudio* sharedAudio)
     : QWidget(parent), project(Project::load(project_path)), game(&project) {
+    shared = sharedAudio;
     renderer.project = &project;
     game.layout.w = static_cast<int>(1280.0 / renderer.zoom);
     game.layout.h = static_cast<int>(720.0 / renderer.zoom);
@@ -231,12 +234,90 @@ GameView::GameView(const std::string& project_path, QWidget* parent)
     QTimer::singleShot(0, this, [this]() { setFocus(); });
     connect(&timer, &QTimer::timeout, [this]() {
         game.update(0.016, input_state);
+        syncSong();
         update();
     });
     auto* debugShortcut = new QShortcut(QKeySequence(Qt::Key_F2), this);
     debugShortcut->setContext(Qt::WidgetWithChildrenShortcut);
     connect(debugShortcut, &QShortcut::activated, this, [this]() { openDebugMenu(); });
+    if (shared)
+        buildAudioOverlay();
     timer.start(16);
+}
+
+void GameView::buildAudioOverlay() {
+    audioOverlay = new QWidget(this);
+    audioOverlay->setObjectName("playtestAudio");
+    audioOverlay->setStyleSheet(
+        "QWidget#playtestAudio { background-color: #10141a;"
+        " border: 1px solid #39414b; border-radius: 4px; }"
+        "QWidget#playtestVolume { background: transparent; }"
+        "QLabel { color: #c8c0ae; }");
+    auto* row = new QHBoxLayout(audioOverlay);
+    row->setContentsMargins(8, 3, 8, 3);
+    auto* strip = new MasterVolumeStrip(shared, QStringLiteral("Volume"), audioOverlay);
+    strip->setObjectName("playtestVolume");
+    row->addWidget(strip);
+    soundButton = new QPushButton("Play sound", audioOverlay);
+    soundButton->setToolTip("Play the map's song while the playtest is on screen");
+    row->addWidget(soundButton);
+    connect(soundButton, &QPushButton::clicked, this, [this]() { setSound(!soundOn); });
+    audioOverlay->setFocusPolicy(Qt::NoFocus);
+    // The corner is the layout's job: a hand-placed widget is measured
+    // before the page has its real size, and lands off the bottom.
+    auto* corner = new QVBoxLayout(this);
+    corner->setContentsMargins(10, 10, 10, 10);
+    corner->addStretch();
+    corner->addWidget(audioOverlay, 0, Qt::AlignLeft);
+    audioOverlay->show();
+}
+
+void GameView::syncSong() {
+    // The hidden page does not touch the device: the timer keeps ticking
+    // behind the other tabs, and it must not restart the music there.
+    if (!shared || !pageVisible || !soundOn) return;
+    if (songMapId == game.map_id && shared->output().isPlaying()) return;
+    songMapId = game.map_id;
+    const Json* map = project.maps.contains(game.map_id) ? &project.maps[game.map_id] : nullptr;
+    const Json music = map ? (*map)["music"] : Json();
+    const std::string songId = music.is_string() ? music.as_string() : std::string();
+    const auto entry = songId.empty() ? project.music.end() : project.music.find(songId);
+    if (entry == project.music.end()) {
+        shared->output().stop();
+        return;
+    }
+    shared->mixer().resetPlayback();
+    shared->mixer().loadSong(entry->second);
+    shared->output().start(audio::QtAudioOutput::kSampleRate);
+}
+
+void GameView::setSound(bool on) {
+    soundOn = on;
+    if (soundButton)
+        soundButton->setText(on ? "Stop sound" : "Play sound");
+    if (!on) {
+        if (shared) shared->output().stop();
+        songMapId.clear();
+        return;
+    }
+    syncSong();
+}
+
+void GameView::showEvent(QShowEvent* event) {
+    QWidget::showEvent(event);
+    pageVisible = true;
+    syncSong();
+}
+
+void GameView::hideEvent(QHideEvent* event) {
+    // Leaving the playtest stops the music, so the DAW's preview is not
+    // played over it.
+    pageVisible = false;
+    soundOn = false;
+    if (soundButton) soundButton->setText("Play sound");
+    if (shared) shared->output().stop();
+    songMapId.clear();
+    QWidget::hideEvent(event);
 }
 
 void GameView::reloadProject() {

@@ -56,6 +56,10 @@ target_include_directories(aur_engine PUBLIC engine)
 add_executable(aur_game
     game/main.cpp
     studio/GameView.cpp
+    studio/SharedAudio.cpp
+    studio/AurPaths.cpp
+    studio/music/QtAudioOutput.cpp
+    studio/music/MasterVolumeStrip.cpp
 )
 target_include_directories(aur_game PRIVATE . studio)
 target_link_libraries(aur_game PRIVATE aur_engine Qt6::Widgets Qt6::Multimedia)
@@ -102,17 +106,21 @@ add_executable(aur_studio
     studio/music/StepSequencerCanvas.hpp
     studio/music/GrooveBoxPanel.cpp
     studio/music/GrooveBoxPanel.hpp
-    studio/music/SongTransfer.cpp
-    studio/music/SongTransfer.hpp
     studio/music/MasterVolumeStrip.cpp
     studio/music/MasterVolumeStrip.hpp
+    studio/music/SongTransfer.cpp
+    studio/music/SongTransfer.hpp
+    studio/music/TransportIcon.cpp
+    studio/music/TransportIcon.hpp
+    studio/music/TransportIcon.cpp
+    studio/music/TransportIcon.hpp
     studio/SongHistory.cpp
     studio/MapEditorPanel.cpp
     studio/MapCanvas.cpp
     studio/MapEditUndo.cpp
     studio/UndoCommands.cpp
     studio/DatabasePanel.cpp
-    studio/ForgePanel.cpp
+    studio/CreatureForgePanel.cpp
     studio/MusicPanel.cpp
     studio/WorldPanel.cpp
     studio/world/HdSurface.cpp
@@ -141,7 +149,7 @@ add_executable(aur_studio
     studio/PixelEditSession.hpp
     studio/TilePaletteWidget.cpp
     studio/TilePaletteWidget.hpp
-    studio/EventPanel.cpp
+    studio/EventsPanel.cpp
     studio/TilesetEditorPanel.cpp
     studio/WorldSettingsPanel.cpp
 )

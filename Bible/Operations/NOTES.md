@@ -285,3 +285,46 @@
 - **Every canvas fits the space it is given**: the map's fit margin is 12,
   the world's padding is 8, and the pixel surface's margin is the 24 its
   readout needs.
+
+## The studio's own tools: scrolling and volume (2026-11-12)
+
+- **The arrangement timeline was a painted canvas with no scroll offset**,
+  so a song wider than the window could not be reached. It is now sized to
+  its content and sits in a scroll area.
+- **The mixer had a master effect chain and no gain.** The master volume
+  is now the studio's: one number in `~/.Aur`, read by the audio thread
+  every callback and applied after the clip, so a quiet mix stays quiet
+  instead of clipping.
+- **One device for the app** (owner: "if you swap tabs the other stops").
+  The DAW's preview and the playtest's music share one `QtAudioOutput`
+  (`studio/SharedAudio`), so they cannot play over each other. The page
+  on screen holds the device.
+- **The playtest plays the map's song**, the one the map's `music` names,
+  and the sound is opt-in: a studio that makes noise on its own is a
+  studio nobody wants to open.
+- **A hidden page's timer still ticks.** The playtest's timer kept
+  restarting the music behind the other tabs, which is how "the audio
+  plays when leaving the tab" happened: the page has to know it is
+  visible before it touches the device.
+- **The window's minimum height was 720, larger than the estate's floor**
+  of 690 (`DESIGN.md` 12), so the app could not be shown at the floor and
+  every capture was 45 px short at the bottom. The floor is now the
+  minimum, and the captures hold the whole window.
+- **The Event Scripting page is Events**: the tab, the panel's label, and
+  the class and its files (`studio/EventsPanel.*`) with it, so one name
+  says one thing.
+- **The world map's starter locations were stale markers**: western_harbor,
+  eastern_capital and southern_ruins pointed at places on a seed that has
+  been re-seeded since. `worldgen.cpp` gives a new world no entities at
+  all, so the markers meant nothing. Nothing referenced them -- no exit
+  targets them and no code names them -- so they went and the spawn stayed.
+- **The Character Forge's preview had a scale cap of 8**, so a 48x64
+  character sat in the middle of a large pane at a sixth of the space.
+  Every other canvas had been fitted and this one had not.
+- **The transport is play/pause and stop, as icons.** The style's media
+  icons are drawn for a light theme, so a black play triangle on a dark
+  button cannot be seen: the three glyphs are drawn in the app's own
+  colour (`studio/music/TransportIcon.*`).
+- **The MIDI file transfer moved out of the panel** (`studio/music/
+  SongTransfer.*`): a pure move, so `MusicPanel.cpp` stopped growing at
+  1,311 lines and the DAW's new controls could go in new files.

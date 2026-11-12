@@ -1,4 +1,4 @@
-#include "ForgePanel.hpp"
+#include "CreatureForgePanel.hpp"
 #include "aur/gfx.hpp"
 
 #include <QRandomGenerator>
@@ -61,8 +61,10 @@ void CharacterSheetWidget::paintEvent(QPaintEvent*) {
     auto [image_width, image_height, data] = frame_rgba(graphic, frame);
     if (image_width <= 0 || image_height <= 0 || data.empty()) return;
 
+    // The preview fits the pane it is given, like every other canvas: the
+    // old cap of 8x left a 48x64 character in the middle of a large box.
     const int scale = std::clamp(std::min((width() - 48) / image_width,
-                                          (height() - 64) / image_height), 1, 8);
+                                          (height() - 64) / image_height), 1, 32);
     const int draw_width = image_width * scale;
     const int draw_height = image_height * scale;
     const QRect target((width() - draw_width) / 2, (height() - draw_height) / 2,
@@ -86,12 +88,12 @@ void CharacterSheetWidget::paintEvent(QPaintEvent*) {
                      QString("%1 × %2 px · seed preview").arg(image_width).arg(image_height));
 }
 
-ForgePanel::ForgePanel(Project* p, QWidget* parent)
+CreatureForgePanel::CreatureForgePanel(Project* p, QWidget* parent)
     : QWidget(parent), project(p) {
     auto* mainLayout = new QHBoxLayout(this);
     auto* controlsPanel = new QWidget(this);
     auto* controlsLayout = new QVBoxLayout(controlsPanel);
-    controlsLayout->addWidget(new QLabel("Seeded Asset Forge", this));
+    controlsLayout->addWidget(new QLabel("Creature Forge", this));
     controlsLayout->addWidget(new QLabel("One seed drives repeatable character, creature, tile, and effect generation.", this));
 
     nameEdit = new QLineEdit("Wanderer", this);
@@ -215,12 +217,12 @@ ForgePanel::ForgePanel(Project* p, QWidget* parent)
     generateRandomNPC();
 }
 
-void ForgePanel::setProject(Project* p) {
+void CreatureForgePanel::setProject(Project* p) {
     project = p;
     refreshTilesets();
 }
 
-void ForgePanel::refreshTilesets() {
+void CreatureForgePanel::refreshTilesets() {
     if (!tilesetCombo) return;
     const QString selected = tilesetCombo->currentData().toString();
     tilesetCombo->clear();
@@ -234,7 +236,7 @@ void ForgePanel::refreshTilesets() {
     if (index >= 0) tilesetCombo->setCurrentIndex(index);
 }
 
-void ForgePanel::generateRandomNPC() {
+void CreatureForgePanel::generateRandomNPC() {
     const std::string name = nameEdit->text().trimmed().isEmpty()
         ? "Wanderer" : nameEdit->text().trimmed().toStdString();
     previewSpec = random_character_spec(seedSpin->value(), name, ageCombo->currentText().toStdString(),
@@ -247,7 +249,7 @@ void ForgePanel::generateRandomNPC() {
                              .arg(seedSpin->value()).arg(ageCombo->currentText()));
 }
 
-void ForgePanel::applyPreset(const std::string& preset_name) {
+void CreatureForgePanel::applyPreset(const std::string& preset_name) {
     Json spec = random_character_spec(seedSpin->value(), nameEdit->text().toStdString(),
                                       ageCombo->currentText().toStdString(),
                                       genderCombo->currentText().toStdString(),
@@ -278,7 +280,7 @@ void ForgePanel::applyPreset(const std::string& preset_name) {
                              .arg(seedSpin->value()));
 }
 
-void ForgePanel::createNpc() {
+void CreatureForgePanel::createNpc() {
     if (!project) return;
     if (previewSpec.is_null()) generateRandomNPC();
     const std::string base = asset_id(nameEdit->text().trimmed().toStdString());
@@ -304,7 +306,7 @@ void ForgePanel::createNpc() {
                              .arg(QString::fromStdString(id)).arg(seedSpin->value()));
 }
 
-void ForgePanel::createCreature() {
+void CreatureForgePanel::createCreature() {
     if (!project) return;
     const std::string species = creatureCombo->currentText().toStdString();
     const std::string label = nameEdit->text().trimmed().isEmpty()
@@ -326,7 +328,7 @@ void ForgePanel::createCreature() {
     }
 }
 
-void ForgePanel::createEffect() {
+void CreatureForgePanel::createEffect() {
     if (!project) return;
     const std::string kind = effectCombo->currentText().toStdString();
     const std::string base = asset_id(nameEdit->text().trimmed().toStdString() + "_" + kind);
@@ -344,7 +346,7 @@ void ForgePanel::createEffect() {
     }
 }
 
-void ForgePanel::createClothing() {
+void CreatureForgePanel::createClothing() {
     if (!project) return;
     const std::string kind = clothingCombo->currentText().toStdString();
     const int seed = seedSpin->value();
@@ -370,7 +372,7 @@ void ForgePanel::createClothing() {
     }
 }
 
-void ForgePanel::createProp() {
+void CreatureForgePanel::createProp() {
     if (!project) return;
     const std::string kind = propCombo->currentText().toStdString();
     const int seed = seedSpin->value();
@@ -395,7 +397,7 @@ void ForgePanel::createProp() {
     }
 }
 
-void ForgePanel::createTile() {
+void CreatureForgePanel::createTile() {
     if (!project || tilesetCombo->currentIndex() < 0) return;
     const std::string tileset_id = tilesetCombo->currentData().toString().toStdString();
     auto tileset_it = project->tilesets.find(tileset_id);

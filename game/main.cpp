@@ -1,6 +1,7 @@
 #include <QApplication>
 #include <QMainWindow>
 #include "../studio/GameView.hpp"
+#include "../studio/SharedAudio.hpp"
 
 int main(int argc, char* argv[]) {
     QApplication app(argc, argv);
@@ -11,7 +12,9 @@ int main(int argc, char* argv[]) {
     window.resize(1280, 720);
     window.setMinimumSize(1280, 720);
 
-    aur::GameView* view = new aur::GameView(project_path, &window);
+    // The runtime plays the map's song, like the studio's playtest does.
+    aur::SharedAudio* audio = new aur::SharedAudio(&window);
+    aur::GameView* view = new aur::GameView(project_path, &window, audio);
     window.setCentralWidget(view);
     window.show();
     view->setFocus();

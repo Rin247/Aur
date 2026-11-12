@@ -176,7 +176,7 @@ whole-layer copy; a dense map stroke copies kilobytes per tile.
 
 ### D5 — sprite studio (report feature 5)
 
-- [ ] D5.S1 The sprite studio's four tools, as four steps. Audited 2026-11-11:
+- [x] D5.S1 The sprite studio's four tools, as four steps. Audited 2026-11-11:
       the pixel editor's **Graphic** mode is complete (palette, brush, zoom,
       preview, undo) and its **Sprite** mode is a frame list and a direction
       and pose picker; everything below is what a sprite editor needs to
@@ -261,7 +261,7 @@ indices, and the tileset carries `palettes` (an array of palettes of hex
 colours) and `tile` (the tile's size). `make_tileset_tile()` already renders
 a tile to a `QImage`, which is exactly what a PNG export needs.
 
-- [ ] D6.S1 The tile pixel editor, as three steps.
+- [x] D6.S1 The tile pixel editor, as three steps.
   - [x] D6.S1.1 `PixelSurface`: one pixel-editing surface, two editors.
         The pixel editor's canvas edits "a rows array with a palette"; that
         is what a tile is too. The surface moves to
@@ -316,10 +316,63 @@ get:
 - [x] D9.S2 A master volume: the mixer gains a master gain (the GUI thread
       sets it, the audio thread reads it), and the DAW has a slider beside
       the master effects.
-- [ ] D9.S3 The playtest's sound is the gap behind the volume: the game
+- [x] D9.S3 The playtest's sound is the gap behind the volume: the game
       plays the current map's song, and the two pages share **one** device,
       so swapping tabs stops the other (owner, 2026-11-12).
       `<editsweep-d9s1>`
+
+### D10 - the DAW's transport (owner, 2026-11-12)
+
+The transport was two text buttons -- "Play Preview" and "Stop" -- and the
+first one always started the song again, so there was no way to hold a
+playback still.
+
+- [x] D10.S1 The transport is play/pause and stop, as icons: the button
+      plays and pauses the same playback (the place is kept), and the stop
+      rewinds it. The glyphs are the app's own, drawn light for the dark
+      theme: the style's media icons are black on a dark button.
+      `<editsweep-d10s1>`
+
+### D11 - the Character Forge's preview fits (owner, 2026-11-12)
+
+The forge's preview scaled its sprite to at most 8x, so a 48x64 character
+sat in the middle of a large pane at a sixth of the space -- every other
+canvas had been fitted and this one had not.
+
+- [x] D11.S1 The preview fits the pane it is given, like the map, the
+      world and the pixel surface, and the forge joins the render matrix.
+      `<editsweep-d11s1>`
+
+### D12 - the default map's starter locations (owner, 2026-11-12)
+
+The world map shipped three starter locations -- western_harbor,
+eastern_capital and southern_ruins -- that pointed at places on the old
+seed. A new world seed has no entities at all, so they no longer mean
+anything: they are stale markers on a map that has been re-seeded.
+
+- [x] D12.S1 The starter locations go. Nothing referenced them: no exit
+      targets them and no code names them, so the map keeps its spawn and
+      loses its three markers.
+      `<editsweep-d12s1>`
+
+### D13 - the Events page (owner, 2026-11-12)
+
+The page was called "Event Scripting", which is longer than the thing it
+shows and says what the person does rather than what the page is.
+
+- [x] D13.S1 The page is Events: the tab, the panel's own label, and the
+      class and its files with it (`studio/EventsPanel.*`).
+      `<editsweep-d13s1>`
+
+### D14 - the Creature Forge (owner, 2026-11-12)
+
+The page was called "Character Forge", which is wrong: it makes the main
+characters, the NPCs and the enemies alike, and they are all creatures.
+
+- [x] D14.S1 The page is the Creature Forge: the tab, the panel's own
+      header, and the class and its files with it
+      (`studio/CreatureForgePanel.*`).
+      `<editsweep-d14s1>`
 
 ## Acceptance
 

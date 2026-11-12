@@ -28,7 +28,7 @@ protected:
     void paintEvent(QPaintEvent* event) override;
 };
 
-class ForgePanel : public QWidget {
+class CreatureForgePanel : public QWidget {
     Q_OBJECT
     Project* project = nullptr;
     CharacterSheetWidget* previewWidget = nullptr;
@@ -49,7 +49,7 @@ class ForgePanel : public QWidget {
     Json previewGraphic;
 
 public:
-    explicit ForgePanel(Project* project = nullptr, QWidget* parent = nullptr);
+    explicit CreatureForgePanel(Project* project = nullptr, QWidget* parent = nullptr);
     void setProject(Project* p);
     void generateRandomNPC();
     void applyPreset(const std::string& preset_name);

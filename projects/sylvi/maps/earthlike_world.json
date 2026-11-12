@@ -7,24 +7,6 @@
    "type": "spawn",
    "x": 128,
    "y": 64
-  },
-  {
-   "id": "western_harbor",
-   "type": "location",
-   "x": 61,
-   "y": 46
-  },
-  {
-   "id": "eastern_capital",
-   "type": "location",
-   "x": 179,
-   "y": 44
-  },
-  {
-   "id": "southern_ruins",
-   "type": "location",
-   "x": 141,
-   "y": 80
   }
  ],
  "h": 128,

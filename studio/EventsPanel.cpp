@@ -1,15 +1,15 @@
-#include "EventPanel.hpp"
+#include "EventsPanel.hpp"
 #include <QFormLayout>
 #include <QMessageBox>
 
 namespace aur {
 
-EventPanel::EventPanel(Project* p, QWidget* parent)
+EventsPanel::EventsPanel(Project* p, QWidget* parent)
     : QWidget(parent), project(p) {
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
 
     QHBoxLayout* toolbar = new QHBoxLayout();
-    toolbar->addWidget(new QLabel("Event Scripting:", this));
+    toolbar->addWidget(new QLabel("Events:", this));
 
     QComboBox* cmdTypeCombo = new QComboBox(this);
     cmdTypeCombo->addItems({
@@ -58,12 +58,12 @@ EventPanel::EventPanel(Project* p, QWidget* parent)
     refreshEvents();
 }
 
-void EventPanel::setProject(Project* p) {
+void EventsPanel::setProject(Project* p) {
     project = p;
     refreshEvents();
 }
 
-void EventPanel::refreshEvents() {
+void EventsPanel::refreshEvents() {
     if (!eventList) return;
     eventList->clear();
     if (project) {

@@ -3,11 +3,11 @@
 #include "SharedAudio.hpp"
 #include "MapEditorPanel.hpp"
 #include "DatabasePanel.hpp"
-#include "ForgePanel.hpp"
+#include "CreatureForgePanel.hpp"
 #include "MusicPanel.hpp"
 #include "WorldPanel.hpp"
 #include "SpriteEditorPanel.hpp"
-#include "EventPanel.hpp"
+#include "EventsPanel.hpp"
 #include "TilesetEditorPanel.hpp"
 #include "WorldSettingsPanel.hpp"
 #include <QLabel>
@@ -274,7 +274,7 @@ MainWindow::MainWindow(const std::string& project_path, QWidget* parent)
     tabStack = new QStackedWidget(this);
     connect(tabs, &QTabBar::currentChanged, tabStack, &QStackedWidget::setCurrentIndex);
     chrome->addTitleWidget(tabs);
-    gameView = new GameView(project_path, this);
+    gameView = new GameView(project_path, this, sharedAudio);
     addTab(gameView, "▶ Playtest");
     auto* mapEditor = new MapEditorPanel(&project, this);
     addTab(mapEditor, "Map Editor");
@@ -286,9 +286,9 @@ MainWindow::MainWindow(const std::string& project_path, QWidget* parent)
             mapEditor, &MapEditorPanel::onTilesetChanged);
     addTab(new WorldPanel(&project, this), "World");
     addTab(new SpriteEditorPanel(&project, this), "Sprite Editor");
-    addTab(new ForgePanel(&project, this), "Character Forge");
+    addTab(new CreatureForgePanel(&project, this), "Creature Forge");
     addTab(new DatabasePanel(&project, this), "Database");
-    addTab(new EventPanel(&project, this), "Event Scripting");
+    addTab(new EventsPanel(&project, this), "Events");
     addTab(new MusicPanel(&project, sharedAudio, this), "DAW");
     // World & Time Settings is baked into the World tab (WANTED #3).
 
@@ -531,9 +531,9 @@ void MainWindow::refreshProjectPanels() {
     for (auto* panel : findChildren<MapEditorPanel*>()) panel->setProject(&project);
     for (auto* panel : findChildren<SpriteEditorPanel*>()) panel->setProject(&project);
     for (auto* panel : findChildren<TilesetEditorPanel*>()) panel->setProject(&project);
-    for (auto* panel : findChildren<ForgePanel*>()) panel->setProject(&project);
+    for (auto* panel : findChildren<CreatureForgePanel*>()) panel->setProject(&project);
     for (auto* panel : findChildren<DatabasePanel*>()) panel->setProject(&project);
-    for (auto* panel : findChildren<EventPanel*>()) panel->setProject(&project);
+    for (auto* panel : findChildren<EventsPanel*>()) panel->setProject(&project);
     for (auto* panel : findChildren<MusicPanel*>()) panel->setProject(&project);
     for (auto* panel : findChildren<WorldPanel*>()) panel->setProject(&project);
     for (auto* panel : findChildren<WorldSettingsPanel*>()) panel->setProject(&project);
@@ -563,6 +563,8 @@ void MainWindow::playProject() {
         gameView->syncProject(project);
         tabs->setCurrentIndex(tabStack->indexOf(gameView));
         gameView->setFocus();
+        // Asking to play the project asks for its sound too.
+        gameView->setSound(true);
     }
 }
 
