@@ -34,10 +34,6 @@ MapEditorPanel::MapEditorPanel(Project* p, QWidget* parent)
     modeCombo->setMinimumWidth(150);
     toolbar->addWidget(modeCombo);
 
-    modeHint = new QLabel("", this);
-    modeHint->setStyleSheet("color: #888888; font-style: italic;");
-    toolbar->addWidget(modeHint);
-
     auto setModeHint = [this](int idx) {
         const char* h = nullptr;
         switch (idx) {
@@ -46,7 +42,7 @@ MapEditorPanel::MapEditorPanel(Project* p, QWidget* parent)
             case 2: h = "Grid-based positioning on the exploration plane (Fire Emblem / Triangle Strategy style)."; break;
             default: h = "";
         }
-        modeHint->setText(h ? h : "");
+        modeCombo->setToolTip(h ? h : "");
     };
     connect(modeCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), [this, setModeHint](int idx) {
         if (!project || current_map.empty() || !project->maps.contains(current_map)) {
@@ -199,7 +195,7 @@ MapEditorPanel::MapEditorPanel(Project* p, QWidget* parent)
         canvas->fitToView();
         refreshTilePalette();
         // Sync mode selector to the loaded map's mode.
-        if (modeCombo && modeHint) {
+        if (modeCombo) {
             auto& m = it->second;
             std::string mode = m.contains("mode") ? m["mode"].as_string() : "action";
             modeCombo->blockSignals(true);
@@ -211,7 +207,7 @@ MapEditorPanel::MapEditorPanel(Project* p, QWidget* parent)
             if (mode == "action") h = "Smooth real-time exploration & combat on the field (Trials of Mana style).";
             else if (mode == "turn") h = "Command-menu turn order on the exploration plane (Chrono Trigger style).";
             else if (mode == "tactics") h = "Grid-based positioning on the exploration plane (Fire Emblem / Triangle Strategy style).";
-            modeHint->setText(h ? h : "");
+            modeCombo->setToolTip(h ? h : "");
         }
     });
 
@@ -394,7 +390,7 @@ void MapEditorPanel::refreshMaps() {
             canvas->fitToView();
             current_map = project->maps.begin()->first;
             refreshTilePalette();
-            if (modeCombo && modeHint) {
+            if (modeCombo) {
                 auto& m = project->maps.begin()->second;
                 std::string mode = m.contains("mode") ? m["mode"].as_string() : "action";
                 modeCombo->blockSignals(true);
@@ -406,7 +402,7 @@ void MapEditorPanel::refreshMaps() {
                 if (mode == "action") h = "Smooth real-time exploration & combat on the field (Trials of Mana style).";
                 else if (mode == "turn") h = "Command-menu turn order on the exploration plane (Chrono Trigger style).";
                 else if (mode == "tactics") h = "Grid-based positioning on the exploration plane (Fire Emblem / Triangle Strategy style).";
-                modeHint->setText(h ? h : "");
+                modeCombo->setToolTip(h ? h : "");
             }
         }
     }

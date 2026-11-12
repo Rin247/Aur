@@ -58,7 +58,6 @@ class MapEditorPanel : public QWidget {
     QPushButton* zoomInButton = nullptr;
     QPushButton* zoomOutButton = nullptr;
     QLabel* zoomLabel = nullptr;
-    QLabel* modeHint = nullptr;
     QLabel* selectedObjectLabel = nullptr;
     QLineEdit* facingEdit = nullptr;
     QComboBox* eventCombo = nullptr;
