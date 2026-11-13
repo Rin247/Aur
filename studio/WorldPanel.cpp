@@ -16,6 +16,7 @@
 #include "aur/clock.hpp"
 #include "aur/game.hpp"
 #include "aur/mapforge.hpp"
+#include "MapEditorPanel.hpp"
 #include "aur/world_topology.hpp"
 
 #include <QColorDialog>
@@ -150,6 +151,11 @@ WorldPanel::WorldPanel(Project* p, QWidget* parent)
     auto* sidebar_layout = new QVBoxLayout(sidebar);
     sidebar_layout->setContentsMargins(0, 0, 8, 0);
     sidebar_layout->setSpacing(6);
+    expandTileButton = new QPushButton(QStringLiteral("Expand tile"), this);
+    expandTileButton->setToolTip(
+        "Grow the cell under the cursor into a map, with its terrain and its side, and open it "
+        "in the map editor.");
+    sidebar_layout->addWidget(expandTileButton);
 
     auto* biome_title = new QLabel("BIOMES", sidebar);
     biome_title->setStyleSheet("font-weight: 700; color: #c5cdd5; letter-spacing: 1px;");
@@ -417,6 +423,7 @@ WorldPanel::WorldPanel(Project* p, QWidget* parent)
     connect(deleteNodeButton, &QPushButton::clicked, this, [this]() { deleteWorldEntity(); });
     connect(newBiomeButton, &QPushButton::clicked, this, [this]() { createBiome(); });
     connect(generateMapButton, &QPushButton::clicked, this, [this]() { generateMap(); });
+    connect(expandTileButton, &QPushButton::clicked, this, [this]() { expandHoveredTile(); });
     connect(generateWorldButton, &QPushButton::clicked, this, [this]() {
         if (!project || !project->tilesets.contains("world") ||
             !project->tilesets["world"].contains("tiles") ||
@@ -578,6 +585,45 @@ void WorldPanel::generateMap() {
     }
     refreshGraph();
     selectMap(id);
+}
+
+void WorldPanel::expandHoveredTile() {
+    if (!project || !mapCanvas)
+        return;
+    const QPoint cell = mapCanvas->hoveredTile();
+    if (cell.x() < 0 || cell.y() < 0)
+        return;
+    const Json *map = project->maps.contains(current_map) ? &project->maps[current_map] : nullptr;
+    if (!map)
+        return;
+    const std::string tileset_id = (*map)["tileset"].as_string();
+    const auto tileset = project->tilesets.find(tileset_id);
+    if (tileset == project->tilesets.end())
+        return;
+    const TerrainPick pick = pick_terrain(*map, tileset->second, "ground", cell.x(), cell.y());
+    if (pick.group.empty())
+        return;
+    const int seed = QRandomGenerator::global()->bounded(-1000000000, 1000000000);
+    const std::string id = "map_" + std::to_string(seed);
+    const std::string name = pick.tile_name.empty() ? pick.group : pick.tile_name;
+    try {
+        auto& target = project->tilesets["terra"];
+        auto& tiles = target["tiles"].as_array();
+        const int first_tile = static_cast<int>(tiles.size());
+        const int tile_size = target.contains("tile") ? target["tile"].as_int() : 16;
+        const GeneratedMap generated = generate_map_asset(MapKind::Town, seed, 40, 24,
+                                                         tile_size, first_tile, id, name, &pick);
+        for (const Json& tile : generated.tiles)
+            tiles.push_back(tile);
+        project->maps[id] = generated.map;
+        project->invalidate();
+    } catch (const std::exception& error) {
+        QMessageBox::warning(this, "Expand tile", QString::fromStdString(error.what()));
+        return;
+    }
+    refreshGraph();
+    selectMap(id);
+    emit mapExpanded(QString::fromStdString(id));
 }
 
 void WorldPanel::setProject(Project* p) {

@@ -115,6 +115,8 @@ namespace aur
         void setZoom(qreal zoom);
         qreal zoomFactor() const noexcept { return zoom_factor; }
         void fitToView();
+        // The cell under the cursor, for the panel that picks a tile.
+        QPoint hoveredTile() const { return hover_tile; }
         // The zoom control, as a factor of the fit.
         void zoomByFactor(qreal factor);
         void recordEntityEdit();

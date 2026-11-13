@@ -75,6 +75,8 @@ public:
     explicit MapEditorPanel(Project* project = nullptr, QWidget* parent = nullptr);
     void setProject(Project* p);
     void refreshMaps();
+    // Opens the map with this id, if the project has it.
+    void openMap(const QString& id);
     void refreshTilePalette();
     void onTilesetChanged();  // flag edits elsewhere invalidate the tile cache
     // The zoom control, as a factor of the fit.

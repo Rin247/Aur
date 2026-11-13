@@ -375,6 +375,17 @@ void MapEditorPanel::setEditorZoom(qreal factor) {
     if (canvas) canvas->zoomByFactor(factor);
 }
 
+void MapEditorPanel::openMap(const QString& id) {
+    if (!mapCombo) return;
+    refreshMaps();
+    for (int index = 0; index < mapCombo->count(); ++index) {
+        if (mapCombo->itemData(index).toString() == id) {
+            mapCombo->setCurrentIndex(index);
+            return;
+        }
+    }
+}
+
 void MapEditorPanel::refreshMaps() {
     if (!mapCombo) return;
     mapCombo->blockSignals(true);

@@ -45,6 +45,7 @@ class WorldPanel : public QWidget {
     QPushButton* newBiomeButton = nullptr;
     QPushButton* generateWorldButton = nullptr;
     QPushButton* generateMapButton = nullptr;
+    QPushButton* expandTileButton = nullptr;
     world::TimeWeatherBar* timeWeather = nullptr;
     world::WorldGenerationJob* generation_job = nullptr;
     QPushButton* addLocationButton = nullptr;
@@ -58,8 +59,15 @@ public:
     void refreshGraph();
     // Grows a seeded map: a town, a cave or a platformer room.
     void generateMap();
+    // Grows the cell under the cursor into a map, and sends it to the map
+    // editor.
+    void expandHoveredTile();
     // The zoom control, as a factor of the fit.
     void setEditorZoom(qreal factor);
+
+signals:
+    // A map the expansion made, for the map editor to open.
+    void mapExpanded(const QString& id);
 
 private:
     void selectMap(const std::string& map_id);

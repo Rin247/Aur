@@ -277,14 +277,29 @@ MainWindow::MainWindow(const std::string& project_path, QWidget* parent)
     gameView = new GameView(project_path, this, sharedAudio);
     addTab(gameView, "▶ Playtest");
     auto* mapEditor = new MapEditorPanel(&project, this);
-    addTab(mapEditor, "Map Editor");
-    auto* tilesetEditor = new TilesetEditorPanel(&project, this);
+    addTab(mapEditor, "Map Editor");    auto* tilesetEditor = new TilesetEditorPanel(&project, this);
     addTab(tilesetEditor, "Tileset Editor");
     // Flag edits in the tileset editor invalidate the map editor's tile cache
     // and repaint its collision overlay (editsweep D1.S5).
     connect(tilesetEditor, &TilesetEditorPanel::tilesetFlagsChanged,
             mapEditor, &MapEditorPanel::onTilesetChanged);
-    addTab(new WorldPanel(&project, this), "World");
+    auto* worldPanel = new WorldPanel(&project, this);
+    addTab(worldPanel, "World");
+    // An expansion grows a map; the map editor opens it.
+    connect(worldPanel, &WorldPanel::mapExpanded, this, [this](const QString& id) {
+        if (tabs)
+        {
+            for (int index = 0; index < tabs->count(); ++index)
+            {
+                if (tabs->tabText(index).contains("Map Editor", Qt::CaseInsensitive))
+                {
+                    tabs->setCurrentIndex(index);
+                    break;
+                }
+            }
+        }
+        if (auto* editor = findChild<MapEditorPanel*>()) editor->openMap(id);
+    });
     addTab(new SpriteEditorPanel(&project, this), "Sprite Editor");
     addTab(new CreatureForgePanel(&project, this), "Creature Forge");
     addTab(new DatabasePanel(&project, this), "Database");
