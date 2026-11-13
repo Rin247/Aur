@@ -1,6 +1,7 @@
 # The globe's tile becomes a map: plan
 
-Status: P0 done (the audit). Next: P1, the pick and the send.
+Status: P0 done (the audit); the engine's pick and the expansion that
+keeps the side landed. Next: P1's tool and the send, then P3's beach.
 
 ## Goal
 
@@ -17,6 +18,12 @@ should always generate a beach there and not otherwise, is that doable?"
 
 **Yes, it is doable.** The direction is the hard part, and the tileset
 already knows how to carry it: the autotile's edge variants.
+
+The owner's picture of it (2026-11-12): "we can think of the zoomed out
+worldmap as 8bit and the map becomes 16/32bit basically". The globe is
+the coarse picture of a place and the map is the fine one, so expanding
+a tile is a magnification, not an invention: the land keeps the side it
+had, and the map is the same place at the field's detail.
 
 ## Contracts (binding)
 
@@ -96,19 +103,21 @@ committed on its own.
 - [ ] P1.2 "Expand this tile" in the World tab sends the pick to the
   map editor, which opens the map the expansion makes.
 - [ ] P1.3 The test: the pick of a coastal tile names the side, and the
-  same tile always names the same side.
+  same tile always names the same side. **The engine's half landed**:
+  `pick_terrain` reads the cell's autotile group and the side its land is
+  on, and the test pins both.
 
 Acceptance: ctest green; picking a coastal tile and expanding it opens
 a map in the map editor.
 
 ### P2 The expansion
 
-- [ ] P2.1 The generator takes the terrain and the side and lays the
+- [x] P2.1 The generator takes the terrain and the side and lays the
   map's edges out to match: the beach on the west, the water on the
   east.
-- [ ] P2.2 The expansion's tiles are added to the tileset with their
+- [x] P2.2 The expansion's tiles are added to the tileset with their
   flags.
-- [ ] P2.3 The test: the west beach stays on the west, the corner tiles
+- [x] P2.3 The test: the west beach stays on the west, the corner tiles
   are the variants for that corner, and the same seed gives the same map.
 
 Acceptance: ctest green; the expanded map's edges read as the picked
@@ -142,6 +151,9 @@ Phase commits; revert to the tag `globe-expand-p2` for the expansion and
 
 ## Decisions and deviations
 
+- **The globe is the coarse picture and the map the fine one.** The
+  expansion is a magnification: the same place, at the field's detail, and
+  the land keeps the side it had.
 - **The direction comes from the autotile variant.** A coastal cell holds
   the ocean's edge variant, and the variant says which side the land is
   on. That is where the direction already lives; the generator reads it

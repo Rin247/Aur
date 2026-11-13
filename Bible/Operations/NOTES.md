@@ -318,6 +318,10 @@
   rule "the feet were in a row above the platform's" is what lets a hero
   jump up through it and still land on it, and it never catches a hero
   who is already underneath.
+- **The globe is the coarse picture and the map the fine one.** The
+  owner's words: "we can think of the zoomed out worldmap as 8bit and the
+  map becomes 16/32bit basically". An expansion is a magnification of the
+  picked place, not an invention, so the land keeps the side it had.
 - **A coastal tile on the globe is an autotile variant, not a tile
   kind.** The world tileset's ocean autotile is edge-joined, so a coastal
   cell holds the ocean's edge variant and the land is on the side the

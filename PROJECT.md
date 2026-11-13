@@ -98,6 +98,11 @@ twenty-two PNGs.
   and a platformer is another, chosen by the map's `mode`. The rules are
   a pure function of the hero's state and the tile flags, so they are
   tested without a widget -- and the shipped field's rule is unchanged.
+- **The engine can read a world map's tile and grow it into a map.**
+  `pick_terrain` names the cell's terrain and the side its land is on, and
+  the map generator keeps that side: the beach on the west stays on the
+  west. The tool that picks the tile, and the beach the field's tileset
+  still lacks, are the open parts.
 - **The world map answers the game's weather.** The pick belongs to the
   engine (`weather_for_slot`): the runtime rolls it and so does the editor,
   so the day, the hour and the map's climate in the World header answer
