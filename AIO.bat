@@ -39,6 +39,8 @@ set "EXE="
 set "FACE="
 
 set "WANT_VERB=%~1"
+rem  A non-interactive caller gets usage, not a menu that blocks on a read.
+if not defined WANT_VERB if defined NO_PAUSE goto :print_usage
 if not defined WANT_VERB goto :main_menu
 if /i "%WANT_VERB%"=="help" goto :print_usage
 if /i "%WANT_VERB%"=="-h" goto :print_usage
@@ -92,7 +94,8 @@ echo    0. Exit
 echo.
 set "AIO_CHOICE="
 set /p "AIO_CHOICE=Choice: "
-if not defined AIO_CHOICE goto :main_menu
+rem  An empty read is a closed or redirected stdin: exit, never spin.
+if not defined AIO_CHOICE goto :main_exit
 set "VERB="
 if "%AIO_CHOICE%"=="1" (set "VERB=build" & set "OS=aio-win" & set "CONFIG=Release")
 if "%AIO_CHOICE%"=="2" (set "VERB=build" & set "OS=aio-win" & set "CONFIG=Debug")
@@ -114,7 +117,7 @@ if /i "%AIO_CHOICE%"=="Q" goto :main_exit
 if "%VERB%"=="" goto :main_menu
 call :main_go
 if "%ERRORLEVEL%"=="0" (echo [aio] OK) else (echo [aio] FAILED)
-rem auto-exit: no pause (estate rule)
+if not defined NO_PAUSE pause
 endlocal & exit /b 0
 
 :main_exit

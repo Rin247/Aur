@@ -318,6 +318,11 @@
   rule "the feet were in a row above the platform's" is what lets a hero
   jump up through it and still land on it, and it never catches a hero
   who is already underneath.
+- **A blank capture is a page that has not painted.** The sweep
+  captured the map editor blank once and the tileset editor another
+  time, with the window answering WM_NULL: the page had not drawn. The
+  sweep waits longer now and nudges the window's size when a capture
+  comes back blank, so the page draws again.
 - **A list's padding is dead space.** The list items carried 4px of
   vertical padding, which is the space the owner noticed: more items per
   list and fewer scrollbars. It is 2px now, and the horizontal padding

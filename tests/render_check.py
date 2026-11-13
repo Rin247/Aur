@@ -43,7 +43,7 @@ PAGES = [("map", "Map Editor"), ("world", "World"),
          ("playtest", "\u25b6 Playtest")]
 ZOOM_SWEEP = [0.75, 1.5]
 
-SETTLE = 4.0
+SETTLE = 6.0
 user32 = ctypes.windll.user32
 gdi32 = ctypes.windll.gdi32
 kernel32 = ctypes.windll.kernel32
@@ -229,10 +229,16 @@ def shoot(page, tab, size, zoom, sprite=False, preview=False, sub_tab=None):
             img = ImageGrab.grab(bbox=(ox, oy, ox + cw, oy + ch))
         img = img.convert("RGB").crop((0, 0, cw, ch))
         colours = distinct_colours(img)
-        for _ in range(3):
+        for _ in range(4):
             if colours >= 100:
                 break
             time.sleep(3.0)
+            # A blank capture is a window that has not painted yet: nudge it
+            # so the page draws again, and give it the time to.
+            resize(hwnd, int(round(w * scale)) + 2, int(round(h * scale)) + 2)
+            time.sleep(0.5)
+            resize(hwnd, int(round(w * scale)), int(round(h * scale)))
+            time.sleep(1.5)
             again = capture(hwnd, cw, ch)
             if again is None:
                 again = ImageGrab.grab(bbox=(ox, oy, ox + cw, oy + ch))
