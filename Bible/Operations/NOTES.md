@@ -318,6 +318,11 @@
   rule "the feet were in a row above the platform's" is what lets a hero
   jump up through it and still land on it, and it never catches a hero
   who is already underneath.
+- **Six of the Database page's seven tabs were stubs.** A list and a
+  form of empty fields, with no load, no save and no selection handling
+  -- they look editable and are not. Only Races and (now) the Bestiary
+  edit their records. The plan for the rest is
+  Bible/notes/database-editors.md.
 - **A blank capture is a page that has not painted.** The sweep
   captured the map editor blank once and the tileset editor another
   time, with the window answering WM_NULL: the page had not drawn. The

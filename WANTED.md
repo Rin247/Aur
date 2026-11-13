@@ -15,6 +15,9 @@
   groovebox initiative (see below). Next: P7a GM/GS instrument — plan at
   `Bible/notes/daw/gm-gs.md` (P0 landed `daw-p7a.1`; **P1 deferred by owner
   2026-11-11** — parked mid-wiring, exact resume point recorded in the plan).
+- `Bible/notes/database-editors.md` — the Database page's editors: six
+  of its seven tabs are a list and a form of empty fields. P0 (the audit)
+  done; P1 (the field tables) is next.
 - `Bible/notes/platformer.md` — the platformer engine: the movement
   modes, the tile physics and the cameras. P0 (the audit) done; P1 (the
   modes) is next.
