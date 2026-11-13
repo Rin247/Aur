@@ -72,6 +72,10 @@ twenty-two PNGs.
   the leading dot, and the settings file lives in it.
 - **The DAW scrolls.** The arrangement timeline is sized to its content and sits in a scroll
   area, so the bars and the tracks beyond the window are reachable.
+- **A tile carries its flags from the forge.** The Creature Forge's
+  generator takes Solid and One-way, and the tileset editor can mark any
+  tile one-way, so a platformer's floor and its platforms are tiles the
+  owner makes.
 - **Every tab of the Database page edits its records.** One generic
   editor and a table of fields per kind: a character's nested growth, a
   weapon's fraction and range, and the rest. A field the editor does

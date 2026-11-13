@@ -145,8 +145,11 @@ and the walls. A platformer room needs its own tiles -- a solid floor and
 a one-way platform -- and the tiles are the owner's to choose. The rules
 are in and tested; the room is waiting on the art.
 
-- [ ] P4.0 The tiles: a solid floor and a one-way platform, in a tileset
-      of their own, so the field's floors stay walkable.
+- [x] P4.0 The tiles: the Creature Forge's generator now takes the flags
+      (Solid and One-way), and the tileset editor can set the one-way
+      platform on any tile. The floor itself is a tile of the owner's
+      choosing: the field's grass cannot become solid, because the flags
+      are per tile.
 - [ ] P4.1 A platformer map: the mode, the tiles, the exits and the
       spawns -- a small room in the shipped project, played with.
 
@@ -196,6 +199,11 @@ camera, and to `platformer-p1` for the mode split.
   flags go in, the new state comes out: that is what makes the rules
   testable without a widget, and the field's movement is already close
   to that shape.
+- **The tile's flags are the platformer's floor.** The forge's tile
+  generator takes them now, so a floor is one click (Solid) and a
+  platform another (One-way). The flags are per tile, so the field's
+  walkable floors cannot become the platformer's floor: that is why the
+  platformer needs a tile of its own.
 - **The rooms are the maps.** The exits already name a target map and a
   spawn, so a metroidvania's doors are the doors the field already has.
   What a platformer needs on top is the camera and the physics, not a

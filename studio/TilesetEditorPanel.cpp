@@ -19,13 +19,14 @@ namespace aur
             int bit;
             const char *label;
         };
-        constexpr std::array<FlagDef, 6> kFlagDefs{{
+        constexpr std::array<FlagDef, 7> kFlagDefs{{
             {SOLID, "Solid Wall"},
             {WATER, "Water / Swim"},
             {SLOW, "Slow Terrain"},
             {HURT, "Hurt / Lava"},
             {ENCOUNTER, "Random Encounters"},
             {BRIDGE, "Bridge Overpass"},
+            {ONE_WAY, "One-way Platform"},
         }};
     } // namespace
 

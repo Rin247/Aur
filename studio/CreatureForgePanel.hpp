@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QWidget>
+#include <QCheckBox>
 #include <QComboBox>
 #include <QPushButton>
 #include <QLineEdit>
@@ -42,6 +43,8 @@ class CreatureForgePanel : public QWidget {
     QComboBox* clothingCombo = nullptr;
     QComboBox* propCombo = nullptr;
     QComboBox* tileKindCombo = nullptr;
+    QCheckBox* tileSolidCheck = nullptr;
+    QCheckBox* tileOneWayCheck = nullptr;
     QComboBox* tilesetCombo = nullptr;
     QSpinBox* seedSpin = nullptr;
     QLabel* statusLabel = nullptr;

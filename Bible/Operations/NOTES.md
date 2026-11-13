@@ -318,6 +318,10 @@
   rule "the feet were in a row above the platform's" is what lets a hero
   jump up through it and still land on it, and it never catches a hero
   who is already underneath.
+- **The tile's flags are per tile, so a platformer's floor cannot be
+  the field's grass.** The forge's generator takes them now (Solid and
+  One-way) and the tileset editor can mark any tile one-way, but a tile
+  that is solid in one map is solid in all of them.
 - **The Database's editors are one editor and a table.** The kinds
   differ only in their fields, so the fields are data: one row per field,
   with the kind (text, a number, a fraction, a nested group, a pair) and

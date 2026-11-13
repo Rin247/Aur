@@ -166,6 +166,12 @@ CreatureForgePanel::CreatureForgePanel(Project* p, QWidget* parent)
     tileKindCombo->addItems({"grass", "sand", "dirt", "stone", "brick", "planks",
                              "water", "snow", "lava", "crystal", "foliage", "noise"});
     controlsLayout->addWidget(tileKindCombo);
+    tileSolidCheck = new QCheckBox("Solid", this);
+    tileSolidCheck->setToolTip("The tile blocks movement: the floor of a platformer.");
+    controlsLayout->addWidget(tileSolidCheck);
+    tileOneWayCheck = new QCheckBox("One-way", this);
+    tileOneWayCheck->setToolTip("The tile holds from above and is open from below.");
+    controlsLayout->addWidget(tileOneWayCheck);
     auto* tileButton = new QPushButton("Generate tile", this);
     controlsLayout->addWidget(tileButton);
 
@@ -413,6 +419,11 @@ void CreatureForgePanel::createTile() {
     const int seed = seedSpin->value();
     try {
         Json tile = generate_tile_asset(kind, seed, tile_size, tile_size);
+        // The flags are what make the tile a floor or a platform.
+        int flags = 0;
+        if (tileSolidCheck && tileSolidCheck->isChecked()) flags |= SOLID;
+        if (tileOneWayCheck && tileOneWayCheck->isChecked()) flags |= ONE_WAY;
+        tile["flags"] = flags;
         auto& tiles = tileset["tiles"].as_array();
         const int index = static_cast<int>(tiles.size());
         tiles.push_back(tile);

@@ -39,7 +39,7 @@ class TilesetEditorPanel : public QWidget {
     QComboBox* colorCombo = nullptr;
     QPushButton* exportButton = nullptr;
     QPushButton* importButton = nullptr;
-    std::array<QCheckBox*, 6> flagChecks {};
+    std::array<QCheckBox*, 7> flagChecks {};
     int currentTile = -1;
     bool updatingFlags = false;
 

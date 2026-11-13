@@ -81,7 +81,9 @@ the other (owner, 2026-11-12). The MIDI file transfer moved out of
 P1 to P3): the modes, the physics, the one-way platform and the cameras.
 P4 waits on an asset: the project has no solid floor tile, and the
 tileset's flags are per tile, so the field's walkable floors cannot
-become the platformer's floor. The tiles are the owner's to choose.
+become the platformer's floor. The forge's generator now takes the
+flags (Solid, One-way) and the tileset editor can mark a tile one-way,
+so the floor is one click once the owner picks the tile.
 
 **The platformer engine has its modes** (`Bible/notes/platformer.md`):
 the top-down field is one mode and a platformer is another, chosen by
