@@ -106,3 +106,73 @@ void test_movement_modes()
     const double full_height = resting - full_jump.y;
     ASSERT(short_height < full_height);
 }
+
+// A one-way platform: the hero comes up through it and lands on it from
+// above, and the top-down field does not see it at all.
+void test_movement_one_way()
+{
+    using namespace aur;
+
+    // A platform two rows above the ground, and the ground below it.
+    std::vector<std::vector<int>> flags(20, std::vector<int>(20, 0));
+    for (int x = 0; x < 20; ++x)
+        flags[19][static_cast<size_t>(x)] = aur::SOLID;
+    for (int x = 0; x < 20; ++x)
+        flags[17][static_cast<size_t>(x)] = aur::ONE_WAY;
+
+    MoveWorld world;
+    world.flags = &flags;
+    world.width = 20;
+    world.height = 20;
+    world.tile_size = 16;
+    MoveRules rules;
+
+    // Falling onto the platform from above: the hero lands on it.
+    Body body;
+    body.x = 5 * 16 + 8;
+    body.y = 15 * 16 + 8;
+    body.half_width = 4;
+    body.half_height = 8;
+    for (int frame = 0; frame < 120 && !body.on_ground; ++frame)
+        movePlatformer(body, world, rules, 0, false, false, 1.0 / 60.0);
+    ASSERT(body.on_ground);
+    // It rests on the platform, not on the ground below it.
+    ASSERT(body.y + body.half_height <= 17 * 16 + 1.0);
+
+    // A hero on the ground jumps up through the platform and comes back
+    // down onto it.
+    Body jumper;
+    jumper.x = 5 * 16 + 8;
+    jumper.y = 18 * 16 + 8;
+    jumper.half_width = 4;
+    jumper.half_height = 8;
+    for (int frame = 0; frame < 120 && !jumper.on_ground; ++frame)
+        movePlatformer(jumper, world, rules, 0, false, false, 1.0 / 60.0);
+    ASSERT(jumper.on_ground);
+
+    movePlatformer(jumper, world, rules, 0, true, true, 1.0 / 60.0);
+    bool passed = false;
+    for (int frame = 0; frame < 120; ++frame)
+    {
+        // The jump is held for the rise and released after it.
+        movePlatformer(jumper, world, rules, 0, false, frame < 20, 1.0 / 60.0);
+        if (jumper.y + jumper.half_height < 17 * 16) passed = true;
+    }
+    ASSERT(passed);   // it went up through the platform
+    ASSERT(jumper.on_ground);
+    // And it came back down onto it, not through it.
+    ASSERT(jumper.y + jumper.half_height <= 17 * 16 + 1.0);
+
+    // The top-down field does not see the flag: it walks over it.
+    std::vector<std::vector<int>> open_map(20, std::vector<int>(20, 0));
+    MoveWorld flat;
+    flat.flags = &open_map;
+    flat.width = 20;
+    flat.height = 20;
+    flat.tile_size = 16;
+    Body walker;
+    walker.x = 5 * 16 + 8;
+    walker.y = 17 * 16 + 8;
+    moveTopDown(walker, flat, 1, 0, 148.0, 1.0 / 60.0);
+    ASSERT(walker.x > 5 * 16 + 8);
+}

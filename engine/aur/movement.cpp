@@ -10,11 +10,6 @@ namespace aur
 
     namespace
     {
-        // The one-way platform: solid from above, open from below. The
-        // flag is invisible to the top-down field, which reads SOLID and
-        // WATER only.
-        constexpr int kOneWay = 64;
-
         double approach(double value, double target, double step)
         {
             if (value < target)
@@ -102,8 +97,13 @@ namespace aur
         const double ny = body.y + body.vy * dt;
         const bool falling = body.vy >= 0;
         const int next_feet = falling ? tileAt(world, body.x, ny + body.half_height) : 0;
-        const bool one_way_blocks = falling && (next_feet & kOneWay) &&
-                                    !(body.feet_flags & kOneWay);
+        // The one-way platform stops a fall only when the hero's feet were
+        // above it: the row they are in now is below the row they were in.
+        const int row_before = static_cast<int>(
+            std::floor((body.y + body.half_height) / world.tile_size));
+        const int row_now = static_cast<int>(
+            std::floor((ny + body.half_height) / world.tile_size));
+        const bool one_way_blocks = falling && (next_feet & ONE_WAY) && row_before < row_now;
         const bool blocked = (flagsAt(world, body.x, ny, body.half_width,
                                       body.half_height) & SOLID) ||
                              one_way_blocks;

@@ -14,6 +14,9 @@ constexpr int SLOW = 4;
 constexpr int HURT = 8;
 constexpr int ENCOUNTER = 16;
 constexpr int BRIDGE = 32;
+// A one-way platform: solid from above, open from below. The top-down field
+// reads SOLID and WATER only, so the flag is invisible to it.
+constexpr int ONE_WAY = 64;
 
 class Project {
 public:

@@ -310,6 +310,10 @@
   of 690 (`DESIGN.md` 12), so the app could not be shown at the floor and
   every capture was 45 px short at the bottom. The floor is now the
   minimum, and the captures hold the whole window.
+- **A one-way platform has to know which side the hero is on.** The
+  rule "the feet were in a row above the platform's" is what lets a hero
+  jump up through it and still land on it, and it never catches a hero
+  who is already underneath.
 - **A list's padding is dead space.** The list items carried 4px of
   vertical padding, which is the space the owner noticed: more items per
   list and fewer scrollbars. It is 2px now, and the horizontal padding

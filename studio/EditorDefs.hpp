@@ -17,12 +17,13 @@ inline constexpr std::array<const char*, 8> kEntityKinds{
 
 // Flag colors used by both the tileset editor and the map collision overlay.
 struct FlagStyle { int flag; const char* name; QColor color; };
-inline constexpr std::array<FlagStyle, 5> kFlagStyles{{
+inline constexpr std::array<FlagStyle, 6> kFlagStyles{{
     {SOLID, "Solid", QColor(229, 57, 53, 105)},
     {WATER, "Water", QColor(30, 136, 229, 115)},
     {HURT, "Hurt", QColor(239, 83, 80, 120)},
     {SLOW, "Slow", QColor(255, 202, 40, 100)},
     {ENCOUNTER, "Encounter", QColor(171, 71, 188, 95)},
+    {ONE_WAY, "One-way", QColor(120, 200, 190, 110)},
 }};
 
 // Palette swatch color for a palette JSON string ("#rrggbbaa").

@@ -114,11 +114,11 @@ the split cannot change it by accident.
 
 ### P2 The platformer's physics
 
-- [ ] P2.1 Gravity, a jump with a variable height, and a body that is
+- [x] P2.1 Gravity, a jump with a variable height, and a body that is
   wider than a point: the corners are what get stuck, so the box is
   swept per axis.
-- [ ] P2.2 The one-way platform flag, invisible to the top-down mode.
-- [ ] P2.3 The test: falling, landing, jumping, the jump's height, and
+- [x] P2.2 The one-way platform flag, invisible to the top-down mode.
+- [x] P2.3 The test: falling, landing, jumping, the jump's height, and
   the one-way platform (up through, not down).
 
 Acceptance: ctest green; the physics are a pure function of the state
@@ -171,6 +171,11 @@ camera, and to `platformer-p1` for the mode split.
   map and the hero in both modes; what changes is how the hero moves and
   how the camera follows. A separate scene would duplicate the whole
   map drawing for one set of rules.
+- **A one-way platform stops a fall only from above.** The rule is the
+  hero's feet were in a row above the platform's, so the flag never
+  catches a hero who is already under it -- and a hero who jumps up
+  through it comes down onto it, because its feet are above the platform
+  again by then.
 - **The body settles by less than a pixel.** The collision catches the
   falling hero a step after the landing, so the resting place is a
   fraction below the floor. The test measures the settle instead of
