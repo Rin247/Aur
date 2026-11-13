@@ -126,6 +126,10 @@ add_executable(aur_studio
     studio/DatabasePanel.cpp
     studio/bestiary/BestiaryData.cpp
     studio/bestiary/BestiaryData.hpp
+    studio/bestiary/RecordFields.cpp
+    studio/bestiary/RecordFields.hpp
+    studio/bestiary/RecordEditor.cpp
+    studio/bestiary/RecordEditor.hpp
     studio/bestiary/BestiaryEditor.cpp
     studio/bestiary/BestiaryEditor.hpp
     studio/bestiary/CreaturePortrait.cpp
@@ -241,11 +245,13 @@ add_executable(aur_tests
     tests/test_pixel_session.cpp
     tests/test_bestiary_data.cpp
     tests/test_movement.cpp
+    tests/test_record_fields.cpp
     tests/test_weather_render.cpp
     tests/test_step_sequencer.cpp
     tests/test_arpeggiator.cpp
     studio/PixelEditSession.cpp
     studio/bestiary/BestiaryData.cpp
+    studio/bestiary/RecordFields.cpp
     studio/PixelFrameOps.cpp
     studio/UndoCommands.cpp
     studio/MapEditUndo.cpp

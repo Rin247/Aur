@@ -94,6 +94,11 @@ and so does the editor, and the World header answers "what does the game
 show then?" -- the day, the hour and the map's climate. A forced kind is
 the runtime's manual override.
 
+**The Database page's editors landed** (`Bible/notes/database-editors.md`):
+five of its tabs were a list and a form of empty fields. One generic
+editor and a table of fields per kind hold them now, and a field the
+editor does not show is carried through untouched.
+
 **The Bestiary landed** (`Bible/notes/bestiary.md`): the Database page's
 "Enemies" stub is the "Bestiary" tab -- the creatures, their record and
 their artwork. The record layer is Qt-free and tested; the fields the

@@ -86,6 +86,10 @@
   runtime's manual override, and the climate mix stays as the authoring
   view.
 
+- **The Database page's other tabs are stubs** (closed 2026-11-13, plan
+  `Bible/notes/database-editors.md`): five of the page's tabs were a
+  list and a form of empty fields -- they looked editable and were not.
+  One generic editor and a table of fields per kind now hold them.
 - **A Bestiary** (closed 2026-11-12, plan `Bible/notes/bestiary.md`): the
   Database page's "Enemies" stub is the "Bestiary" tab now -- the
   creatures, their record and their artwork. The record layer is Qt-free

@@ -79,33 +79,33 @@ committed on its own.
 
 ### P1 The field tables
 
-- [ ] P1.1 The tables: the fields of each kind, with their labels and
+- [x] P1.1 The tables: the fields of each kind, with their labels and
   their kinds (text, number, fraction, a nested group of numbers, a pair
   of numbers).
-- [ ] P1.2 The layer: the defaults for a new record, the read of a
+- [x] P1.2 The layer: the defaults for a new record, the read of a
   record into the fields, and the write that carries the fields the
   editor does not show through untouched.
-- [ ] P1.3 The test: a new record has every field, an edit keeps the
+- [x] P1.3 The test: a new record has every field, an edit keeps the
   fields the editor does not show, and the numbers are clamped.
 
 Acceptance: ctest green; the layer needs no widget and the test says so.
 
 ### P2 The editor
 
-- [ ] P2.1 The generic editor: the list of the records, the form, and
+- [x] P2.1 The generic editor: the list of the records, the form, and
   the portrait-free layout the Bestiary uses.
-- [ ] P2.2 The five tabs use it, and the page's own refresh follows the
+- [x] P2.2 The five tabs use it, and the page's own refresh follows the
   project's records.
-- [ ] P2.3 Add and remove, with the ids the project uses.
+- [x] P2.3 Add and remove, with the ids the project uses.
 
 Acceptance: a record of any kind can be edited and comes back after a
 reload.
 
 ### P3 The proof
 
-- [ ] P3.1 The Database page's tabs are captures of their own, and the
+- [x] P3.1 The Database page's tabs are captures of their own, and the
   capture shows a filled form.
-- [ ] P3.2 `PROJECT.md`, `WANTED.md` and `Bible/Operations/NOTES.md` carry
+- [x] P3.2 `PROJECT.md`, `WANTED.md` and `Bible/Operations/NOTES.md` carry
   the state, and the defect is closed.
 
 Acceptance: the PNG is opened and shows the editor; the gate is clean.
@@ -133,3 +133,6 @@ Phase commits; revert to the tag `db-editors-p2` for the editor and
   through", and the two layers should not drift apart.
 - **The record layer is Qt-free.** The tables and the write are plain
   functions over `Json`; the widget is the drawing.
+- **A decimal is read with a comma as well as a point.** A locale that
+  writes "0,5" must not be read as five, so the layer's parse takes
+  both.

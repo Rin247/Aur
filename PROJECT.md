@@ -72,6 +72,10 @@ twenty-two PNGs.
   the leading dot, and the settings file lives in it.
 - **The DAW scrolls.** The arrangement timeline is sized to its content and sits in a scroll
   area, so the bars and the tracks beyond the window are reachable.
+- **Every tab of the Database page edits its records.** One generic
+  editor and a table of fields per kind: a character's nested growth, a
+  weapon's fraction and range, and the rest. A field the editor does
+  not show is carried through untouched.
 - **The Database page has a Bestiary.** The creatures are edited where
   their records live: the list, the record, the artwork, and the fields
   the editor does not show carried through. The other tabs of that page
@@ -132,11 +136,10 @@ twenty-two PNGs.
 
 1. **`studio/MusicPanel.cpp` is 1,311 lines**, over the owner's hard ceiling of ~1,250 and
    pre-existing. It needs splitting; the MIDI file transfer moved out in this pass.
-2. **The Database page's other tabs are stubs.** Six of the seven tabs
-   are a list and a form of empty fields, with no load, no save and no
-   selection handling -- they look editable and are not. The Bestiary
-   replaces the "Enemies" one; the rest (Actors, Classes, Items,
-   Weapons, Skills) are open.
+2. **The Races tab is still a bespoke editor.** It writes a dozen lore
+   fields with a text box each, where the other tabs use the generic
+   editor. It works, and it is the one tab the generic editor does not
+   hold.
 3. **Three of the seven creatures have no artwork.** `bandit`,
    `bandit_archer` and `bandit_boss` name graphics the project does not
    have, so the Bestiary's portrait says so for them. The game's own

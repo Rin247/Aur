@@ -318,6 +318,11 @@
   rule "the feet were in a row above the platform's" is what lets a hero
   jump up through it and still land on it, and it never catches a hero
   who is already underneath.
+- **The Database's editors are one editor and a table.** The kinds
+  differ only in their fields, so the fields are data: one row per field,
+  with the kind (text, a number, a fraction, a nested group, a pair) and
+  the range. Five copies of the same form would be five places to fix the
+  same bug.
 - **Six of the Database page's seven tabs were stubs.** A list and a
   form of empty fields, with no load, no save and no selection handling
   -- they look editable and are not. Only Races and (now) the Bestiary

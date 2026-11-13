@@ -295,8 +295,12 @@ def main():
         shots.append(("sprite_preview", "Sprite Editor", SIZES[0], 1.0, True, True))
         # The DAW's arrangement timeline is the page that has to scroll.
         shots.append(("daw_arrangement", "DAW", SIZES[0], 1.0, False, False, "Arrangement"))
-        # The Bestiary is a tab of the Database page.
+        # The Bestiary is a tab of the Database page, and so are the
+        # records the generic editor holds: the actors carry a nested
+        # group of numbers and the weapons a fraction and a pair.
         shots.append(("bestiary", "Database", SIZES[0], 1.0, False, False, "Bestiary"))
+        shots.append(("db_actors", "Database", SIZES[0], 1.0, False, False, "Actors"))
+        shots.append(("db_weapons", "Database", SIZES[0], 1.0, False, False, "Weapons"))
     failed = 0
     for shot in shots:
         page, tab, size, zoom, sprite, preview = shot[:6]

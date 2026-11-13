@@ -1,6 +1,7 @@
 #include "DatabasePanel.hpp"
 
 #include "bestiary/BestiaryEditor.hpp"
+#include "bestiary/RecordEditor.hpp"
 
 #include <QFormLayout>
 #include <QMessageBox>
@@ -34,41 +35,14 @@ DatabasePanel::DatabasePanel(Project* p, QWidget* parent)
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
     dbTabs = new QTabWidget(this);
 
-    auto createCategoryView = [this](const std::string& catKey, const QStringList& fieldNames) {
-        QSplitter* splitter = new QSplitter(Qt::Horizontal, this);
-        QListWidget* listWidget = new QListWidget(this);
-        QWidget* formContainer = new QWidget(this);
-        QFormLayout* formLayout = new QFormLayout(formContainer);
-
-        for (const QString& field : fieldNames) {
-            formLayout->addRow(field + ":", new QLineEdit(formContainer));
-        }
-
-        splitter->addWidget(listWidget);
-        splitter->addWidget(formContainer);
-        splitter->setSizes({200, 800});
-
-        if (project && project->db.contains(catKey) && project->db[catKey].is_object()) {
-            for (const auto& [id, obj] : project->db[catKey].as_object()) {
-                std::string label = id;
-                if (obj.contains("name") && obj["name"].is_string()) {
-                    label += " (" + obj["name"].as_string() + ")";
-                }
-                listWidget->addItem(QString::fromStdString(label));
-            }
-        }
-
-        return splitter;
-    };
-
-    dbTabs->addTab(createCategoryView("actors", {"Name", "Char Graphic", "Level", "HP", "MP", "Str", "Def"}), "Actors");
-    dbTabs->addTab(createCategoryView("classes", {"Class Name", "Primary Stat", "HP Growth", "MP Growth"}), "Classes");
+    dbTabs->addTab(new records::RecordEditor(project, "actors", this), "Actors");
+    dbTabs->addTab(new records::RecordEditor(project, "classes", this), "Classes");
     dbTabs->addTab(createRaceEditor(), "Races");
     bestiaryEditor = new bestiary::BestiaryEditor(project, this);
     dbTabs->addTab(bestiaryEditor, "Bestiary");
-    dbTabs->addTab(createCategoryView("items", {"Item Name", "Type", "Value", "Cost"}), "Items");
-    dbTabs->addTab(createCategoryView("weapons", {"Weapon Name", "Might", "Reach", "Cost"}), "Weapons");
-    dbTabs->addTab(createCategoryView("skills", {"Skill Name", "MP Cost", "Power", "Radius"}), "Skills");
+    dbTabs->addTab(new records::RecordEditor(project, "items", this), "Items");
+    dbTabs->addTab(new records::RecordEditor(project, "weapons", this), "Weapons");
+    dbTabs->addTab(new records::RecordEditor(project, "skills", this), "Skills");
 
     mainLayout->addWidget(dbTabs);
     refreshData();
