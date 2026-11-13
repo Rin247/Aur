@@ -65,9 +65,49 @@ namespace aur
         return false;
     }
 
+    TerrainPick pick_terrain(const Json &map, const Json &tileset, const std::string &layer,
+                              int x, int y)
+    {
+        TerrainPick pick;
+        pick.x = x;
+        pick.y = y;
+        if (!map.contains("layers") || !map["layers"].is_object() ||
+            !map["layers"].contains(layer) || !map["layers"][layer].is_array())
+            return pick;
+        const Json &rows = map["layers"][layer].as_array();
+        const int height = map["h"].as_int();
+        const int width = map["w"].as_int();
+        if (y < 0 || y >= height || y >= static_cast<int>(rows.as_array().size()))
+            return pick;
+        const Json &row = rows[static_cast<size_t>(y)].as_array();
+        if (x < 0 || x >= width || x >= static_cast<int>(row.as_array().size()))
+            return pick;
+        const int tile = row[static_cast<size_t>(x)].as_int();
+        const std::map<int, std::string> groups = tile_groups(tileset);
+        const auto entry = groups.find(tile);
+        if (entry == groups.end())
+            return pick;
+        pick.group = entry->second;
+        if (!tileset.contains("tiles") || !tileset["tiles"].is_array())
+            return pick;
+        const Json &tiles = tileset["tiles"].as_array();
+        if (tile >= 0 && tile < static_cast<int>(tiles.as_array().size()))
+        {
+            const Json &record = tiles[static_cast<size_t>(tile)];
+            if (record.contains("name") && record["name"].is_string())
+                pick.tile_name = record["name"].as_string();
+        }
+        // The mask says where the terrain continues; the land is where it
+        // does not, which is the side a coastal tile's beach is on.
+        const int mask = mask_at(map, tileset, layer, x, y, pick.group, groups);
+        pick.land_mask = (~mask) & (N | E | S | W);
+        return pick;
+    }
+
     GeneratedMap generate_map_asset(MapKind kind, int seed, int width, int height,
                                     int tile_size, int first_tile_index,
-                                    const std::string &map_id, const std::string &name)
+                                    const std::string &map_id, const std::string &name,
+                                    const TerrainPick *pick)
     {
         if (width < 4 || width > 256 || height < 4 || height > 256)
             throw std::runtime_error("Map dimensions must be 4-256 tiles.");
@@ -115,6 +155,26 @@ namespace aur
             object_rows.push_back(object_row);
         }
 
+        if (pick && !pick->group.empty())
+        {
+            // The picked tile's land is on these sides, and the expansion
+            // keeps them: the beach stays on the west if it was on the
+            // west.
+            const int land = pick->land_mask;
+            for (int y = 0; y < height; ++y)
+            {
+                JsonArray &row = ground_rows[static_cast<size_t>(y)].as_array();
+                for (int x = 0; x < width; ++x)
+                {
+                    Json &cell = row[static_cast<size_t>(x)];
+                    const bool edge = x == 0 || y == 0 || x == width - 1 || y == height - 1;
+                    if (!edge)
+                        continue;
+                    const int side = x == 0 ? W : x == width - 1 ? E : y == 0 ? N : S;
+                    cell = Json((land & side) ? ground_tile : wall_tile);
+                }
+            }
+        }
         if (platformer)
         {
             // Two platforms to jump onto, at seeded heights.
