@@ -12,12 +12,12 @@
 <!-- The last thing that was actually run, with its result. Delete a line when it stops being true. -->
 
 - `C:\Dev\Qt\Tools\CMake_64\bin\ctest.exe --test-dir build\Release --timeout 300` — 7 of 7
-  suites passed (66 checks), 2026-11-13.
+  suites passed (67 checks), 2026-11-13.
 - `python tools\conformance.py --project Aur` — all 9 checks clean, 2026-11-13.
-- `python tests\render_check.py` — 22 captures written to `build/renders/`, 2026-11-13. The pages
+- `python tests\render_check.py` — 24 captures written to `build/renders/`, 2026-11-13. The pages
   are Map Editor, World, Sprite Editor, Tileset Editor, DAW, Creature Forge, Database and
   Playtest, at both estate sizes, plus the zoom sweep, the sprite preview, the DAW's
-  arrangement and the Bestiary. **A render asserts that a
+  arrangement, the Bestiary and the Database's actors and weapons. **A render asserts that a
   surface did not crash, not that it looks right: open the PNGs.**
 - `cmd /c "AIO.bat build windows Release"` — built and deployed, 2026-11-13.
 
