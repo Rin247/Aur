@@ -338,6 +338,28 @@ MainWindow::MainWindow(const std::string& project_path, QWidget* parent)
     // Keyboard Shortcuts (F5 Play; Ctrl+S is the File-menu action)
     QShortcut* f5Shortcut = new QShortcut(QKeySequence(Qt::Key_F5), this);
     connect(f5Shortcut, &QShortcut::activated, this, &MainWindow::playProject);
+
+    // F11 swaps between maximized and windowed.
+    QShortcut* fullScreenShortcut = new QShortcut(QKeySequence(Qt::Key_F11), this);
+    connect(fullScreenShortcut, &QShortcut::activated, this, [this]() {
+        if (isMaximized()) {
+            showNormal();
+        } else {
+            showMaximized();
+        }
+    });
+
+    // Ctrl+Tab walks the pages, and Ctrl+Shift+Tab walks back.
+    QShortcut* nextPage = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Tab), this);
+    connect(nextPage, &QShortcut::activated, this, [this]() {
+        if (tabs && tabs->count() > 0)
+            tabs->setCurrentIndex((tabs->currentIndex() + 1) % tabs->count());
+    });
+    QShortcut* previousPage = new QShortcut(QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_Tab), this);
+    connect(previousPage, &QShortcut::activated, this, [this]() {
+        if (tabs && tabs->count() > 0)
+            tabs->setCurrentIndex((tabs->currentIndex() - 1 + tabs->count()) % tabs->count());
+    });
 }
 
 void MainWindow::saveProject() {

@@ -112,6 +112,16 @@ twenty-two PNGs.
   is larger than the floor, so the app could not be shown at it, and every capture was 45 px
   short at the bottom.
 
+## Keybinds
+
+| key | what it does |
+|---|---|
+| `F5` | play the project |
+| `F11` | swap between maximized and windowed |
+| `Ctrl+Tab` / `Ctrl+Shift+Tab` | the next page / the previous one |
+| `Ctrl+S` / `Ctrl+O` | save the project / open another one |
+| `F2` | the in-game debug menu (the playtest) |
+
 ## Open defects
 
 1. **`studio/MusicPanel.cpp` is 1,311 lines**, over the owner's hard ceiling of ~1,250 and

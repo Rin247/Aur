@@ -310,6 +310,10 @@
   of 690 (`DESIGN.md` 12), so the app could not be shown at the floor and
   every capture was 45 px short at the bottom. The floor is now the
   minimum, and the captures hold the whole window.
+- **A list's padding is dead space.** The list items carried 4px of
+  vertical padding, which is the space the owner noticed: more items per
+  list and fewer scrollbars. It is 2px now, and the horizontal padding
+  stayed at 4px.
 - **The engine's movement is now a mode.** The field's rule -- four
   directions, one speed, a centre probe -- is the top-down mode, byte for
   byte; a platformer map gets gravity, a jump with a variable height and

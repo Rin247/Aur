@@ -56,7 +56,7 @@ int main(int argc, char* argv[]) {
             background: #11171f; alternate-background-color: #19212a;
             color: #e8e1cf; border: 1px solid #39444e;
         }
-        QListWidget::item, QTreeWidget::item { padding: 4px; }
+        QListWidget::item, QTreeWidget::item { padding: 2px 4px; }
         QListWidget::item:selected, QTreeWidget::item:selected, QTableWidget::item:selected {
             background: #725b36; color: #fff3d4;
         }
