@@ -42,6 +42,7 @@ void test_movement_modes();
 void test_movement_one_way();
 void test_camera_modes();
 void test_record_fields();
+void test_mapforge();
 void test_master_volume();
 void test_offline_render_job();
 void test_song_v1_contract();
@@ -145,6 +146,7 @@ int main(int argc, char** argv) {
     RUN_TEST(test_movement_one_way);
     RUN_TEST(test_camera_modes);
     RUN_TEST(test_record_fields);
+    RUN_TEST(test_mapforge);
     RUN_TEST(test_master_volume);
     RUN_TEST(test_offline_render_job);
     RUN_TEST(test_song_v1_contract);

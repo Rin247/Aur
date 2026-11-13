@@ -318,6 +318,11 @@
   rule "the feet were in a row above the platform's" is what lets a hero
   jump up through it and still land on it, and it never catches a hero
   who is already underneath.
+- **A coastal tile on the globe is an autotile variant, not a tile
+  kind.** The world tileset's ocean autotile is edge-joined, so a coastal
+  cell holds the ocean's edge variant and the land is on the side the
+  variant faces. That is where the direction already lives, so an
+  expansion reads it rather than working it out a second way.
 - **The MCP writes the project when it saves, and its startup seeds the
   starter lore into the database.** Running the tile tool on the shipped
   project added the "elementals" race and a walkable stone tile to it.

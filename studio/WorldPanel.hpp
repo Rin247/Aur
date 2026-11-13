@@ -44,6 +44,7 @@ class WorldPanel : public QWidget {
     QComboBox* weatherCombo = nullptr;
     QPushButton* newBiomeButton = nullptr;
     QPushButton* generateWorldButton = nullptr;
+    QPushButton* generateMapButton = nullptr;
     world::TimeWeatherBar* timeWeather = nullptr;
     world::WorldGenerationJob* generation_job = nullptr;
     QPushButton* addLocationButton = nullptr;
@@ -55,6 +56,8 @@ public:
     explicit WorldPanel(Project* project = nullptr, QWidget* parent = nullptr);
     void setProject(Project* p);
     void refreshGraph();
+    // Grows a seeded map: a town, a cave or a platformer room.
+    void generateMap();
     // The zoom control, as a factor of the fit.
     void setEditorZoom(qreal factor);
 

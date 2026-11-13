@@ -24,6 +24,8 @@ add_library(aur_engine STATIC
     engine/aur/camera.hpp
     engine/aur/clock.cpp
     engine/aur/forge.cpp
+    engine/aur/mapforge.cpp
+    engine/aur/mapforge.hpp
     engine/aur/worldgen.cpp
     engine/aur/script.cpp
     engine/aur/game.cpp
@@ -246,6 +248,7 @@ add_executable(aur_tests
     tests/test_bestiary_data.cpp
     tests/test_movement.cpp
     tests/test_record_fields.cpp
+    tests/test_mapforge.cpp
     tests/test_weather_render.cpp
     tests/test_step_sequencer.cpp
     tests/test_arpeggiator.cpp

@@ -64,6 +64,10 @@
 
 ## Open
 
+- **Expand a world map tile into a map** (owner, 2026-11-12): pick a
+  tile on the world map, send it to the map editor, and grow it into a map
+  that keeps the direction -- a beach on the west side stays on the west
+  side. Plan at `Bible/notes/globe-expand.md`.
 - **A map seed generator** - the estate can seed a character, a creature,
   an effect, clothing, a prop and a tile, but not a map: every field map
   was made by hand. Plan at `Bible/notes/map-generator.md`.

@@ -1,6 +1,7 @@
 # The map seed generator: plan
 
-Status: P0 done (the audit). Next: P1, the engine's generator.
+Status: P1 and P2 done (2026-11-13). Next: P3, the MCP's map_generate
+and the capture.
 
 ## Goal
 
@@ -85,11 +86,11 @@ committed on its own.
 
 ### P1 The engine's generator
 
-- [ ] P1.1 `mapforge`: the kinds (a town, a cave and a platformer room),
+- [x] P1.1 `mapforge`: the kinds (a town, a cave and a platformer room),
   the seed, the size, and the map's layers and entities.
-- [ ] P1.2 The tiles the map needs are added to the tileset with their
+- [x] P1.2 The tiles the map needs are added to the tileset with their
   flags -- a solid floor for the platformer, a wall for the town.
-- [ ] P1.3 The test: the same seed gives the same map, the kinds differ,
+- [x] P1.3 The test: the same seed gives the same map, the kinds differ,
   and the platformer's floor is solid while the field's grass is not.
 
 Acceptance: ctest green; the generator needs no widget and the test says
@@ -97,9 +98,9 @@ so.
 
 ### P2 The studio
 
-- [ ] P2.1 "Generate map…" in the World tab, beside "Generate new
+- [x] P2.1 "New map…" in the World tab, beside "Generate new
   world…": the kind, the seed, the size, and the name.
-- [ ] P2.2 The map is added to the project and opened, and its mode is
+- [x] P2.2 The map is added to the project and opened, and its mode is
   set from the kind.
 
 Acceptance: a generated map opens in the map editor and plays.

@@ -15,6 +15,7 @@
 #include "aur/autotile.hpp"
 #include "aur/clock.hpp"
 #include "aur/game.hpp"
+#include "aur/mapforge.hpp"
 #include "aur/world_topology.hpp"
 
 #include <QColorDialog>
@@ -134,6 +135,10 @@ WorldPanel::WorldPanel(Project* p, QWidget* parent)
     timeWeather = new world::TimeWeatherBar(project, this);
     header->addWidget(timeWeather);
     header->addStretch(1);
+    generateMapButton = new QPushButton(QStringLiteral("New map\u2026"), this);
+    generateMapButton->setToolTip(
+        "Grow a seeded map: a town, a cave, or a platformer room.");
+    header->addWidget(generateMapButton);
     generateWorldButton = new QPushButton(QStringLiteral("New world"), this);
     generateWorldButton->setToolTip(
         "Generate a new world: a fresh seed, a new map, and the terrain to match.");
@@ -411,6 +416,7 @@ WorldPanel::WorldPanel(Project* p, QWidget* parent)
     connect(editNodeButton, &QPushButton::clicked, this, [this]() { editWorldEntity(); });
     connect(deleteNodeButton, &QPushButton::clicked, this, [this]() { deleteWorldEntity(); });
     connect(newBiomeButton, &QPushButton::clicked, this, [this]() { createBiome(); });
+    connect(generateMapButton, &QPushButton::clicked, this, [this]() { generateMap(); });
     connect(generateWorldButton, &QPushButton::clicked, this, [this]() {
         if (!project || !project->tilesets.contains("world") ||
             !project->tilesets["world"].contains("tiles") ||
@@ -514,6 +520,64 @@ WorldPanel::WorldPanel(Project* p, QWidget* parent)
     });
 
     refreshGraph();
+}
+
+void WorldPanel::generateMap() {
+    if (!project)
+        return;
+    QDialog dialog(this);
+    dialog.setWindowTitle("Generate a map");
+    QFormLayout form(&dialog);
+    auto* kind = new QComboBox(&dialog);
+    kind->addItem("Town", "town");
+    kind->addItem("Cave", "cave");
+    kind->addItem("Platformer room", "platformer");
+    form.addRow("Kind:", kind);
+    auto* seed = new QSpinBox(&dialog);
+    seed->setRange(-1000000000, 1000000000);
+    seed->setValue(QRandomGenerator::global()->bounded(-1000000000, 1000000000));
+    form.addRow("Seed:", seed);
+    auto* width = new QSpinBox(&dialog);
+    width->setRange(8, 128);
+    width->setValue(40);
+    form.addRow("Width (tiles):", width);
+    auto* height = new QSpinBox(&dialog);
+    height->setRange(8, 96);
+    height->setValue(24);
+    form.addRow("Height (tiles):", height);
+    QDialogButtonBox buttons(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, &dialog);
+    form.addRow(&buttons);
+    connect(&buttons, &QDialogButtonBox::accepted, &dialog, &QDialog::accept);
+    connect(&buttons, &QDialogButtonBox::rejected, &dialog, &QDialog::reject);
+    if (dialog.exec() != QDialog::Accepted)
+        return;
+
+    MapKind map_kind = MapKind::Town;
+    mapKindFromName(kind->currentData().toString().toStdString(), map_kind);
+    const int seed_value = seed->value();
+    const std::string id = "map_" + std::to_string(seed_value);
+    const std::string name = std::string(mapKindName(map_kind)) + " " + std::to_string(seed_value);
+    try {
+        // The tiles the map needs go into the tileset, and the map uses
+        // them: the flags are per tile, so a platformer's floor cannot be
+        // the field's grass.
+        auto& tileset = project->tilesets["terra"];
+        auto& tiles = tileset["tiles"].as_array();
+        const int first_tile = static_cast<int>(tiles.size());
+        const int tile_size = tileset.contains("tile") ? tileset["tile"].as_int() : 16;
+        const GeneratedMap generated = generate_map_asset(map_kind, seed_value,
+                                                         width->value(), height->value(),
+                                                         tile_size, first_tile, id, name);
+        for (const Json& tile : generated.tiles)
+            tiles.push_back(tile);
+        project->maps[id] = generated.map;
+        project->invalidate();
+    } catch (const std::exception& error) {
+        QMessageBox::warning(this, "Generate map", QString::fromStdString(error.what()));
+        return;
+    }
+    refreshGraph();
+    selectMap(id);
 }
 
 void WorldPanel::setProject(Project* p) {
