@@ -318,6 +318,10 @@
   rule "the feet were in a row above the platform's" is what lets a hero
   jump up through it and still land on it, and it never catches a hero
   who is already underneath.
+- **The MCP writes the project when it saves, and its startup seeds the
+  starter lore into the database.** Running the tile tool on the shipped
+  project added the "elementals" race and a walkable stone tile to it.
+  The tools are for a project of your own, not the shipped one.
 - **The tile's flags are per tile, so a platformer's floor cannot be
   the field's grass.** The forge's generator takes them now (Solid and
   One-way) and the tileset editor can mark any tile one-way, but a tile

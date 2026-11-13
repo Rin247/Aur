@@ -64,6 +64,9 @@
 
 ## Open
 
+- **A map seed generator** - the estate can seed a character, a creature,
+  an effect, clothing, a prop and a tile, but not a map: every field map
+  was made by hand. Plan at `Bible/notes/map-generator.md`.
 - **Split the DAW's panel** - `studio/MusicPanel.cpp` is 1,349 lines,
   over the owner's hard ceiling of ~1,250, and it grew with the transport.
   The MIDI device strip (the combos, the connect buttons, the refresh, the
