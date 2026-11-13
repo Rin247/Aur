@@ -126,11 +126,11 @@ and the tile flags.
 
 ### P3 The cameras
 
-- [ ] P3.1 The side-scrolling camera: the x follows the hero and is
+- [x] P3.1 The side-scrolling camera: the x follows the hero and is
   clamped to the room, the y follows with a dead zone, and the map does
   not wrap.
-- [ ] P3.2 The field keeps its camera exactly as it is.
-- [ ] P3.3 The test: the camera's position for a hero in a room, the
+- [x] P3.2 The field keeps its camera exactly as it is.
+- [x] P3.3 The test: the camera's position for a hero in a room, the
   dead zone's edges, and the clamp.
 
 Acceptance: ctest green; the field's camera is pinned by the same test

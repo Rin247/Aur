@@ -83,6 +83,9 @@ twenty-two PNGs.
 - **The platformer's rules are in the engine.** Gravity, a jump with a
   variable height, a body swept per axis, and a one-way platform that
   catches a fall from above and lets a hero up through it.
+- **The cameras are the mode's.** The field's is the hero's place,
+  clamped and wrap-aware; the platformer's scrolls sideways and holds its
+  height until the hero leaves a dead zone.
 - **The engine has movement modes.** The top-down field is one of them
   and a platformer is another, chosen by the map's `mode`. The rules are
   a pure function of the hero's state and the tile flags, so they are

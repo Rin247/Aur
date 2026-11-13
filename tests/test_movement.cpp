@@ -176,3 +176,56 @@ void test_movement_one_way()
     moveTopDown(walker, flat, 1, 0, 148.0, 1.0 / 60.0);
     ASSERT(walker.x > 5 * 16 + 8);
 }
+
+// The cameras: the field's is the hero's place, clamped and wrap-aware,
+// and the platformer's scrolls sideways with a dead zone.
+void test_camera_modes()
+{
+    using namespace aur;
+
+    MoveWorld world;
+    world.width = 100;
+    world.height = 50;
+    world.tile_size = 16;
+
+    // The field's camera: the hero in the middle of a big map.
+    Body hero;
+    hero.x = 50 * 16;
+    hero.y = 25 * 16;
+    const Camera field = fieldCamera(hero, world, 320, 240);
+    ASSERT(std::abs(field.x - (50 * 16 - 160)) < 0.001);
+    ASSERT(std::abs(field.y - (25 * 16 - 24 - 120)) < 0.001);
+
+    // The clamp: the hero at the left edge, the camera stops at zero.
+    hero.x = 0;
+    const Camera edge = fieldCamera(hero, world, 320, 240);
+    ASSERT(edge.x == 0.0);
+
+    // The wrap: a world map does not clamp in x.
+    world.wraps_x = true;
+    hero.x = 50 * 16;
+    const Camera wrapped = fieldCamera(hero, world, 320, 240);
+    ASSERT(std::abs(wrapped.x - (50 * 16 - 160)) < 0.001);
+
+    // The platformer's camera: it scrolls sideways and holds its height
+    // until the hero leaves the dead zone.
+    world.wraps_x = false;
+    Body jumper;
+    jumper.x = 50 * 16;
+    jumper.y = 25 * 16;
+    Camera camera{0, 0};
+    camera = platformerCamera(jumper, world, 320, 240, 48.0, camera);
+    ASSERT(std::abs(camera.x - (50 * 16 - 160)) < 0.001);
+    const double held = camera.y;
+
+    // The hero is inside the dead zone: the camera holds.
+    jumper.y = held + 120 + 10;
+    camera = platformerCamera(jumper, world, 320, 240, 48.0, camera);
+    ASSERT(camera.y == held);
+
+    // The hero leaves the zone: the camera follows.
+    jumper.y = held + 120 + 60;
+    camera = platformerCamera(jumper, world, 320, 240, 48.0, camera);
+    ASSERT(camera.y != held);
+    ASSERT(camera.y <= jumper.y);
+}
