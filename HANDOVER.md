@@ -77,6 +77,12 @@ through the same device the DAW previews with, so swapping tabs stops
 the other (owner, 2026-11-12). The MIDI file transfer moved out of
 `MusicPanel.cpp` in the same pass, so the panel stopped growing.
 
+**The platformer engine's rules are in and tested** (`Bible/notes/platformer.md`,
+P1 to P3): the modes, the physics, the one-way platform and the cameras.
+P4 waits on an asset: the project has no solid floor tile, and the
+tileset's flags are per tile, so the field's walkable floors cannot
+become the platformer's floor. The tiles are the owner's to choose.
+
 **The platformer engine has its modes** (`Bible/notes/platformer.md`):
 the top-down field is one mode and a platformer is another, chosen by
 the map's `mode`, and the rules are a pure function of the hero's state

@@ -138,6 +138,18 @@ that pins its movement.
 
 ### P4 The map and the proof
 
+**Blocked on an asset.** The project has no solid floor tile: the tileset's
+flags are per tile, so the walkable floors (the grass, the cave floor) are
+shared with the field's maps, and the solid tiles are the trees, the roofs
+and the walls. A platformer room needs its own tiles -- a solid floor and
+a one-way platform -- and the tiles are the owner's to choose. The rules
+are in and tested; the room is waiting on the art.
+
+- [ ] P4.0 The tiles: a solid floor and a one-way platform, in a tileset
+      of their own, so the field's floors stay walkable.
+- [ ] P4.1 A platformer map: the mode, the tiles, the exits and the
+      spawns -- a small room in the shipped project, played with.
+
 - [ ] P4.1 A platformer map: the mode, the tiles, the exits and the
   spawns -- a small room in the shipped project, played with.
 - [ ] P4.2 The studio: the map's mode is editable, so a map can be made
