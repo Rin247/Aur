@@ -96,6 +96,10 @@ and so does the editor, and the World header answers "what does the game
 show then?" -- the day, the hour and the map's climate. A forced kind is
 the runtime's manual override.
 
+**The DAW's panel owes a split** (`studio/MusicPanel.cpp`, 1,349 lines,
+over the hard ceiling): the MIDI device strip moves out first. It is
+queued in `WANTED.md`.
+
 **The Database page's editors landed** (`Bible/notes/database-editors.md`):
 five of its tabs were a list and a form of empty fields. One generic
 editor and a table of fields per kind hold them now, and a field the

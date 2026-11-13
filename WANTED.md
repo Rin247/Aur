@@ -64,6 +64,11 @@
 
 ## Open
 
+- **Split the DAW's panel** - `studio/MusicPanel.cpp` is 1,349 lines,
+  over the owner's hard ceiling of ~1,250, and it grew with the transport.
+  The MIDI device strip (the combos, the connect buttons, the refresh, the
+  record arm, the count-in and the status) is the piece to move first; the
+  FX strip is already its own widget.
 - **Qt desktop foundation** — Audit AIO/Vulkan behavior, legacy source/header layout, professional toolbars/settings/keybindings, and canonical `Aur` artifact identity; do not suffix its app name with Qt/desktop roles. Preserve the higher-priority active Aur queue.
 
 
