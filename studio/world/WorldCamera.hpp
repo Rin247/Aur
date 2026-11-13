@@ -37,7 +37,7 @@ namespace aur::studio
     class WorldCamera
     {
     public:
-        static qreal clampZoom(qreal zoom) { return std::clamp(zoom, 0.05, 16.0); }
+        static qreal clampZoom(qreal zoom) { return std::clamp(zoom, 0.05, 32.0); }
 
         static QRectF mapBounds(const WorldCameraSpec &spec, const QSizeF &widget)
         {

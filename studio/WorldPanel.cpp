@@ -93,7 +93,7 @@ WorldPanel::WorldPanel(Project* p, QWidget* parent)
     header->addSpacing(10);
     header->addWidget(new QLabel("Zoom:", this));
     zoomSpin = new QSpinBox(this);
-    zoomSpin->setRange(5, 1600);
+    zoomSpin->setRange(5, 3200);
     zoomSpin->setSingleStep(25);
     zoomSpin->setValue(100);
     zoomSpin->setSuffix("%");
