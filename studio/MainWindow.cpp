@@ -481,11 +481,8 @@ bool MainWindow::nativeEvent(const QByteArray& eventType, void* message, qintptr
     if (eventType == "windows_generic_MSG") {
         const auto* native_message = static_cast<MSG*>(message);
         if (native_message->message == WM_NCCALCSIZE && native_message->wParam) {
-            // The frame is the app's own chrome: the client area is the whole
-            // window, so the title row reaches the screen edge and the
-            // window has no OS border to drag.
-            auto* params = reinterpret_cast<NCCALCSIZE_PARAMS*>(native_message->lParam);
-            params->rgrc[0] = params->rgrc[2];
+            // The client area is the whole window: the app draws its own frame,
+            // and rgrc[0] is left as the new window rect so a maximize grows it.
             *result = 0;
             return true;
         }

@@ -403,3 +403,20 @@
 - **The MIDI file transfer moved out of the panel** (`studio/music/
   SongTransfer.*`): a pure move, so `MusicPanel.cpp` stopped growing at
   1,311 lines and the DAW's new controls could go in new files.
+
+## The maximized window's client is the window (2026-11-14)
+
+- **A maximized window kept its restored client rect.** `WM_NCCALCSIZE` set
+  `rgrc[0] = rgrc[2]` -- the client rect from *before* the size change -- and
+  returned 0, so on a maximize the client stayed at the old size while the
+  window grew. Measured on the 2560x1600 display: window 2560x1540, client
+  2400x1500. The chrome laid out 2400 wide inside a 2560 window, so the
+  maximize and close buttons fell off the right edge and "New world" was
+  clipped -- which read as "the toolbar breaks" and "manual maximizing does
+  not work". It was one defect, not two.
+- **The fix is to leave `rgrc[0]` alone.** On input it is the *new* window
+  rect, and returning 0 tells Windows the client area is that rect, so the
+  client grows with the window. `rgrc[0] = rgrc[2]` was the bug, not the
+  frame removal: the frame removal is the `*result = 0`.
+- **Measured after**: window 2560x1540, client 2560x1540, in the opened,
+  restored and re-maximized states alike.
