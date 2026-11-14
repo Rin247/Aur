@@ -133,3 +133,12 @@ start of any task, check the size of every file you will touch; at the end, chec
 Several harnesses and agents work this tree, so a dirty working tree and an unpushed commit are
 normal: push what is not pushed. A roadblock is audited and recorded in `WANTED.md`/`HANDOVER.md`
 before work moves on. Authority: root `AGENTS.md` 53.
+
+## Python (estate rule)
+
+**Python 3.15 is the preferred interpreter. `py -3.15` selects it** — it is the newest version
+installed, and it is the default, so bare `python` resolves to it too. Write every helper script,
+checker and one-off measurement for 3.15 and run it through `py -3.15`; never pin or fall back to
+an older interpreter because a different `python` answered first on `PATH`, and never use the
+`C:\LLM\Data\...\Python` copies that belong to other applications. Authority: root `AGENTS.md`
+`## The toolchains live here`.
