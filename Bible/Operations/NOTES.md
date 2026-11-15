@@ -420,3 +420,20 @@
   frame removal: the frame removal is the `*result = 0`.
 - **Measured after**: window 2560x1540, client 2560x1540, in the opened,
   restored and re-maximized states alike.
+
+## The World header fits the floor (2026-11-15)
+
+- **The World header elided its controls at 1280.** The render sweep at the
+  estate floor showed `Day (`, `Game's ro` and `08:0` -- the day spin, the
+  weather combo and the time edit were each narrower than their own text.
+  The row is one `QHBoxLayout` of twelve controls; when the width runs out
+  the combos absorb it by eliding, and a number elided mid-digit reads as
+  broken rather than as a narrow control.
+- **The "Weather:" label went.** The bar it introduced already leads with
+  its own `Day` spin and its own `Time:` label, so the outer label named a
+  group the bar was not in. Dropping it freed the 66 the row needed, and the
+  map combo went back to 148 so `Earth-like World` is no longer cut.
+- **Dead label removed.** An empty `QLabel` with a 15px style sat at the
+  head of the row and was never given text.
+- **Measured after**: at 1280x690 and 1280x770 every header control shows
+  its full text, and at 2560 the row is unchanged in appearance.

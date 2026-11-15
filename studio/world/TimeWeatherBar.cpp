@@ -21,7 +21,7 @@ namespace aur
             row->setContentsMargins(0, 0, 0, 0);
             row->setSpacing(6);
             // The bar is not squeezed to nothing when the header is full.
-            setMinimumWidth(290);
+            setMinimumWidth(250);
 
             daySpin = new QSpinBox(this);
             daySpin->setRange(0, 111);

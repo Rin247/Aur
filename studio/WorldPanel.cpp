@@ -71,13 +71,9 @@ WorldPanel::WorldPanel(Project* p, QWidget* parent)
     layout->setSpacing(8);
 
     auto* header = new QHBoxLayout();
-    auto* title = new QLabel(this);
-    title->setStyleSheet("font-size: 15px; font-weight: 700; color: #e8edf2; letter-spacing: 1px;");
-    header->addWidget(title);
-    header->addSpacing(14);
     header->addWidget(new QLabel("Map:", this));
     mapCombo = new QComboBox(this);
-    mapCombo->setMinimumWidth(150);
+    mapCombo->setMinimumWidth(148);
     header->addWidget(mapCombo);
     header->addSpacing(12);
     header->addWidget(new QLabel("Tool:", this));
@@ -97,7 +93,7 @@ WorldPanel::WorldPanel(Project* p, QWidget* parent)
     zoomSpin->setSingleStep(25);
     zoomSpin->setValue(100);
     zoomSpin->setSuffix("%");
-    zoomSpin->setMaximumWidth(96);
+    zoomSpin->setMaximumWidth(86);
     header->addWidget(zoomSpin);
     auto* fitButton = new QPushButton("Fit", this);
     header->addWidget(fitButton);
@@ -132,7 +128,6 @@ WorldPanel::WorldPanel(Project* p, QWidget* parent)
     simulationAction->setCheckable(true);
     overlayButton->setMenu(overlayMenu);
     header->addWidget(overlayButton);
-    header->addWidget(new QLabel("Weather:", this));
     timeWeather = new world::TimeWeatherBar(project, this);
     header->addWidget(timeWeather);
     header->addStretch(1);
