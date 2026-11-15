@@ -61,6 +61,9 @@
   owner-approved for that slice only.
 - `Bible/notes/sc-cleanroom.md` — SC (Sound Canvas-style) clean-room instrument, planning only; sequenced behind DAW P7a/P7b.
 
+- **`ROADMAP.md`** — the stages of this project's work and the standard a stage meets before the next starts (root `AGENTS.md` §"Project shape").
+- **`IMPLEMENTATION.md`** — every open item, by area, with its evidence and its gate: W-01, W-02, W-03, E-01, E-02, P-01, D-01, Q-01, L-01.
+
 
 ## Open
 
