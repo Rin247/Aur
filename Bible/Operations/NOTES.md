@@ -437,3 +437,18 @@
   head of the row and was never given text.
 - **Measured after**: at 1280x690 and 1280x770 every header control shows
   its full text, and at 2560 the row is unchanged in appearance.
+
+
+## 2026-11-16 repaint P0: safety net and line baseline
+
+- Plan: `Bible/notes/repaint.md`. Baseline before any change: ctest 7/7, `render_check.py` 24
+  captures, `C:\Projects\tools\conformance.py --project Aur` 9/9 clean.
+- The blank Map Editor capture was a cold-start flake, not a page defect: the same page painted
+  4,790 colours on the next launch. The harness left the old PNG in place when a capture failed, so
+  a stale white frame looked like a result. It now deletes the PNG before the shot and launches a
+  failed shot once more. It also uses `get_flattened_data` where Pillow has it.
+- Captures are 1920x1035 because this machine runs at 150% DPI (1280x690 logical). That is correct.
+- Line baseline (growth over these is a gate failure; lower an entry when its file shrinks):
+  `studio/MusicPanel.cpp` 1,268 (over the 1,250 hard ceiling), `studio/WorldPanel.cpp` 968,
+  `studio/world/WorldMapCanvas.cpp` 825, `studio/music/PianoRollCanvas.cpp` 788.
+  `studio/MainWindow.cpp` 575 is under the soft limit but holds the chrome and the native-event code.

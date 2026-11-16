@@ -173,6 +173,8 @@ def shoot(page, tab, size, zoom, sprite=False, preview=False, sub_tab=None):
     """One launch, one capture. Returns the PNG path or None."""
     w, h = size
     out = os.path.join(OUT_DIR, "%s_%dx%d_z%s.png" % (page, w, h, zoom))
+    if os.path.exists(out):
+        os.remove(out)
     args = [EXE, PROJECT, "--tab", tab, "--size", "%dx%d" % (w, h), "--no-state"]
     if zoom != 1.0:
         args += ["--zoom", str(zoom)]
@@ -245,7 +247,9 @@ def shoot(page, tab, size, zoom, sprite=False, preview=False, sub_tab=None):
             img = again.convert("RGB").crop((0, 0, cw, ch))
             colours = distinct_colours(img)
         img.save(out)
-        counts = Counter(img.getdata())
+        pixels = (img.get_flattened_data() if hasattr(img, "get_flattened_data")
+                  else img.getdata())
+        counts = Counter(pixels)
         total = sum(counts.values())
         print("render_check: %s %dx%d zoom=%s -> %s (%d colours, %d bytes)"
               % (tab, cw, ch, zoom, os.path.relpath(out, REPO), colours,
@@ -305,7 +309,11 @@ def main():
     for shot in shots:
         page, tab, size, zoom, sprite, preview = shot[:6]
         sub_tab = shot[6] if len(shot) > 6 else None
-        if shoot(page, tab, size, zoom, sprite, preview, sub_tab) is None:
+        result = shoot(page, tab, size, zoom, sprite, preview, sub_tab)
+        if result is None:
+            print("render_check: %s failed once, launching again" % page)
+            result = shoot(page, tab, size, zoom, sprite, preview, sub_tab)
+        if result is None:
             failed += 1
     print()
     print("render_check: %d captures in %s - OPEN THE PNGs" % (len(shots) - failed, OUT_DIR))
