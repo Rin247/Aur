@@ -175,6 +175,8 @@ add_executable(aur_studio
     studio/EventsPanel.cpp
     studio/TilesetEditorPanel.cpp
     studio/WorldSettingsPanel.cpp
+    studio/theme/ThemeMath.cpp
+    studio/theme/ThemePalettes.cpp
 )
 target_include_directories(aur_studio PRIVATE . studio)
 target_link_libraries(aur_studio PRIVATE aur_engine Qt6::Widgets Qt6::Multimedia Qt6::GuiPrivate Qt6::Concurrent)
@@ -257,6 +259,7 @@ add_executable(aur_tests
     tests/test_weather_render.cpp
     tests/test_step_sequencer.cpp
     tests/test_arpeggiator.cpp
+    tests/test_theme.cpp
     studio/PixelEditSession.cpp
     studio/bestiary/BestiaryData.cpp
     studio/bestiary/RecordFields.cpp
@@ -274,6 +277,8 @@ add_executable(aur_tests
     studio/world/WorldCommandHistory.cpp
     studio/world/WorldStrokeState.cpp
     studio/WorldModel.cpp
+    studio/theme/ThemeMath.cpp
+    studio/theme/ThemePalettes.cpp
 )
 target_include_directories(aur_tests PRIVATE studio)
 target_link_libraries(aur_tests PRIVATE aur_engine Qt6::Gui Qt6::Widgets)

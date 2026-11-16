@@ -70,6 +70,8 @@ void test_weather_preview_field();
 void test_weather_slot_parity();
 void test_step_sequencer();
 void test_arpeggiator();
+void test_theme_math();
+void test_theme_palettes();
 
 int main(int argc, char** argv) {
     // Allow a focused run without the memory-heavy full generator sweep.
@@ -176,6 +178,8 @@ int main(int argc, char** argv) {
     RUN_TEST(test_weather_slot_parity);
     RUN_TEST(test_step_sequencer);
     RUN_TEST(test_arpeggiator);
+    RUN_TEST(test_theme_math);
+    RUN_TEST(test_theme_palettes);
 
     std::cout << "\nResults: " << g_tests_passed << " passed, " << g_tests_failed << " failed.\n";
     return g_tests_failed > 0 ? 1 : 0;
