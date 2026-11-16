@@ -10,7 +10,8 @@
 #include "EventsPanel.hpp"
 #include "TilesetEditorPanel.hpp"
 #include "WorldSettingsPanel.hpp"
-#include "theme/LabelRoles.hpp"
+#include "FramelessWindow.hpp"
+#include "StudioChrome.hpp"
 #include <QLabel>
 #include <QApplication>
 #include <QSettings>
@@ -20,192 +21,11 @@
 #include <QKeySequence>
 #include <QMessageBox>
 #include <QFileDialog>
-#include <QHBoxLayout>
-#include <QMenu>
-#include <QMouseEvent>
 #include <QStyle>
 #include <QStatusBar>
-#include <QToolButton>
-#include <QVBoxLayout>
 #include <functional>
-#include <QWindow>
-#include <QEvent>
-
-#ifdef Q_OS_WIN
-#include <windows.h>
-#include <windowsx.h>
-#endif
 
 namespace aur {
-namespace {
-
-class StudioChrome final : public QWidget {
-    QMainWindow* window;
-    QPoint dragPosition;
-    bool dragging = false;
-    QToolButton* maximizeButton = nullptr;
-    QMenu* file_menu = nullptr;
-    QWidget* project_buttons = nullptr;
-    QHBoxLayout* titleRow = nullptr;
-    QHBoxLayout* projectLayout = nullptr;
-
-    // The hamburger: three lines, drawn rather than shipped as an asset.
-    static QIcon hamburger_icon() {
-        QIcon icon;
-        for (int size : {16, 32}) {
-            QPixmap pixmap(size, size);
-            pixmap.fill(Qt::transparent);
-            QPainter painter(&pixmap);
-            painter.setRenderHint(QPainter::Antialiasing);
-            painter.setPen(QPen(QColor("#c8c0ae"), std::max(1.5, size / 6.0),
-                                Qt::SolidLine, Qt::RoundCap));
-            const int margin = size / 5;
-            const int gap = size / 3;
-            for (int line = 0; line < 3; ++line) {
-                const int y = margin + line * gap;
-                painter.drawLine(margin, y, size - margin, y);
-            }
-            icon.addPixmap(pixmap);
-        }
-        return icon;
-    }
-
-public:
-    explicit StudioChrome(QMainWindow* owner) : QWidget(owner), window(owner) {
-        setObjectName("StudioChrome");
-        auto* layout = new QVBoxLayout(this);
-        layout->setContentsMargins(8, 4, 8, 1);
-        layout->setSpacing(2);
-        titleRow = new QHBoxLayout();
-        titleRow->setContentsMargins(4, 0, 0, 0);
-        // The file commands live behind a hamburger, so the toolbar can sit
-        // under the title instead of under a menu row.
-        auto* menuButton = new QToolButton(this);
-        menuButton->setIcon(hamburger_icon());
-        menuButton->setToolTip("File");
-        menuButton->setPopupMode(QToolButton::InstantPopup);
-        file_menu = new QMenu(menuButton);
-        menuButton->setMenu(file_menu);
-        titleRow->addWidget(menuButton);
-        auto* titleLabel = new QLabel(owner->windowTitle(), this);
-        titleLabel->setObjectName("StudioTitle");
-        theme::sectionTitle(titleLabel);
-        titleLabel->setContentsMargins(6, 2, 6, 2);
-        titleLabel->setAttribute(Qt::WA_TransparentForMouseEvents);
-        titleRow->addWidget(titleLabel);
-        project_buttons = new QWidget(this);
-        projectLayout = new QHBoxLayout(project_buttons);
-        projectLayout->setContentsMargins(4, 0, 4, 0);
-        projectLayout->setSpacing(2);
-        titleRow->addWidget(project_buttons);
-        titleRow->addStretch();
-        auto* minimize = new QToolButton(this);
-        minimize->setIcon(style()->standardIcon(QStyle::SP_TitleBarMinButton));
-        minimize->setToolTip("Minimize");
-        titleRow->addWidget(minimize);
-        maximizeButton = new QToolButton(this);
-        maximizeButton->setIcon(style()->standardIcon(QStyle::SP_TitleBarMaxButton));
-        maximizeButton->setToolTip("Maximize or restore");
-        titleRow->addWidget(maximizeButton);
-        auto* close = new QToolButton(this);
-        close->setIcon(style()->standardIcon(QStyle::SP_TitleBarCloseButton));
-        close->setToolTip("Close Aur");
-        close->setProperty("dangerHover", true);
-        titleRow->addWidget(close);
-        layout->addLayout(titleRow);
-        owner->setMenuWidget(this);
-        QObject::connect(minimize, &QToolButton::clicked, owner, &QWidget::showMinimized);
-        QObject::connect(maximizeButton, &QToolButton::clicked, owner, [owner]() {
-            if (owner->isMaximized()) {
-                owner->showNormal();
-            } else {
-                owner->showMaximized();
-            }
-        });
-        QObject::connect(close, &QToolButton::clicked, owner, &QWidget::close);
-        owner->installEventFilter(this);
-    }
-
-    // The menu behind the hamburger: the file commands.
-    QMenu* fileMenu() const { return file_menu; }
-
-    // The project's actions, as icon buttons beside the hamburger. One
-    // control cluster in the title row is the estate's rule, and it gives the
-    // editor a row back.
-    void setProjectActions(const QList<QAction*>& actions) {
-        for (QAction* action : actions) {
-            auto* button = new QToolButton(this);
-            button->setDefaultAction(action);
-            button->setToolButtonStyle(Qt::ToolButtonIconOnly);
-            button->setIconSize(QSize(16, 16));
-            projectLayout->addWidget(button);
-        }
-    }
-
-    // The tab bar, in the title row beside the buttons.
-    void addTitleWidget(QWidget* widget) {
-        // After the project buttons and before the stretch.
-        titleRow->insertWidget(3, widget);
-    }
-
-    // The project buttons, icon-only or with their text.
-    void setCompactButtons(bool compact) {
-        for (QToolButton *button : project_buttons->findChildren<QToolButton*>())
-            button->setToolButtonStyle(compact ? Qt::ToolButtonIconOnly
-                                               : Qt::ToolButtonTextBesideIcon);
-    }
-
-protected:
-    void paintEvent(QPaintEvent*) override {
-        QPainter painter(this);
-        painter.fillRect(rect(), palette().color(QPalette::Base));
-        painter.setPen(palette().color(QPalette::Mid));
-        painter.drawLine(rect().bottomLeft(), rect().bottomRight());
-    }
-    bool eventFilter(QObject* watched, QEvent* event) override {
-        if (watched == window && event->type() == QEvent::WindowStateChange && maximizeButton) {
-            maximizeButton->setIcon(window->style()->standardIcon(
-                window->isMaximized() ? QStyle::SP_TitleBarNormalButton
-                                      : QStyle::SP_TitleBarMaxButton));
-        }
-        return QWidget::eventFilter(watched, event);
-    }
-
-    void mousePressEvent(QMouseEvent* event) override {
-        if (event->button() == Qt::LeftButton && window && !window->isMaximized()) {
-            dragging = true;
-            dragPosition = event->globalPosition().toPoint() - window->frameGeometry().topLeft();
-            event->accept();
-            return;
-        }
-        QWidget::mousePressEvent(event);
-    }
-
-    void mouseMoveEvent(QMouseEvent* event) override {
-        if (dragging && window && (event->buttons() & Qt::LeftButton) && !window->isMaximized()) {
-            window->move(event->globalPosition().toPoint() - dragPosition);
-            event->accept();
-            return;
-        }
-        QWidget::mouseMoveEvent(event);
-    }
-
-    void mouseReleaseEvent(QMouseEvent* event) override {
-        dragging = false;
-        QWidget::mouseReleaseEvent(event);
-    }
-
-    void mouseDoubleClickEvent(QMouseEvent* event) override {
-        if (event->button() == Qt::LeftButton && window) {
-            window->isMaximized() ? window->showNormal() : window->showMaximized();
-            event->accept();
-            return;
-        }
-        QWidget::mouseDoubleClickEvent(event);
-    }
-};
-
-} // namespace
 
 MainWindow::MainWindow(const std::string& project_path, QWidget* parent)
     : QMainWindow(parent), project(Project::load(project_path)), project_path(project_path) {
@@ -482,54 +302,7 @@ void MainWindow::closeEvent(QCloseEvent* event) {
 }
 
 bool MainWindow::nativeEvent(const QByteArray& eventType, void* message, qintptr* result) {
-#ifdef Q_OS_WIN
-    if (eventType == "windows_generic_MSG") {
-        const auto* native_message = static_cast<MSG*>(message);
-        if (native_message->message == WM_NCCALCSIZE && native_message->wParam) {
-            // The client area is the whole window: the app draws its own frame,
-            // and rgrc[0] is left as the new window rect so a maximize grows it.
-            *result = 0;
-            return true;
-        }
-        if (native_message->message == WM_GETMINMAXINFO) {
-            auto* limits = reinterpret_cast<MINMAXINFO*>(native_message->lParam);
-            const HMONITOR monitor = MonitorFromWindow(
-                reinterpret_cast<HWND>(winId()), MONITOR_DEFAULTTONEAREST);
-            MONITORINFO information{};
-            information.cbSize = sizeof(information);
-            if (GetMonitorInfoW(monitor, &information)) {
-                const RECT& work = information.rcWork;
-                const RECT& full = information.rcMonitor;
-                limits->ptMaxPosition.x = work.left - full.left;
-                limits->ptMaxPosition.y = work.top - full.top;
-                limits->ptMaxSize.x = work.right - work.left;
-                limits->ptMaxSize.y = work.bottom - work.top;
-                *result = 0;
-                return true;
-            }
-        }
-        if (native_message->message == WM_NCHITTEST && !isMaximized()) {
-            const QPoint position(GET_X_LPARAM(native_message->lParam),
-                                  GET_Y_LPARAM(native_message->lParam));
-            const QPoint local = mapFromGlobal(position);
-            constexpr int border = 8;
-            const bool left = local.x() < border;
-            const bool right = local.x() >= width() - border;
-            const bool top = local.y() < border;
-            const bool bottom = local.y() >= height() - border;
-            if (top && left) *result = HTTOPLEFT;
-            else if (top && right) *result = HTTOPRIGHT;
-            else if (bottom && left) *result = HTBOTTOMLEFT;
-            else if (bottom && right) *result = HTBOTTOMRIGHT;
-            else if (left) *result = HTLEFT;
-            else if (right) *result = HTRIGHT;
-            else if (top) *result = HTTOP;
-            else if (bottom) *result = HTBOTTOM;
-            else return QMainWindow::nativeEvent(eventType, message, result);
-            return true;
-        }
-    }
-#endif
+    if (handleFramelessNativeEvent(this, eventType, message, result)) return true;
     return QMainWindow::nativeEvent(eventType, message, result);
 }
 

@@ -85,6 +85,8 @@ target_link_libraries(aur_editor_common PUBLIC aur_engine)
 add_executable(aur_studio
     studio/main.cpp
     studio/MainWindow.cpp
+    studio/StudioChrome.cpp
+    studio/FramelessWindow.cpp
     studio/AurPaths.cpp
     studio/GameView.cpp
     studio/SharedAudio.cpp

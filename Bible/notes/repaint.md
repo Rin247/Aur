@@ -1,6 +1,6 @@
 # Repaint and refactor: plan
 
-Status: P2 closed (tag repaint-p2). Next step: P3.1, extract StudioChrome and FramelessWindow out of MainWindow.cpp.
+Status: P3.1 landed (MainWindow.cpp 367 lines). Next step: P3.2, ThemeIcons (window, hamburger, file, transport glyphs in token colours).
 
 ## Goal
 
@@ -105,17 +105,17 @@ Acceptance: harness exits 0 with 24 captures; ctest 7/7; baseline recorded. Tag 
 Acceptance: unit tests green; app still looks as today (not yet installed). Tag `repaint-p1`.
 
 ### P2 Install it, delete the stylesheet
-- [ ] P2.1 `main.cpp` installs `ThemeManager` + `AurStyle` before the window and sets the colour scheme
+- [x] P2.1 `main.cpp` installs `ThemeManager` + `AurStyle` before the window and sets the colour scheme
   before first paint (no white flash, DESIGN ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§12.2b); the `main.cpp` stylesheet is deleted in the same
   commit.
-- [ ] P2.2 Replace the 21 `setStyleSheet` sites with palette roles, object names handled in
+- [x] P2.2 Replace the 21 `setStyleSheet` sites with palette roles, object names handled in
   `AurStyle`, or `theme::tokens()` reads; `rg setStyleSheet studio` returns nothing.
-- [ ] P2.3 Default mode `dark`, default accent per DESIGN (`#3b82f6`). Record the decision.
+- [x] P2.3 Default mode `dark`, default accent per DESIGN (`#3b82f6`). Record the decision.
 Acceptance: all pages render in `dark`; no navy or gold literal left in `studio/` outside data
 colours; ctest 7/7. Tag `repaint-p2`.
 
 ### P3 Chrome
-- [ ] P3.1 Pure move: `StudioChrome` and the native-event code leave `MainWindow.cpp`.
+- [x] P3.1 Pure move: `StudioChrome` and the native-event code leave `MainWindow.cpp`.
 - [ ] P3.2 `ThemeIcons`: hamburger, minimise, maximise/restore, close, file actions drawn in token
   colours at 16 px glyph, 28 px target; close hovers in `bad`. Delete `SP_TitleBar*` use.
 - [ ] P3.3 Title row follows ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§13.6 (labels drop to icon-only, tabs ellipsise, overflow opens) at the
@@ -149,7 +149,7 @@ Acceptance: the 24-capture sweep at floor sizes; a person opens every PNG. Tag `
 - [ ] P6.2 `WorldPanel.cpp` (968): left column (biomes, terrain, locations) into its own widget.
 - [ ] P6.3 `world/WorldMapCanvas.cpp` (825): input handling into its own file.
 - [ ] P6.4 `music/PianoRollCanvas.cpp` (788): painting versus editing.
-- [ ] P6.5 `MainWindow.cpp` (575) after P3.1: page registry stays, nothing else.
+- [x] P6.5 `MainWindow.cpp` (575) after P3.1: page registry stays, nothing else.
 - [ ] P6.6 Races tab onto the generic editor (E-01), a behaviour commit with a test.
 - [ ] P6.7 `CMakeLists.txt`: remove the duplicate `TransportIcon` lines and trim over-long comments.
 Acceptance: no studio file over 750 without a baseline entry; ctest 7/7. Tag `repaint-p6`.
