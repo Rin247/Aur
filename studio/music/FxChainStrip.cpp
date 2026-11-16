@@ -45,6 +45,7 @@ namespace aur
 
         chainList = new QListWidget(this);
         chainList->setMaximumHeight(88);
+        chainList->setVisible(false);
         chainList->setToolTip("Master effect chain, top processes first. Select a slot to modify it.");
         root->addWidget(chainList);
 
@@ -134,6 +135,7 @@ namespace aur
             statusLabel->setText("No master effects");
         else
             statusLabel->setText(QString("%1 effect(s) in the master chain").arg(int(chain.size())));
+        chainList->setVisible(!chain.empty());
         chainList->setCurrentRow(std::min<int>(selected, int(chain.size()) - 1));
     }
 

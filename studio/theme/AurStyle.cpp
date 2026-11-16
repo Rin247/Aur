@@ -1,7 +1,9 @@
 #include "theme/AurStyle.hpp"
 
 #include "theme/AurStylePaint.hpp"
+#include "theme/ThemeManager.hpp"
 #include "theme/ThemeMetrics.hpp"
+#include "theme/ThemeQt.hpp"
 
 #include <QAbstractButton>
 #include <QPainter>
@@ -113,6 +115,7 @@ namespace aur::theme
             if (!qobject_cast<const QAbstractButton *>(widget)) paint::focusFrame(option, painter);
             return;
         case PE_FrameTabWidget: paint::tabWidgetFrame(option, painter); return;
+        case PE_PanelItemViewItem: paint::itemViewPanel(option, painter); return;
         case PE_Frame:
             painter->save();
             painter->setPen(option->palette.color(QPalette::Mid));
@@ -172,6 +175,17 @@ namespace aur::theme
             }
             break;
         case CE_Splitter: paint::splitter(option, painter); return;
+        case CE_ItemViewItem:
+            if (const auto *v = qstyleoption_cast<const QStyleOptionViewItem *>(option))
+            {
+                QStyleOptionViewItem copy(*v);
+                copy.state &= ~State_HasFocus;
+                copy.palette.setColor(QPalette::Highlight, qt(tokens().accent_wash()));
+                copy.palette.setColor(QPalette::HighlightedText, copy.palette.color(QPalette::Text));
+                QProxyStyle::drawControl(element, &copy, painter, widget);
+                return;
+            }
+            break;
         default: break;
         }
         QProxyStyle::drawControl(element, option, painter, widget);

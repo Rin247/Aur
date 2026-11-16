@@ -119,6 +119,8 @@ add_executable(aur_studio
     studio/music/MasterVolumeStrip.hpp
     studio/music/SongTransfer.cpp
     studio/music/SongTransfer.hpp
+    studio/music/MidiStrip.cpp
+    studio/music/MidiStrip.hpp
     studio/music/TransportIcon.cpp
     studio/music/TransportIcon.hpp
     studio/music/TransportIcon.cpp
@@ -141,6 +143,7 @@ add_executable(aur_studio
     studio/bestiary/CreaturePortrait.hpp
     studio/CreatureForgePanel.cpp
     studio/MusicPanel.cpp
+    studio/MusicPanelSession.cpp
     studio/WorldPanel.cpp
     studio/world/HdSurface.cpp
     studio/world/TerrainLod.cpp

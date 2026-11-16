@@ -25,6 +25,7 @@ namespace aur::theme::paint
     void tabShape(const QStyleOptionTab *option, QPainter *painter);
     QPalette tabLabelPalette(const QStyleOptionTab *option);
     void headerSection(const QStyleOptionHeader *option, QPainter *painter);
+    void itemViewPanel(const QStyleOption *option, QPainter *painter);
     void splitter(const QStyleOption *option, QPainter *painter);
     void comboBox(const QStyleOptionComboBox *option, QPainter *painter, const QRect &arrow);
     void spinBox(const QStyleOptionSpinBox *option, QPainter *painter, const QRect &up,

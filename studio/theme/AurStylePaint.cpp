@@ -198,6 +198,25 @@ namespace aur::theme::paint
         painter->restore();
     }
 
+    void itemViewPanel(const QStyleOption *o, QPainter *painter)
+    {
+        const bool selected = o->state & QStyle::State_Selected;
+        const bool hover = (o->state & QStyle::State_Enabled) && (o->state & QStyle::State_MouseOver);
+        if (!selected && !hover) return;
+        const Tokens &t = tokens();
+        painter->save();
+        if (selected)
+        {
+            painter->fillRect(o->rect, qt(t.accent_wash()));
+            painter->fillRect(QRect(o->rect.left(), o->rect.top(), 2, o->rect.height()), qt(t.primary));
+        }
+        else
+        {
+            painter->fillRect(o->rect, o->palette.color(QPalette::Light));
+        }
+        painter->restore();
+    }
+
     void splitter(const QStyleOption *o, QPainter *painter)
     {
         painter->save();

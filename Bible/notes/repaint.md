@@ -1,6 +1,6 @@
 # Repaint and refactor: plan
 
-Status: P4 landed (tag repaint-p4). Next step: P6.1, extract MidiStrip from MusicPanel.cpp, then P5.1-P5.2.
+Status: P5 and P6.1 landed (tag repaint-p5; MusicPanel.cpp 659 lines). Next step: P6.2-P6.4 and P6.6-P6.7.
 
 ## Goal
 
@@ -136,15 +136,15 @@ Acceptance: `dark` and `light` captures of every page opened and read; no text u
 surface except `textMute`. Tag `repaint-p4`.
 
 ### P5 Page polish
-- [ ] P5.1 DAW header: merge the song, MIDI and master rows so the track list is not clipped at
+- [x] P5.1 DAW header: merge the song, MIDI and master rows so the track list is not clipped at
   1280x690 (`MidiStrip` extracted first, P6.1).
-- [ ] P5.2 Padding budget and one hint style across pages (DESIGN ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§1.7.1); selected rows use the accent
+- [x] P5.2 Padding budget and one hint style across pages (DESIGN ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§1.7.1); selected rows use the accent
   wash (`accentDim`), not the brown fill.
 - [x] P5.3 Appearance dialog: mode grid, accent hex field, live apply, persisted.
 Acceptance: the 24-capture sweep at floor sizes; a person opens every PNG. Tag `repaint-p5`.
 
 ### P6 Refactor splits (pure moves, one commit each, build and ctest between)
-- [ ] P6.1 `MusicPanel.cpp` (1,268): `MidiStrip` first, then the master FX and volume row; target under
+- [x] P6.1 `MusicPanel.cpp` (1,268): `MidiStrip` first, then the master FX and volume row; target under
   750 or a recorded baseline.
 - [ ] P6.2 `WorldPanel.cpp` (968): left column (biomes, terrain, locations) into its own widget.
 - [ ] P6.3 `world/WorldMapCanvas.cpp` (825): input handling into its own file.
