@@ -1,5 +1,5 @@
 #include "mini_test.hpp"
-#include "theme/ThemePalettes.hpp"
+#include "theme/ThemeQt.hpp"
 
 #include <cmath>
 #include <set>
@@ -54,6 +54,24 @@ void test_theme_math()
     ASSERT(mix(hex("#102030"), hex("#ffffff"), 0.0) == hex("#102030"));
     ASSERT(lighter(hex("#404040"), 200) == hex("#808080"));
     ASSERT(darker(hex("#808080"), 200) == hex("#404040"));
+}
+
+void test_theme_qpalette()
+{
+    for (const Mode &mode : modes())
+    {
+        const Tokens t = derive_tokens(mode.palette, hex("#3b82f6"));
+        const QPalette pal = build_palette(t);
+        ASSERT(pal.color(QPalette::Window) == qt(mode.palette.background));
+        ASSERT(pal.color(QPalette::Base) == qt(mode.palette.surface));
+        ASSERT(pal.color(QPalette::Button) == qt(mode.palette.surface_secondary));
+        ASSERT(pal.color(QPalette::Mid) == qt(mode.palette.divider));
+        ASSERT(pal.color(QPalette::Highlight) == qt(t.primary));
+        ASSERT(pal.color(QPalette::HighlightedText) == qt(t.on_accent));
+        ASSERT(pal.color(QPalette::PlaceholderText) == qt(mode.palette.text_dim));
+        ASSERT(pal.color(QPalette::Disabled, QPalette::Text) != pal.color(QPalette::Active, QPalette::Text));
+        ASSERT(pal.color(QPalette::Disabled, QPalette::Text) != qt(mode.palette.background));
+    }
 }
 
 void test_theme_palettes()

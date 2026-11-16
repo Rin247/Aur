@@ -72,6 +72,7 @@ void test_step_sequencer();
 void test_arpeggiator();
 void test_theme_math();
 void test_theme_palettes();
+void test_theme_qpalette();
 
 int main(int argc, char** argv) {
     // Allow a focused run without the memory-heavy full generator sweep.
@@ -180,6 +181,7 @@ int main(int argc, char** argv) {
     RUN_TEST(test_arpeggiator);
     RUN_TEST(test_theme_math);
     RUN_TEST(test_theme_palettes);
+    RUN_TEST(test_theme_qpalette);
 
     std::cout << "\nResults: " << g_tests_passed << " passed, " << g_tests_failed << " failed.\n";
     return g_tests_failed > 0 ? 1 : 0;

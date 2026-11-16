@@ -177,6 +177,9 @@ add_executable(aur_studio
     studio/WorldSettingsPanel.cpp
     studio/theme/ThemeMath.cpp
     studio/theme/ThemePalettes.cpp
+    studio/theme/ThemeQt.cpp
+    studio/theme/ThemeManager.cpp
+    studio/theme/ThemeManager.hpp
 )
 target_include_directories(aur_studio PRIVATE . studio)
 target_link_libraries(aur_studio PRIVATE aur_engine Qt6::Widgets Qt6::Multimedia Qt6::GuiPrivate Qt6::Concurrent)
@@ -279,6 +282,7 @@ add_executable(aur_tests
     studio/WorldModel.cpp
     studio/theme/ThemeMath.cpp
     studio/theme/ThemePalettes.cpp
+    studio/theme/ThemeQt.cpp
 )
 target_include_directories(aur_tests PRIVATE studio)
 target_link_libraries(aur_tests PRIVATE aur_engine Qt6::Gui Qt6::Widgets)
