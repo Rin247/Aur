@@ -1,6 +1,8 @@
 #include "theme/AurStylePaint.hpp"
 
+#include "theme/ThemeManager.hpp"
 #include "theme/ThemeMetrics.hpp"
+#include "theme/ThemeQt.hpp"
 
 #include <QAbstractSpinBox>
 #include <QPainter>
@@ -73,10 +75,16 @@ namespace aur::theme::paint
         const QColor accent = pal.color(QPalette::Highlight);
         const QRectF r = inset(o->rect);
 
+        const bool danger = o->styleObject && o->styleObject->property("dangerHover").toBool();
         if (flat && !on && !pressed && !hover && !focus) return;
         QColor fill = pal.color(enabled ? QPalette::Active : QPalette::Disabled, QPalette::Button);
         QColor edge = pal.color(QPalette::Mid);
         if (!enabled) edge = mixed(edge, pal.color(QPalette::Window), 0.4);
+        else if (danger && (hover || pressed))
+        {
+            fill = qt(tokens().palette.bad);
+            edge = fill;
+        }
         else if (on) fill = hover ? accent.lighter(110) : accent;
         else if (pressed) fill = mixed(fill, accent, 0.30);
         else if (hover) fill = pal.color(QPalette::Light);

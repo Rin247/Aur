@@ -1,6 +1,6 @@
 # Repaint and refactor: plan
 
-Status: P1 landed (not yet installed). Next step: P2.1, install ThemeManager + AurStyle in main.cpp and delete the stylesheet in one commit.
+Status: P2 closed (tag repaint-p2). Next step: P3.1, extract StudioChrome and FramelessWindow out of MainWindow.cpp.
 
 ## Goal
 

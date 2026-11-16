@@ -1,4 +1,5 @@
 #include "WorldPanel.hpp"
+#include "theme/LabelRoles.hpp"
 #include "RhiBackend.hpp"
 #include "TileTexture.hpp"
 #include "WorldSettingsPanel.hpp"
@@ -153,7 +154,7 @@ WorldPanel::WorldPanel(Project* p, QWidget* parent)
     sidebar_layout->addWidget(expandTileButton);
 
     auto* biome_title = new QLabel("BIOMES", sidebar);
-    biome_title->setStyleSheet("font-weight: 700; color: #c5cdd5; letter-spacing: 1px;");
+    theme::sectionTitle(biome_title);
     sidebar_layout->addWidget(biome_title);
     biomeList = new QListWidget(sidebar);
     biomeList->setMaximumHeight(190);
@@ -162,7 +163,7 @@ WorldPanel::WorldPanel(Project* p, QWidget* parent)
     sidebar_layout->addWidget(newBiomeButton);
 
     auto* terrain_title = new QLabel("TERRAIN", sidebar);
-    terrain_title->setStyleSheet("font-weight: 700; color: #c5cdd5; letter-spacing: 1px;");
+    theme::sectionTitle(terrain_title);
     sidebar_layout->addWidget(terrain_title);
     auto* landformRow = new QHBoxLayout();
     landformCombo = new QComboBox(sidebar);
@@ -202,11 +203,11 @@ WorldPanel::WorldPanel(Project* p, QWidget* parent)
     auto* tileHelp = new QLabel(
         "Select a tile, then Paint terrain and click/drag. HD maps layer tiles over relief.", sidebar);
     tileHelp->setWordWrap(true);
-    tileHelp->setStyleSheet("color: #8d98a3;");
+    theme::dimLabel(tileHelp);
     sidebar_layout->addWidget(tileHelp);
 
     auto* nodes_title = new QLabel("LOCATIONS & EXITS", sidebar);
-    nodes_title->setStyleSheet("font-weight: 700; color: #c5cdd5; letter-spacing: 1px;");
+    theme::sectionTitle(nodes_title);
     sidebar_layout->addWidget(nodes_title);
     nodeList = new QListWidget(sidebar);
     sidebar_layout->addWidget(nodeList, 1);
@@ -237,7 +238,7 @@ WorldPanel::WorldPanel(Project* p, QWidget* parent)
                               "Keys 1-7: tool \u00b7 Ctrl+Z/Y: undo/redo \u00b7 "
                               "Raise/Lower height or paint biome \u00b7 Add Location/Exit, then click \u00b7 "
                               "Fit: show the whole world \u00b7 Save with Ctrl+S."), this);
-    footer->setStyleSheet("color: #8d98a3;");
+    theme::dimLabel(footer);
 
     // Time & World settings are baked into the World editor as a second tab
     // (WANTED #3: the standalone tab is gone from MainWindow).

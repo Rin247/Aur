@@ -1,4 +1,5 @@
 #include "CreatureForgePanel.hpp"
+#include "theme/LabelRoles.hpp"
 #include "aur/gfx.hpp"
 
 #include <QRandomGenerator>
@@ -186,7 +187,7 @@ CreatureForgePanel::CreatureForgePanel(Project* p, QWidget* parent)
     controlsLayout->addStretch();
     statusLabel = new QLabel("Generated assets are project-backed; use Ctrl+S to save.", this);
     statusLabel->setWordWrap(true);
-    statusLabel->setStyleSheet("color: #aeb8c2;");
+    theme::dimLabel(statusLabel);
     controlsLayout->addWidget(statusLabel);
     auto* controlsScroll = new QScrollArea(this);
     controlsScroll->setWidgetResizable(true);

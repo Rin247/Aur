@@ -10,6 +10,7 @@
 #include "EventsPanel.hpp"
 #include "TilesetEditorPanel.hpp"
 #include "WorldSettingsPanel.hpp"
+#include "theme/LabelRoles.hpp"
 #include <QLabel>
 #include <QApplication>
 #include <QSettings>
@@ -72,9 +73,8 @@ class StudioChrome final : public QWidget {
 public:
     explicit StudioChrome(QMainWindow* owner) : QWidget(owner), window(owner) {
         setObjectName("StudioChrome");
-        setStyleSheet("#StudioChrome { background:#11161e; border-bottom:1px solid #39414b; }");
         auto* layout = new QVBoxLayout(this);
-        layout->setContentsMargins(8, 4, 8, 0);
+        layout->setContentsMargins(8, 4, 8, 1);
         layout->setSpacing(2);
         titleRow = new QHBoxLayout();
         titleRow->setContentsMargins(4, 0, 0, 0);
@@ -84,14 +84,13 @@ public:
         menuButton->setIcon(hamburger_icon());
         menuButton->setToolTip("File");
         menuButton->setPopupMode(QToolButton::InstantPopup);
-        menuButton->setStyleSheet(
-            "QToolButton { padding: 4px 6px; }"
-            "QToolButton::menu-indicator { image: none; }");
         file_menu = new QMenu(menuButton);
         menuButton->setMenu(file_menu);
         titleRow->addWidget(menuButton);
         auto* titleLabel = new QLabel(owner->windowTitle(), this);
         titleLabel->setObjectName("StudioTitle");
+        theme::sectionTitle(titleLabel);
+        titleLabel->setContentsMargins(6, 2, 6, 2);
         titleLabel->setAttribute(Qt::WA_TransparentForMouseEvents);
         titleRow->addWidget(titleLabel);
         project_buttons = new QWidget(this);
@@ -100,7 +99,8 @@ public:
         projectLayout->setSpacing(2);
         titleRow->addWidget(project_buttons);
         titleRow->addStretch();
-        auto* minimize = new QToolButton(this);        minimize->setIcon(style()->standardIcon(QStyle::SP_TitleBarMinButton));
+        auto* minimize = new QToolButton(this);
+        minimize->setIcon(style()->standardIcon(QStyle::SP_TitleBarMinButton));
         minimize->setToolTip("Minimize");
         titleRow->addWidget(minimize);
         maximizeButton = new QToolButton(this);
@@ -110,7 +110,7 @@ public:
         auto* close = new QToolButton(this);
         close->setIcon(style()->standardIcon(QStyle::SP_TitleBarCloseButton));
         close->setToolTip("Close Aur");
-        close->setStyleSheet("QToolButton:hover { background:#8d3f3f; }");
+        close->setProperty("dangerHover", true);
         titleRow->addWidget(close);
         layout->addLayout(titleRow);
         owner->setMenuWidget(this);
@@ -138,7 +138,6 @@ public:
             button->setDefaultAction(action);
             button->setToolButtonStyle(Qt::ToolButtonIconOnly);
             button->setIconSize(QSize(16, 16));
-            button->setStyleSheet("QToolButton { padding: 4px 6px; }");
             projectLayout->addWidget(button);
         }
     }
@@ -157,6 +156,12 @@ public:
     }
 
 protected:
+    void paintEvent(QPaintEvent*) override {
+        QPainter painter(this);
+        painter.fillRect(rect(), palette().color(QPalette::Base));
+        painter.setPen(palette().color(QPalette::Mid));
+        painter.drawLine(rect().bottomLeft(), rect().bottomRight());
+    }
     bool eventFilter(QObject* watched, QEvent* event) override {
         if (watched == window && event->type() == QEvent::WindowStateChange && maximizeButton) {
             maximizeButton->setIcon(window->style()->standardIcon(

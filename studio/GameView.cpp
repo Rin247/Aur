@@ -1,4 +1,5 @@
 #include "SharedAudio.hpp"
+#include "theme/CardFrame.hpp"
 #include "GameView.hpp"
 #include "aur/gfx.hpp"
 #include "TileTexture.hpp"
@@ -246,13 +247,8 @@ GameView::GameView(const std::string& project_path, QWidget* parent, SharedAudio
 }
 
 void GameView::buildAudioOverlay() {
-    audioOverlay = new QWidget(this);
+    audioOverlay = new theme::CardFrame(this);
     audioOverlay->setObjectName("playtestAudio");
-    audioOverlay->setStyleSheet(
-        "QWidget#playtestAudio { background-color: #10141a;"
-        " border: 1px solid #39414b; border-radius: 4px; }"
-        "QWidget#playtestVolume { background: transparent; }"
-        "QLabel { color: #c8c0ae; }");
     auto* row = new QHBoxLayout(audioOverlay);
     row->setContentsMargins(8, 3, 8, 3);
     auto* strip = new MasterVolumeStrip(shared, QStringLiteral("Volume"), audioOverlay);

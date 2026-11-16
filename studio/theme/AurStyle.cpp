@@ -204,6 +204,19 @@ namespace aur::theme
                 return;
             }
             break;
+        case CC_ToolButton:
+            if (const auto *tb = qstyleoption_cast<const QStyleOptionToolButton *>(option))
+            {
+                if ((tb->features & QStyleOptionToolButton::HasMenu) &&
+                    !(tb->features & QStyleOptionToolButton::MenuButtonPopup))
+                {
+                    QStyleOptionToolButton copy(*tb);
+                    copy.features &= ~QStyleOptionToolButton::HasMenu;
+                    QProxyStyle::drawComplexControl(control, &copy, painter, widget);
+                    return;
+                }
+            }
+            break;
         default: break;
         }
         QProxyStyle::drawComplexControl(control, option, painter, widget);

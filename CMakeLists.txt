@@ -66,6 +66,7 @@ add_executable(aur_game
     studio/AurPaths.cpp
     studio/music/QtAudioOutput.cpp
     studio/music/MasterVolumeStrip.cpp
+    studio/theme/CardFrame.cpp
 )
 target_include_directories(aur_game PRIVATE . studio)
 target_link_libraries(aur_game PRIVATE aur_engine Qt6::Widgets Qt6::Multimedia)
@@ -182,6 +183,8 @@ add_executable(aur_studio
     studio/theme/ThemeManager.hpp
     studio/theme/AurStyle.cpp
     studio/theme/AurStylePaint.cpp
+    studio/theme/CardFrame.cpp
+    studio/music/ClipButton.cpp
 )
 target_include_directories(aur_studio PRIVATE . studio)
 target_link_libraries(aur_studio PRIVATE aur_engine Qt6::Widgets Qt6::Multimedia Qt6::GuiPrivate Qt6::Concurrent)

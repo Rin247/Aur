@@ -1,4 +1,5 @@
 #include "FxChainStrip.hpp"
+#include "theme/LabelRoles.hpp"
 
 #include "aur/audio/Effect.hpp"
 
@@ -31,7 +32,7 @@ namespace aur
         removeButton = new QPushButton("Remove", this);
         removeButton->setEnabled(false);
         statusLabel = new QLabel("No master effects", this);
-        statusLabel->setStyleSheet("color: #aeb8c2;");
+        theme::dimLabel(statusLabel);
         bar->addWidget(new QLabel("Master FX:", this));
         bar->addWidget(typeCombo);
         bar->addWidget(addButton);

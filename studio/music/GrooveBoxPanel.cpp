@@ -1,4 +1,5 @@
 #include "GrooveBoxPanel.hpp"
+#include "theme/LabelRoles.hpp"
 
 #include <QFormLayout>
 #include <QHBoxLayout>
@@ -79,7 +80,7 @@ namespace aur
         playButton = new QPushButton("Play", this);
         playButton->setCheckable(true);
         statusLabel = new QLabel("No patterns", this);
-        statusLabel->setStyleSheet("color: #aeb8c2;");
+        theme::dimLabel(statusLabel);
         patternRow->addWidget(patternList, 1);
         patternRow->addWidget(addButton);
         patternRow->addWidget(removeButton);

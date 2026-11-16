@@ -73,7 +73,9 @@ namespace aur
         tilePreview = new QLabel(inspector);
         tilePreview->setMinimumSize(128, 128);
         tilePreview->setAlignment(Qt::AlignCenter);
-        tilePreview->setStyleSheet("background:#20222c; border:1px solid #34384a;");
+        tilePreview->setFrameShape(QFrame::StyledPanel);
+        tilePreview->setAutoFillBackground(true);
+        tilePreview->setBackgroundRole(QPalette::AlternateBase);
         inspectorLayout->addWidget(tilePreview);
         tileNameLabel = new QLabel(inspector);
         inspectorLayout->addWidget(tileNameLabel);

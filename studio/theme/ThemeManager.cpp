@@ -1,6 +1,7 @@
 #include "theme/ThemeManager.hpp"
 
 #include "AurPaths.hpp"
+#include "theme/AurStyle.hpp"
 #include "theme/ThemeQt.hpp"
 
 #include <QApplication>
@@ -65,6 +66,7 @@ namespace aur::theme
     void ThemeManager::install(QApplication &app)
     {
         if (!settings_read_) load();
+        app.setStyle(new AurStyle);
         QFont font(QStringLiteral("Segoe UI"));
         font.setPixelSize(13);
         app.setFont(font);

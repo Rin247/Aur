@@ -1,4 +1,6 @@
 #include "MusicPanel.hpp"
+#include "music/ClipButton.hpp"
+#include "theme/LabelRoles.hpp"
 #include "SharedAudio.hpp"
 #include "music/MasterVolumeStrip.hpp"
 #include "music/SongLibrary.hpp"
@@ -314,7 +316,7 @@ namespace aur
                 const audio::SongDocument::ClipInfo clipInfo =
                     hasClip ? audio::SongDocument::clip_info(clip, trackNames[row].toStdString())
                             : audio::SongDocument::ClipInfo{};
-                auto *button = new QPushButton(
+                auto *button = new ClipButton(
                     hasClip ? QString("●  %1\n%2 · %3%4")
                                   .arg(QString::fromStdString(clipInfo.name))
                                   .arg(clipInfo.length / 16)
@@ -333,14 +335,12 @@ namespace aur
                 const bool active = clipLauncher.state(column, row) !=
                                             ClipLauncherStates::State::Idle &&
                                     hasClip;
-                button->setStyleSheet(
-                    active ? (clipLauncher.state(column, row) ==
-                                      ClipLauncherStates::State::Playing
-                                  ? "QPushButton { background:#795c2d; border:2px solid #f0bd58; color:#fff1cf; font-weight:700; }"
-                                  : "QPushButton { background:#2d4a79; border:2px solid #8ab4f8; color:#e4efff; font-weight:700; }")
-                           : hasClip
-                               ? "QPushButton { background:#285b52; border:1px solid #428d79; color:#e4fff2; }"
-                               : "QPushButton { background:#1b222a; border:1px dashed #49535d; color:#929da8; }");
+                button->setState(!hasClip ? ClipButton::State::Empty
+                                 : !active ? ClipButton::State::Clip
+                                 : clipLauncher.state(column, row) ==
+                                           ClipLauncherStates::State::Playing
+                                       ? ClipButton::State::Playing
+                                       : ClipButton::State::Queued);
                 button->setToolTip(hasClip
                                        ? QString("%1 · %2 notes").arg(sceneNames[column]).arg(noteCount)
                                        : QString("Create a clip from %1 in %2").arg(trackNames[row], sceneNames[column]));
@@ -797,7 +797,7 @@ MusicPanel::MusicPanel(Project* p, SharedAudio* sharedAudio, QWidget* parent)
     midiBar->addWidget(new QLabel("Count-in", this));
     midiBar->addWidget(countInBarsSpin);
     midiStatusLabel = new QLabel("No MIDI devices connected", this);
-    midiStatusLabel->setStyleSheet("color: #aeb8c2;");
+    theme::dimLabel(midiStatusLabel);
     midiBar->addWidget(midiStatusLabel, 1);
     layout->addLayout(midiBar);
 
@@ -907,7 +907,7 @@ MusicPanel::MusicPanel(Project* p, SharedAudio* sharedAudio, QWidget* parent)
         "from that bar of the piano roll, then select a scene and Play Scene.",
         sessionPage);
     sessionHint->setWordWrap(true);
-    sessionHint->setStyleSheet("color: #aeb5c5; padding: 3px;");
+    theme::hintLabel(sessionHint);
     sessionLayout->addWidget(sessionHint);
     editorTabs->addTab(sessionPage, "Session Grid");
 
@@ -1002,7 +1002,7 @@ MusicPanel::MusicPanel(Project* p, SharedAudio* sharedAudio, QWidget* parent)
     auto* pianoHint = new QLabel(
         "Piano Roll — drag empty grid to marquee-select · Shift+click adds a note · drag to move/resize (Alt = velocity) · Ctrl+click toggles · Ctrl+C/V/D copies/pastes/duplicates · right-click or Delete removes",
         pianoPage);
-    pianoHint->setStyleSheet("color: #aeb5c5; padding: 3px;");
+    theme::hintLabel(pianoHint);
     pianoLayout->addWidget(pianoHint);
     editorTabs->addTab(pianoPage, "Piano Roll");
 
@@ -1034,7 +1034,7 @@ MusicPanel::MusicPanel(Project* p, SharedAudio* sharedAudio, QWidget* parent)
     auto *arrangeHint = new QLabel(
         "Arrangement — click an empty cell to place the selected scene's clip · drag to move · Delete removes · Play Arrangement flattens the timeline",
         arrangePage);
-    arrangeHint->setStyleSheet("color: #aeb5c5; padding: 3px;");
+    theme::hintLabel(arrangeHint);
     arrangeLayout->addWidget(arrangeHint);
     editorTabs->addTab(arrangePage, "Arrangement");
 
@@ -1069,7 +1069,7 @@ MusicPanel::MusicPanel(Project* p, SharedAudio* sharedAudio, QWidget* parent)
         "Step Sequencer — click a cell to toggle it · drag to paint · Ctrl+click accents · "
         "right-click clears · arrow keys move · Space toggles · Page Up/Down transposes",
         stepPage);
-    stepHint->setStyleSheet("color: #aeb5c5; padding: 3px;");
+    theme::hintLabel(stepHint);
     stepHint->setWordWrap(true);
     stepLayout->addWidget(stepHint);
     editorTabs->addTab(stepPage, "Step Sequencer");
