@@ -1,11 +1,11 @@
 #include "TilesetEditorPanel.hpp"
 
-#include "PixelFrameOps.hpp"
+#include "pixel/PixelFrameOps.hpp"
 #include "theme/ResponsiveSplitter.hpp"
 
 #include <QFileDialog>
 #include <QMessageBox>
-#include "TileTexture.hpp"
+#include "map/TileTexture.hpp"
 #include <QFormLayout>
 #include <QKeySequence>
 #include <QShortcut>

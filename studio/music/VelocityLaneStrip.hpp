@@ -4,16 +4,13 @@
 #include <functional>
 #include "aur/audio/SongDocument.hpp"
 #include "aur/json.hpp"
-#include "SongHistory.hpp"
+#include "music/SongHistory.hpp"
 
 namespace aur
 {
 
-    // Lane strip under the piano roll: a per-note velocity ladder plus the
-    // track's automation lanes (CC 0..127, bend = 128, pressure = 129).
-    // All edits go through SongHistory's track-snapshot path — a NoteEdit
-    // commit snapshots only the notes array, so lane changes must pair with
-    // begin_track_edit/commit_track_change (see Bible/Operations/NOTES.md).
+    // Lane strip under the piano roll: per-note velocity ladder and track automation
+    // lanes (CC 0..127, bend = 128, pressure = 129) over SongHistory TrackProps.
     class VelocityLaneStrip : public QWidget
     {
         Q_OBJECT

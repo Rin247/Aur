@@ -1,4 +1,4 @@
-#include "SharedAudio.hpp"
+#include "music/SharedAudio.hpp"
 
 #include <QSettings>
 

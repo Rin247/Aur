@@ -1,5 +1,5 @@
 #include "mini_test.hpp"
-#include "MapEditUndo.hpp"
+#include "map/MapEditUndo.hpp"
 #include "UndoCommands.hpp"
 
 #include <QUndoStack>
@@ -247,11 +247,11 @@ namespace
     void test_stale_command_over_resized_document_is_safe()
     {
         Json doc = tilesetDocument();
-        CellCommand command(QStringLiteral("toggle flag"));
+        CellCommand command(QStringLiteral("toggle stale flag"));
         command.setDocument(&doc);
-        RegionKey region;
-        region.kind = RegionKey::TileObjects;
-        command.setRegion(region);
+        RegionKey stale_region;
+        stale_region.kind = RegionKey::TileObjects;
+        command.setRegion(stale_region);
         Json after = JsonObject{{"name", "rock"}, {"flags", 9}};
         CellDiff diff;
         diff.cellIndex = 2;
@@ -339,7 +339,7 @@ namespace
         Json doc = mapDocument();
         QUndoStack stack;
         MapEditUndo recorder;
-        recorder.beginLayer(0, QStringLiteral("paint tiles"));
+        recorder.beginLayer(0, QStringLiteral("noop stroke"));
         Json &layer = doc["layers"]["ground"];
         recorder.noteCell(layer, 0, 0);
         ASSERT(!recorder.commit(&doc, &stack));

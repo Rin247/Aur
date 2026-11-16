@@ -1,4 +1,4 @@
-#include "PixelEditSession.hpp"
+#include "pixel/PixelEditSession.hpp"
 
 #include <QListWidgetItem>
 #include <QPixmap>

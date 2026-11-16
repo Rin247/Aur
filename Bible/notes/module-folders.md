@@ -1,6 +1,6 @@
 # Plan: Nested Module Helper Folders (`module-folders`)
 
-Status: Phase 1 in progress (`[module-folders-p1.1]`).
+Status: Phase 2 in progress (`[module-folders-p2.1]`).
 
 ## Goal
 
@@ -40,7 +40,7 @@ Ensure every module in `studio/` keeps its helper files in a nested module subfo
 
 ### Phase 1 — Consolidate existing module folders (`theme/`, `world/`, `music/`, `map/`, `pixel/`) (`module-folders-p1`)
 
-- [ ] `[module-folders-p1.1]` Move `StudioChrome.{hpp,cpp}` and `FramelessWindow.{hpp,cpp}` into `studio/theme/`; move `WorldModel.{hpp,cpp}`, `WorldSettingsPanel.{hpp,cpp}`, and `WorldPanelActions.cpp` into `studio/world/`; move `MusicPanelSession.cpp`, `MidiDeviceIo.{hpp,cpp}`, `SongHistory.{hpp,cpp}`, and `SharedAudio.{hpp,cpp}` into `studio/music/`; move `MapCanvas.{hpp,cpp}`, `MapEditUndo.{hpp,cpp}`, `TilePaletteWidget.{hpp,cpp}`, `TileTexture.hpp`, and `EditorDefs.hpp` into `studio/map/`; move `PixelSurface.{hpp,cpp}`, `PixelEditSession.{hpp,cpp}`, `PixelFrameOps.{hpp,cpp}`, and `SpriteCanvas.{hpp,cpp}` into `studio/pixel/`. Update includes and `CMakeLists.txt`.
+- [x] `[module-folders-p1.1]` Move `StudioChrome.{hpp,cpp}` and `FramelessWindow.{hpp,cpp}` into `studio/theme/`; move `WorldModel.{hpp,cpp}`, `WorldSettingsPanel.{hpp,cpp}`, and `WorldPanelActions.cpp` into `studio/world/`; move `MusicPanelSession.cpp`, `MidiDeviceIo.{hpp,cpp}`, `SongHistory.{hpp,cpp}`, and `SharedAudio.{hpp,cpp}` into `studio/music/`; move `MapCanvas.{hpp,cpp}`, `MapEditUndo.{hpp,cpp}`, `TilePaletteWidget.{hpp,cpp}`, `TileTexture.hpp`, and `EditorDefs.hpp` into `studio/map/`; move `PixelSurface.{hpp,cpp}`, `PixelEditSession.{hpp,cpp}`, `PixelFrameOps.{hpp,cpp}`, and `SpriteCanvas.{hpp,cpp}` into `studio/pixel/`. Update includes and `CMakeLists.txt`.
 
 Acceptance: `aur_studio`, `aur_game`, and `aur_tests` build cleanly and `ctest` passes 7/7. Tag: `module-folders-p1`.
 

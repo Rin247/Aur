@@ -1,7 +1,7 @@
 #include <QApplication>
 #include <QMainWindow>
-#include "../studio/GameView.hpp"
-#include "../studio/SharedAudio.hpp"
+#include "GameView.hpp"
+#include "music/SharedAudio.hpp"
 
 int main(int argc, char* argv[]) {
     QApplication app(argc, argv);

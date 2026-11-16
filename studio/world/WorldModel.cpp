@@ -1,4 +1,4 @@
-#include "WorldModel.hpp"
+#include "world/WorldModel.hpp"
 #include "aur/world_topology.hpp"
 
 #include <algorithm>

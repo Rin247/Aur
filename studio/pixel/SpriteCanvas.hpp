@@ -9,7 +9,7 @@
 #include <string>
 #include <vector>
 
-#include "PixelSurface.hpp"
+#include "pixel/PixelSurface.hpp"
 #include "aur/project.hpp"
 
 namespace aur {

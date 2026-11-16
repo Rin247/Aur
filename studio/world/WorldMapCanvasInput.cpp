@@ -1,6 +1,6 @@
 #include "world/WorldMapCanvas.hpp"
 #include "RhiBackend.hpp"
-#include "TileTexture.hpp"
+#include "map/TileTexture.hpp"
 #include "world/HdSurface.hpp"
 #include "world/TerrainLod.hpp"
 #include "world/WorldTerrainPaint.hpp"

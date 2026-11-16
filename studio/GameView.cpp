@@ -1,8 +1,8 @@
-#include "SharedAudio.hpp"
+#include "music/SharedAudio.hpp"
 #include "theme/CardFrame.hpp"
 #include "GameView.hpp"
 #include "aur/gfx.hpp"
-#include "TileTexture.hpp"
+#include "map/TileTexture.hpp"
 #include "music/MasterVolumeStrip.hpp"
 
 #include <QCheckBox>

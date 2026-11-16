@@ -1,5 +1,5 @@
 #include "mini_test.hpp"
-#include "SongHistory.hpp"
+#include "music/SongHistory.hpp"
 #include "aur/json.hpp"
 
 namespace

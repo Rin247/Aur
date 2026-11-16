@@ -1,9 +1,9 @@
 #include "SpriteEditorPanel.hpp"
 
-#include "SpriteCanvas.hpp"
+#include "pixel/SpriteCanvas.hpp"
 
-#include "PixelFrameOps.hpp"
-#include "PixelEditSession.hpp"
+#include "pixel/PixelFrameOps.hpp"
+#include "pixel/PixelEditSession.hpp"
 #include "theme/ResponsiveSplitter.hpp"
 #include "aur/gfx.hpp"
 

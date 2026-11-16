@@ -1,6 +1,6 @@
 #include "mini_test.hpp"
-#include "PixelEditSession.hpp"
-#include "PixelFrameOps.hpp"
+#include "pixel/PixelEditSession.hpp"
+#include "pixel/PixelFrameOps.hpp"
 #include "aur/project.hpp"
 #include "aur/gfx.hpp"
 #include <iostream>
@@ -162,9 +162,7 @@ void test_direction_token_match()
     ASSERT(down.size() == 5);
 }
 
-// D5.S1.2: one owner for the anim a direction/pose pair names. The pose-
-// direction anim wins, then the bare pose, then none; the fps and the loop
-// flag come with it, because the preview plays the sprite's own sequence.
+// D5.S1.2: pose-direction anim wins over bare pose, carrying fps and loop.
 void test_sprite_anim_resolution()
 {
     aur::Project p = make_project();
@@ -229,9 +227,7 @@ void test_sprite_png_snap()
     ASSERT(aur::editor::snap_rgba_to_rows({}, 2, 2, palette).empty());
 }
 
-// D5.S1.4: the frame tools over a sprite's sequence. Add, duplicate, remove
-// and move are pure functions over the graphic JSON, so they are pinned
-// without a widget.
+// D5.S1.4: pure frame tools (add, duplicate, remove, move) over graphic JSON.
 void test_sprite_frame_tools()
 {
     aur::Project p = make_project();
@@ -289,9 +285,7 @@ void test_sprite_frame_tools()
     ASSERT(other["frames"].contains("keep"));
 }
 
-// D5.S1.3: the mirror copies the right half of a frame onto its left half.
-// The right half is mirrored onto the left, so the result is symmetric
-// about the middle and the mirror of a symmetric frame is itself.
+// D5.S1.3: mirrors the right half of a frame onto its left half.
 void test_sprite_frame_mirror()
 {
     const JsonArray rows{Json("abcd"), Json("wxyz"), Json("....")};

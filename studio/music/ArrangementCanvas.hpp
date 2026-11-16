@@ -4,7 +4,7 @@
 #include <functional>
 #include "aur/audio/SongDocument.hpp"
 #include "aur/json.hpp"
-#include "SongHistory.hpp"
+#include "music/SongHistory.hpp"
 
 namespace aur
 {

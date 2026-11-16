@@ -1,6 +1,6 @@
-#include "PixelSurface.hpp"
+#include "pixel/PixelSurface.hpp"
 
-#include "PixelFrameOps.hpp"
+#include "pixel/PixelFrameOps.hpp"
 #include "aur/gfx.hpp"
 #include "theme/ThemeManager.hpp"
 #include "theme/ThemeQt.hpp"

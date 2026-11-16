@@ -18,7 +18,7 @@
 #include <functional>
 #include <map>
 
-#include "SongHistory.hpp"
+#include "music/SongHistory.hpp"
 #include "aur/audio/RealtimeMixer.hpp"
 #include "aur/project.hpp"
 #include "music/ArrangementCanvas.hpp"

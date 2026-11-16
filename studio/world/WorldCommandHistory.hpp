@@ -1,5 +1,5 @@
 #pragma once
-#include "WorldModel.hpp"
+#include "world/WorldModel.hpp"
 #include "CommandStack.hpp"
 #include "aur/json.hpp"
 

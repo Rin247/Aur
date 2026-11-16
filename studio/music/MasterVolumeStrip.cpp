@@ -1,6 +1,6 @@
 #include "MasterVolumeStrip.hpp"
 
-#include "SharedAudio.hpp"
+#include "music/SharedAudio.hpp"
 
 #include <QHBoxLayout>
 #include <QLabel>

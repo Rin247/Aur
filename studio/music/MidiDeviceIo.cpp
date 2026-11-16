@@ -1,4 +1,4 @@
-#include "MidiDeviceIo.hpp"
+#include "music/MidiDeviceIo.hpp"
 
 #ifdef _WIN32
 #include <windows.h>

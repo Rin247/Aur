@@ -1,4 +1,4 @@
-#include "WorldSettingsPanel.hpp"
+#include "world/WorldSettingsPanel.hpp"
 
 #include <QFontDatabase>
 #include <QLabel>

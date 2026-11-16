@@ -20,7 +20,7 @@
 
 #include "aur/project.hpp"
 
-#include "SpriteCanvas.hpp"
+#include "pixel/SpriteCanvas.hpp"
 #include "UndoCommands.hpp"
 
 namespace aur {

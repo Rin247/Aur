@@ -1,5 +1,5 @@
 #include "MusicPanel.hpp"
-#include "SharedAudio.hpp"
+#include "music/SharedAudio.hpp"
 #include "music/GmPatchList.hpp"
 #include "music/MasterVolumeStrip.hpp"
 #include "music/SongLibrary.hpp"

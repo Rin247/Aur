@@ -21,7 +21,7 @@
 #include <utility>
 #include <vector>
 
-#include "MapEditUndo.hpp"
+#include "map/MapEditUndo.hpp"
 #include "UndoCommands.hpp"
 #include "aur/project.hpp"
 #include "aur/render.hpp"

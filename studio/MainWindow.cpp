@@ -1,6 +1,6 @@
 #include "MainWindow.hpp"
 #include "AurPaths.hpp"
-#include "SharedAudio.hpp"
+#include "music/SharedAudio.hpp"
 #include "MapEditorPanel.hpp"
 #include "DatabasePanel.hpp"
 #include "CreatureForgePanel.hpp"
@@ -9,9 +9,9 @@
 #include "SpriteEditorPanel.hpp"
 #include "EventsPanel.hpp"
 #include "TilesetEditorPanel.hpp"
-#include "WorldSettingsPanel.hpp"
-#include "FramelessWindow.hpp"
-#include "StudioChrome.hpp"
+#include "world/WorldSettingsPanel.hpp"
+#include "theme/FramelessWindow.hpp"
+#include "theme/StudioChrome.hpp"
 #include "theme/AppearanceDialog.hpp"
 #include "theme/ThemeIcons.hpp"
 #include "theme/ThemeManager.hpp"
@@ -296,13 +296,8 @@ void MainWindow::updateStudioTitle() {
     if (chromeTitle) chromeTitle->setText(title);
 }
 
-// The window's state lives in the data root (~/.Aur), so it follows the
-// person and not the machine: the page it was on.
-//
-// The window itself is not restored. It opens maximized, which is how it has
-// always opened, and a geometry saved on another machine can be wider than
-// the screen -- which is how the app ended up opening with its own window
-// buttons off the edge.
+// Window state (the last open tab) lives in ~/.Aur; window geometry is not
+// restored because the studio always opens maximized.
 void MainWindow::restoreWindowState(bool restore_geometry, bool restore_tab) {
     Q_UNUSED(restore_geometry);
     QSettings settings(aur::settingsPath(), QSettings::IniFormat);

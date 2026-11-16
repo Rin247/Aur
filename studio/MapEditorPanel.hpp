@@ -33,14 +33,14 @@
 #include <QUndoStack>
 #include <memory>
 
-#include "MapCanvas.hpp"
+#include "map/MapCanvas.hpp"
 
 #include <map>
 
 #include <vector>
 #include "aur/project.hpp"
 #include "aur/render.hpp"
-#include "TilePaletteWidget.hpp"
+#include "map/TilePaletteWidget.hpp"
 
 namespace aur {
 

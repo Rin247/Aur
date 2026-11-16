@@ -1,5 +1,5 @@
-#include "TilePaletteWidget.hpp"
-#include "TileTexture.hpp"
+#include "map/TilePaletteWidget.hpp"
+#include "map/TileTexture.hpp"
 
 #include <QSignalBlocker>
 #include <algorithm>

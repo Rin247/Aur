@@ -1,8 +1,8 @@
-#include "MapCanvas.hpp"
+#include "map/MapCanvas.hpp"
 
-#include "TileTexture.hpp"
+#include "map/TileTexture.hpp"
 
-#include "EditorDefs.hpp"
+#include "map/EditorDefs.hpp"
 #include "theme/ThemeManager.hpp"
 #include "theme/ThemeQt.hpp"
 

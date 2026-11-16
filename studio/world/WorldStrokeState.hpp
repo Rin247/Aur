@@ -1,5 +1,5 @@
 #pragma once
-#include "WorldModel.hpp"
+#include "world/WorldModel.hpp"
 
 #include <QPoint>
 #include <set>

@@ -20,7 +20,7 @@
 
 #include "aur/project.hpp"
 
-#include "PixelSurface.hpp"
+#include "pixel/PixelSurface.hpp"
 #include "UndoCommands.hpp"
 
 namespace aur {

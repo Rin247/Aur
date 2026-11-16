@@ -9,7 +9,7 @@
 #include <atomic>
 #include <map>
 #include <vector>
-#include "MidiDeviceIo.hpp"
+#include "music/MidiDeviceIo.hpp"
 #include "aur/json.hpp"
 
 namespace aur
@@ -39,9 +39,7 @@ namespace aur
 
         MidiDeviceIo &devices() { return midiDevices; }
 
-        // Clock source for playback scheduling. When attached, event timing
-        // derives from the mixer's sample clock instead of a wall timer, so
-        // hardware MIDI stays in sync with what is heard.
+        // Clock source for playback scheduling from the mixer's sample clock.
         void attachClock(const std::atomic<std::int64_t> *frames,
                          const std::atomic<int> *bpm,
                          const std::atomic<bool> *active)

@@ -1,5 +1,5 @@
 #include "mini_test.hpp"
-#include "WorldModel.hpp"
+#include "world/WorldModel.hpp"
 #include "aur/world_topology.hpp"
 
 #include <array>

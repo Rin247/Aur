@@ -1,4 +1,4 @@
-#include "SpriteCanvas.hpp"
+#include "pixel/SpriteCanvas.hpp"
 
 #include <algorithm>
 

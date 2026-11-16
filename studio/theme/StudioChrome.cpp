@@ -1,4 +1,4 @@
-#include "StudioChrome.hpp"
+#include "theme/StudioChrome.hpp"
 
 #include "theme/LabelRoles.hpp"
 #include "theme/ThemeIcons.hpp"

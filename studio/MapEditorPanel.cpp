@@ -1,8 +1,8 @@
 #include "MapEditorPanel.hpp"
 
-#include "MapCanvas.hpp"
+#include "map/MapCanvas.hpp"
 
-#include "EditorDefs.hpp"
+#include "map/EditorDefs.hpp"
 #include "theme/ResponsiveSplitter.hpp"
 
 #include <QKeySequence>

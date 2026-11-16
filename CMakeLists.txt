@@ -62,7 +62,7 @@ target_include_directories(aur_engine PUBLIC engine)
 add_executable(aur_game
     game/main.cpp
     studio/GameView.cpp
-    studio/SharedAudio.cpp
+    studio/music/SharedAudio.cpp
     studio/AurPaths.cpp
     studio/music/QtAudioOutput.cpp
     studio/music/MasterVolumeStrip.cpp
@@ -77,7 +77,7 @@ target_link_libraries(aur_mcp PRIVATE aur_engine)
 
 # Aur executable (IDE / Editors)
 add_library(aur_editor_common STATIC
-    studio/SongHistory.cpp
+    studio/music/SongHistory.cpp
 )
 target_include_directories(aur_editor_common PUBLIC studio)
 target_link_libraries(aur_editor_common PUBLIC aur_engine)
@@ -85,14 +85,16 @@ target_link_libraries(aur_editor_common PUBLIC aur_engine)
 add_executable(aur_studio
     studio/main.cpp
     studio/MainWindow.cpp
-    studio/StudioChrome.cpp
-    studio/FramelessWindow.cpp
+    studio/theme/StudioChrome.cpp
+    studio/theme/StudioChrome.hpp
+    studio/theme/FramelessWindow.cpp
+    studio/theme/FramelessWindow.hpp
     studio/AurPaths.cpp
     studio/GameView.cpp
-    studio/SharedAudio.cpp
-    studio/SharedAudio.hpp
-    studio/MidiDeviceIo.cpp
-    studio/MidiDeviceIo.hpp
+    studio/music/SharedAudio.cpp
+    studio/music/SharedAudio.hpp
+    studio/music/MidiDeviceIo.cpp
+    studio/music/MidiDeviceIo.hpp
     studio/music/MidiSession.cpp
     studio/music/MidiSession.hpp
     studio/music/PianoRollCanvas.cpp
@@ -124,10 +126,11 @@ add_executable(aur_studio
     studio/music/MidiStrip.hpp
     studio/music/TransportIcon.cpp
     studio/music/TransportIcon.hpp
-    studio/SongHistory.cpp
+    studio/music/SongHistory.cpp
     studio/MapEditorPanel.cpp
-    studio/MapCanvas.cpp
-    studio/MapEditUndo.cpp
+    studio/map/MapCanvas.cpp
+    studio/map/MapCanvas.hpp
+    studio/map/MapEditUndo.cpp
     studio/UndoCommands.cpp
     studio/DatabasePanel.cpp
     studio/bestiary/BestiaryData.cpp
@@ -142,9 +145,9 @@ add_executable(aur_studio
     studio/bestiary/CreaturePortrait.hpp
     studio/CreatureForgePanel.cpp
     studio/MusicPanel.cpp
-    studio/MusicPanelSession.cpp
+    studio/music/MusicPanelSession.cpp
     studio/WorldPanel.cpp
-    studio/WorldPanelActions.cpp
+    studio/world/WorldPanelActions.cpp
     studio/world/HdSurface.cpp
     studio/world/TerrainLod.cpp
     studio/world/TerrainLod.hpp
@@ -166,21 +169,24 @@ add_executable(aur_studio
     studio/world/WorldEntityDialogs.cpp
     studio/world/WorldMapCanvas.cpp
     studio/world/WorldMapCanvasInput.cpp
-    studio/WorldModel.cpp
-    studio/WorldModel.hpp
+    studio/world/WorldModel.cpp
+    studio/world/WorldModel.hpp
     studio/RhiBackend.cpp
     studio/RhiBackend.hpp
     studio/SpriteEditorPanel.cpp
-    studio/PixelEditSession.cpp
-    studio/PixelFrameOps.cpp
-    studio/PixelSurface.cpp
-    studio/SpriteCanvas.cpp
-    studio/PixelEditSession.hpp
-    studio/TilePaletteWidget.cpp
-    studio/TilePaletteWidget.hpp
+    studio/pixel/PixelEditSession.cpp
+    studio/pixel/PixelFrameOps.cpp
+    studio/pixel/PixelSurface.cpp
+    studio/pixel/PixelSurface.hpp
+    studio/pixel/SpriteCanvas.cpp
+    studio/pixel/SpriteCanvas.hpp
+    studio/pixel/PixelEditSession.hpp
+    studio/map/TilePaletteWidget.cpp
+    studio/map/TilePaletteWidget.hpp
     studio/EventsPanel.cpp
     studio/TilesetEditorPanel.cpp
-    studio/WorldSettingsPanel.cpp
+    studio/world/WorldSettingsPanel.cpp
+    studio/world/WorldSettingsPanel.hpp
     studio/theme/ThemeMath.cpp
     studio/theme/ThemePalettes.cpp
     studio/theme/ThemeQt.cpp
@@ -274,15 +280,15 @@ add_executable(aur_tests
     tests/test_step_sequencer.cpp
     tests/test_arpeggiator.cpp
     tests/test_theme.cpp
-    studio/PixelEditSession.cpp
+    studio/pixel/PixelEditSession.cpp
     studio/bestiary/BestiaryData.cpp
     studio/bestiary/RecordFields.cpp
-    studio/PixelFrameOps.cpp
+    studio/pixel/PixelFrameOps.cpp
     studio/UndoCommands.cpp
-    studio/MapEditUndo.cpp
+    studio/map/MapEditUndo.cpp
     studio/world/WeatherRender.cpp
     studio/world/WeatherPreviewField.cpp
-    studio/SongHistory.cpp
+    studio/music/SongHistory.cpp
     studio/music/ClipLauncherStates.cpp
     studio/world/HdSurface.cpp
     studio/world/TerrainLod.cpp
@@ -290,7 +296,7 @@ add_executable(aur_tests
     studio/world/MapView.cpp
     studio/world/WorldCommandHistory.cpp
     studio/world/WorldStrokeState.cpp
-    studio/WorldModel.cpp
+    studio/world/WorldModel.cpp
     studio/theme/ThemeMath.cpp
     studio/theme/ThemePalettes.cpp
     studio/theme/ThemeQt.cpp
