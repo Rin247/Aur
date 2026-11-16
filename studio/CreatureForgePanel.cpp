@@ -1,5 +1,7 @@
 #include "CreatureForgePanel.hpp"
 #include "theme/LabelRoles.hpp"
+#include "theme/ThemeManager.hpp"
+#include "theme/ThemeQt.hpp"
 #include "aur/gfx.hpp"
 
 #include <QRandomGenerator>
@@ -45,12 +47,14 @@ void CharacterSheetWidget::setGraphic(const Json& g) {
 }
 
 void CharacterSheetWidget::paintEvent(QPaintEvent*) {
+    using theme::qt;
+    const theme::Palette& pal = theme::tokens().palette;
     QPainter painter(this);
-    painter.fillRect(rect(), QColor("#222831"));
+    painter.fillRect(rect(), qt(pal.surface_variant));
 
     if (!graphic.contains("frames") || !graphic["frames"].is_object() ||
         graphic["frames"].as_object().empty()) {
-        painter.setPen(QColor("#c1c8ce"));
+        painter.setPen(qt(pal.text_dim));
         painter.drawText(rect(), Qt::AlignCenter, "Generate a seeded asset to preview");
         return;
     }
@@ -84,7 +88,7 @@ void CharacterSheetWidget::paintEvent(QPaintEvent*) {
     painter.setRenderHint(QPainter::SmoothPixmapTransform, false);
     painter.drawImage(target, image);
 
-    painter.setPen(QColor("#aeb8c2"));
+    painter.setPen(qt(pal.text_dim));
     painter.drawText(QRect(8, height() - 30, width() - 16, 20), Qt::AlignCenter,
                      QString("%1 × %2 px · seed preview").arg(image_width).arg(image_height));
 }

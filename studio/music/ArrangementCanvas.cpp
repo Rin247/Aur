@@ -1,5 +1,8 @@
 #include "ArrangementCanvas.hpp"
 
+#include "theme/ThemeManager.hpp"
+#include "theme/ThemeQt.hpp"
+
 #include <QKeyEvent>
 #include <QMouseEvent>
 #include <QPainter>
@@ -124,8 +127,10 @@ namespace aur
 
     void ArrangementCanvas::paintEvent(QPaintEvent *)
     {
+        using theme::qt;
+        const theme::Palette &pal = theme::tokens().palette;
         QPainter painter(this);
-        painter.fillRect(rect(), QColor("#14161e"));
+        painter.fillRect(rect(), qt(pal.background));
 
         const int rows = song.contains("tracks") && song["tracks"].is_array()
                              ? static_cast<int>(song["tracks"].as_array().size())
@@ -134,11 +139,12 @@ namespace aur
                              ? std::max(1, song["bars"].as_int())
                              : 1;
         const int totalSteps = bars * 16;
+        Q_UNUSED(totalSteps);
 
         // Ruler: bar numbers, markers, loop brace.
         const QRect ruler(0, 0, width(), rulerHeight);
-        painter.fillRect(ruler, QColor("#181a23"));
-        painter.setPen(QColor("#aeb5c5"));
+        painter.fillRect(ruler, qt(pal.surface));
+        painter.setPen(qt(pal.text_dim));
         for (int bar = 0; bar <= bars; ++bar)
         {
             const int x = kRowLabelWidth + bar * 16 * kStepWidth;
@@ -149,7 +155,7 @@ namespace aur
         }
         if (song.contains("markers") && song["markers"].is_array())
         {
-            painter.setPen(QColor("#e0b050"));
+            painter.setPen(qt(pal.warning));
             for (const Json &marker : song["markers"].as_array())
             {
                 if (!marker.is_object() || !marker.contains("step") ||
@@ -168,7 +174,7 @@ namespace aur
         {
             const int x0 = kRowLabelWidth + loopStart * kStepWidth;
             const int x1 = kRowLabelWidth + loopEnd * kStepWidth;
-            painter.setPen(QPen(QColor("#48d6a0"), 2));
+            painter.setPen(QPen(qt(pal.good), 2));
             painter.drawLine(x0, rulerHeight - 4, x1, rulerHeight - 4);
             painter.drawLine(x0, rulerHeight - 10, x0, rulerHeight - 4);
             painter.drawLine(x1, rulerHeight - 10, x1, rulerHeight - 4);
@@ -176,10 +182,10 @@ namespace aur
 
         // Tempo / T.S. lane.
         const int tempoY = rulerHeight + rows * rowHeight;
-        painter.fillRect(0, tempoY, width(), kTempoLaneHeight, QColor("#181a23"));
-        painter.setPen(QColor("#858a99"));
+        painter.fillRect(0, tempoY, width(), kTempoLaneHeight, qt(pal.surface));
+        painter.setPen(qt(pal.text_dim));
         painter.drawText(4, tempoY + 10, "tempo");
-        painter.setPen(QColor("#e0b050"));
+        painter.setPen(qt(pal.warning));
         if (song.contains("tempo_map") && song["tempo_map"].is_array())
         {
             for (const Json &t : song["tempo_map"].as_array())
@@ -201,12 +207,12 @@ namespace aur
         {
             const int yTop = rulerHeight + row * rowHeight;
             painter.fillRect(QRect(0, yTop, width(), rowHeight),
-                             row % 2 ? QColor("#181a23") : QColor("#1c1f2a"));
-            painter.setPen(QColor("#0c0d12"));
+                             row % 2 ? qt(pal.surface) : qt(pal.surface_variant));
+            painter.setPen(qt(pal.divider));
             painter.drawLine(0, yTop, width(), yTop);
 
             const Json &track = song["tracks"].as_array()[static_cast<size_t>(row)];
-            painter.setPen(QColor("#aeb5c5"));
+            painter.setPen(qt(pal.text));
             painter.drawText(QRect(4, yTop, kRowLabelWidth - 8, rowHeight),
                              Qt::AlignVCenter | Qt::AlignLeft,
                              QString::fromStdString(
@@ -234,12 +240,12 @@ namespace aur
                                  QString::fromStdString(info.name));
                 if (info.muted)
                 {
-                    painter.setPen(QPen(QColor("#d07070"), 2));
+                    painter.setPen(QPen(qt(pal.bad), 2));
                     painter.drawRect(block);
                 }
             }
         }
-        painter.setPen(QColor("#0c0d12"));
+        painter.setPen(qt(pal.divider));
         painter.drawLine(kRowLabelWidth - 1, 0, kRowLabelWidth - 1, height());
     }
 

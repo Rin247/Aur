@@ -10,6 +10,8 @@
 #include "world/WorldClimateOverlays.hpp"
 #include "world/WorldMarkerOverlays.hpp"
 #include "world/WorldCamera.hpp"
+#include "theme/ThemeManager.hpp"
+#include "theme/ThemeQt.hpp"
 #include "aur/autotile.hpp"
 #include "aur/clock.hpp"
 #include "aur/world_topology.hpp"
@@ -565,7 +567,7 @@ void WorldMapCanvasWidget::paintCanvas(QPainter& painter) {
     if (!gpuTerrain) painter.fillRect(rect(), QColor("#171b20"));
 
     if (!project || current_map.empty() || !project->maps.contains(current_map)) {
-        painter.setPen(QColor("#aeb8c2"));
+        painter.setPen(theme::qt(theme::tokens().palette.text_dim));
         painter.drawText(rect(), Qt::AlignCenter, "Select a world map to begin");
         return;
     }
@@ -632,9 +634,7 @@ void WorldMapCanvasWidget::paintCanvas(QPainter& painter) {
         static_cast<int>(std::floor((0.0 - bounds.left()) / cell));
     const int last_visible_x =
         static_cast<int>(std::ceil((width() - bounds.left()) / cell));
-    // WP1: with repeat off, tile iteration stays within the single copy;
-    // data lookups still wrap (wraps_x), drawing just never goes past the
-    // map bounds because the camera clamps.
+    // WP1: with repeat off, tile iteration stays within the single copy.
     const bool repeat_x = wraps_x && repeat_world_view;
     const int first_x = repeat_x ? first_visible_x
         : std::clamp(first_visible_x, 0, map_width);
@@ -645,7 +645,7 @@ void WorldMapCanvasWidget::paintCanvas(QPainter& painter) {
     const int last_y = std::clamp(static_cast<int>(std::ceil((height() - bounds.top()) / cell)),
                                   0, map_height);
 
-    if (!gpuTerrain) painter.fillRect(bounds.adjusted(-1, -1, 1, 1), QColor("#080a0c"));
+    if (!gpuTerrain) painter.fillRect(bounds.adjusted(-1, -1, 1, 1), theme::qt(theme::tokens().palette.divider));
     world::TerrainPaintContext terrain{painter,        &map,      bounds, QRectF(rect()),
                                      cell,            map_width, map_height,
                                      first_x,         last_x,    first_y, last_y,

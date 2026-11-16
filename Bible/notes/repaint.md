@@ -1,6 +1,6 @@
 # Repaint and refactor: plan
 
-Status: P3 closed (tag repaint-p3). Next step: P4.1, PixelSurface, MapCanvas, and EditorDefs.hpp read theme tokens.
+Status: P4 landed (tag repaint-p4). Next step: P6.1, extract MidiStrip from MusicPanel.cpp, then P5.1-P5.2.
 
 ## Goal
 
@@ -126,12 +126,12 @@ both sizes. Tag `repaint-p3`.
 
 ### P4 Canvases and painters read tokens
 One step per file group; each opens its PNGs. UI furniture goes to tokens, data colours stay.
-- [ ] P4.1 `PixelSurface`, `MapCanvas`, `EditorDefs.hpp` (grid, selection, void margin).
-- [ ] P4.2 DAW canvases: `PianoRollCanvas`, `ArrangementCanvas`, `StepSequencerCanvas`,
+- [x] P4.1 `PixelSurface`, `MapCanvas`, `EditorDefs.hpp` (grid, selection, void margin).
+- [x] P4.2 DAW canvases: `PianoRollCanvas`, `ArrangementCanvas`, `StepSequencerCanvas`,
   `VelocityLaneStrip`, session grid.
-- [ ] P4.3 World: `WorldMapCanvas`, `WorldMarkerOverlays`, `WorldClimateOverlays`; the world margin
+- [x] P4.3 World: `WorldMapCanvas`, `WorldMarkerOverlays`, `WorldClimateOverlays`; the world margin
   stays `#171b20` in the shader and the CPU path (PROJECT.md decision) unless both change together.
-- [ ] P4.4 `CreatureForgePanel`, `GameView` overlay, `bestiary/CreaturePortrait` backgrounds.
+- [x] P4.4 `CreatureForgePanel`, `GameView` overlay, `bestiary/CreaturePortrait` backgrounds.
 Acceptance: `dark` and `light` captures of every page opened and read; no text under 4.5:1 on its
 surface except `textMute`. Tag `repaint-p4`.
 

@@ -1,5 +1,8 @@
 #include "StepSequencerCanvas.hpp"
 
+#include "theme/ThemeManager.hpp"
+#include "theme/ThemeQt.hpp"
+
 #include <QKeyEvent>
 #include <QMouseEvent>
 
@@ -13,11 +16,11 @@ namespace aur
 {
     namespace
     {
-        QColor cellColor(bool on, bool accent)
+        QColor cellColor(bool on, bool accent, const theme::Palette &pal)
         {
             if (!on)
-                return QColor("#22262f");
-            return accent ? QColor("#e0b050") : QColor("#48d6a0");
+                return theme::qt(pal.surface_secondary);
+            return accent ? theme::qt(pal.warning) : theme::qt(pal.good);
         }
     } // namespace
 
@@ -179,12 +182,15 @@ namespace aur
 
     void StepSequencerCanvas::paintEvent(QPaintEvent *)
     {
+        using theme::qt;
+        const theme::Tokens &t = theme::tokens();
+        const theme::Palette &pal = t.palette;
         QPainter painter(this);
-        painter.fillRect(rect(), QColor("#14161e"));
+        painter.fillRect(rect(), qt(pal.background));
 
         // Ruler: bar numbers every 16 steps (a bar is 16 song steps).
-        painter.fillRect(QRect(0, 0, width(), rulerHeight), QColor("#181a23"));
-        painter.setPen(QColor("#aeb5c5"));
+        painter.fillRect(QRect(0, 0, width(), rulerHeight), qt(pal.surface));
+        painter.setPen(qt(pal.text_dim));
         for (int bar = 0; bar * 16 < maxSteps; ++bar)
         {
             const int x = labelWidth + bar * 16 * cellWidth;
@@ -193,7 +199,7 @@ namespace aur
             painter.drawLine(x, 0, x, rulerHeight);
             painter.drawText(x + 3, rulerHeight - 6, QString::number(bar + 1));
         }
-        painter.setPen(QColor("#5a6270"));
+        painter.setPen(qt(pal.text_dim));
         painter.drawText(4, rulerHeight - 6, "Pattern");
 
         // One row per pattern.
@@ -202,8 +208,8 @@ namespace aur
             const audio::StepPattern &pattern = patterns[static_cast<size_t>(row)];
             const int yTop = rulerHeight + row * rowHeight;
             painter.fillRect(QRect(0, yTop, width(), rowHeight),
-                             row % 2 ? QColor("#181a23") : QColor("#1c1f2a"));
-            painter.setPen(QColor("#aeb5c5"));
+                             row % 2 ? qt(pal.surface) : qt(pal.surface_variant));
+            painter.setPen(qt(pal.text));
             painter.drawText(QRect(4, yTop, labelWidth - 8, rowHeight),
                              Qt::AlignVCenter | Qt::AlignLeft,
                              QString::fromStdString(pattern.name));
@@ -218,7 +224,7 @@ namespace aur
                 const bool accent = on && cell->accent != 0;
                 QRect box(x + 1, yTop + (rowHeight - cellHeight) / 2,
                           cellWidth - 2, cellHeight);
-                painter.fillRect(box, cellColor(on, accent));
+                painter.fillRect(box, cellColor(on, accent, pal));
                 if (on)
                 {
                     painter.setPen(QColor("#10121a"));
@@ -233,10 +239,10 @@ namespace aur
         {
             const int x = labelWidth + cursorStep * cellWidth;
             const int yTop = rulerHeight + cursorPattern * rowHeight;
-            painter.setPen(QPen(QColor("#8fb8ff"), 2));
+            painter.setPen(QPen(qt(t.accent_bright), 2));
             painter.drawRect(x, yTop + (rowHeight - cellHeight) / 2, cellWidth - 1, cellHeight);
         }
-        painter.setPen(QColor("#0c0d12"));
+        painter.setPen(qt(pal.divider));
         painter.drawLine(labelWidth - 1, 0, labelWidth - 1, height());
     }
 

@@ -1,5 +1,7 @@
 #include "WorldMarkerOverlays.hpp"
 #include "aur/world_topology.hpp"
+#include "theme/ThemeManager.hpp"
+#include "theme/ThemeQt.hpp"
 
 #include <QFontMetrics>
 #include <QPen>
@@ -40,7 +42,7 @@ namespace aur::world
                 const QPointF center(marker_x + copy * ctx.bounds.width(),
                                      ctx.bounds.top() + (y + 0.5) * ctx.cell);
                 ctx.painter.setPen(QPen(index == static_cast<size_t>(ctx.selected_node)
-                                            ? Qt::white
+                                            ? theme::qt(theme::tokens().accent_bright)
                                             : QColor("#202329"),
                                         index == static_cast<size_t>(ctx.selected_node) ? 2.0 : 1.0));
                 ctx.painter.setBrush(marker);

@@ -3,6 +3,8 @@
 #include "TileTexture.hpp"
 
 #include "EditorDefs.hpp"
+#include "theme/ThemeManager.hpp"
+#include "theme/ThemeQt.hpp"
 
 #include <QTimer>
 
@@ -375,13 +377,16 @@ void MapCanvasWidget::redo() {
 }
 
 void MapCanvasWidget::paintEvent(QPaintEvent*) {
+    using theme::qt;
+    const theme::Tokens& t = theme::tokens();
+    const theme::Palette& pal = t.palette;
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
     painter.setRenderHint(QPainter::SmoothPixmapTransform, false);
-    painter.fillRect(rect(), QColor("#171b20"));
+    painter.fillRect(rect(), qt(pal.background));
 
     if (!project || current_map.empty() || !project->maps.contains(current_map)) {
-        painter.setPen(QColor("#c1c8ce"));
+        painter.setPen(qt(pal.text_dim));
         painter.drawText(rect(), Qt::AlignCenter, "Select a map to inspect terrain and units");
         return;
     }
@@ -393,8 +398,8 @@ void MapCanvasWidget::paintEvent(QPaintEvent*) {
     const QRectF bounds = mapBounds();
     if (bounds.isEmpty() || !map.contains("layers") || !map["layers"].is_object()) return;
     const qreal cell = bounds.width() / map_width;
-    painter.fillRect(QRectF(rect()), QColor("#171b20"));
-    painter.fillRect(bounds.intersected(QRectF(rect())).adjusted(-1, -1, 1, 1), QColor("#090b0e"));
+    painter.fillRect(QRectF(rect()), qt(pal.background));
+    painter.fillRect(bounds.intersected(QRectF(rect())).adjusted(-1, -1, 1, 1), qt(pal.divider));
 
     const int first_x = std::clamp(static_cast<int>(std::floor(-bounds.left() / cell)), 0, map_width);
     const int last_x = std::clamp(static_cast<int>(std::ceil((width() - bounds.left()) / cell)), 0, map_width);
@@ -415,8 +420,8 @@ void MapCanvasWidget::paintEvent(QPaintEvent*) {
                 const QRectF target(bounds.left() + x * cell, bounds.top() + y * cell, cell, cell);
                 const QImage tile = tileImage(tileset_id, tile_index);
                 if (tile.isNull()) {
-                    painter.fillRect(target, QColor("#34404a"));
-                    painter.setPen(QColor("#c1c8ce"));
+                    painter.fillRect(target, qt(pal.surface_variant));
+                    painter.setPen(qt(pal.text_dim));
                     painter.drawText(target, Qt::AlignCenter, QString::number(tile_index));
                 } else {
                     painter.drawImage(target, tile);
@@ -511,7 +516,7 @@ void MapCanvasWidget::paintEvent(QPaintEvent*) {
             const QRectF marker(cell_rect.center().x() - marker_size / 2,
                                 cell_rect.center().y() - marker_size / 2,
                                 marker_size, marker_size);
-            painter.setPen(QPen(selected ? QColor("#fff3c4") : QColor("#171b20"), selected ? 2.5 : 1.2));
+            painter.setPen(QPen(selected ? qt(t.accent_bright) : qt(pal.background), selected ? 2.5 : 1.2));
             painter.setBrush(color);
             painter.drawRoundedRect(marker, 3, 3);
             painter.setPen(Qt::white);
@@ -527,7 +532,7 @@ void MapCanvasWidget::paintEvent(QPaintEvent*) {
         painter.drawRect(hover);
     }
 
-    painter.setPen(QColor("#c1c8ce"));
+    painter.setPen(qt(pal.text_dim));
     painter.drawText(QRectF(16, 8, width() - 32, 20), Qt::AlignLeft | Qt::AlignVCenter,
                      QString("%1 × %2 · %3")
                          .arg(map_width).arg(map_height)

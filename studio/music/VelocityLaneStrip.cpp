@@ -1,5 +1,8 @@
 #include "VelocityLaneStrip.hpp"
 
+#include "theme/ThemeManager.hpp"
+#include "theme/ThemeQt.hpp"
+
 #include <QMouseEvent>
 #include <QPainter>
 
@@ -154,15 +157,18 @@ namespace aur
 
     void VelocityLaneStrip::paintEvent(QPaintEvent *)
     {
+        using theme::qt;
+        const theme::Tokens &t = theme::tokens();
+        const theme::Palette &pal = t.palette;
         QPainter painter(this);
-        painter.fillRect(rect(), QColor("#14161e"));
+        painter.fillRect(rect(), qt(pal.background));
 
         const bool validTrack = song.contains("tracks") && song["tracks"].is_array() &&
                                 trackIndex >= 0 &&
                                 trackIndex < static_cast<int>(song["tracks"].as_array().size());
         if (!validTrack)
         {
-            painter.setPen(QColor("#858a99"));
+            painter.setPen(qt(pal.text_dim));
             painter.drawText(rect(), Qt::AlignCenter, "Velocity");
             return;
         }
@@ -172,12 +178,12 @@ namespace aur
         {
             const LaneLayout &lane = lanes[static_cast<size_t>(row)];
             const QRect cell(0, lane.yTop, width(), lane.height);
-            painter.fillRect(cell, row % 2 ? QColor("#181a23") : QColor("#1c1f2a"));
+            painter.fillRect(cell, row % 2 ? qt(pal.surface) : qt(pal.surface_variant));
 
-            painter.setPen(QColor("#aeb5c5"));
+            painter.setPen(qt(pal.text_dim));
             painter.drawText(cell.adjusted(4, 2, -2, 0), Qt::AlignLeft,
                              lane.id < 0 ? "vel" : laneLabel(lane.id));
-            painter.setPen(QColor("#2a2d39"));
+            painter.setPen(qt(pal.divider));
             painter.drawLine(0, cell.bottom(), width(), cell.bottom());
 
             if (lane.id < 0)
@@ -194,7 +200,7 @@ namespace aur
                     const int barHeight = std::max(2, velocity * h / 127);
                     const int x = kKeyWidth + step * kStepWidth;
                     painter.fillRect(x + 2, lane.yTop + lane.height - 2 - barHeight,
-                                     kStepWidth - 4, barHeight, QColor("#48d6a0"));
+                                     kStepWidth - 4, barHeight, qt(pal.good));
                 }
             }
             else
@@ -216,16 +222,16 @@ namespace aur
                         const int ny = lane.id == audio::SongDocument::kLaneBend
                                            ? lane.yTop + 12 + (h / 2) - nv / 2
                                            : lane.yTop + lane.height - 2 - nv;
-                        painter.setPen(QPen(QColor("#6fa8dc"), 1));
+                        painter.setPen(QPen(qt(t.primary), 1));
                         painter.drawLine(x, y, nx, ny);
                     }
-                    painter.setBrush(QColor("#6fa8dc"));
-                    painter.setPen(QColor("#c8dcf0"));
+                    painter.setBrush(qt(t.primary));
+                    painter.setPen(qt(t.accent_bright));
                     painter.drawRect(x - 2, y - 2, 5, 5);
                 }
             }
         }
-        painter.setPen(QColor("#0c0d12"));
+        painter.setPen(qt(pal.divider));
         painter.drawLine(kKeyWidth - 1, 0, kKeyWidth - 1, height());
     }
 

@@ -1,6 +1,4 @@
-// EditorDefs.hpp - single definitions shared by the map, pixel and tileset
-// editor panels: the entity-kind list, flag definitions and colors, and the
-// palette swatch helper. Previously each panel held its own copy.
+// EditorDefs.hpp - shared entity kinds, collision flag styles and palette swatch helper.
 #pragma once
 
 #include <QColor>

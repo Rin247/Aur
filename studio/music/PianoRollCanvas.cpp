@@ -2,6 +2,8 @@
 
 #include "NoteIndex.hpp"
 #include "QtAudioOutput.hpp"
+#include "theme/ThemeManager.hpp"
+#include "theme/ThemeQt.hpp"
 
 #include <QKeyEvent>
 #include <QMouseEvent>
@@ -449,8 +451,11 @@ namespace aur
 
     void PianoRollCanvasWidget::paintEvent(QPaintEvent *)
     {
+        using theme::qt;
+        const theme::Tokens &t = theme::tokens();
+        const theme::Palette &pal = t.palette;
         QPainter painter(this);
-        painter.fillRect(rect(), QColor("#171922"));
+        painter.fillRect(rect(), qt(pal.background));
 
         for (int row = 0; row < pitchCount; ++row)
         {
@@ -463,20 +468,23 @@ namespace aur
             const bool inScale = !scaleMask.empty() &&
                                  static_cast<size_t>(pitch) < scaleMask.size() &&
                                  scaleMask[static_cast<size_t>(pitch % 12 + 12) % 12];
-            painter.fillRect(key, blackKey ? QColor("#292c38") : QColor("#363945"));
+            painter.fillRect(key, blackKey ? qt(pal.surface) : qt(pal.surface_variant));
             if (inScale)
                 painter.fillRect(key, QColor(72, 214, 160, 36));
-            painter.setPen(QColor("#858a99"));
+            painter.setPen(qt(pal.text_dim));
             painter.drawText(key.adjusted(4, 0, -2, 0), Qt::AlignVCenter | Qt::AlignRight,
                              noteName(pitch));
             if (pitch % 12 == 0)
             {
                 painter.fillRect(QRect(keyWidth, row * pitchHeight,
                                        width() - keyWidth, pitchHeight),
-                                 QColor(255, 255, 255, 8));
+                                 qt(pal.surface));
             }
         }
 
+        const QColor barLine = qt(theme::mix(pal.divider, pal.text_dim, 0.35));
+        const QColor beatLine = qt(pal.divider);
+        const QColor stepLine = qt(theme::mix(pal.background, pal.divider, 0.55));
         const int displayedSteps = (width() - keyWidth) / currentStepWidth;
         const int firstGridStep = (firstVisibleStep / 16) * 16;
         const int lastGridStep = firstVisibleStep + displayedSteps;
@@ -485,21 +493,20 @@ namespace aur
             const int x = keyWidth + (step - firstVisibleStep) * currentStepWidth;
             const int barNumber = step / 16;
             const int barBeat = step % 16;
-            painter.setPen(barBeat == 0 ? QColor("#555b6d") : barBeat % 4 == 0 ? QColor("#393d4b")
-                                                                               : QColor("#272a35"));
+            painter.setPen(barBeat == 0 ? barLine : barBeat % 4 == 0 ? beatLine : stepLine);
             painter.drawLine(x, 0, x, height());
             if (barBeat == 0 && step >= firstVisibleStep)
             {
-                painter.setPen(QColor("#aeb5c5"));
+                painter.setPen(qt(pal.text_dim));
                 painter.drawText(x + 3, 12, QString::number(barNumber + 1));
             }
         }
         for (int row = 0; row <= pitchCount; ++row)
         {
-            painter.setPen(QColor("#30333f"));
+            painter.setPen(stepLine);
             painter.drawLine(keyWidth, row * pitchHeight, width(), row * pitchHeight);
         }
-        painter.setPen(QColor("#0c0d12"));
+        painter.setPen(beatLine);
         painter.drawLine(keyWidth - 1, 0, keyWidth - 1, height());
 
         if (snapSteps != 1)
@@ -509,14 +516,14 @@ namespace aur
                                       : snapSteps == 4 ? "snap: 1/4"
                                       : snapSteps == 5 ? "snap: 1/4T"
                                                        : "snap: 1/16";
-            painter.setPen(QColor("#8ab4f8"));
+            painter.setPen(qt(t.accent_bright));
             painter.drawText(width() - 78, 14, snapLabel);
         }
 
         if (!song.contains("tracks") || !song["tracks"].is_array() ||
             trackIndex < 0 || trackIndex >= static_cast<int>(song["tracks"].as_array().size()))
         {
-            painter.setPen(Qt::white);
+            painter.setPen(qt(pal.text));
             painter.drawText(QRect(keyWidth + 8, 8, width() - keyWidth - 16, 28),
                              Qt::AlignLeft, "Add or select a track, then click the grid to create notes.");
             return;
@@ -525,7 +532,7 @@ namespace aur
         const Json &notes = song["tracks"][static_cast<size_t>(trackIndex)]["notes"];
         if (!notes.is_array())
             return;
-        const QColor noteColor("#48d6a0");
+        const QColor noteColor = qt(pal.good);
         for (size_t i = 0; i < notes.as_array().size(); ++i)
         {
             const Json &note = notes[i];
@@ -544,16 +551,18 @@ namespace aur
             QColor fill = noteColor.darker(70 + (audio::SongDocument::note_velocity(note) * 90 / 127));
             const bool selected = selectedNotes.count(static_cast<int>(i)) > 0;
             if (selected)
-                fill = QColor("#f0bd58");
-            painter.setPen(selected ? QPen(QColor("#fff0a8"), 2)
+                fill = qt(t.primary);
+            painter.setPen(selected ? QPen(qt(t.accent_bright), 2)
                                     : QPen(fill.darker(150), 1));
             painter.setBrush(fill);
             painter.drawRoundedRect(noteRect, 2, 2);
         }
         if (marqueeSelecting && !marqueeRect.isNull())
         {
-            painter.setPen(QPen(QColor("#8ab4f8"), 1, Qt::DashLine));
-            painter.setBrush(QColor(138, 180, 248, 30));
+            QColor wash = qt(t.primary);
+            wash.setAlphaF(t.accent_dim_alpha);
+            painter.setPen(QPen(qt(t.accent_bright), 1, Qt::DashLine));
+            painter.setBrush(wash);
             painter.drawRect(marqueeRect);
         }
         if (playheadStep >= 0)
@@ -561,7 +570,7 @@ namespace aur
             const int px = keyWidth + (playheadStep - firstVisibleStep) * currentStepWidth;
             if (px >= keyWidth)
             {
-                painter.setPen(QPen(QColor("#f0bd58"), 1));
+                painter.setPen(QPen(qt(pal.warning), 1));
                 painter.drawLine(px, 0, px, height());
             }
         }

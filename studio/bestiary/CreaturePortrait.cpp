@@ -1,6 +1,8 @@
 #include "CreaturePortrait.hpp"
 
 #include "BestiaryData.hpp"
+#include "theme/ThemeManager.hpp"
+#include "theme/ThemeQt.hpp"
 
 #include <QPainter>
 
@@ -45,11 +47,13 @@ namespace aur
 
         void CreaturePortrait::paintEvent(QPaintEvent *)
         {
+            using theme::qt;
+            const theme::Palette &pal = theme::tokens().palette;
             QPainter painter(this);
-            painter.fillRect(rect(), QColor("#151a22"));
+            painter.fillRect(rect(), qt(pal.surface_variant));
             if (image.isNull())
             {
-                painter.setPen(QColor("#aeb8c2"));
+                painter.setPen(qt(pal.text_dim));
                 painter.drawText(rect(), Qt::AlignCenter,
                                  graphicId.isEmpty() ? "No creature selected"
                                                      : "The project has no artwork for this creature");

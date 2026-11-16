@@ -2,6 +2,8 @@
 
 #include "PixelFrameOps.hpp"
 #include "aur/gfx.hpp"
+#include "theme/ThemeManager.hpp"
+#include "theme/ThemeQt.hpp"
 
 #include <QApplication>
 #include <QClipboard>
@@ -339,11 +341,13 @@ namespace aur
     }
 
     void PixelSurface::paintEvent(QPaintEvent*) {
+        using theme::qt;
+        const theme::Palette& pal = theme::tokens().palette;
         QPainter painter(this);
-        painter.fillRect(rect(), QColor("#323840"));
+        painter.fillRect(rect(), qt(pal.surface_variant));
 
         if (!rows_target || !rows_target->is_array() || surface_width <= 0 || surface_height <= 0) {
-            painter.setPen(QColor("#c1c8ce"));
+            painter.setPen(qt(pal.text_dim));
             painter.drawText(rect(), Qt::AlignCenter, "Select something to edit");
             return;
         }
@@ -361,9 +365,7 @@ namespace aur
             }
         }
 
-        // D5.S1.1: the neighbours of the current frame, ghosted behind it. The
-        // previous frame is warm and the next one cool, so a pose reads left to
-        // right the way a walk cycle does.
+        // D5.S1.1: previous frame warm, next frame cool, ghosted behind the current one.
         if (onion_index >= 0 && onion_index < static_cast<int>(onion_rows.size())) {
             const auto ghost = [&](int index, const QColor& tint) {
                 if (index < 0 || index >= static_cast<int>(onion_rows.size())) return;
@@ -434,7 +436,7 @@ namespace aur
                              std::min(brush_size, surface_height - start_y) * zoom_scale);
         }
 
-        painter.setPen(QColor("#c1c8ce"));
+        painter.setPen(qt(pal.text_dim));
         painter.drawText(24, surface_height * zoom_scale + 42,
                          QString("%1 × %2 px  ·  8×8 SNES tiles").arg(surface_width).arg(surface_height));
     }
