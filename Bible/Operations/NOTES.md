@@ -534,3 +534,16 @@
     and placed `+ Location`, `+ Exit`, `Edit`, and `Delete` on one row.
   - `MapEditorPanel` & `MusicPanel`: paired `Apply` and `Delete (Del)` on one row in the map inspector,
     and placed `+ Track`, `+ Drum`, and `Remove` on one row in the DAW track pane.
+- **Carried over Hydra themes (`C:\Projects\Hydra\`) into `studio/theme/`**:
+  - Added `studio/theme/ThemeContract.hpp` (carried over from `Hydra/src/ThemeContract.h`): 13 mode IDs
+    (`system`, `brahmamuhurta`, `dawn`, `sunrise`, `light`, `noon`, `sunset`, `bluehour`, `dusk`,
+    `dark`, `midnight`, `amoled`, `custom`), legacy ordinal migration (`resolveLegacyThemeOrdinal`,
+    `legacyModeIdFor`), and `"firstlight"` -> `"brahmamuhurta"` alias normalization.
+  - Added `derive_custom_palette(Rgb primary)` and `color_blind_transform(Rgb, std::string_view)` in
+    `ThemePalettes.{hpp,cpp}` matching `Hydra/qml/modules/Hydra/Theme.qml` (`custom` accent-tinted
+    neutral ramp, `protanopia`/`deuteranopia`/`tritanopia`/`achromatopsia` semantic colour transforms,
+    and Hydra's exact `good`/`bad`/`warning` tokens for `brahmamuhurta`, `sunrise`, and `noon`).
+  - Extended `ThemeManager` and `AppearanceDialog` with Hydra's `Custom (Accent)` mode button,
+    `Interface scale (75..200%)` slider, `Dyslexia-friendly font` toggle, and `Colour vision`
+    simulation selector with live `Great` / `Unstable` / `Broken` swatch previews; pinned in
+    `tests/test_theme.cpp`.

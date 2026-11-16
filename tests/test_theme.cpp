@@ -2,6 +2,7 @@
 #include "theme/ThemeQt.hpp"
 
 #include <cmath>
+#include <cstring>
 #include <set>
 #include <string>
 
@@ -76,12 +77,30 @@ void test_theme_qpalette()
 
 void test_theme_palettes()
 {
+    ASSERT(kThemeModeCount == 13);
+    ASSERT(std::strcmp(kThemeModes[0], "system") == 0);
+    ASSERT(std::strcmp(kThemeModes[1], "brahmamuhurta") == 0);
+    ASSERT(std::strcmp(kThemeModes[12], "custom") == 0);
+    ASSERT(kLegacyCustomThemeOrdinal == 5);
+    ASSERT(resolveLegacyThemeOrdinal(5) == 7);
+    ASSERT(std::strcmp(legacyModeIdFor(0), "system") == 0);
+    ASSERT(std::strcmp(legacyModeIdFor(1), "light") == 0);
+    ASSERT(std::strcmp(legacyModeIdFor(2), "midnight") == 0);
+    ASSERT(std::strcmp(legacyModeIdFor(3), "dark") == 0);
+    ASSERT(std::strcmp(legacyModeIdFor(4), "amoled") == 0);
+    ASSERT(std::strcmp(legacyModeIdFor(5), "custom") == 0);
+    ASSERT(std::strcmp(legacyModeIdFor(6), "noon") == 0);
+    ASSERT(std::strcmp(legacyModeIdFor(7), "custom") == 0);
+    ASSERT(legacyModeIdFor(-1) == nullptr);
+    ASSERT(legacyModeIdFor(99) == nullptr);
+
     ASSERT(modes().size() == 11);
     std::set<std::string> ids;
     for (const Mode &mode : modes()) ids.insert(std::string(mode.id));
     ASSERT(ids.size() == 11);
+    ASSERT(find_mode("firstlight") == find_mode("brahmamuhurta"));
 
-    const std::set<std::string> light{"firstlight", "dawn", "sunrise", "light", "noon"};
+    const std::set<std::string> light{"brahmamuhurta", "dawn", "sunrise", "light", "noon"};
     int light_count = 0;
     for (const Mode &mode : modes())
     {
@@ -102,10 +121,9 @@ void test_theme_palettes()
     ASSERT(light_count == 5);
 
     ASSERT(near(contrast_ratio(palette_of("dark").text, palette_of("dark").background), 18.23));
-    ASSERT(near(contrast_ratio(palette_of("firstlight").text, palette_of("firstlight").background), 7.06));
+    ASSERT(near(contrast_ratio(palette_of("brahmamuhurta").text, palette_of("brahmamuhurta").background), 7.06));
     ASSERT(near(contrast_ratio(palette_of("amoled").text_dim, palette_of("amoled").background), 8.19));
     ASSERT(near(contrast_ratio(palette_of("light").good, palette_of("light").background), 4.56));
-    ASSERT(near(contrast_ratio(palette_of("sunrise").warning, palette_of("sunrise").background), 1.98));
     ASSERT(near(contrast_ratio(palette_of("amoled").text_mute, palette_of("amoled").surface_variant), 6.14));
     ASSERT(near(contrast_ratio(palette_of("midnight").text_mute, palette_of("midnight").surface_variant), 6.04));
 
@@ -117,20 +135,39 @@ void test_theme_palettes()
     }
 
     ASSERT(is_valid_mode_id("system"));
+    ASSERT(is_valid_mode_id("brahmamuhurta"));
+    ASSERT(is_valid_mode_id("firstlight"));
     ASSERT(is_valid_mode_id("amoled"));
-    ASSERT(!is_valid_mode_id("custom"));
+    ASSERT(is_valid_mode_id("custom"));
+    ASSERT(!is_valid_mode_id("fog"));
     ASSERT(!is_valid_mode_id("Dark"));
     ASSERT(resolve_mode_id("system", true) == "dark");
     ASSERT(resolve_mode_id("system", false) == "light");
+    ASSERT(resolve_mode_id("firstlight", true) == "brahmamuhurta");
+    ASSERT(resolve_mode_id("custom", false) == "custom");
     ASSERT(resolve_mode_id("noon", true) == "noon");
     ASSERT(resolve_mode_id("bogus", false) == "dark");
 
+    const Palette customDark = derive_custom_palette(hex("#3b82f6"));
+    ASSERT(is_dark_background(customDark.background));
+    ASSERT(customDark.text == hex("#fafafa"));
+    const Palette customLight = derive_custom_palette(hex("#ffd54f"));
+    ASSERT(!is_dark_background(customLight.background));
+    ASSERT(customLight.text == hex("#18181b"));
+
     const Choice fresh = sanitize_choice("", "");
     ASSERT(fresh.mode == "dark" && fresh.accent == hex("#3b82f6") && fresh.rejected.empty());
-    const Choice good = sanitize_choice("dusk", "#ffd54f");
-    ASSERT(good.mode == "dusk" && good.accent == hex("#ffd54f") && good.rejected.empty());
-    const Choice bad = sanitize_choice("custom", "3b82f6");
+    const Choice good = sanitize_choice("custom", "#ffd54f");
+    ASSERT(good.mode == "custom" && good.accent == hex("#ffd54f") && good.rejected.empty());
+    const Choice alias = sanitize_choice("firstlight", "#3b82f6");
+    ASSERT(alias.mode == "brahmamuhurta" && alias.rejected.empty());
+    const Choice bad = sanitize_choice("fog", "3b82f6");
     ASSERT(bad.mode == "dark" && bad.accent == hex("#3b82f6") && bad.rejected.size() == 2);
+
+    const Rgb achrom = color_blind_transform(hex("#4caf50"), "achromatopsia");
+    ASSERT(achrom.r == achrom.g && achrom.g == achrom.b);
+    const Tokens cbTokens = derive_tokens(palette_of("dark"), hex("#3b82f6"), "protanopia");
+    ASSERT(cbTokens.palette.good != palette_of("dark").good);
 
     const Tokens dark = derive_tokens(palette_of("dark"), hex("#3b82f6"));
     ASSERT(dark.is_dark && near(dark.accent_dim_alpha, 0.15));

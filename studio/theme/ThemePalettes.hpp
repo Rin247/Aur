@@ -1,5 +1,6 @@
 #pragma once
 
+#include "theme/ThemeContract.hpp"
 #include "theme/ThemeMath.hpp"
 
 #include <span>
@@ -53,6 +54,7 @@ namespace aur::theme
     };
 
     inline constexpr std::string_view kSystemMode = "system";
+    inline constexpr std::string_view kCustomMode = "custom";
     inline constexpr std::string_view kDefaultMode = "dark";
     inline constexpr std::uint32_t kDefaultAccent = 0x3b82f6;
 
@@ -60,7 +62,11 @@ namespace aur::theme
     const Mode *find_mode(std::string_view id);
     bool is_valid_mode_id(std::string_view id);
     std::string_view resolve_mode_id(std::string_view id, bool system_is_dark);
-    Tokens derive_tokens(const Palette &palette, Rgb primary);
+    Palette derive_custom_palette(Rgb primary);
+    Palette resolve_palette(std::string_view id, bool system_is_dark, Rgb primary);
+    Rgb color_blind_transform(Rgb c, std::string_view color_blind_mode);
+    Tokens derive_tokens(const Palette &palette, Rgb primary,
+                         std::string_view color_blind_mode = "none");
     Choice sanitize_choice(std::string_view mode, std::string_view accent);
 
 }

@@ -85,12 +85,15 @@ twenty-two PNGs.
   generator takes Solid and One-way, and the tileset editor can mark any
   tile one-way, so a platformer's floor and its platforms are tiles the
   owner makes.
-- **The studio uses the estate design system (`studio/theme/`, `C:\Projects\DESIGN.md` §1, §2, §6.3, §13).**
-  `ThemeManager` and `AurStyle` (`QProxyStyle` over Fusion) drive every surface, control, tab,
-  scrollbar, splitter and item-view selection wash (`accentDim`) from `QPalette` and token roles,
-  with zero stylesheets (`rg setStyleSheet studio` is 0). `ThemeIcons` paints vector glyphs in live
-  token colours, and `AppearanceDialog` exposes the 11 modes + `system`, the 24×24 HSV + 23-grey +
-  escape-hatch accent matrix, and a validated `#rrggbb` hex field.
+- **The studio uses the estate design system and Hydra theme stack (`studio/theme/`, `C:\Projects\DESIGN.md` §1, §2, §6.3, §13; `C:\Projects\Hydra\`).**
+  `ThemeManager`, `ThemeContract`, and `AurStyle` (`QProxyStyle` over Fusion) drive every surface,
+  control, tab, scrollbar, splitter and item-view selection wash (`accentDim`) from `QPalette` and
+  token roles, with zero stylesheets (`rg setStyleSheet studio` is 0). `ThemeIcons` paints vector
+  glyphs in live token colours, and `AppearanceDialog` exposes all 13 Hydra modes (`system`,
+  `brahmamuhurta` / `firstlight`, `dawn`, `sunrise`, `light`, `noon`, `sunset`, `bluehour`, `dusk`,
+  `dark`, `midnight`, `amoled`, and accent-tinted `custom`), the 24×24 HSV + 23-grey + escape-hatch
+  accent matrix, `#rrggbb` hex input, interface scale (`75–200%`), dyslexia-friendly font toggle, and
+  colour-vision simulation (`none`, `protanopia`, `deuteranopia`, `tritanopia`, `achromatopsia`).
 - **Every tab of the Database page edits its records.** One generic
   editor (`records::RecordEditor`) and a table of fields per kind (`actors`, `classes`, `races`,
   `items`, `weapons`, `skills`), plus `Bestiary` for creatures. A field the editor does not show is

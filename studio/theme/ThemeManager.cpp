@@ -9,6 +9,8 @@
 #include <QSettings>
 #include <QStyleHints>
 #include <QtGlobal>
+#include <algorithm>
+#include <cmath>
 
 namespace aur::theme
 {
@@ -30,6 +32,13 @@ namespace aur::theme
         {
             return s.toUtf8().toStdString();
         }
+
+        bool is_valid_color_blind_mode(const QString &m)
+        {
+            return m == QLatin1String("none") || m == QLatin1String("protanopia") ||
+                   m == QLatin1String("deuteranopia") || m == QLatin1String("tritanopia") ||
+                   m == QLatin1String("achromatopsia");
+        }
     }
 
     ThemeManager &ThemeManager::instance()
@@ -47,11 +56,24 @@ namespace aur::theme
     {
         system_is_dark_ = sample_system_is_dark();
         QSettings settings(aur::settingsPath(), QSettings::IniFormat);
+        QString rawMode = settings.value(QStringLiteral("theme/mode")).toString();
+        bool isInt = false;
+        const int ordinal = rawMode.toInt(&isInt);
+        if (isInt && !rawMode.isEmpty())
+        {
+            const char *mapped = legacyModeIdFor(ordinal);
+            if (mapped) rawMode = QString::fromLatin1(mapped);
+        }
         const Choice choice = sanitize_choice(
-            utf8(settings.value(QStringLiteral("theme/mode")).toString()),
+            utf8(rawMode),
             utf8(settings.value(QStringLiteral("theme/accent")).toString()));
         mode_ = QString::fromStdString(choice.mode);
         accent_ = choice.accent;
+        ui_scale_ = std::clamp(settings.value(QStringLiteral("theme/uiScale"), 100).toInt(), 75, 200);
+        dyslexia_font_ = settings.value(QStringLiteral("theme/dyslexiaFont"), false).toBool();
+        const QString cb = settings.value(QStringLiteral("theme/colorBlindMode"),
+                                          QStringLiteral("none")).toString();
+        color_blind_mode_ = is_valid_color_blind_mode(cb) ? cb : QStringLiteral("none");
         rejected_.clear();
         for (const std::string &item : choice.rejected)
         {
@@ -67,26 +89,23 @@ namespace aur::theme
     {
         if (!settings_read_) load();
         app.setStyle(new AurStyle);
-        QFont font(QStringLiteral("Segoe UI"));
-        font.setPixelSize(13);
-        app.setFont(font);
         installed_ = true;
         rebuild();
     }
 
     bool ThemeManager::setMode(const QString &id)
     {
-        if (!is_valid_mode_id(utf8(id))) return false;
-        mode_ = id;
-        rebuild();
+        if (!applyTransientMode(id)) return false;
         save();
         return true;
     }
 
     bool ThemeManager::applyTransientMode(const QString &id)
     {
-        if (!is_valid_mode_id(utf8(id))) return false;
-        mode_ = id;
+        const std::string raw = utf8(id);
+        if (!is_valid_mode_id(raw)) return false;
+        const std::string_view normalized = normalize_mode_alias(raw);
+        mode_ = QString::fromUtf8(normalized.data(), static_cast<int>(normalized.size()));
         rebuild();
         return true;
     }
@@ -102,13 +121,48 @@ namespace aur::theme
         return true;
     }
 
+    void ThemeManager::setUiScale(int percent)
+    {
+        const int clamped = std::clamp(percent, 75, 200);
+        if (ui_scale_ == clamped) return;
+        ui_scale_ = clamped;
+        rebuild();
+        save();
+    }
+
+    void ThemeManager::setDyslexiaFont(bool enabled)
+    {
+        if (dyslexia_font_ == enabled) return;
+        dyslexia_font_ = enabled;
+        rebuild();
+        save();
+    }
+
+    bool ThemeManager::setColorBlindMode(const QString &mode)
+    {
+        if (!is_valid_color_blind_mode(mode)) return false;
+        if (color_blind_mode_ == mode) return true;
+        color_blind_mode_ = mode;
+        rebuild();
+        save();
+        return true;
+    }
+
     void ThemeManager::rebuild()
     {
-        const std::string id = utf8(mode_);
-        const Mode *mode = find_mode(resolve_mode_id(id, system_is_dark_));
-        tokens_ = derive_tokens(mode->palette, accent_);
+        const Palette pal = resolve_palette(utf8(mode_), system_is_dark_, accent_);
+        tokens_ = derive_tokens(pal, accent_, utf8(color_blind_mode_));
         if (installed_)
         {
+            QFont font;
+            if (dyslexia_font_)
+                font.setFamilies({QStringLiteral("OpenDyslexic"),
+                                  QStringLiteral("Atkinson Hyperlegible"),
+                                  QStringLiteral("Segoe UI")});
+            else
+                font.setFamily(QStringLiteral("Segoe UI"));
+            font.setPixelSize(std::max(9, static_cast<int>(std::lround(13.0 * ui_scale_ / 100.0))));
+            QApplication::setFont(font);
             QGuiApplication::styleHints()->setColorScheme(tokens_.is_dark ? Qt::ColorScheme::Dark
                                                                            : Qt::ColorScheme::Light);
             QApplication::setPalette(build_palette(tokens_));
@@ -122,6 +176,9 @@ namespace aur::theme
         QSettings settings(aur::settingsPath(), QSettings::IniFormat);
         settings.setValue(QStringLiteral("theme/mode"), mode_);
         settings.setValue(QStringLiteral("theme/accent"), qt(accent_).name());
+        settings.setValue(QStringLiteral("theme/uiScale"), ui_scale_);
+        settings.setValue(QStringLiteral("theme/dyslexiaFont"), dyslexia_font_);
+        settings.setValue(QStringLiteral("theme/colorBlindMode"), color_blind_mode_);
     }
 
 }

@@ -7,14 +7,16 @@ headless Null only under RHI_POLICY_HEADLESS=1. See C:\Projects\POLICY.md.
 
 ## Where things stand (2026-11-16)
 
-- **The studio runs on the estate design system (`studio/theme/`, `C:\Projects\DESIGN.md` §1, §2, §6.3, §13).**
-  `ThemeManager` and `AurStyle` (`QProxyStyle` over Fusion) drive every surface, control, tab,
-  scrollbar, splitter and selected-row wash (`accentDim`) from `QPalette` and token roles, with
-  zero stylesheets (`rg setStyleSheet studio` is 0). `ThemeIcons` paints vector glyphs in live
-  token colours, and `AppearanceDialog` (reachable from the hamburger menu and the title bar)
-  switches between `system` and the 11 modes (`firstlight`, `dawn`, `sunrise`, `light`, `noon`,
-  `sunset`, `bluehour`, `dusk`, `dark`, `midnight`, `amoled`) and picks the user accent from the
-  24×24 HSV + 23-grey + escape-hatch matrix or a validated `#rrggbb` hex field.
+- **The studio runs on the estate design system and Hydra theme stack (`studio/theme/`, `C:\Projects\DESIGN.md` §1, §2, §6.3, §13; `C:\Projects\Hydra\`).**
+  `ThemeManager`, `ThemeContract`, and `AurStyle` (`QProxyStyle` over Fusion) drive every surface,
+  control, tab, scrollbar, splitter and selected-row wash (`accentDim`) from `QPalette` and token
+  roles, with zero stylesheets (`rg setStyleSheet studio` is 0). `ThemeIcons` paints vector glyphs in
+  live token colours, and `AppearanceDialog` (reachable from the hamburger menu and the title bar)
+  switches between all 13 Hydra modes (`system`, `brahmamuhurta` / `firstlight`, `dawn`, `sunrise`,
+  `light`, `noon`, `sunset`, `bluehour`, `dusk`, `dark`, `midnight`, `amoled`, and accent-tinted
+  `custom`), picks the user accent from the 24×24 HSV + 23-grey + escape-hatch matrix or a validated
+  `#rrggbb` hex field, and configures interface scale (`75–200%`), dyslexia-friendly font, and
+  colour-vision simulation (`protanopia`, `deuteranopia`, `tritanopia`, `achromatopsia`).
 - **Every `studio/` file is under the 750-line soft limit and every module keeps its helpers in a nested folder** (`studio/core/`, `studio/theme/`, `studio/playtest/`, `studio/map/`, `studio/pixel/`, `studio/tileset/`, `studio/world/`, `studio/forge/`, `studio/bestiary/`, `studio/events/`, `studio/music/`):
   - `studio/` root holds only `main.cpp`, `MainWindow.*`, and the nine tab panels; shared studio primitives (`AurPaths`, `CommandStack`, `UndoCommands`, `RhiBackend`) live under `studio/core/`.
   - `studio/MainWindow.cpp` (411 lines): `theme/StudioChrome.{hpp,cpp}` and `theme/FramelessWindow.{hpp,cpp}` moved out (`P3.1` / `P6.5`).

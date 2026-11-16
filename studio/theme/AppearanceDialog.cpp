@@ -5,7 +5,9 @@
 #include "theme/ThemeQt.hpp"
 
 #include <QButtonGroup>
+#include <QCheckBox>
 #include <QColorDialog>
+#include <QComboBox>
 #include <QGridLayout>
 #include <QHBoxLayout>
 #include <QLabel>
@@ -13,6 +15,8 @@
 #include <QMouseEvent>
 #include <QPainter>
 #include <QPushButton>
+#include <QSignalBlocker>
+#include <QSlider>
 #include <QVBoxLayout>
 
 #include <array>
@@ -123,11 +127,14 @@ namespace aur::theme
         setWindowTitle(QStringLiteral("Appearance"));
         auto *root = new QVBoxLayout(this);
         root->setContentsMargins(20, 20, 20, 20);
-        root->setSpacing(12);
+        root->setSpacing(10);
 
+        auto *modeHeader = new QHBoxLayout();
         auto *modeTitle = new QLabel(QStringLiteral("THEME MODE"), this);
         sectionTitle(modeTitle);
-        root->addWidget(modeTitle);
+        modeHeader->addWidget(modeTitle);
+        modeHeader->addStretch();
+        root->addLayout(modeHeader);
 
         modeGroup_ = new QButtonGroup(this);
         modeGroup_->setExclusive(true);
@@ -143,6 +150,7 @@ namespace aur::theme
         for (const Mode &m : modes())
             entries.append({QString::fromUtf8(m.id.data(), static_cast<int>(m.id.size())),
                             QString::fromUtf8(m.name.data(), static_cast<int>(m.name.size()))});
+        entries.append({QStringLiteral("custom"), QStringLiteral("Custom (Accent)")});
 
         for (int i = 0; i < entries.size(); ++i)
         {
@@ -151,7 +159,10 @@ namespace aur::theme
             btn->setMinimumHeight(30);
             btn->setProperty("modeId", entries[i].id);
             modeGroup_->addButton(btn, i);
-            grid->addWidget(btn, i / 4, i % 4);
+            if (entries[i].id == QLatin1String("custom"))
+                grid->addWidget(btn, i / 4, 0, 1, 4);
+            else
+                grid->addWidget(btn, i / 4, i % 4);
             connect(btn, &QPushButton::clicked, this, [id = entries[i].id]() {
                 ThemeManager::instance().setMode(id);
             });
@@ -164,6 +175,45 @@ namespace aur::theme
 
         matrix_ = new AccentMatrix(this);
         root->addWidget(matrix_, 0, Qt::AlignLeft);
+
+        auto *scaleTitle = new QLabel(QStringLiteral("TYPE & SCALE"), this);
+        sectionTitle(scaleTitle);
+        root->addWidget(scaleTitle);
+
+        auto *scaleRow = new QHBoxLayout();
+        scaleRow->addWidget(new QLabel(QStringLiteral("Interface scale:"), this));
+        scaleSlider_ = new QSlider(Qt::Horizontal, this);
+        scaleSlider_->setRange(75, 200);
+        scaleSlider_->setSingleStep(5);
+        scaleSlider_->setPageStep(25);
+        scaleLabel_ = new QLabel(QStringLiteral("100%"), this);
+        scaleLabel_->setMinimumWidth(44);
+        dyslexiaCheck_ = new QCheckBox(QStringLiteral("Dyslexia-friendly font"), this);
+        scaleRow->addWidget(scaleSlider_, 1);
+        scaleRow->addWidget(scaleLabel_);
+        scaleRow->addWidget(dyslexiaCheck_);
+        root->addLayout(scaleRow);
+
+        auto *visionRow = new QHBoxLayout();
+        visionRow->addWidget(new QLabel(QStringLiteral("Colour vision:"), this));
+        colorBlindCombo_ = new QComboBox(this);
+        colorBlindCombo_->addItem(QStringLiteral("None"), QStringLiteral("none"));
+        colorBlindCombo_->addItem(QStringLiteral("Protanopia (no red)"), QStringLiteral("protanopia"));
+        colorBlindCombo_->addItem(QStringLiteral("Deuteranopia (no green)"), QStringLiteral("deuteranopia"));
+        colorBlindCombo_->addItem(QStringLiteral("Tritanopia (no blue)"), QStringLiteral("tritanopia"));
+        colorBlindCombo_->addItem(QStringLiteral("Achromatopsia (no colour)"), QStringLiteral("achromatopsia"));
+        visionRow->addWidget(colorBlindCombo_, 1);
+        const std::array<const char *, 3> swatchNames{"Great", "Unstable", "Broken"};
+        for (int i = 0; i < 3; ++i)
+        {
+            auto *swatch = new QLabel(QString::fromLatin1(swatchNames[static_cast<std::size_t>(i)]), this);
+            swatch->setAlignment(Qt::AlignCenter);
+            swatch->setFixedSize(64, 24);
+            swatch->setAutoFillBackground(true);
+            swatches_[static_cast<std::size_t>(i)] = swatch;
+            visionRow->addWidget(swatch);
+        }
+        root->addLayout(visionRow);
 
         auto *hexRow = new QHBoxLayout();
         auto *hexLabel = new QLabel(QStringLiteral("Hex (#rrggbb):"), this);
@@ -179,6 +229,18 @@ namespace aur::theme
         hexRow->addWidget(closeBtn);
         root->addLayout(hexRow);
 
+        connect(scaleSlider_, &QSlider::valueChanged, this, [this](int val) {
+            const int snapped = (val / 5) * 5;
+            scaleLabel_->setText(QStringLiteral("%1%").arg(snapped));
+            ThemeManager::instance().setUiScale(snapped);
+        });
+        connect(dyslexiaCheck_, &QCheckBox::toggled, this, [](bool checked) {
+            ThemeManager::instance().setDyslexiaFont(checked);
+        });
+        connect(colorBlindCombo_, &QComboBox::currentIndexChanged, this, [this](int idx) {
+            if (idx >= 0)
+                ThemeManager::instance().setColorBlindMode(colorBlindCombo_->itemData(idx).toString());
+        });
         connect(hexEdit_, &QLineEdit::textEdited, this, [](const QString &text) {
             Rgb parsed;
             if (parse_hex(text.toUtf8().toStdString(), parsed))
@@ -197,6 +259,33 @@ namespace aur::theme
         const QString hex = ThemeManager::instance().accent().name();
         if (!hexEdit_->hasFocus() || hexEdit_->text().compare(hex, Qt::CaseInsensitive) != 0)
             hexEdit_->setText(hex);
+        if (scaleSlider_)
+        {
+            const QSignalBlocker blocker(scaleSlider_);
+            scaleSlider_->setValue(ThemeManager::instance().uiScale());
+            scaleLabel_->setText(QStringLiteral("%1%").arg(ThemeManager::instance().uiScale()));
+        }
+        if (dyslexiaCheck_)
+        {
+            const QSignalBlocker blocker(dyslexiaCheck_);
+            dyslexiaCheck_->setChecked(ThemeManager::instance().dyslexiaFont());
+        }
+        if (colorBlindCombo_)
+        {
+            const QSignalBlocker blocker(colorBlindCombo_);
+            const int idx = colorBlindCombo_->findData(ThemeManager::instance().colorBlindMode());
+            if (idx >= 0) colorBlindCombo_->setCurrentIndex(idx);
+        }
+        const Palette &pal = tokens().palette;
+        const std::array<Rgb, 3> cols{pal.good, pal.warning, pal.bad};
+        for (std::size_t i = 0; i < 3; ++i)
+        {
+            if (!swatches_[i]) continue;
+            QPalette sp = swatches_[i]->palette();
+            sp.setColor(QPalette::Window, qt(cols[i]));
+            sp.setColor(QPalette::WindowText, qt(on_accent(cols[i])));
+            swatches_[i]->setPalette(sp);
+        }
         if (matrix_) matrix_->update();
     }
 

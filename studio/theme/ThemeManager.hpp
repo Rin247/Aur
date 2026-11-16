@@ -24,11 +24,17 @@ namespace aur::theme
         const Tokens &tokens() const { return tokens_; }
         QString modeId() const { return mode_; }
         QColor accent() const;
+        int uiScale() const { return ui_scale_; }
+        bool dyslexiaFont() const { return dyslexia_font_; }
+        QString colorBlindMode() const { return color_blind_mode_; }
         const QStringList &rejected() const { return rejected_; }
 
         bool setMode(const QString &id);
         bool applyTransientMode(const QString &id);
         bool setAccent(const QColor &color);
+        void setUiScale(int percent);
+        void setDyslexiaFont(bool enabled);
+        bool setColorBlindMode(const QString &mode);
 
     signals:
         void changed();
@@ -40,6 +46,9 @@ namespace aur::theme
 
         QString mode_{QString::fromUtf8(kDefaultMode.data(), static_cast<int>(kDefaultMode.size()))};
         Rgb accent_{rgb_from_int(kDefaultAccent)};
+        int ui_scale_ = 100;
+        bool dyslexia_font_ = false;
+        QString color_blind_mode_{QStringLiteral("none")};
         Tokens tokens_{};
         QStringList rejected_;
         bool system_is_dark_ = true;
