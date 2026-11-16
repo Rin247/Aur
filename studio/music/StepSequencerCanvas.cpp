@@ -68,9 +68,21 @@ namespace aur
         return rulerHeight + std::max(1, static_cast<int>(patterns.size())) * rowHeight + 4;
     }
 
+    int StepSequencerCanvas::effectiveCellWidth() const
+    {
+        return std::max(cellWidth, (width() - labelWidth - 8) / 64);
+    }
+
+    int StepSequencerCanvas::effectiveRowHeight() const
+    {
+        return std::max(rowHeight,
+                        (height() - rulerHeight - 8) /
+                            std::max(4, static_cast<int>(patterns.size())));
+    }
+
     int StepSequencerCanvas::rowAt(const QPoint &pos) const
     {
-        const int row = (pos.y() - rulerHeight) / rowHeight;
+        const int row = (pos.y() - rulerHeight) / effectiveRowHeight();
         return row >= 0 && row < static_cast<int>(patterns.size()) ? row : -1;
     }
 
@@ -79,7 +91,7 @@ namespace aur
         row = rowAt(pos);
         if (row < 0)
             return -1;
-        const int step = (pos.x() - labelWidth) / cellWidth;
+        const int step = (pos.x() - labelWidth) / effectiveCellWidth();
         if (step < 0 || step >= maxSteps)
             return -1;
         return step;
@@ -188,12 +200,16 @@ namespace aur
         QPainter painter(this);
         painter.fillRect(rect(), qt(pal.background));
 
+        const int cw = effectiveCellWidth();
+        const int rh = effectiveRowHeight();
+        const int ch = std::max(cellHeight, rh - 10);
+
         // Ruler: bar numbers every 16 steps (a bar is 16 song steps).
         painter.fillRect(QRect(0, 0, width(), rulerHeight), qt(pal.surface));
         painter.setPen(qt(pal.text_dim));
         for (int bar = 0; bar * 16 < maxSteps; ++bar)
         {
-            const int x = labelWidth + bar * 16 * cellWidth;
+            const int x = labelWidth + bar * 16 * cw;
             if (x > width())
                 break;
             painter.drawLine(x, 0, x, rulerHeight);
@@ -206,24 +222,23 @@ namespace aur
         for (int row = 0; row < static_cast<int>(patterns.size()); ++row)
         {
             const audio::StepPattern &pattern = patterns[static_cast<size_t>(row)];
-            const int yTop = rulerHeight + row * rowHeight;
-            painter.fillRect(QRect(0, yTop, width(), rowHeight),
+            const int yTop = rulerHeight + row * rh;
+            painter.fillRect(QRect(0, yTop, width(), rh),
                              row % 2 ? qt(pal.surface) : qt(pal.surface_variant));
             painter.setPen(qt(pal.text));
-            painter.drawText(QRect(4, yTop, labelWidth - 8, rowHeight),
+            painter.drawText(QRect(4, yTop, labelWidth - 8, rh),
                              Qt::AlignVCenter | Qt::AlignLeft,
                              QString::fromStdString(pattern.name));
 
             for (int step = 0; step < maxSteps; ++step)
             {
-                const int x = labelWidth + step * cellWidth;
+                const int x = labelWidth + step * cw;
                 if (x > width())
                     break;
                 const audio::StepCell *cell = cellAt(row, step);
                 const bool on = cell != nullptr;
                 const bool accent = on && cell->accent != 0;
-                QRect box(x + 1, yTop + (rowHeight - cellHeight) / 2,
-                          cellWidth - 2, cellHeight);
+                QRect box(x + 1, yTop + (rh - ch) / 2, cw - 2, ch);
                 painter.fillRect(box, cellColor(on, accent, pal));
                 if (on)
                 {
@@ -237,10 +252,10 @@ namespace aur
         // Cursor.
         if (cursorPattern < static_cast<int>(patterns.size()))
         {
-            const int x = labelWidth + cursorStep * cellWidth;
-            const int yTop = rulerHeight + cursorPattern * rowHeight;
+            const int x = labelWidth + cursorStep * cw;
+            const int yTop = rulerHeight + cursorPattern * rh;
             painter.setPen(QPen(qt(t.accent_bright), 2));
-            painter.drawRect(x, yTop + (rowHeight - cellHeight) / 2, cellWidth - 1, cellHeight);
+            painter.drawRect(x, yTop + (rh - ch) / 2, cw - 1, ch);
         }
         painter.setPen(qt(pal.divider));
         painter.drawLine(labelWidth - 1, 0, labelWidth - 1, height());

@@ -1,5 +1,6 @@
 #include "WorldPanel.hpp"
 #include "theme/LabelRoles.hpp"
+#include "theme/ResponsiveSplitter.hpp"
 #include "RhiBackend.hpp"
 #include "TileTexture.hpp"
 #include "WorldSettingsPanel.hpp"
@@ -230,9 +231,7 @@ WorldPanel::WorldPanel(Project* p, QWidget* parent)
     mapCanvas = new WorldMapCanvasWidget(splitter);
     mapCanvas->setProject(project);
     splitter->addWidget(mapCanvas);
-    splitter->setStretchFactor(0, 0);
-    splitter->setStretchFactor(1, 1);
-    splitter->setSizes({235, 760});
+    theme::bindResponsiveSplitter(splitter, {20, 80});
 
     auto* footer = new QLabel(QStringLiteral("Wheel: zoom \u00b7 Ctrl+wheel: snap 1/2/4/8/16\u00d7 \u00b7 middle-drag: pan \u00b7 "
                               "Keys 1-7: tool \u00b7 Ctrl+Z/Y: undo/redo \u00b7 "
@@ -296,9 +295,7 @@ WorldPanel::WorldPanel(Project* p, QWidget* parent)
     connect(tileCategoryCombo, &QComboBox::currentIndexChanged, this,
             [this](int) { filterTerrainTiles(); });
     connect(landformCombo, &QComboBox::currentIndexChanged, this, [this](int index) {
-        // WP2.S1: landform entries resolve tiles by NAME (starter indices are
-        // not stable); entries whose tile is missing are hidden instead of a
-        // warning dialog. data key: name of the target terrain tile.
+        // Resolve landform entries by tile name; itemData holds the target terrain tile.
         static const std::array<int, 7> sizes = {1, 1, 5, 3, 5, 3, 1};
         if (index <= 0) return;
         if (!project || !project->maps.contains(current_map)) return;

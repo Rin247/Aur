@@ -75,14 +75,31 @@ namespace aur
         return kRowLabelWidth + bars * 16 * kStepWidth + 24;
     }
 
+    int ArrangementCanvas::effectiveStepWidth() const
+    {
+        const int bars = song.contains("bars") && song["bars"].is_number()
+                             ? std::max(1, song["bars"].as_int())
+                             : 1;
+        return std::max(kStepWidth, (width() - kRowLabelWidth - 24) / std::max(1, bars * 16));
+    }
+
+    int ArrangementCanvas::effectiveRowHeight() const
+    {
+        const int rows = song.contains("tracks") && song["tracks"].is_array()
+                             ? static_cast<int>(song["tracks"].as_array().size())
+                             : 0;
+        return std::max(rowHeight,
+                        (height() - rulerHeight - kTempoLaneHeight - 8) / std::max(minRows, rows));
+    }
+
     int ArrangementCanvas::stepAt(const QPoint &pos) const
     {
-        return std::max(0, (pos.x() - kRowLabelWidth) / kStepWidth);
+        return std::max(0, (pos.x() - kRowLabelWidth) / effectiveStepWidth());
     }
 
     int ArrangementCanvas::rowAt(const QPoint &pos) const
     {
-        const int row = (pos.y() - rulerHeight) / rowHeight;
+        const int row = (pos.y() - rulerHeight) / effectiveRowHeight();
         const int rows = song.contains("tracks") && song["tracks"].is_array()
                              ? static_cast<int>(song["tracks"].as_array().size())
                              : 0;
@@ -141,13 +158,16 @@ namespace aur
         const int totalSteps = bars * 16;
         Q_UNUSED(totalSteps);
 
+        const int stepW = effectiveStepWidth();
+        const int rowH = effectiveRowHeight();
+
         // Ruler: bar numbers, markers, loop brace.
         const QRect ruler(0, 0, width(), rulerHeight);
         painter.fillRect(ruler, qt(pal.surface));
         painter.setPen(qt(pal.text_dim));
         for (int bar = 0; bar <= bars; ++bar)
         {
-            const int x = kRowLabelWidth + bar * 16 * kStepWidth;
+            const int x = kRowLabelWidth + bar * 16 * stepW;
             if (x > width())
                 break;
             painter.drawLine(x, 0, x, rulerHeight);
@@ -162,7 +182,7 @@ namespace aur
                     !marker.contains("name") || !marker["step"].is_number() ||
                     !marker["name"].is_string())
                     continue;
-                const int x = kRowLabelWidth + marker["step"].as_int() * kStepWidth;
+                const int x = kRowLabelWidth + marker["step"].as_int() * stepW;
                 painter.drawText(x + 2, rulerHeight - 22,
                                  QString::fromStdString(marker["name"].as_string()));
             }
@@ -172,8 +192,8 @@ namespace aur
         const int loopEnd = audio::SongDocument::loop_end(song);
         if (loopEnd > loopStart)
         {
-            const int x0 = kRowLabelWidth + loopStart * kStepWidth;
-            const int x1 = kRowLabelWidth + loopEnd * kStepWidth;
+            const int x0 = kRowLabelWidth + loopStart * stepW;
+            const int x1 = kRowLabelWidth + loopEnd * stepW;
             painter.setPen(QPen(qt(pal.good), 2));
             painter.drawLine(x0, rulerHeight - 4, x1, rulerHeight - 4);
             painter.drawLine(x0, rulerHeight - 10, x0, rulerHeight - 4);
@@ -181,7 +201,7 @@ namespace aur
         }
 
         // Tempo / T.S. lane.
-        const int tempoY = rulerHeight + rows * rowHeight;
+        const int tempoY = rulerHeight + rows * rowH;
         painter.fillRect(0, tempoY, width(), kTempoLaneHeight, qt(pal.surface));
         painter.setPen(qt(pal.text_dim));
         painter.drawText(4, tempoY + 10, "tempo");
@@ -192,7 +212,7 @@ namespace aur
             {
                 if (!t.is_object() || !t.contains("step") || !t["step"].is_number())
                     continue;
-                const int x = kRowLabelWidth + t["step"].as_int() * kStepWidth;
+                const int x = kRowLabelWidth + t["step"].as_int() * stepW;
                 painter.drawText(x + 2, tempoY + 10,
                                  QString::number(
                                      t.contains("value_a") && t["value_a"].is_number()
@@ -205,15 +225,15 @@ namespace aur
         const auto placed = audio::SongDocument::placements(song);
         for (int row = 0; row < rows; ++row)
         {
-            const int yTop = rulerHeight + row * rowHeight;
-            painter.fillRect(QRect(0, yTop, width(), rowHeight),
+            const int yTop = rulerHeight + row * rowH;
+            painter.fillRect(QRect(0, yTop, width(), rowH),
                              row % 2 ? qt(pal.surface) : qt(pal.surface_variant));
             painter.setPen(qt(pal.divider));
             painter.drawLine(0, yTop, width(), yTop);
 
             const Json &track = song["tracks"].as_array()[static_cast<size_t>(row)];
             painter.setPen(qt(pal.text));
-            painter.drawText(QRect(4, yTop, kRowLabelWidth - 8, rowHeight),
+            painter.drawText(QRect(4, yTop, kRowLabelWidth - 8, rowH),
                              Qt::AlignVCenter | Qt::AlignLeft,
                              QString::fromStdString(
                                  track.contains("name") && track["name"].is_string()
@@ -231,8 +251,8 @@ namespace aur
                 QColor fill = placementColor(info.color, p.scene);
                 if (selectedStep == p.step && selectedTrack == row)
                     fill = fill.lighter(140);
-                const QRect block(kRowLabelWidth + p.step * kStepWidth, yTop + 4,
-                                  p.length * kStepWidth - 2, rowHeight - 8);
+                const QRect block(kRowLabelWidth + p.step * stepW, yTop + 4,
+                                  p.length * stepW - 2, rowH - 8);
                 painter.fillRect(block, fill);
                 painter.setPen(QColor("#10121a"));
                 painter.drawText(block.adjusted(4, 2, -4, -2),

@@ -1,6 +1,7 @@
 #include "TilesetEditorPanel.hpp"
 
 #include "PixelFrameOps.hpp"
+#include "theme/ResponsiveSplitter.hpp"
 
 #include <QFileDialog>
 #include <QMessageBox>
@@ -76,11 +77,12 @@ namespace aur
         tilePreview->setFrameShape(QFrame::StyledPanel);
         tilePreview->setAutoFillBackground(true);
         tilePreview->setBackgroundRole(QPalette::AlternateBase);
-        inspectorLayout->addWidget(tilePreview);
+        inspectorLayout->addWidget(tilePreview, 1);
         tileNameLabel = new QLabel(inspector);
         inspectorLayout->addWidget(tileNameLabel);
 
         QFormLayout *form = new QFormLayout();
+        form->setFieldGrowthPolicy(QFormLayout::ExpandingFieldsGrow);
         form->addRow(new QLabel("Tile Gameplay Flags (collision mask)", inspector));
         for (int i = 0; i < 6; ++i)
         {
@@ -92,10 +94,10 @@ namespace aur
             form->addRow(box);
         }
         inspectorLayout->addLayout(form);
-        inspectorLayout->addStretch();
+        inspectorLayout->addStretch(1);
         splitter->addWidget(inspector);
 
-        splitter->setSizes({250, 500, 350});
+        theme::bindResponsiveSplitter(splitter, {20, 54, 26});
         mainLayout->addWidget(splitter, 1);
 
         connect(tsCombo, &QComboBox::currentIndexChanged, this, [this](int index)
@@ -299,7 +301,8 @@ namespace aur
             tilePreview->setPixmap(QPixmap());
             return;
         }
-        const int previewScale = std::max(1, 128 / std::max(1, std::max(source.width(), source.height())));
+        const int boxSpan = std::max(128, std::min(tilePreview->width(), tilePreview->height()) - 16);
+        const int previewScale = std::max(1, boxSpan / std::max(1, std::max(source.width(), source.height())));
         tilePreview->setPixmap(QPixmap::fromImage(
             source.scaled(source.width() * previewScale, source.height() * previewScale,
                           Qt::KeepAspectRatio, Qt::FastTransformation)));
@@ -324,10 +327,7 @@ namespace aur
         const int new_flags = checked ? (old_flags | bit) : (old_flags & ~bit);
         if (new_flags == old_flags)
             return;
-        // Undoable + dirty (editsweep D1.S5 → D4.S1b → D6.S1.2): a flag
-        // toggle is one change to the tile, and the surface's QUndoStack owns
-        // the history, so one Ctrl+Z undoes the last edit whatever it was.
-        // Consumers (map collision overlay) repaint via tilesetFlagsChanged.
+        // Record flag toggle on the tile surface's QUndoStack and notify map overlays.
         tileCanvas->applyChange(&tile, QStringLiteral("toggle flag"), [&tile, new_flags](Json &changed) {
             changed["flags"] = new_flags;
         });
@@ -413,6 +413,7 @@ namespace aur
         QWidget::resizeEvent(event);
         if (canvasScroll && tileCanvas)
             tileCanvas->setAvailableViewportSize(canvasScroll->viewport()->size());
+        refreshTileDetail();
     }
 
 } // namespace aur

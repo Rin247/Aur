@@ -98,4 +98,13 @@ std::vector<int> TilePaletteWidget::stampTiles() const {
     return indices;
 }
 
+void TilePaletteWidget::resizeEvent(QResizeEvent* event) {
+    QWidget::resizeEvent(event);
+    if (!grid) return;
+    const int avail = std::max(140, width() - 24);
+    const int cell = std::clamp(avail / 4, 40, 72);
+    grid->setIconSize(QSize(cell - 8, cell - 8));
+    grid->setGridSize(QSize(cell, cell));
+}
+
 } // namespace aur

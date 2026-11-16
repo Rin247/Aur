@@ -3,6 +3,7 @@
 #include "MapCanvas.hpp"
 
 #include "EditorDefs.hpp"
+#include "theme/ResponsiveSplitter.hpp"
 
 #include <QKeySequence>
 
@@ -17,6 +18,23 @@
 #include <array>
 
 namespace aur {
+namespace {
+
+void sync_mode_combo(QComboBox* modeCombo, const Json& m) {
+    if (!modeCombo) return;
+    const std::string mode = m.contains("mode") ? m["mode"].as_string() : "action";
+    modeCombo->blockSignals(true);
+    if (mode == "turn") modeCombo->setCurrentIndex(1);
+    else if (mode == "tactics") modeCombo->setCurrentIndex(2);
+    else modeCombo->setCurrentIndex(0);
+    modeCombo->blockSignals(false);
+    const char* h = "Smooth real-time exploration & combat on the field (Trials of Mana style).";
+    if (mode == "turn") h = "Command-menu turn order on the exploration plane (Chrono Trigger style).";
+    else if (mode == "tactics") h = "Grid-based positioning on the exploration plane (Fire Emblem / Triangle Strategy style).";
+    modeCombo->setToolTip(h);
+}
+
+} // namespace
 
 MapEditorPanel::MapEditorPanel(Project* p, QWidget* parent)
     : QWidget(parent), project(p) {
@@ -152,6 +170,7 @@ MapEditorPanel::MapEditorPanel(Project* p, QWidget* parent)
     auto* inspectorDock = new QWidget(this);
     QVBoxLayout* inspectorLayout = new QVBoxLayout(inspectorDock);
     QFormLayout* form = new QFormLayout();
+    form->setFieldGrowthPolicy(QFormLayout::ExpandingFieldsGrow);
     auto* deleteShortcut = new QShortcut(QKeySequence(Qt::Key_Delete), this);
     deleteShortcut->setContext(Qt::WidgetWithChildrenShortcut);
     connect(deleteShortcut, &QShortcut::activated, canvas,
@@ -183,7 +202,7 @@ MapEditorPanel::MapEditorPanel(Project* p, QWidget* parent)
     inspectorLayout->addStretch();
     splitter->addWidget(inspectorDock);
 
-    splitter->setSizes({200, 700, 300});
+    theme::bindResponsiveSplitter(splitter, {18, 60, 22});
     mainLayout->addWidget(splitter, 1);
 
     connect(mapCombo, &QComboBox::currentIndexChanged, [this](int idx) {
@@ -195,20 +214,7 @@ MapEditorPanel::MapEditorPanel(Project* p, QWidget* parent)
         canvas->fitToView();
         refreshTilePalette();
         // Sync mode selector to the loaded map's mode.
-        if (modeCombo) {
-            auto& m = it->second;
-            std::string mode = m.contains("mode") ? m["mode"].as_string() : "action";
-            modeCombo->blockSignals(true);
-            if (mode == "turn") modeCombo->setCurrentIndex(1);
-            else if (mode == "tactics") modeCombo->setCurrentIndex(2);
-            else modeCombo->setCurrentIndex(0);
-            modeCombo->blockSignals(false);
-            const char* h = nullptr;
-            if (mode == "action") h = "Smooth real-time exploration & combat on the field (Trials of Mana style).";
-            else if (mode == "turn") h = "Command-menu turn order on the exploration plane (Chrono Trigger style).";
-            else if (mode == "tactics") h = "Grid-based positioning on the exploration plane (Fire Emblem / Triangle Strategy style).";
-            modeCombo->setToolTip(h ? h : "");
-        }
+        sync_mode_combo(modeCombo, it->second);
     });
 
     connect(layerCombo, &QComboBox::currentIndexChanged, [this](int idx) {
@@ -401,20 +407,7 @@ void MapEditorPanel::refreshMaps() {
             canvas->fitToView();
             current_map = project->maps.begin()->first;
             refreshTilePalette();
-            if (modeCombo) {
-                auto& m = project->maps.begin()->second;
-                std::string mode = m.contains("mode") ? m["mode"].as_string() : "action";
-                modeCombo->blockSignals(true);
-                if (mode == "turn") modeCombo->setCurrentIndex(1);
-                else if (mode == "tactics") modeCombo->setCurrentIndex(2);
-                else modeCombo->setCurrentIndex(0);
-                modeCombo->blockSignals(false);
-                const char* h = nullptr;
-                if (mode == "action") h = "Smooth real-time exploration & combat on the field (Trials of Mana style).";
-                else if (mode == "turn") h = "Command-menu turn order on the exploration plane (Chrono Trigger style).";
-                else if (mode == "tactics") h = "Grid-based positioning on the exploration plane (Fire Emblem / Triangle Strategy style).";
-                modeCombo->setToolTip(h ? h : "");
-            }
+            sync_mode_combo(modeCombo, project->maps.begin()->second);
         }
     }
     mapCombo->blockSignals(false);

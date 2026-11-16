@@ -191,6 +191,7 @@ add_executable(aur_studio
     studio/theme/ThemeIcons.cpp
     studio/theme/AppearanceDialog.cpp
     studio/theme/AppearanceDialog.hpp
+    studio/theme/ResponsiveSplitter.cpp
     studio/theme/CardFrame.cpp
     studio/music/ClipButton.cpp
 )

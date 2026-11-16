@@ -104,6 +104,7 @@ void MapCanvasWidget::deleteSelectedEntity() {
 }
 
 void MapCanvasWidget::fitToView() {
+    user_zoom_multiplier = 1.0;
     if (!isVisible()) {
         // The canvas has no real size yet; the fit waits for the first
         // show/resize, or the map opens zoomed out against a stale size.
@@ -113,15 +114,19 @@ void MapCanvasWidget::fitToView() {
     applyFit();
 }
 
-void MapCanvasWidget::applyFit() {
-    if (!project || current_map.empty() || !project->maps.contains(current_map)) return;
+qreal MapCanvasWidget::fitZoomForCurrentSize() const {
+    if (!project || current_map.empty() || !project->maps.contains(current_map)) return 1.0;
     const Json& map = project->maps.at(current_map);
     const int map_width = map["w"].as_int();
     const int map_height = map["h"].as_int();
-    if (map_width <= 0 || map_height <= 0) return;
-    const qreal fit = std::min((width() - 12.0) / (map_width * field_tile_size),
-                               (height() - 12.0) / (map_height * field_tile_size));
-    zoom_factor = std::clamp(fit, 0.05, 16.0);
+    if (map_width <= 0 || map_height <= 0) return 1.0;
+    return std::min((width() - 12.0) / (map_width * field_tile_size),
+                    (height() - 12.0) / (map_height * field_tile_size));
+}
+
+void MapCanvasWidget::applyFit() {
+    if (!project || current_map.empty() || !project->maps.contains(current_map)) return;
+    zoom_factor = std::clamp(fitZoomForCurrentSize() * user_zoom_multiplier, 0.05, 16.0);
     pan_offset = {};
     constrainCamera();
     update();
@@ -146,30 +151,23 @@ void MapCanvasWidget::centerOn(const QPointF& position) {
 void MapCanvasWidget::setZoomFactor(qreal zoom) {
     fit_pending = false;
     zoom_factor = std::clamp(zoom, 0.05, 16.0);
+    user_zoom_multiplier = zoom_factor / std::max(0.01, fitZoomForCurrentSize());
     constrainCamera();
     update();
     emit zoomChanged(zoom_factor);
 }
 
 void MapCanvasWidget::zoomByFactor(qreal factor) {
+    user_zoom_multiplier = factor;
     applyFit();
-    setZoomFactor(zoom_factor * factor);
 }
 
 void MapCanvasWidget::zoomIn() {
-    fit_pending = false;
-    zoom_factor = std::clamp(zoom_factor * 1.25, 0.05, 16.0);
-    constrainCamera();
-    update();
-    emit zoomChanged(zoom_factor);
+    setZoomFactor(zoom_factor * 1.25);
 }
 
 void MapCanvasWidget::zoomOut() {
-    fit_pending = false;
-    zoom_factor = std::clamp(zoom_factor / 1.25, 0.05, 16.0);
-    constrainCamera();
-    update();
-    emit zoomChanged(zoom_factor);
+    setZoomFactor(zoom_factor / 1.25);
 }
 
 void MapCanvasWidget::constrainCamera() {
@@ -635,6 +633,7 @@ void MapCanvasWidget::wheelEvent(QWheelEvent* event) {
                                (cursor.y() - old_bounds.top()) / old_cell);
     const qreal factor = event->angleDelta().y() > 0 ? 1.15 : 1.0 / 1.15;
     zoom_factor = std::clamp(zoom_factor * factor, 0.05, 16.0);
+    user_zoom_multiplier = zoom_factor / std::max(0.01, fitZoomForCurrentSize());
     const QRectF new_bounds = mapBounds();
     const qreal new_cell = new_bounds.width() / map["w"].as_int();
     pan_offset += cursor - QPointF(new_bounds.left() + map_position.x() * new_cell,
@@ -647,6 +646,10 @@ void MapCanvasWidget::wheelEvent(QWheelEvent* event) {
 
 void MapCanvasWidget::resizeEvent(QResizeEvent* event) {
     QWidget::resizeEvent(event);
+    if (isVisible() && width() > 24 && height() > 24) {
+        zoom_factor = std::clamp(fitZoomForCurrentSize() * user_zoom_multiplier, 0.05, 16.0);
+        emit zoomChanged(zoom_factor);
+    }
     constrainCamera();
     requestPendingFit();
     update();

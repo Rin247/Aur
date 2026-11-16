@@ -1,6 +1,7 @@
 #include "RecordEditor.hpp"
 
 #include "RecordFields.hpp"
+#include "theme/ResponsiveSplitter.hpp"
 
 #include <QFormLayout>
 #include <QHBoxLayout>
@@ -47,6 +48,7 @@ namespace aur
             scroll->setWidgetResizable(true);
             formWidget = new QWidget(scroll);
             form = new QFormLayout(formWidget);
+            form->setFieldGrowthPolicy(QFormLayout::ExpandingFieldsGrow);
             for (const Field &field : fieldsFor(kind.toStdString()))
             {
                 if (field.kind == FieldKind::Group || field.kind == FieldKind::Pair)
@@ -83,10 +85,10 @@ namespace aur
 
             splitter->addWidget(leftPane);
             splitter->addWidget(rightPane);
-            splitter->setStretchFactor(0, 0);
-            splitter->setStretchFactor(1, 1);
-            leftPane->setMaximumWidth(420);
-            splitter->setSizes({240, 760});
+            theme::bindResponsiveSplitter(splitter, {22, 78});
+            auto *outer = new QVBoxLayout(this);
+            outer->setContentsMargins(0, 0, 0, 0);
+            outer->addWidget(splitter);
 
             connect(list, &QListWidget::currentRowChanged, this, [this](int) { loadSelected(); });
             connect(newButton, &QPushButton::clicked, this, [this]() { addRecord(); });

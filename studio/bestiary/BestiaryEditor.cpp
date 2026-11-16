@@ -2,6 +2,7 @@
 
 #include "BestiaryData.hpp"
 #include "CreaturePortrait.hpp"
+#include "theme/ResponsiveSplitter.hpp"
 
 #include <QFormLayout>
 #include <QHBoxLayout>
@@ -46,8 +47,8 @@ namespace aur
                 "the project.",
                 rightPane));
             portrait = new CreaturePortrait(rightPane);
-            portrait->setFixedHeight(180);
-            rightLayout->addWidget(portrait);
+            portrait->setMinimumHeight(140);
+            rightLayout->addWidget(portrait, 2);
 
             auto *scrollArea = new QScrollArea(rightPane);
             scrollArea->setWidgetResizable(true);
@@ -63,7 +64,7 @@ namespace aur
                 formLayout->addRow(QString::fromStdString(field.label) + ":", edit);
             }
             scrollArea->setWidget(formWidget);
-            rightLayout->addWidget(scrollArea, 1);
+            rightLayout->addWidget(scrollArea, 3);
 
             applyButton = new QPushButton("Apply Creature Changes", rightPane);
             applyButton->setToolTip("Apply the edits to this project in memory. Use the main "
@@ -72,16 +73,8 @@ namespace aur
 
             splitter->addWidget(leftPane);
             splitter->addWidget(rightPane);
-            splitter->setStretchFactor(0, 0);
-            splitter->setStretchFactor(1, 1);
-            // The list keeps its width; the editor takes the rest of the
-            // page. The sizes are not set in pixels: a splitter keeps the
-            // sizes it was given and leaves the rest of the page empty.
-            leftPane->setMaximumWidth(420);
+            theme::bindResponsiveSplitter(splitter, {22, 78});
 
-            // The editor is the tab's page, so it fills it: a widget with no
-            // layout is sized to its hint, and the page was a third of the
-            // window wide.
             auto *outer = new QVBoxLayout(this);
             outer->setContentsMargins(0, 0, 0, 0);
             outer->addWidget(splitter);

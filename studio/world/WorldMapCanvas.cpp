@@ -224,15 +224,24 @@ void WorldMapCanvasWidget::setRepeatWorldView(bool enabled) {
     refreshCanvas();
 }
 
+qreal WorldMapCanvasWidget::fitZoomForCurrentSize() const {
+    if (!project || current_map.empty() || !project->maps.contains(current_map)) return 1.0;
+    const auto spec = cameraSpec(project, current_map, this, zoom_factor, pan_offset,
+                                 repeat_world_view);
+    return studio::WorldCamera::fitZoom(spec, size());
+}
+
 void WorldMapCanvasWidget::setZoom(qreal zoom) {
     fit_pending = false;
     zoom_factor = studio::WorldCamera::clampZoom(zoom);
+    user_zoom_multiplier = zoom_factor / std::max(0.01, fitZoomForCurrentSize());
     constrainWorldCamera();
     refreshCanvas();
     emit zoomChanged(zoom_factor);
 }
 
 void WorldMapCanvasWidget::fitToView() {
+    user_zoom_multiplier = 1.0;
     if (!isVisible()) {
         // The canvas has no real size yet; the fit waits for the first
         // show/resize, or the world opens zoomed out against a stale size.
@@ -244,10 +253,11 @@ void WorldMapCanvasWidget::fitToView() {
 
 void WorldMapCanvasWidget::applyFit() {
     if (!project || current_map.empty() || !project->maps.contains(current_map)) return;
-    const auto spec = cameraSpec(project, current_map, this, zoom_factor, pan_offset,
-                                 repeat_world_view);
     pan_offset = {};
-    setZoom(studio::WorldCamera::fitZoom(spec, size()));
+    zoom_factor = studio::WorldCamera::clampZoom(fitZoomForCurrentSize() * user_zoom_multiplier);
+    constrainWorldCamera();
+    refreshCanvas();
+    emit zoomChanged(zoom_factor);
 }
 
 void WorldMapCanvasWidget::requestPendingFit() {
@@ -260,8 +270,8 @@ void WorldMapCanvasWidget::requestPendingFit() {
 }
 
 void WorldMapCanvasWidget::zoomByFactor(qreal factor) {
+    user_zoom_multiplier = factor;
     applyFit();
-    setZoom(zoom_factor * factor);
 }
 
 void WorldMapCanvasWidget::recordEntityEdit() {
@@ -330,6 +340,11 @@ void WorldMapCanvasWidget::resizeEvent(QResizeEvent* event) {
     QWidget::resizeEvent(event);
     if (terrain_renderer) terrain_renderer->setGeometry(rect());
     if (overlay_widget) overlay_widget->setGeometry(rect());
+    if (isVisible() && width() > 24 && height() > 24) {
+        zoom_factor = studio::WorldCamera::clampZoom(fitZoomForCurrentSize() * user_zoom_multiplier);
+        constrainWorldCamera();
+        emit zoomChanged(zoom_factor);
+    }
     requestPendingFit();
     refreshCanvas();
 }

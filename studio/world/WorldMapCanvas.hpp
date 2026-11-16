@@ -60,6 +60,7 @@ namespace aur
         int brush_size = 1;
         double height_strength_setting = 0.015;  // fraction of the R16 range
         qreal zoom_factor = 1.0;
+        qreal user_zoom_multiplier = 1.0;
         QPointF pan_offset;
         QPointF pan_start_position;
         QPointF pan_start_offset;
@@ -77,6 +78,7 @@ namespace aur
         QTimer simulation_timer;
         // The first fit waits for a real widget size, like the map editor's.
         bool fit_pending = false;
+        qreal fitZoomForCurrentSize() const;
         void applyFit();
         void requestPendingFit();
 

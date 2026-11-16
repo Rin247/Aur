@@ -128,20 +128,15 @@ namespace aur
             }
         }
         const int newContentWidth = contentWidth();
-        if (newContentWidth > width())
-            resize(newContentWidth, pitchCount * pitchHeight);
+        setMinimumSize(newContentWidth, pitchCount * pitchHeight);
         update();
     }
 
     void PianoRollCanvasWidget::resizeEvent(QResizeEvent *event)
     {
         QWidget::resizeEvent(event);
-        if (event->size().width() > event->oldSize().width())
-        {
-            const int newContentWidth = contentWidth();
-            if (newContentWidth > width())
-                resize(newContentWidth, height());
-        }
+        setMinimumSize(contentWidth(), pitchCount * pitchHeight);
+        update();
     }
 
     void PianoRollCanvasWidget::setSelectedTrack(int selectedTrack)
@@ -263,14 +258,13 @@ namespace aur
 
     void PianoRollCanvasWidget::copySelected()
     {
-        if (selectedNotes.empty() || trackIndex < 0 || !song.contains("tracks") ||
-            !song["tracks"].is_array() ||
-            trackIndex >= static_cast<int>(song["tracks"].as_array().size()))
-            return;
-        const JsonArray &notes =
-            song["tracks"][static_cast<size_t>(trackIndex)]["notes"].as_array();
         clipboard.clear();
         clipboardMinStep = 0;
+        Json *track = currentTrack();
+        if (selectedNotes.empty() || !track || !track->contains("notes") ||
+            !(*track)["notes"].is_array())
+            return;
+        const JsonArray &notes = (*track)["notes"].as_array();
         for (int index : selectedNotes)
         {
             if (index >= static_cast<int>(notes.size()))
@@ -314,32 +308,18 @@ namespace aur
 
     void PianoRollCanvasWidget::duplicateSelection()
     {
-        if (selectedNotes.empty() || trackIndex < 0 || !song.contains("tracks") ||
-            !song["tracks"].is_array() ||
-            trackIndex >= static_cast<int>(song["tracks"].as_array().size()))
-            return;
-        const JsonArray &notes =
-            song["tracks"][static_cast<size_t>(trackIndex)]["notes"].as_array();
-        int span = 0;
-        std::vector<ClipNote> source;
-        for (int index : selectedNotes)
-        {
-            if (index >= static_cast<int>(notes.size()))
-                continue;
-            const Json &note = notes[static_cast<size_t>(index)];
-            if (!note.is_array() || note.as_array().size() < 3)
-                continue;
-            source.push_back({note[0].as_int(), note[1].as_int(),
-                              std::max(1, note[2].as_int()),
-                              audio::SongDocument::note_velocity(note),
-                              audio::SongDocument::note_id(note)});
-            span = std::max(span, note[0].as_int() + std::max(1, note[2].as_int()));
-        }
+        auto savedClip = std::move(clipboard);
+        const int savedMin = clipboardMinStep;
+        copySelected();
+        std::vector<ClipNote> source = std::move(clipboard);
+        const int minStep = clipboardMinStep;
+        clipboard = std::move(savedClip);
+        clipboardMinStep = savedMin;
         if (source.empty())
             return;
-        int minStep = source.front().step;
+        int span = 0;
         for (const ClipNote &clip : source)
-            minStep = std::min(minStep, clip.step);
+            span = std::max(span, clip.step + clip.length);
         const int spanOffset = span - minStep;
         if (history)
             history->begin_note_edit(song, trackIndex);

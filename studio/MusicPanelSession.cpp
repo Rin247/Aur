@@ -7,9 +7,6 @@
 #include "theme/LabelRoles.hpp"
 #include <QHeaderView>
 #include <QScrollBar>
-#include "theme/LabelRoles.hpp"
-#include <QHeaderView>
-#include <QScrollBar>
 
 #include <QHideEvent>
 #include <QMessageBox>
@@ -43,9 +40,10 @@ namespace aur
     sessionGrid->setEditTriggers(QAbstractItemView::NoEditTriggers);
     sessionGrid->setSelectionMode(QAbstractItemView::SingleSelection);
     sessionGrid->setSelectionBehavior(QAbstractItemView::SelectItems);
-    sessionGrid->horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
+    sessionGrid->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     sessionGrid->horizontalHeader()->setDefaultSectionSize(120);
-    sessionGrid->verticalHeader()->setDefaultSectionSize(66);
+    sessionGrid->verticalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    sessionGrid->verticalHeader()->setMinimumSectionSize(56);
     sessionGrid->horizontalHeader()->setStretchLastSection(false);
     sessionLayout->addWidget(sessionGrid, 1);
     auto* sessionHint = new QLabel(
@@ -60,7 +58,7 @@ namespace aur
     auto* pianoPage = new QWidget(editorTabs);
     auto* pianoLayout = new QVBoxLayout(pianoPage);
     auto* pianoScroll = new QScrollArea(pianoPage);
-    pianoScroll->setWidgetResizable(false);
+    pianoScroll->setWidgetResizable(true);
     pianoScroll->setFrameShape(QFrame::StyledPanel);
     pianoRoll = new PianoRollCanvasWidget(pianoScroll);
     pianoScroll->setWidget(pianoRoll);
@@ -162,7 +160,7 @@ namespace aur
     arrangeToolbar->addStretch();
     arrangeLayout->addLayout(arrangeToolbar);
     auto *arrangeScroll = new QScrollArea(arrangePage);
-    arrangeScroll->setWidgetResizable(false);
+    arrangeScroll->setWidgetResizable(true);
     arrangeScroll->setFrameShape(QFrame::NoFrame);
     arrangementCanvas = new ArrangementCanvas(arrangeScroll);
     arrangeScroll->setWidget(arrangementCanvas);

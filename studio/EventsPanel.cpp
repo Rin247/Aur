@@ -1,4 +1,5 @@
 #include "EventsPanel.hpp"
+#include "theme/ResponsiveSplitter.hpp"
 #include <QFormLayout>
 #include <QMessageBox>
 
@@ -42,13 +43,14 @@ EventsPanel::EventsPanel(Project* p, QWidget* parent)
 
     QWidget* inspector = new QWidget(this);
     QFormLayout* form = new QFormLayout(inspector);
+    form->setFieldGrowthPolicy(QFormLayout::ExpandingFieldsGrow);
     form->addRow("Command Type:", new QLabel("say", inspector));
     form->addRow("Speaker:", new QLineEdit("Elder", inspector));
     form->addRow("Text:", new QLineEdit("Welcome to Eldervale.", inspector));
     form->addRow("Face Portrait:", new QLineEdit("elder_face", inspector));
     splitter->addWidget(inspector);
 
-    splitter->setSizes({200, 500, 300});
+    theme::bindResponsiveSplitter(splitter, {20, 52, 28});
     mainLayout->addWidget(splitter, 1);
 
     connect(validateBtn, &QPushButton::clicked, [this]() {

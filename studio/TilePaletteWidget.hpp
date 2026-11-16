@@ -10,10 +10,8 @@
 
 namespace aur {
 
-// Thumbnail grid of a tileset's tiles (editsweep D2.S1): one picker shared by
-// the map editor (and later the tileset editor). Clicking selects a single
-// tile; Ctrl+click extends a row-major multi-tile stamp. Right-click picks a
-// tile as an eyedropper action.
+// Thumbnail grid of a tileset's tiles: click selects a single tile, Ctrl+click
+// extends a row-major stamp, right-click acts as an eyedropper.
 class TilePaletteWidget : public QWidget {
     Q_OBJECT
     Project* project = nullptr;
@@ -32,6 +30,9 @@ public:
     std::string tilesetId() const;
     // Current stamp: sorted tile indices of the selection (1..n entries).
     std::vector<int> stampTiles() const;
+
+protected:
+    void resizeEvent(QResizeEvent* event) override;
 
 signals:
     // A stamp (one or more tiles, ascending) was chosen with left-click.

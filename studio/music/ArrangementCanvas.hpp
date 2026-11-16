@@ -9,12 +9,8 @@
 namespace aur
 {
 
-    // Arrangement timeline: one row per track, scene-clip placements painted
-    // as blocks on the absolute step axis, a bar ruler with markers, the loop
-    // brace and tempo/T.S. lanes from the v2 maps. Click on an empty cell
-    // places the selected scene's clip for that track; drag moves a placement;
-    // Delete removes the selection. Placement edits mutate the shared song
-    // document through SongHistory's track-snapshot path (TrackProps).
+    // Arrangement timeline: one row per track with scene-clip placements, bar ruler,
+    // loop brace, and tempo/T.S. lanes over SongHistory TrackProps.
     class ArrangementCanvas : public QWidget
     {
         Q_OBJECT
@@ -32,6 +28,8 @@ namespace aur
 
         int canvasHeight() const;
         int canvasWidth() const;
+        int effectiveStepWidth() const;
+        int effectiveRowHeight() const;
         int stepAt(const QPoint &pos) const;
         int rowAt(const QPoint &pos) const;
 

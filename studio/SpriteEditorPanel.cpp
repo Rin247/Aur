@@ -4,6 +4,7 @@
 
 #include "PixelFrameOps.hpp"
 #include "PixelEditSession.hpp"
+#include "theme/ResponsiveSplitter.hpp"
 #include "aur/gfx.hpp"
 
 #include <QIcon>
@@ -191,7 +192,7 @@ SpriteEditorPanel::SpriteEditorPanel(Project* p, QWidget* parent)
     canvas = new SpriteCanvasWidget();
     canvasScroll->setWidget(canvas);
     splitter->addWidget(canvasScroll);
-    splitter->setSizes({250, 950});
+    theme::bindResponsiveSplitter(splitter, {20, 80});
     mainLayout->addWidget(splitter, 1);
 
     connect(modeCombo, &QComboBox::currentIndexChanged, this,

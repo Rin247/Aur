@@ -1,12 +1,15 @@
 #include "CreatureForgePanel.hpp"
 #include "theme/LabelRoles.hpp"
+#include "theme/ResponsiveSplitter.hpp"
 #include "theme/ThemeManager.hpp"
 #include "theme/ThemeQt.hpp"
 #include "aur/gfx.hpp"
 
+#include <QGridLayout>
 #include <QRandomGenerator>
 #include <QMessageBox>
 #include <QScrollArea>
+#include <QSplitter>
 #include <algorithm>
 #include <cctype>
 
@@ -186,10 +189,12 @@ CreatureForgePanel::CreatureForgePanel(Project* p, QWidget* parent)
     controlsLayout->addWidget(tileButton);
 
     controlsLayout->addWidget(new QLabel("Outfit previews", this));
-    auto* presetLayout = new QHBoxLayout();
+    auto* presetLayout = new QGridLayout();
+    int presetIdx = 0;
     for (const std::string& preset : {"Adventurer", "Mage", "Knight", "Villager"}) {
         auto* button = new QPushButton(QString::fromStdString(preset), this);
-        presetLayout->addWidget(button);
+        presetLayout->addWidget(button, presetIdx / 2, presetIdx % 2);
+        ++presetIdx;
         connect(button, &QPushButton::clicked, this, [this, preset]() { applyPreset(preset); });
     }
     controlsLayout->addLayout(presetLayout);
@@ -198,15 +203,18 @@ CreatureForgePanel::CreatureForgePanel(Project* p, QWidget* parent)
     statusLabel->setWordWrap(true);
     theme::dimLabel(statusLabel);
     controlsLayout->addWidget(statusLabel);
-    auto* controlsScroll = new QScrollArea(this);
+    auto* splitter = new QSplitter(Qt::Horizontal, this);
+    auto* controlsScroll = new QScrollArea(splitter);
     controlsScroll->setWidgetResizable(true);
     controlsScroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     controlsScroll->setFrameShape(QFrame::NoFrame);
     controlsScroll->setWidget(controlsPanel);
-    mainLayout->addWidget(controlsScroll, 1);
+    splitter->addWidget(controlsScroll);
 
-    previewWidget = new CharacterSheetWidget(this);
-    mainLayout->addWidget(previewWidget, 2);
+    previewWidget = new CharacterSheetWidget(splitter);
+    splitter->addWidget(previewWidget);
+    theme::bindResponsiveSplitter(splitter, {28, 72});
+    mainLayout->addWidget(splitter, 1);
 
     connect(previewButton, &QPushButton::clicked, this, [this]() { generateRandomNPC(); });
     connect(createNpcButton, &QPushButton::clicked, this, [this]() { createNpc(); });

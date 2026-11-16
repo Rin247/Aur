@@ -486,3 +486,19 @@
     with `"races"` in `RecordFields.{hpp,cpp}` (tested in `tests/test_record_fields.cpp`).
   - `CMakeLists.txt`: removed duplicate `TransportIcon` and `BestiaryData` entries and trimmed the
     4-line icon comment block so the `QUIRKS.md` §43 pre-commit hook passes cleanly.
+- **Responsive splitter and canvas scaling across all 9 panels**:
+  - Added `studio/theme/ResponsiveSplitter.{hpp,cpp}` (`theme::bindResponsiveSplitter(QSplitter*, std::initializer_list<int>)`):
+    redistributes splitter pane widths proportionally on `QEvent::Resize` and `QEvent::Show` while
+    updating stored ratios whenever the user manually drags `splitterMoved`.
+  - Wired `theme::bindResponsiveSplitter` and `QFormLayout::ExpandingFieldsGrow` into `MapEditorPanel`
+    (`{18, 60, 22}`), `TilesetEditorPanel` (`{20, 54, 26}` + dynamic `tilePreview` scaling in
+    `resizeEvent`), `WorldPanel` (`{20, 80}`), `SpriteEditorPanel` (`{20, 80}`), `CreatureForgePanel`
+    (`{28, 72}` with 2x2 preset grid so `controlsScroll` never clips horizontally),
+    `bestiary/RecordEditor` (`{22, 78}` + outer `QVBoxLayout(this)` so the splitter fills the Database
+    tab instead of stopping at `1000px`), `bestiary/BestiaryEditor` (`{22, 78}` + expanding creature
+    portrait height), `EventsPanel` (`{20, 52, 28}`), and `MusicPanel` (`{22, 78}`).
+  - `MapCanvasWidget` and `WorldMapCanvasWidget` now track `user_zoom_multiplier` and recompute fit
+    zoom on every `resizeEvent` via `fitZoomForCurrentSize()`. `TilePaletteWidget` scales tile icon
+    and grid cell sizes (`40..72` px) with sidebar width. `MusicPanelSession`, `ArrangementCanvas`,
+    `StepSequencerCanvas`, and `PianoRollCanvas` stretch cells and rows dynamically with viewport
+    width and height.

@@ -42,6 +42,7 @@ class MapCanvasWidget : public QWidget {
     int drag_entity_index = -1;         // D3.S1: entity being drag-moved
     std::map<std::pair<std::string, int>, QImage> tile_cache;
     qreal zoom_factor = 1.0;
+    qreal user_zoom_multiplier = 1.0;
     QPointF pan_offset;
     QPointF pan_start_position;
     QPointF pan_start_offset;
@@ -93,9 +94,8 @@ public:
     void redo();
 
 private:
-    // Fits the map into the canvas. Deferred until the widget has a real
-    // size, so the first boot shows the whole map instead of a zoomed-out
-    // one.
+    // Fits the map into the canvas once the widget has a real size.
+    qreal fitZoomForCurrentSize() const;
     void applyFit();
     void requestPendingFit();
     // Opens and closes an undoable stroke over a layer (-1 is entities).

@@ -5,6 +5,7 @@
 #include "music/SongLibrary.hpp"
 #include "music/TransportIcon.hpp"
 #include "theme/LabelRoles.hpp"
+#include "theme/ResponsiveSplitter.hpp"
 #include "theme/ThemeIcons.hpp"
 
 #include <QCompleter>
@@ -436,6 +437,7 @@ MusicPanel::MusicPanel(Project* p, SharedAudio* sharedAudio, QWidget* parent)
     trackLayout->addWidget(addDrumTrackButton);
 
     auto* propertyForm = new QFormLayout();
+    propertyForm->setFieldGrowthPolicy(QFormLayout::ExpandingFieldsGrow);
     instrument = new QComboBox(trackPane);
     instrument->setEditable(true);
     instrument->setInsertPolicy(QComboBox::NoInsert);
@@ -470,7 +472,7 @@ MusicPanel::MusicPanel(Project* p, SharedAudio* sharedAudio, QWidget* parent)
     splitter->addWidget(trackPane);
 
     buildEditorTabs(splitter);
-    splitter->setSizes({270, 1300});
+    theme::bindResponsiveSplitter(splitter, {22, 78});
     layout->addWidget(splitter, 1);
 
     pianoRoll->setChangeCallback([this](const Json& song) { saveCurrentSong(song); });

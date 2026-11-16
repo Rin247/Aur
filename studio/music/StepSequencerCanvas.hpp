@@ -40,6 +40,8 @@ namespace aur
         void setAuditionHook(std::function<void(int pitch, int velocity)> hook);
 
         int patternCount() const { return static_cast<int>(patterns.size()); }
+        int effectiveCellWidth() const;
+        int effectiveRowHeight() const;
         int cellAt(const QPoint &pos, int &row) const;
         int rowAt(const QPoint &pos) const;
         int contentHeight() const;

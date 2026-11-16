@@ -69,9 +69,7 @@ void WorldMapCanvasWidget::paintTile(const QPoint& tile) {
     if (world::is_height_tool(selected_tool)) {
         ensureWorldModel();
         if (!world_model) return;
-        // WP0.5: strength as a fraction of the 0..65535 R16 elevation range
-        // (default 1.5% ≈ 983 R16 units ≈ 15 of the 0..1000 display range),
-        // scaled by a soft circular falloff from the stamp centre.
+        // Strength as a fraction of the 0..65535 R16 elevation range with circular falloff.
         const double height_strength = height_strength_setting;
         const qreal radius_f = std::max(1, radius);
         for (const QPoint& position : stamp) {
@@ -200,28 +198,24 @@ void WorldMapCanvasWidget::undo() {
         !history.can_undo()) return;
     Json& map = project->maps[current_map];
     const editor::WorldCommandHistory::Action action = history.take_undo();
+    editor::WorldCommandHistory::Action redo;
     if (action.entities) {
-        editor::WorldCommandHistory::Action redo;
         redo.entities = true;
         redo.state = map["entities"];
-        history.push_redo(std::move(redo));
         map["entities"] = action.state;
         emit entitiesChanged();
     } else if (!action.model_rects.empty() && world_model) {
-        editor::WorldCommandHistory::Action redo;
         for (auto it = action.model_rects.rbegin(); it != action.model_rects.rend(); ++it) {
             redo.model_rects.push_back(world_model->captureRect(it->layer, it->rect));
             world_model->restore(*it);
             world_model->writeRect(map, it->layer, it->rect);
         }
-        history.push_redo(std::move(redo));
     } else {
-        editor::WorldCommandHistory::Action redo;
         redo.entities = false;
         redo.state = map["layers"];
-        history.push_redo(std::move(redo));
         map["layers"] = action.state;
     }
+    history.push_redo(std::move(redo));
     surface_cache = {};
     surface_cache_map.clear();
     refreshCanvas();
@@ -232,28 +226,24 @@ void WorldMapCanvasWidget::redo() {
         !history.can_redo()) return;
     Json& map = project->maps[current_map];
     const editor::WorldCommandHistory::Action action = history.take_redo();
+    editor::WorldCommandHistory::Action undo;
     if (action.entities) {
-        editor::WorldCommandHistory::Action undo;
         undo.entities = true;
         undo.state = map["entities"];
-        history.push_undo(std::move(undo));
         map["entities"] = action.state;
         emit entitiesChanged();
     } else if (!action.model_rects.empty() && world_model) {
-        editor::WorldCommandHistory::Action undo;
         for (auto it = action.model_rects.rbegin(); it != action.model_rects.rend(); ++it) {
             undo.model_rects.push_back(world_model->captureRect(it->layer, it->rect));
             world_model->restore(*it);
             world_model->writeRect(map, it->layer, it->rect);
         }
-        history.push_undo(std::move(undo));
     } else {
-        editor::WorldCommandHistory::Action undo;
         undo.entities = false;
         undo.state = map["layers"];
-        history.push_undo(std::move(undo));
         map["layers"] = action.state;
     }
+    history.push_undo(std::move(undo));
     surface_cache = {};
     surface_cache_map.clear();
     refreshCanvas();
@@ -392,6 +382,7 @@ void WorldMapCanvasWidget::wheelEvent(QWheelEvent* event) {
     }
     if (updated_zoom == zoom_factor) return;
     zoom_factor = updated_zoom;
+    user_zoom_multiplier = zoom_factor / std::max(0.01, fitZoomForCurrentSize());
     const QRectF new_bounds = mapBounds();
     const qreal new_cell = new_bounds.width() / map["w"].as_int();
     pan_offset += cursor - QPointF(new_bounds.left() + map_position.x() * new_cell,

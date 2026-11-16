@@ -65,9 +65,12 @@ twenty-two PNGs.
   buttons are icon buttons beside it, and the tab bar is in the same row. `WM_NCCALCSIZE` gives
   the client area the whole window, so the chrome reaches the screen edge and there is no OS
   border to drag.
-- **Every canvas fits the space it is given.** The map, the world and the pixel surface scale to
-  their pane with a small margin; the pixel surface learns its room from the scroll area's
-  viewport, which is the only place that knows it.
+- **Every canvas and sidebar scales with the window.** `theme::bindResponsiveSplitter`
+  (`studio/theme/ResponsiveSplitter.*`) redistributes splitter panes proportionally on resize across
+  all nine panels while preserving manual splitter adjustments. `MapCanvas`, `WorldMapCanvas`,
+  `PixelSurface`, `TilesetEditorPanel`'s tile preview, `TilePaletteWidget`, `CreatureForgePanel`,
+  `RecordEditor`, `BestiaryEditor`'s portrait, and the DAW's `SessionGrid`, `ArrangementCanvas`,
+  `StepSequencerCanvas` and `PianoRollCanvas` all scale dynamically with their viewport.
 - **The app opens maximized** and remembers the page it was on. The data root is `~/.Aur`, with
   the leading dot, and the settings file lives in it.
 - **The DAW scrolls.** The arrangement timeline is sized to its content and sits in a scroll
@@ -86,10 +89,6 @@ twenty-two PNGs.
   editor (`records::RecordEditor`) and a table of fields per kind (`actors`, `classes`, `races`,
   `items`, `weapons`, `skills`), plus `Bestiary` for creatures. A field the editor does not show is
   carried through untouched.
-- **The Database page has a Bestiary.** The creatures are edited where
-  their records live: the list, the record, the artwork, and the fields
-  the editor does not show carried through. The other tabs of that page
-  are still stubs, and say so.
 - **The pages are named for what they are.** The tab bar reads Playtest,
   Map Editor, Tileset Editor, World, Sprite Editor, Character Forge,
   Database, Events and DAW -- one name per page, and the class and its
