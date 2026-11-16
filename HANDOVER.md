@@ -15,23 +15,19 @@ headless Null only under RHI_POLICY_HEADLESS=1. See C:\Projects\POLICY.md.
   switches between `system` and the 11 modes (`firstlight`, `dawn`, `sunrise`, `light`, `noon`,
   `sunset`, `bluehour`, `dusk`, `dark`, `midnight`, `amoled`) and picks the user accent from the
   24×24 HSV + 23-grey + escape-hatch matrix or a validated `#rrggbb` hex field.
-- **Every `studio/` file is under the 750-line soft limit:**
-  - `studio/MainWindow.cpp` (377 lines): `StudioChrome.{hpp,cpp}` and `FramelessWindow.{hpp,cpp}`
-    moved out (`P3.1` / `P6.5`).
-  - `studio/MusicPanel.cpp` (628 lines): `music/MidiStrip.{hpp,cpp}`, `music/GmPatchList.hpp`, and
-    `MusicPanelSession.cpp` (567 lines) moved out (`P6.1` / `E-02`), and the DAW header rows were
-    compacted (`P5.1`) with `FxChainStrip` hiding its chain list when empty.
-  - `studio/WorldPanel.cpp` (660 lines): `WorldPanelActions.cpp` (395 lines) moved out (`P6.2`).
-  - `studio/world/WorldMapCanvas.cpp` (465 lines): `world/WorldMapCanvasInput.cpp` (412 lines)
-    moved out (`P6.3`).
-  - `studio/music/PianoRollCanvas.cpp` (536 lines): `music/PianoRollInput.cpp` (289 lines) moved
-    out (`P6.4`).
-  - `studio/DatabasePanel.cpp` (45 lines): the `Races` tab now uses the generic
-    `records::RecordEditor` with `"races"` in `RecordFields.{hpp,cpp}` (`P6.6` / `E-01`).
+- **Every `studio/` file is under the 750-line soft limit and every module keeps its helpers in a nested folder** (`studio/theme/`, `studio/playtest/`, `studio/map/`, `studio/pixel/`, `studio/tileset/`, `studio/world/`, `studio/forge/`, `studio/bestiary/`, `studio/events/`, `studio/music/`):
+  - `studio/MainWindow.cpp` (411 lines): `theme/StudioChrome.{hpp,cpp}` and `theme/FramelessWindow.{hpp,cpp}` moved out (`P3.1` / `P6.5`).
+  - `studio/GameView.cpp` (186 lines): `playtest/QtRenderer.{hpp,cpp}` and `playtest/PlaytestDebugDialog.{hpp,cpp}` moved out.
+  - `studio/MapEditorPanel.cpp` (427 lines): `map/MapCanvas.{hpp,cpp}`, `map/MapEditUndo.{hpp,cpp}`, `map/TilePaletteWidget.{hpp,cpp}`, `map/TileTexture.hpp`, and `map/EditorDefs.hpp` live under `studio/map/`.
+  - `studio/SpriteEditorPanel.cpp` (618 lines) and `studio/TilesetEditorPanel.cpp` (387 lines): `pixel/PixelSurface.{hpp,cpp}`, `pixel/PixelEditSession.{hpp,cpp}`, `pixel/PixelFrameOps.{hpp,cpp}`, and `pixel/SpriteCanvas.{hpp,cpp}` live under `studio/pixel/`, and `tileset/TilePngIo.{hpp,cpp}` lives under `studio/tileset/`.
+  - `studio/WorldPanel.cpp` (686 lines): `world/WorldPanelActions.cpp` (395 lines), `world/WorldModel.{hpp,cpp}`, `world/WorldSettingsPanel.{hpp,cpp}`, and `world/WorldMapCanvasInput.cpp` (403 lines) live under `studio/world/`.
+  - `studio/CreatureForgePanel.cpp` (355 lines): `forge/CharacterSheetWidget.{hpp,cpp}` and `forge/ForgeAssetOps.{hpp,cpp}` live under `studio/forge/`.
+  - `studio/DatabasePanel.cpp` (47 lines) and `studio/EventsPanel.cpp` (78 lines): `bestiary/*` and `events/EventCommandOps.{hpp,cpp}` live under `studio/bestiary/` and `studio/events/`.
+  - `studio/MusicPanel.cpp` (661 lines): `music/MidiStrip.{hpp,cpp}`, `music/GmPatchList.hpp`, `music/MusicPanelSession.cpp` (598 lines), `music/PianoRollInput.cpp` (289 lines), `music/MidiDeviceIo.{hpp,cpp}`, `music/SongHistory.{hpp,cpp}`, and `music/SharedAudio.{hpp,cpp}` live under `studio/music/`.
 - **The editors undo over `QUndoStack`** (`studio/UndoCommands.{hpp,cpp}`),
-  and the map editor records per-cell diffs (`studio/MapEditUndo.{hpp,cpp}`).
+  and the map editor records per-cell diffs (`studio/map/MapEditUndo.{hpp,cpp}`).
   `tests/test_undo_commands.cpp` and `tests/test_theme.cpp` pin both; ctest 7/7 (73 checks).
-- **The studio has one master volume and one audio device** (`studio/SharedAudio`,
+- **The studio has one master volume and one audio device** (`studio/music/SharedAudio`,
   `studio/music/MasterVolumeStrip`).
 - **A render harness exists** (`tests/render_check.py`). Run it and OPEN the
   PNGs in `build/renders/`:
@@ -42,7 +38,6 @@ cd C:\Projects\Aur; py -3.15 tests\render_check.py
 
 ## Active plans
 
-- `Bible/notes/module-folders.md` — Phase 1 in progress: organize every studio module's helper files into nested subfolders (`studio/theme/`, `studio/playtest/`, `studio/map/`, `studio/pixel/`, `studio/tileset/`, `studio/world/`, `studio/forge/`, `studio/bestiary/`, `studio/events/`, `studio/music/`).
 - `Bible/notes/globe-expand.md` — **W-01**: expand a world map tile into a map preserving coast direction.
 - `Bible/notes/map-generator.md` — **W-02**: procedural seed generator for field, cave, and platformer maps.
 - `Bible/notes/platformer.md` — **P-01**: P1–P3 landed and tested; P4 waits on a solid floor tile chosen by the owner.

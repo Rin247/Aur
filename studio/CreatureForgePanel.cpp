@@ -1,8 +1,7 @@
 #include "CreatureForgePanel.hpp"
+#include "forge/ForgeAssetOps.hpp"
 #include "theme/LabelRoles.hpp"
 #include "theme/ResponsiveSplitter.hpp"
-#include "theme/ThemeManager.hpp"
-#include "theme/ThemeQt.hpp"
 #include "aur/gfx.hpp"
 
 #include <QGridLayout>
@@ -10,91 +9,8 @@
 #include <QMessageBox>
 #include <QScrollArea>
 #include <QSplitter>
-#include <algorithm>
-#include <cctype>
 
 namespace aur {
-namespace {
-
-std::string asset_id(const std::string& value) {
-    std::string id;
-    bool separator = false;
-    for (unsigned char ch : value) {
-        if (std::isalnum(ch)) {
-            if (separator && !id.empty()) id.push_back('_');
-            id.push_back(static_cast<char>(std::tolower(ch)));
-            separator = false;
-        } else {
-            separator = true;
-        }
-    }
-    return id;
-}
-
-std::string unique_id(const JsonObject& records, std::string base) {
-    if (base.empty()) base = "asset";
-    std::string id = base;
-    for (int suffix = 2; records.contains(id); ++suffix) id = base + "_" + std::to_string(suffix);
-    return id;
-}
-
-} // namespace
-
-CharacterSheetWidget::CharacterSheetWidget(QWidget* parent) : QWidget(parent) {
-    setMinimumSize(256, 256);
-}
-
-void CharacterSheetWidget::setGraphic(const Json& g) {
-    graphic = g;
-    update();
-}
-
-void CharacterSheetWidget::paintEvent(QPaintEvent*) {
-    using theme::qt;
-    const theme::Palette& pal = theme::tokens().palette;
-    QPainter painter(this);
-    painter.fillRect(rect(), qt(pal.surface_variant));
-
-    if (!graphic.contains("frames") || !graphic["frames"].is_object() ||
-        graphic["frames"].as_object().empty()) {
-        painter.setPen(qt(pal.text_dim));
-        painter.drawText(rect(), Qt::AlignCenter, "Generate a seeded asset to preview");
-        return;
-    }
-
-    std::string frame = "down_0";
-    if (!graphic["frames"].contains(frame)) {
-        frame = graphic["frames"].as_object().begin()->first;
-    }
-    auto [image_width, image_height, data] = frame_rgba(graphic, frame);
-    if (image_width <= 0 || image_height <= 0 || data.empty()) return;
-
-    // The preview fits the pane it is given, like every other canvas: the
-    // old cap of 8x left a 48x64 character in the middle of a large box.
-    const int scale = std::clamp(std::min((width() - 48) / image_width,
-                                          (height() - 64) / image_height), 1, 32);
-    const int draw_width = image_width * scale;
-    const int draw_height = image_height * scale;
-    const QRect target((width() - draw_width) / 2, (height() - draw_height) / 2,
-                       draw_width, draw_height);
-    constexpr int checker_pixels = 4;
-    for (int y = 0; y < image_height; y += checker_pixels) {
-        for (int x = 0; x < image_width; x += checker_pixels) {
-            const bool alternate = ((x / checker_pixels) + (y / checker_pixels)) % 2 != 0;
-            painter.fillRect(QRect(target.left() + x * scale, target.top() + y * scale,
-                                   std::min(checker_pixels, image_width - x) * scale,
-                                   std::min(checker_pixels, image_height - y) * scale),
-                             alternate ? QColor("#cbd1d7") : QColor("#eef0f2"));
-        }
-    }
-    QImage image(data.data(), image_width, image_height, QImage::Format_RGBA8888);
-    painter.setRenderHint(QPainter::SmoothPixmapTransform, false);
-    painter.drawImage(target, image);
-
-    painter.setPen(qt(pal.text_dim));
-    painter.drawText(QRect(8, height() - 30, width() - 16, 20), Qt::AlignCenter,
-                     QString("%1 × %2 px · seed preview").arg(image_width).arg(image_height));
-}
 
 CreatureForgePanel::CreatureForgePanel(Project* p, QWidget* parent)
     : QWidget(parent), project(p) {
@@ -280,24 +196,7 @@ void CreatureForgePanel::applyPreset(const std::string& preset_name) {
                                       genderCombo->currentText().toStdString(),
                                       presentationCombo->currentText().toStdString(),
                                       raceCombo->currentData().toString().toStdString());
-    Json& colors = spec["colors"];
-    Json& parts = spec["parts"];
-    if (preset_name == "Mage") {
-        colors["top"] = "#7957a0";
-        colors["accent"] = "#84bde0";
-        parts["role"] = "mage";
-    } else if (preset_name == "Knight") {
-        colors["top"] = "#858a9a";
-        colors["bottom"] = "#4b5368";
-        colors["accent"] = "#4876a5";
-        parts["role"] = "guard";
-    } else if (preset_name == "Villager") {
-        colors["top"] = "#b9a16d";
-        colors["bottom"] = "#74523b";
-        parts["role"] = "villager";
-    } else {
-        parts["role"] = "adventurer";
-    }
+    forge::apply_role_preset(spec, preset_name);
     previewSpec = spec;
     previewGraphic = compile_character(previewSpec, project ? Json(project->parts) : Json{});
     if (previewWidget) previewWidget->setGraphic(previewGraphic);
@@ -308,12 +207,12 @@ void CreatureForgePanel::applyPreset(const std::string& preset_name) {
 void CreatureForgePanel::createNpc() {
     if (!project) return;
     if (previewSpec.is_null()) generateRandomNPC();
-    const std::string base = asset_id(nameEdit->text().trimmed().toStdString());
+    const std::string base = forge::asset_id(nameEdit->text().trimmed().toStdString());
     if (base.empty()) {
         QMessageBox::warning(this, "Create NPC", "Enter a name containing letters or numbers.");
         return;
     }
-    const std::string id = unique_id(project->characters, base);
+    const std::string id = forge::unique_id(project->characters, base);
     previewSpec["name"] = nameEdit->text().trimmed().toStdString();
     previewSpec["age_group"] = ageCombo->currentText().toStdString();
     previewSpec["race"] = raceCombo->currentData().toString().toStdString();
@@ -336,7 +235,7 @@ void CreatureForgePanel::createCreature() {
     const std::string species = creatureCombo->currentText().toStdString();
     const std::string label = nameEdit->text().trimmed().isEmpty()
         ? species : nameEdit->text().trimmed().toStdString();
-    const std::string id = unique_id(project->db["enemies"].as_object(), asset_id(label));
+    const std::string id = forge::unique_id(project->db["enemies"].as_object(), forge::asset_id(label));
     try {
         Json graphic = generate_creature_graphic(species, seedSpin->value());
         project->graphics[id] = graphic;
@@ -356,8 +255,8 @@ void CreatureForgePanel::createCreature() {
 void CreatureForgePanel::createEffect() {
     if (!project) return;
     const std::string kind = effectCombo->currentText().toStdString();
-    const std::string base = asset_id(nameEdit->text().trimmed().toStdString() + "_" + kind);
-    const std::string id = unique_id(project->graphics, base);
+    const std::string base = forge::asset_id(nameEdit->text().trimmed().toStdString() + "_" + kind);
+    const std::string id = forge::unique_id(project->graphics, base);
     try {
         Json graphic = generate_effect_graphic(kind, seedSpin->value());
         graphic["seed"] = seedSpin->value();
@@ -377,7 +276,7 @@ void CreatureForgePanel::createClothing() {
     const int seed = seedSpin->value();
     try {
         Json graphic = generate_clothing_graphic(kind, seed);
-        std::string id = unique_id(project->graphics, asset_id(kind));
+        std::string id = forge::unique_id(project->graphics, forge::asset_id(kind));
         while (project->db["items"].as_object().contains(id)) id += "_2";
         graphic["name"] = kind;
         project->graphics[id] = graphic;
@@ -400,7 +299,7 @@ void CreatureForgePanel::createProp() {
     const int seed = seedSpin->value();
     try {
         Json graphic = generate_prop_graphic(kind, seed);
-        std::string id = unique_id(project->db["items"].as_object(), asset_id(kind));
+        std::string id = forge::unique_id(project->db["items"].as_object(), forge::asset_id(kind));
         while (project->graphics.contains(id)) id += "_2";
         graphic["name"] = kind;
         project->graphics[id] = std::move(graphic);

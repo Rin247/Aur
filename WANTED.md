@@ -3,7 +3,6 @@
 > This file holds **Aur's own asks**. For estate-wide decisions, see `C:\Projects\WANTED.md`.
 
 ## Active plans
-- `Bible/notes/module-folders.md` — Phase 1 in progress: organize every studio module's helper files into nested subfolders (`studio/theme/`, `studio/playtest/`, `studio/map/`, `studio/pixel/`, `studio/tileset/`, `studio/world/`, `studio/forge/`, `studio/bestiary/`, `studio/events/`, `studio/music/`).
 - `C:\Projects\Bible\notes\project-handoff-prep.md` — audit-only reconciliation. This plan is not an Aur implementation priority; keep the open owner queue below first.
 - `C:\Projects\Bible\notes\qt-desktop-foundation.md` — P0 audit only; AIO/Vulkan, source/header map, naming, and toolbar/settings/keybindings. Preserve Aur's higher-priority map/DAW/editor requests.
 

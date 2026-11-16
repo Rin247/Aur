@@ -11,23 +11,11 @@
 #include <QHBoxLayout>
 #include <QSplitter>
 #include <QLabel>
-#include <QPainter>
 #include "aur/project.hpp"
 #include "aur/forge.hpp"
+#include "forge/CharacterSheetWidget.hpp"
 
 namespace aur {
-
-class CharacterSheetWidget : public QWidget {
-    Q_OBJECT
-    Json graphic;
-
-public:
-    explicit CharacterSheetWidget(QWidget* parent = nullptr);
-    void setGraphic(const Json& g);
-
-protected:
-    void paintEvent(QPaintEvent* event) override;
-};
 
 class CreatureForgePanel : public QWidget {
     Q_OBJECT

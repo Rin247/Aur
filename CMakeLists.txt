@@ -62,6 +62,8 @@ target_include_directories(aur_engine PUBLIC engine)
 add_executable(aur_game
     game/main.cpp
     studio/GameView.cpp
+    studio/playtest/QtRenderer.cpp
+    studio/playtest/PlaytestDebugDialog.cpp
     studio/music/SharedAudio.cpp
     studio/AurPaths.cpp
     studio/music/QtAudioOutput.cpp
@@ -91,6 +93,8 @@ add_executable(aur_studio
     studio/theme/FramelessWindow.hpp
     studio/AurPaths.cpp
     studio/GameView.cpp
+    studio/playtest/QtRenderer.cpp
+    studio/playtest/PlaytestDebugDialog.cpp
     studio/music/SharedAudio.cpp
     studio/music/SharedAudio.hpp
     studio/music/MidiDeviceIo.cpp
@@ -144,6 +148,9 @@ add_executable(aur_studio
     studio/bestiary/CreaturePortrait.cpp
     studio/bestiary/CreaturePortrait.hpp
     studio/CreatureForgePanel.cpp
+    studio/forge/CharacterSheetWidget.cpp
+    studio/forge/CharacterSheetWidget.hpp
+    studio/forge/ForgeAssetOps.cpp
     studio/MusicPanel.cpp
     studio/music/MusicPanelSession.cpp
     studio/WorldPanel.cpp
@@ -184,7 +191,9 @@ add_executable(aur_studio
     studio/map/TilePaletteWidget.cpp
     studio/map/TilePaletteWidget.hpp
     studio/EventsPanel.cpp
+    studio/events/EventCommandOps.cpp
     studio/TilesetEditorPanel.cpp
+    studio/tileset/TilePngIo.cpp
     studio/world/WorldSettingsPanel.cpp
     studio/world/WorldSettingsPanel.hpp
     studio/theme/ThemeMath.cpp

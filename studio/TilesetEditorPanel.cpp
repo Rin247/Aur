@@ -2,9 +2,8 @@
 
 #include "pixel/PixelFrameOps.hpp"
 #include "theme/ResponsiveSplitter.hpp"
+#include "tileset/TilePngIo.hpp"
 
-#include <QFileDialog>
-#include <QMessageBox>
 #include "map/TileTexture.hpp"
 #include <QFormLayout>
 #include <QKeySequence>
@@ -338,48 +337,17 @@ namespace aur
     {
         if (!project || currentTile < 0 || !tileCanvas)
             return;
-        const QImage image = tileCanvas->toImage();
-        if (image.isNull())
-            return;
-        const QString path = QFileDialog::getSaveFileName(
-            this, "Export tile as PNG", QString(),
-            "PNG images (*.png)");
-        if (path.isEmpty())
-            return;
-        if (!image.save(path, "PNG"))
-            QMessageBox::warning(this, "Export failed",
-                                 QString("Could not write %1").arg(path));
+        tileset::export_surface_png(this, tileCanvas->toImage(),
+                                    QStringLiteral("Export tile as PNG"));
     }
 
     void TilesetEditorPanel::importTilePng()
     {
         if (!project || currentTile < 0 || !tileCanvas)
             return;
-        const QString path = QFileDialog::getOpenFileName(
-            this, "Import a PNG into the tile", QString(),
-            "PNG images (*.png)");
-        if (path.isEmpty())
-            return;
-        QImage source(path);
-        if (source.isNull())
-        {
-            QMessageBox::warning(this, "Import failed",
-                                 QString("Could not read %1").arg(path));
-            return;
-        }
-        const int size = tileCanvas->surfaceSize();
-        if (size <= 0)
-            return;
-        const QImage scaled = source.scaled(size, size, Qt::IgnoreAspectRatio,
-                                             Qt::FastTransformation);
-        const QImage rgba = scaled.convertToFormat(QImage::Format_RGBA8888);
-        const std::size_t byte_count = static_cast<std::size_t>(rgba.width()) *
-                                       static_cast<std::size_t>(rgba.height()) * 4;
-        const std::vector<unsigned char> bytes(rgba.constBits(),
-                                               rgba.constBits() + byte_count);
-        const JsonArray rows = editor::snap_rgba_to_rows(bytes, rgba.width(),
-                                                         rgba.height(),
-                                                         tileCanvas->paletteColors());
+        const JsonArray rows = tileset::import_surface_png_rows(
+            this, tileCanvas->surfaceSize(), tileCanvas->paletteColors(),
+            QStringLiteral("Import a PNG into the tile"));
         if (rows.empty())
             return;
         Json &tile = project->tilesets[currentTilesetId()]["tiles"]

@@ -502,3 +502,25 @@
     and grid cell sizes (`40..72` px) with sidebar width. `MusicPanelSession`, `ArrangementCanvas`,
     `StepSequencerCanvas`, and `PianoRollCanvas` stretch cells and rows dynamically with viewport
     width and height.
+- **Nested module helper folders across `studio/` (`module-folders-p1`, `module-folders-p2`)**:
+  - `studio/` root now holds only `main.cpp`, `MainWindow.{hpp,cpp}`, the 9 tab panel entry points
+    (`GameView`, `MapEditorPanel`, `TilesetEditorPanel`, `WorldPanel`, `SpriteEditorPanel`,
+    `CreatureForgePanel`, `DatabasePanel`, `EventsPanel`, `MusicPanel`), and shared cross-module
+    primitives (`AurPaths`, `CommandStack`, `UndoCommands`, `RhiBackend`).
+  - Every module's helper files live in a dedicated nested folder:
+    - `studio/theme/`: `StudioChrome.{hpp,cpp}`, `FramelessWindow.{hpp,cpp}`, plus all theme/style files.
+    - `studio/playtest/`: `QtRenderer.{hpp,cpp}`, `PlaytestDebugDialog.{hpp,cpp}` (extracted from `GameView`).
+    - `studio/map/`: `MapCanvas.{hpp,cpp}`, `MapEditUndo.{hpp,cpp}`, `TilePaletteWidget.{hpp,cpp}`,
+      `TileTexture.hpp`, `EditorDefs.hpp`.
+    - `studio/pixel/`: `PixelSurface.{hpp,cpp}`, `PixelEditSession.{hpp,cpp}`,
+      `PixelFrameOps.{hpp,cpp}`, `SpriteCanvas.{hpp,cpp}`.
+    - `studio/tileset/`: `TilePngIo.{hpp,cpp}` (extracted from `TilesetEditorPanel`).
+    - `studio/world/`: `WorldModel.{hpp,cpp}`, `WorldSettingsPanel.{hpp,cpp}`,
+      `WorldPanelActions.cpp`, plus all existing world helpers.
+    - `studio/forge/`: `CharacterSheetWidget.{hpp,cpp}`, `ForgeAssetOps.{hpp,cpp}` (extracted from
+      `CreatureForgePanel`).
+    - `studio/bestiary/`: `BestiaryData.{hpp,cpp}`, `BestiaryEditor.{hpp,cpp}`,
+      `CreaturePortrait.{hpp,cpp}`, `RecordEditor.{hpp,cpp}`, `RecordFields.{hpp,cpp}`.
+    - `studio/events/`: `EventCommandOps.{hpp,cpp}` (extracted from `EventsPanel`).
+    - `studio/music/`: `MusicPanelSession.cpp`, `MidiDeviceIo.{hpp,cpp}`, `SongHistory.{hpp,cpp}`,
+      `SharedAudio.{hpp,cpp}`, plus all existing DAW helpers.
