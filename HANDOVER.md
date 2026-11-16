@@ -42,6 +42,7 @@ cd C:\Projects\Aur; py -3.15 tests\render_check.py
 
 ## Active plans
 
+- `Bible/notes/module-folders.md` — Phase 1 in progress: organize every studio module's helper files into nested subfolders (`studio/theme/`, `studio/playtest/`, `studio/map/`, `studio/pixel/`, `studio/tileset/`, `studio/world/`, `studio/forge/`, `studio/bestiary/`, `studio/events/`, `studio/music/`).
 - `Bible/notes/globe-expand.md` — **W-01**: expand a world map tile into a map preserving coast direction.
 - `Bible/notes/map-generator.md` — **W-02**: procedural seed generator for field, cave, and platformer maps.
 - `Bible/notes/platformer.md` — **P-01**: P1–P3 landed and tested; P4 waits on a solid floor tile chosen by the owner.
