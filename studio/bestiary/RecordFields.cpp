@@ -41,6 +41,24 @@ namespace aur
                 return table;
             }
 
+            const std::vector<Field> &raceFields()
+            {
+                static const std::vector<Field> table = {
+                    {"name", "Name", FieldKind::Text, 0, 0, {}},
+                    {"category", "Category", FieldKind::Text, 0, 0, {}},
+                    {"lifespan", "Lifespan", FieldKind::Text, 0, 0, {}},
+                    {"maturation", "Maturation", FieldKind::Text, 0, 0, {}},
+                    {"habitat", "Habitat", FieldKind::Text, 0, 0, {}},
+                    {"appearance", "Appearance", FieldKind::Text, 0, 0, {}},
+                    {"adaptations", "Adaptations", FieldKind::Text, 0, 0, {}},
+                    {"culture", "Culture and society", FieldKind::Text, 0, 0, {}},
+                    {"naming", "Naming", FieldKind::Text, 0, 0, {}},
+                    {"combat_role", "Gameplay / combat role", FieldKind::Text, 0, 0, {}},
+                    {"notes", "Additional notes", FieldKind::Text, 0, 0, {}},
+                };
+                return table;
+            }
+
             const std::vector<Field> &itemFields()
             {
                 static const std::vector<Field> table = {
@@ -103,6 +121,7 @@ namespace aur
         {
             if (kind == "actors") return actorFields();
             if (kind == "classes") return classFields();
+            if (kind == "races") return raceFields();
             if (kind == "items") return itemFields();
             if (kind == "weapons") return weaponFields();
             if (kind == "skills") return skillFields();

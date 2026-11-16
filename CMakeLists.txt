@@ -124,8 +124,6 @@ add_executable(aur_studio
     studio/music/MidiStrip.hpp
     studio/music/TransportIcon.cpp
     studio/music/TransportIcon.hpp
-    studio/music/TransportIcon.cpp
-    studio/music/TransportIcon.hpp
     studio/SongHistory.cpp
     studio/MapEditorPanel.cpp
     studio/MapCanvas.cpp
@@ -174,7 +172,6 @@ add_executable(aur_studio
     studio/RhiBackend.hpp
     studio/SpriteEditorPanel.cpp
     studio/PixelEditSession.cpp
-    studio/bestiary/BestiaryData.cpp
     studio/PixelFrameOps.cpp
     studio/PixelSurface.cpp
     studio/SpriteCanvas.cpp
@@ -199,10 +196,7 @@ add_executable(aur_studio
 )
 target_include_directories(aur_studio PRIVATE . studio)
 target_link_libraries(aur_studio PRIVATE aur_engine Qt6::Widgets Qt6::Multimedia Qt6::GuiPrivate Qt6::Concurrent)
-# The app's own icon, from the estate's M3 set (AssetLibrary/Icons/Aur).
-# The PNGs are the window icon (":/icons/aur-icon-256.png"); the .rc carries
-# the .ico for the PE resource section, which is what Explorer draws. Both
-# are listed as sources so CMake compiles them with the right tool.
+# The app's own icon from AssetLibrary/Icons/Aur (qrc PNGs + Windows .rc/.ico).
 qt_add_resources(aur_studio aur_studio_icons
     PREFIX "/"
     BASE studio/resources

@@ -1,10 +1,7 @@
 #pragma once
 
 // RecordFields.hpp - the fields of a record, as data.
-//
-// One row per field: the key, the label, the kind and the range. Adding
-// a field to a kind is a row, not code. The layer is Qt-free, so the
-// test does not need a widget.
+// One row per field; the layer is Qt-free so tests do not need a widget.
 
 #include <string>
 #include <utility>
@@ -37,8 +34,7 @@ namespace aur
             std::vector<std::pair<std::string, int>> parts;
         };
 
-        // The fields of a kind of record ("actors", "classes", "items",
-        // "weapons", "skills"). An unknown kind has no fields.
+        // The fields of a kind of record ("actors", "classes", "races", "items", "weapons", "skills").
         const std::vector<Field> &fieldsFor(const std::string &kind);
 
         // A new record's defaults: every field the editor shows, and
@@ -49,9 +45,7 @@ namespace aur
         // read part by part, so the form's value is one string per part.
         std::string fieldText(const Json &record, const Field &field, const std::string &part = "");
 
-        // The write: the fields the editor shows, with the rest carried
-        // through untouched. The values are keyed by the field's path
-        // ("name", "growth.hp", "range.0").
+        // The write: the fields the editor shows, with the rest carried through untouched.
         Json applyFields(const std::string &kind, const Json &record,
                          const std::vector<std::pair<std::string, std::string>> &values);
 

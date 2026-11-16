@@ -13,10 +13,18 @@ void test_record_fields()
     // The fields of each kind are data.
     ASSERT(records::fieldsFor("actors").size() > 5);
     ASSERT(records::fieldsFor("classes").size() == 2);
+    ASSERT(records::fieldsFor("races").size() == 11);
     ASSERT(records::fieldsFor("items").size() == 4);
     ASSERT(records::fieldsFor("weapons").size() == 8);
     ASSERT(records::fieldsFor("skills").size() == 5);
     ASSERT(records::fieldsFor("nonsense").empty());
+
+    const Json race = records::newRecord("races", "elf", "Sylvan Elf");
+    ASSERT(race["name"].as_string() == "Sylvan Elf");
+    const Json race_edited = records::applyFields(
+        "races", race, {{"habitat", "Canopy cities"}, {"lifespan", "Centuries"}});
+    ASSERT(race_edited["habitat"].as_string() == "Canopy cities");
+    ASSERT(race_edited["lifespan"].as_string() == "Centuries");
 
     // A new record: the fields the editor shows, and their defaults.
     const Json actor = records::newRecord("actors", "bram", "Bram");
