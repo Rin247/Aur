@@ -96,6 +96,7 @@ add_executable(aur_studio
     studio/music/MidiSession.cpp
     studio/music/MidiSession.hpp
     studio/music/PianoRollCanvas.cpp
+    studio/music/PianoRollInput.cpp
     studio/music/PianoRollCanvas.hpp
     studio/music/VelocityLaneStrip.cpp
     studio/music/VelocityLaneStrip.hpp
@@ -145,6 +146,7 @@ add_executable(aur_studio
     studio/MusicPanel.cpp
     studio/MusicPanelSession.cpp
     studio/WorldPanel.cpp
+    studio/WorldPanelActions.cpp
     studio/world/HdSurface.cpp
     studio/world/TerrainLod.cpp
     studio/world/TerrainLod.hpp
@@ -165,6 +167,7 @@ add_executable(aur_studio
     studio/world/WorldGenerationJob.cpp
     studio/world/WorldEntityDialogs.cpp
     studio/world/WorldMapCanvas.cpp
+    studio/world/WorldMapCanvasInput.cpp
     studio/WorldModel.cpp
     studio/WorldModel.hpp
     studio/RhiBackend.cpp

@@ -1,6 +1,6 @@
 # Repaint and refactor: plan
 
-Status: P5 and P6.1 landed (tag repaint-p5; MusicPanel.cpp 659 lines). Next step: P6.2-P6.4 and P6.6-P6.7.
+Status: P6.2-P6.4 landed (all studio files under 750 lines). Next step: P6.6 (Races tab onto RecordEditor) and P6.7 (CMakeLists.txt cleanup).
 
 ## Goal
 
@@ -146,9 +146,9 @@ Acceptance: the 24-capture sweep at floor sizes; a person opens every PNG. Tag `
 ### P6 Refactor splits (pure moves, one commit each, build and ctest between)
 - [x] P6.1 `MusicPanel.cpp` (1,268): `MidiStrip` first, then the master FX and volume row; target under
   750 or a recorded baseline.
-- [ ] P6.2 `WorldPanel.cpp` (968): left column (biomes, terrain, locations) into its own widget.
-- [ ] P6.3 `world/WorldMapCanvas.cpp` (825): input handling into its own file.
-- [ ] P6.4 `music/PianoRollCanvas.cpp` (788): painting versus editing.
+- [x] P6.2 `WorldPanel.cpp` (968): left column (biomes, terrain, locations) into its own widget.
+- [x] P6.3 `world/WorldMapCanvas.cpp` (825): input handling into its own file.
+- [x] P6.4 `music/PianoRollCanvas.cpp` (788): painting versus editing.
 - [x] P6.5 `MainWindow.cpp` (575) after P3.1: page registry stays, nothing else.
 - [ ] P6.6 Races tab onto the generic editor (E-01), a behaviour commit with a test.
 - [ ] P6.7 `CMakeLists.txt`: remove the duplicate `TransportIcon` lines and trim over-long comments.
