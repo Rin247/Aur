@@ -1,4 +1,4 @@
-#include "RhiBackend.hpp"
+#include "core/RhiBackend.hpp"
 
 #include <QByteArray>
 #include <QtCore/qglobal.h>

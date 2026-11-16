@@ -15,7 +15,8 @@ headless Null only under RHI_POLICY_HEADLESS=1. See C:\Projects\POLICY.md.
   switches between `system` and the 11 modes (`firstlight`, `dawn`, `sunrise`, `light`, `noon`,
   `sunset`, `bluehour`, `dusk`, `dark`, `midnight`, `amoled`) and picks the user accent from the
   24×24 HSV + 23-grey + escape-hatch matrix or a validated `#rrggbb` hex field.
-- **Every `studio/` file is under the 750-line soft limit and every module keeps its helpers in a nested folder** (`studio/theme/`, `studio/playtest/`, `studio/map/`, `studio/pixel/`, `studio/tileset/`, `studio/world/`, `studio/forge/`, `studio/bestiary/`, `studio/events/`, `studio/music/`):
+- **Every `studio/` file is under the 750-line soft limit and every module keeps its helpers in a nested folder** (`studio/core/`, `studio/theme/`, `studio/playtest/`, `studio/map/`, `studio/pixel/`, `studio/tileset/`, `studio/world/`, `studio/forge/`, `studio/bestiary/`, `studio/events/`, `studio/music/`):
+  - `studio/` root holds only `main.cpp`, `MainWindow.*`, and the nine tab panels; shared studio primitives (`AurPaths`, `CommandStack`, `UndoCommands`, `RhiBackend`) live under `studio/core/`.
   - `studio/MainWindow.cpp` (411 lines): `theme/StudioChrome.{hpp,cpp}` and `theme/FramelessWindow.{hpp,cpp}` moved out (`P3.1` / `P6.5`).
   - `studio/GameView.cpp` (186 lines): `playtest/QtRenderer.{hpp,cpp}` and `playtest/PlaytestDebugDialog.{hpp,cpp}` moved out.
   - `studio/MapEditorPanel.cpp` (427 lines): `map/MapCanvas.{hpp,cpp}`, `map/MapEditUndo.{hpp,cpp}`, `map/TilePaletteWidget.{hpp,cpp}`, `map/TileTexture.hpp`, and `map/EditorDefs.hpp` live under `studio/map/`.
@@ -24,7 +25,7 @@ headless Null only under RHI_POLICY_HEADLESS=1. See C:\Projects\POLICY.md.
   - `studio/CreatureForgePanel.cpp` (355 lines): `forge/CharacterSheetWidget.{hpp,cpp}` and `forge/ForgeAssetOps.{hpp,cpp}` live under `studio/forge/`.
   - `studio/DatabasePanel.cpp` (47 lines) and `studio/EventsPanel.cpp` (78 lines): `bestiary/*` and `events/EventCommandOps.{hpp,cpp}` live under `studio/bestiary/` and `studio/events/`.
   - `studio/MusicPanel.cpp` (661 lines): `music/MidiStrip.{hpp,cpp}`, `music/GmPatchList.hpp`, `music/MusicPanelSession.cpp` (598 lines), `music/PianoRollInput.cpp` (289 lines), `music/MidiDeviceIo.{hpp,cpp}`, `music/SongHistory.{hpp,cpp}`, and `music/SharedAudio.{hpp,cpp}` live under `studio/music/`.
-- **The editors undo over `QUndoStack`** (`studio/UndoCommands.{hpp,cpp}`),
+- **The editors undo over `QUndoStack`** (`studio/core/UndoCommands.{hpp,cpp}`),
   and the map editor records per-cell diffs (`studio/map/MapEditUndo.{hpp,cpp}`).
   `tests/test_undo_commands.cpp` and `tests/test_theme.cpp` pin both; ctest 7/7 (73 checks).
 - **The studio has one master volume and one audio device** (`studio/music/SharedAudio`,

@@ -503,10 +503,11 @@
     `StepSequencerCanvas`, and `PianoRollCanvas` stretch cells and rows dynamically with viewport
     width and height.
 - **Nested module helper folders across `studio/` (`module-folders-p1`, `module-folders-p2`)**:
-  - `studio/` root now holds only `main.cpp`, `MainWindow.{hpp,cpp}`, the 9 tab panel entry points
+  - `studio/` root now holds ONLY `main.cpp`, `MainWindow.{hpp,cpp}`, and the 9 tab panel entry points
     (`GameView`, `MapEditorPanel`, `TilesetEditorPanel`, `WorldPanel`, `SpriteEditorPanel`,
-    `CreatureForgePanel`, `DatabasePanel`, `EventsPanel`, `MusicPanel`), and shared cross-module
-    primitives (`AurPaths`, `CommandStack`, `UndoCommands`, `RhiBackend`).
+    `CreatureForgePanel`, `DatabasePanel`, `EventsPanel`, `MusicPanel`).
+  - Shared studio primitives live in `studio/core/` (`AurPaths.{hpp,cpp}`, `CommandStack.hpp`,
+    `UndoCommands.{hpp,cpp}`, `RhiBackend.{hpp,cpp}`).
   - Every module's helper files live in a dedicated nested folder:
     - `studio/theme/`: `StudioChrome.{hpp,cpp}`, `FramelessWindow.{hpp,cpp}`, plus all theme/style files.
     - `studio/playtest/`: `QtRenderer.{hpp,cpp}`, `PlaytestDebugDialog.{hpp,cpp}` (extracted from `GameView`).

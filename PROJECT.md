@@ -54,14 +54,13 @@ twenty-two PNGs.
 
 - **The editors undo over `QUndoStack`.** The map editor records per-cell diffs
   (`studio/map/MapEditUndo.*`), the tileset and sprite editors snapshot the document they change, and
-  the command core resolves a region against the live project (`studio/UndoCommands.*`).
+  the command core resolves a region against the live project (`studio/core/UndoCommands.*`).
 - **Every module organizes its helpers in a nested folder under `studio/`.** `studio/` root holds
-  `main.cpp`, `MainWindow.*`, the nine tab panel widgets (`GameView`, `MapEditorPanel`,
+  only `main.cpp`, `MainWindow.*`, and the nine tab panel widgets (`GameView`, `MapEditorPanel`,
   `TilesetEditorPanel`, `WorldPanel`, `SpriteEditorPanel`, `CreatureForgePanel`, `DatabasePanel`,
-  `EventsPanel`, `MusicPanel`), and shared primitives (`AurPaths`, `CommandStack`, `UndoCommands`,
-  `RhiBackend`), while module helpers live in `studio/theme/`, `studio/playtest/`, `studio/map/`,
-  `studio/pixel/`, `studio/tileset/`, `studio/world/`, `studio/forge/`, `studio/bestiary/`,
-  `studio/events/`, and `studio/music/`.
+  `EventsPanel`, `MusicPanel`), while all helpers live in `studio/core/`, `studio/theme/`,
+  `studio/playtest/`, `studio/map/`, `studio/pixel/`, `studio/tileset/`, `studio/world/`,
+  `studio/forge/`, `studio/bestiary/`, `studio/events/`, and `studio/music/`.
 - **The sprite editor** has onion skinning (the neighbouring frames ghosted behind the current
   one), a live preview of the sprite's own sequence at the anim's fps, the mirror, and the frame
   tools (add, duplicate, delete, reorder). The tile editor has the same surface over a tile's

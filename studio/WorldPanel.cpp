@@ -1,7 +1,7 @@
 #include "WorldPanel.hpp"
 #include "theme/LabelRoles.hpp"
 #include "theme/ResponsiveSplitter.hpp"
-#include "RhiBackend.hpp"
+#include "core/RhiBackend.hpp"
 #include "map/TileTexture.hpp"
 #include "world/WorldSettingsPanel.hpp"
 #include "world/HdSurface.hpp"

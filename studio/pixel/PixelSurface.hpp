@@ -1,11 +1,7 @@
 #pragma once
 
-// PixelSurface.hpp - the pixel-editing surface: it edits "a rows array with
-// a palette", which is what a graphic's frame is and what a tile is.
-//
-// The surface owns the brush, the zoom, the undo and the painting. It does
-// not know which document it is editing: the owner hands it the rows and
-// the palette, and takes them back when the target changes.
+// PixelSurface.hpp - shared pixel-editing surface over a rows array and palette,
+// owning the brush, zoom, undo stack, and painting for both sprites and tiles.
 
 #include <QWidget>
 
@@ -24,7 +20,7 @@
 #include <string>
 #include <vector>
 
-#include "UndoCommands.hpp"
+#include "core/UndoCommands.hpp"
 #include "aur/json.hpp"
 
 namespace aur {

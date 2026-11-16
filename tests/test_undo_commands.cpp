@@ -1,6 +1,6 @@
 #include "mini_test.hpp"
 #include "map/MapEditUndo.hpp"
-#include "UndoCommands.hpp"
+#include "core/UndoCommands.hpp"
 
 #include <QUndoStack>
 

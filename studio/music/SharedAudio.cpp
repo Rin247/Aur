@@ -4,7 +4,7 @@
 
 #include <algorithm>
 
-#include "AurPaths.hpp"
+#include "core/AurPaths.hpp"
 
 namespace aur
 {

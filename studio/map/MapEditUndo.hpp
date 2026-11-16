@@ -3,7 +3,7 @@
 // MapEditUndo.hpp - the map editor's undo recorder: it collects the cells a
 // stroke touched so the command carries per-cell diffs.
 
-#include "UndoCommands.hpp"
+#include "core/UndoCommands.hpp"
 
 #include <QString>
 #include <QUndoStack>

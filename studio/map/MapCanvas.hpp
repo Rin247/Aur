@@ -22,7 +22,7 @@
 #include <vector>
 
 #include "map/MapEditUndo.hpp"
-#include "UndoCommands.hpp"
+#include "core/UndoCommands.hpp"
 #include "aur/project.hpp"
 #include "aur/render.hpp"
 

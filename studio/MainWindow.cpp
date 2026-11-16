@@ -1,5 +1,5 @@
 #include "MainWindow.hpp"
-#include "AurPaths.hpp"
+#include "core/AurPaths.hpp"
 #include "music/SharedAudio.hpp"
 #include "MapEditorPanel.hpp"
 #include "DatabasePanel.hpp"

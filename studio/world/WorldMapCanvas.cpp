@@ -1,5 +1,5 @@
 #include "world/WorldMapCanvas.hpp"
-#include "RhiBackend.hpp"
+#include "core/RhiBackend.hpp"
 #include "map/TileTexture.hpp"
 #include "world/HdSurface.hpp"
 #include "world/TerrainLod.hpp"

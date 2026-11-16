@@ -21,7 +21,7 @@
 #include "aur/project.hpp"
 
 #include "pixel/SpriteCanvas.hpp"
-#include "UndoCommands.hpp"
+#include "core/UndoCommands.hpp"
 
 namespace aur {
 

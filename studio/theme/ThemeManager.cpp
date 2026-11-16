@@ -1,6 +1,6 @@
 #include "theme/ThemeManager.hpp"
 
-#include "AurPaths.hpp"
+#include "core/AurPaths.hpp"
 #include "theme/AurStyle.hpp"
 #include "theme/ThemeQt.hpp"
 

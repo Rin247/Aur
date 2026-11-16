@@ -36,7 +36,7 @@ Work in small steps: one file per turn, targeted greps over full reads, explicit
 
 ## Housekeeping (estate rule)
 
-Implementation files and their headers are co-located in the same directory (e.g. `studio/world/foo.cpp` beside `studio/world/foo.h`); tests in `tests/`. Do not split into separate `src/` and `include/` trees for new code. No stray files in module or project roots. Agents clean up misplaced files they create in the same pass.
+Implementation files and their headers are co-located in the same directory (e.g. `studio/world/foo.cpp` beside `studio/world/foo.h`); tests in `tests/`. Do not split into separate `src/` and `include/` trees for new code. Every module in `studio/` keeps its helper files in a nested module subfolder (`studio/core/`, `studio/theme/`, `studio/playtest/`, `studio/map/`, `studio/pixel/`, `studio/tileset/`, `studio/world/`, `studio/forge/`, `studio/bestiary/`, `studio/events/`, `studio/music/`) so the root of `studio/` holds only `main.cpp`, `MainWindow.*`, and the top-level tab panels (`*Panel.*` / `GameView.*`) for immediate human scannability. No stray files in module or project roots. Agents clean up misplaced files they create in the same pass.
 
 > Dirty working trees are treated as non-dirty: commit and push them (use --no-verify if comment-bloat hooks block), and note any deferred comment cleanup in HANDOVER.md.
 

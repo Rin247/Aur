@@ -1,5 +1,5 @@
 #include "TerrainRhiWidget.hpp"
-#include "RhiBackend.hpp"
+#include "core/RhiBackend.hpp"
 #include "aur/clock.hpp"
 #include "aur/game.hpp"
 #include <QColor>

@@ -1,6 +1,6 @@
 #include "WorldPanel.hpp"
 #include "theme/LabelRoles.hpp"
-#include "RhiBackend.hpp"
+#include "core/RhiBackend.hpp"
 #include "map/TileTexture.hpp"
 #include "world/WorldSettingsPanel.hpp"
 #include "world/HdSurface.hpp"
@@ -101,9 +101,7 @@ void WorldPanel::generateMap() {
     const std::string id = "map_" + std::to_string(seed_value);
     const std::string name = std::string(mapKindName(map_kind)) + " " + std::to_string(seed_value);
     try {
-        // The tiles the map needs go into the tileset, and the map uses
-        // them: the flags are per tile, so a platformer's floor cannot be
-        // the field's grass.
+        // Append generated tiles into the tileset with their per-tile collision flags.
         auto& tileset = project->tilesets["terra"];
         auto& tiles = tileset["tiles"].as_array();
         const int first_tile = static_cast<int>(tiles.size());
@@ -376,12 +374,13 @@ void WorldPanel::editWorldEntity() {
 }
 
 void WorldPanel::deleteWorldEntity() {
+    QListWidgetItem* selectedItem = nodeList ? nodeList->currentItem() : nullptr;
     if (!project || current_map.empty() || !project->maps.contains(current_map) ||
-        !nodeList->currentItem()) return;
+        !selectedItem) return;
     Json& map = project->maps[current_map];
     if (!map.contains("entities") || !map["entities"].is_array()) return;
+    const int entity_index = selectedItem->data(Qt::UserRole).toInt();
     JsonArray& entities = map["entities"].as_array();
-    const int entity_index = nodeList->currentItem()->data(Qt::UserRole).toInt();
     if (entity_index < 0 || entity_index >= static_cast<int>(entities.size())) return;
     const auto answer = QMessageBox::question(
         this, "Delete world marker", "Delete the selected location or exit?",

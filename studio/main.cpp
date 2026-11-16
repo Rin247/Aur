@@ -6,7 +6,7 @@
 #include <QStyleHints>
 #include <QTimer>
 #include "MainWindow.hpp"
-#include "RhiBackend.hpp"
+#include "core/RhiBackend.hpp"
 
 int main(int argc, char* argv[]) {
     aur::editor::configureRhiBackendBeforeApplication();
@@ -71,9 +71,7 @@ int main(int argc, char* argv[]) {
     if (!theme_mode.isEmpty())
         aur::theme::ThemeManager::instance().applyTransientMode(theme_mode);
     aur::MainWindow window(project_path.toStdString());
-    // The window's state comes from the data root, unless the command line
-    // asked for a size or a page: then the command line wins. A run that
-    // must not touch the state at all says --no-state.
+    // Restore state from ~/.Aur unless overridden by CLI flags (--size, --tab, --no-state).
     const bool sized = window_width > 0 && window_height > 0;
     if (no_state) {
         window.setSaveWindowState(false);

@@ -65,7 +65,7 @@ add_executable(aur_game
     studio/playtest/QtRenderer.cpp
     studio/playtest/PlaytestDebugDialog.cpp
     studio/music/SharedAudio.cpp
-    studio/AurPaths.cpp
+    studio/core/AurPaths.cpp
     studio/music/QtAudioOutput.cpp
     studio/music/MasterVolumeStrip.cpp
     studio/theme/CardFrame.cpp
@@ -91,7 +91,7 @@ add_executable(aur_studio
     studio/theme/StudioChrome.hpp
     studio/theme/FramelessWindow.cpp
     studio/theme/FramelessWindow.hpp
-    studio/AurPaths.cpp
+    studio/core/AurPaths.cpp
     studio/GameView.cpp
     studio/playtest/QtRenderer.cpp
     studio/playtest/PlaytestDebugDialog.cpp
@@ -135,7 +135,7 @@ add_executable(aur_studio
     studio/map/MapCanvas.cpp
     studio/map/MapCanvas.hpp
     studio/map/MapEditUndo.cpp
-    studio/UndoCommands.cpp
+    studio/core/UndoCommands.cpp
     studio/DatabasePanel.cpp
     studio/bestiary/BestiaryData.cpp
     studio/bestiary/BestiaryData.hpp
@@ -178,8 +178,8 @@ add_executable(aur_studio
     studio/world/WorldMapCanvasInput.cpp
     studio/world/WorldModel.cpp
     studio/world/WorldModel.hpp
-    studio/RhiBackend.cpp
-    studio/RhiBackend.hpp
+    studio/core/RhiBackend.cpp
+    studio/core/RhiBackend.hpp
     studio/SpriteEditorPanel.cpp
     studio/pixel/PixelEditSession.cpp
     studio/pixel/PixelFrameOps.cpp
@@ -293,7 +293,7 @@ add_executable(aur_tests
     studio/bestiary/BestiaryData.cpp
     studio/bestiary/RecordFields.cpp
     studio/pixel/PixelFrameOps.cpp
-    studio/UndoCommands.cpp
+    studio/core/UndoCommands.cpp
     studio/map/MapEditUndo.cpp
     studio/world/WeatherRender.cpp
     studio/world/WeatherPreviewField.cpp

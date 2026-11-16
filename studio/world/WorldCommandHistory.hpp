@@ -1,6 +1,6 @@
 #pragma once
 #include "world/WorldModel.hpp"
-#include "CommandStack.hpp"
+#include "core/CommandStack.hpp"
 #include "aur/json.hpp"
 
 #include <cstddef>

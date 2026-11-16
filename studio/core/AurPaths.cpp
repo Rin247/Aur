@@ -1,4 +1,4 @@
-#include "AurPaths.hpp"
+#include "core/AurPaths.hpp"
 
 #include <QDir>
 
