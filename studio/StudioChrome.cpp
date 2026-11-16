@@ -1,51 +1,22 @@
 #include "StudioChrome.hpp"
 
 #include "theme/LabelRoles.hpp"
+#include "theme/ThemeIcons.hpp"
 
 #include <QAction>
 #include <QEvent>
 #include <QHBoxLayout>
-#include <QIcon>
 #include <QLabel>
 #include <QMainWindow>
 #include <QMenu>
 #include <QMouseEvent>
 #include <QPainter>
-#include <QPen>
-#include <QPixmap>
-#include <QStyle>
 #include <QToolButton>
 #include <QVBoxLayout>
-
-#include <algorithm>
+#include <QWindow>
 
 namespace aur
 {
-    namespace
-    {
-        QIcon hamburger_icon()
-        {
-            QIcon icon;
-            for (int size : {16, 32})
-            {
-                QPixmap pixmap(size, size);
-                pixmap.fill(Qt::transparent);
-                QPainter painter(&pixmap);
-                painter.setRenderHint(QPainter::Antialiasing);
-                painter.setPen(QPen(QColor("#c8c0ae"), std::max(1.5, size / 6.0), Qt::SolidLine,
-                                    Qt::RoundCap));
-                const int margin = size / 5;
-                const int gap = size / 3;
-                for (int line = 0; line < 3; ++line)
-                {
-                    const int y = margin + line * gap;
-                    painter.drawLine(margin, y, size - margin, y);
-                }
-                icon.addPixmap(pixmap);
-            }
-            return icon;
-        }
-    }
 
     StudioChrome::StudioChrome(QMainWindow *owner) : QWidget(owner), window(owner)
     {
@@ -58,7 +29,7 @@ namespace aur
         // The file commands live behind a hamburger, so the toolbar can sit
         // under the title instead of under a menu row.
         auto *menuButton = new QToolButton(this);
-        menuButton->setIcon(hamburger_icon());
+        menuButton->setIcon(theme::icon(theme::Glyph::Hamburger));
         menuButton->setToolTip("File");
         menuButton->setPopupMode(QToolButton::InstantPopup);
         file_menu = new QMenu(menuButton);
@@ -77,15 +48,15 @@ namespace aur
         titleRow->addWidget(project_buttons);
         titleRow->addStretch();
         auto *minimize = new QToolButton(this);
-        minimize->setIcon(style()->standardIcon(QStyle::SP_TitleBarMinButton));
+        minimize->setIcon(theme::icon(theme::Glyph::Minimize));
         minimize->setToolTip("Minimize");
         titleRow->addWidget(minimize);
         maximizeButton = new QToolButton(this);
-        maximizeButton->setIcon(style()->standardIcon(QStyle::SP_TitleBarMaxButton));
+        maximizeButton->setIcon(theme::icon(theme::Glyph::Maximize));
         maximizeButton->setToolTip("Maximize or restore");
         titleRow->addWidget(maximizeButton);
         auto *close = new QToolButton(this);
-        close->setIcon(style()->standardIcon(QStyle::SP_TitleBarCloseButton));
+        close->setIcon(theme::icon(theme::Glyph::Close));
         close->setToolTip("Close Aur");
         close->setProperty("dangerHover", true);
         titleRow->addWidget(close);
@@ -138,9 +109,8 @@ namespace aur
     {
         if (watched == window && event->type() == QEvent::WindowStateChange && maximizeButton)
         {
-            maximizeButton->setIcon(window->style()->standardIcon(
-                window->isMaximized() ? QStyle::SP_TitleBarNormalButton
-                                      : QStyle::SP_TitleBarMaxButton));
+            maximizeButton->setIcon(theme::icon(window->isMaximized() ? theme::Glyph::Restore
+                                                                      : theme::Glyph::Maximize));
         }
         return QWidget::eventFilter(watched, event);
     }
@@ -149,6 +119,11 @@ namespace aur
     {
         if (event->button() == Qt::LeftButton && window && !window->isMaximized())
         {
+            if (QWindow *handle = window->windowHandle(); handle && handle->startSystemMove())
+            {
+                event->accept();
+                return;
+            }
             dragging = true;
             dragPosition = event->globalPosition().toPoint() - window->frameGeometry().topLeft();
             event->accept();

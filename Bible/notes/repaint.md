@@ -1,6 +1,6 @@
 # Repaint and refactor: plan
 
-Status: P3.1 landed (MainWindow.cpp 367 lines). Next step: P3.2, ThemeIcons (window, hamburger, file, transport glyphs in token colours).
+Status: P3 closed (tag repaint-p3). Next step: P4.1, PixelSurface, MapCanvas, and EditorDefs.hpp read theme tokens.
 
 ## Goal
 
@@ -116,9 +116,9 @@ colours; ctest 7/7. Tag `repaint-p2`.
 
 ### P3 Chrome
 - [x] P3.1 Pure move: `StudioChrome` and the native-event code leave `MainWindow.cpp`.
-- [ ] P3.2 `ThemeIcons`: hamburger, minimise, maximise/restore, close, file actions drawn in token
+- [x] P3.2 `ThemeIcons`: hamburger, minimise, maximise/restore, close, file actions drawn in token
   colours at 16 px glyph, 28 px target; close hovers in `bad`. Delete `SP_TitleBar*` use.
-- [ ] P3.3 Title row follows ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§13.6 (labels drop to icon-only, tabs ellipsise, overflow opens) at the
+- [x] P3.3 Title row follows ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§13.6 (labels drop to icon-only, tabs ellipsise, overflow opens) at the
   1280x690 floor. Hotkeys stay (F5, F11, Ctrl+Tab, Ctrl+S, Ctrl+O); add `Alt+Enter` for the window
   mode and the Appearance entry in the hamburger.
 Acceptance: pull-off from four edges and four corners still snaps (manual note in NOTES); renders at
@@ -140,7 +140,7 @@ surface except `textMute`. Tag `repaint-p4`.
   1280x690 (`MidiStrip` extracted first, P6.1).
 - [ ] P5.2 Padding budget and one hint style across pages (DESIGN ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§1.7.1); selected rows use the accent
   wash (`accentDim`), not the brown fill.
-- [ ] P5.3 Appearance dialog: mode grid, accent hex field, live apply, persisted.
+- [x] P5.3 Appearance dialog: mode grid, accent hex field, live apply, persisted.
 Acceptance: the 24-capture sweep at floor sizes; a person opens every PNG. Tag `repaint-p5`.
 
 ### P6 Refactor splits (pure moves, one commit each, build and ctest between)

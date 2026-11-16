@@ -185,6 +185,9 @@ add_executable(aur_studio
     studio/theme/ThemeManager.hpp
     studio/theme/AurStyle.cpp
     studio/theme/AurStylePaint.cpp
+    studio/theme/ThemeIcons.cpp
+    studio/theme/AppearanceDialog.cpp
+    studio/theme/AppearanceDialog.hpp
     studio/theme/CardFrame.cpp
     studio/music/ClipButton.cpp
 )

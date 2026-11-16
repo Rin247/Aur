@@ -1,6 +1,7 @@
 #include "MusicPanel.hpp"
 #include "music/ClipButton.hpp"
 #include "theme/LabelRoles.hpp"
+#include "theme/ThemeIcons.hpp"
 #include "SharedAudio.hpp"
 #include "music/MasterVolumeStrip.hpp"
 #include "music/SongLibrary.hpp"
@@ -757,10 +758,10 @@ MusicPanel::MusicPanel(Project* p, SharedAudio* sharedAudio, QWidget* parent)
     stopButton->setIcon(music::transportIcon(music::TransportGlyph::Stop));
     stopButton->setToolTip("Stop and rewind");
     auto* importMidiButton = new QPushButton(this);
-    importMidiButton->setIcon(style()->standardIcon(QStyle::SP_DialogOpenButton));
+    importMidiButton->setIcon(theme::icon(theme::Glyph::Open));
     importMidiButton->setToolTip("Import MIDI…");
     auto* exportMidiButton = new QPushButton(this);
-    exportMidiButton->setIcon(style()->standardIcon(QStyle::SP_DialogSaveButton));
+    exportMidiButton->setIcon(theme::icon(theme::Glyph::Save));
     exportMidiButton->setToolTip("Export MIDI…");
     songBar->addWidget(playButton);
     songBar->addWidget(stopButton);

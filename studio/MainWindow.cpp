@@ -12,6 +12,9 @@
 #include "WorldSettingsPanel.hpp"
 #include "FramelessWindow.hpp"
 #include "StudioChrome.hpp"
+#include "theme/AppearanceDialog.hpp"
+#include "theme/ThemeIcons.hpp"
+#include "theme/ThemeManager.hpp"
 #include <QLabel>
 #include <QApplication>
 #include <QSettings>
@@ -50,6 +53,10 @@ MainWindow::MainWindow(const std::string& project_path, QWidget* parent)
     fileMenu->addSeparator();
     reloadAction = fileMenu->addAction("&Reload from Disk");
     connect(reloadAction, &QAction::triggered, this, &MainWindow::reloadProject);
+    QAction* appearanceAction = fileMenu->addAction(theme::icon(theme::Glyph::Appearance), "&Appearance…");
+    connect(appearanceAction, &QAction::triggered, this, [this]() {
+        theme::AppearanceDialog(this).exec();
+    });
     // The project's actions are icon buttons in the title row, beside the
     // hamburger: one control cluster, and the editor gets the row back.
     QList<QAction*> project_actions;
@@ -65,26 +72,29 @@ MainWindow::MainWindow(const std::string& project_path, QWidget* parent)
         return action;
     };
     QAction* saveToolbarAction = addProjectAction("Save Project", "Save", "Save project (Ctrl+S)",
-                     style()->standardIcon(QStyle::SP_DialogSaveButton),
+                     theme::icon(theme::Glyph::Save),
                      [this]() { saveProject(); });
     connect(saveToolbarAction, &QAction::triggered, saveAction, [this]() {
         saveAction->trigger();
     });
     QAction* reloadToolbarAction = addProjectAction("Reload Agent Changes", "Reload", "Reload agent changes from disk",
-                     style()->standardIcon(QStyle::SP_BrowserReload),
+                     theme::icon(theme::Glyph::Reload),
                      [this]() { reloadProject(); });
     connect(reloadToolbarAction, &QAction::triggered, reloadAction, [this]() {
         reloadAction->trigger();
     });
     addProjectAction("Play Project", "Play", "Play project (F5)",
-                     style()->standardIcon(QStyle::SP_MediaPlay),
+                     theme::icon(theme::Glyph::Play),
                      [this]() { playProject(); });
     addProjectAction("Pause", "Pause", "Pause project",
-                     style()->standardIcon(QStyle::SP_MediaPause),
+                     theme::icon(theme::Glyph::Pause),
                      [this]() { pauseProject(); });
     addProjectAction("Stop", "Stop", "Stop project",
-                     style()->standardIcon(QStyle::SP_MediaStop),
+                     theme::icon(theme::Glyph::Stop),
                      [this]() { stopProject(); });
+    addProjectAction("Appearance", "Theme", "Theme and accent colour",
+                     theme::icon(theme::Glyph::Appearance),
+                     [this]() { theme::AppearanceDialog(this).exec(); });
     chrome->setProjectActions(project_actions);
     auto* compactToolbarShortcut = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Alt | Qt::Key_T), this);
     connect(compactToolbarShortcut, &QShortcut::activated, this, [chrome, &compact_buttons]() {
@@ -96,6 +106,9 @@ MainWindow::MainWindow(const std::string& project_path, QWidget* parent)
     // Main Tabbed Editor Workspace: the tab bar sits in the title row
     // beside the project's buttons, and the pages are the stack below.
     tabs = new QTabBar(this);
+    tabs->setExpanding(false);
+    tabs->setUsesScrollButtons(true);
+    tabs->setElideMode(Qt::ElideRight);
     tabStack = new QStackedWidget(this);
     connect(tabs, &QTabBar::currentChanged, tabStack, &QStackedWidget::setCurrentIndex);
     chrome->addTitleWidget(tabs);
@@ -179,14 +192,20 @@ MainWindow::MainWindow(const std::string& project_path, QWidget* parent)
     QShortcut* f5Shortcut = new QShortcut(QKeySequence(Qt::Key_F5), this);
     connect(f5Shortcut, &QShortcut::activated, this, &MainWindow::playProject);
 
-    // F11 swaps between maximized and windowed.
+    // F11 and Alt+Enter swap between maximized and windowed.
+    auto toggleWindowMode = [this]() {
+        if (isMaximized()) showNormal();
+        else showMaximized();
+    };
     QShortcut* fullScreenShortcut = new QShortcut(QKeySequence(Qt::Key_F11), this);
-    connect(fullScreenShortcut, &QShortcut::activated, this, [this]() {
-        if (isMaximized()) {
-            showNormal();
-        } else {
-            showMaximized();
-        }
+    connect(fullScreenShortcut, &QShortcut::activated, this, toggleWindowMode);
+    QShortcut* altReturnShortcut = new QShortcut(QKeySequence(Qt::ALT | Qt::Key_Return), this);
+    connect(altReturnShortcut, &QShortcut::activated, this, toggleWindowMode);
+    QShortcut* altEnterShortcut = new QShortcut(QKeySequence(Qt::ALT | Qt::Key_Enter), this);
+    connect(altEnterShortcut, &QShortcut::activated, this, toggleWindowMode);
+    connect(&theme::ThemeManager::instance(), &theme::ThemeManager::changed, this, [this]() {
+        for (QWidget* w : findChildren<QWidget*>()) w->update();
+        update();
     });
 
     // Ctrl+Tab walks the pages, and Ctrl+Shift+Tab walks back.

@@ -27,6 +27,7 @@ namespace aur::theme
         const QStringList &rejected() const { return rejected_; }
 
         bool setMode(const QString &id);
+        bool applyTransientMode(const QString &id);
         bool setAccent(const QColor &color);
 
     signals:

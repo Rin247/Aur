@@ -20,6 +20,7 @@ int main(int argc, char* argv[]) {
     QString project_path;
     QString tab_name;
     QString sub_tab_name;
+    QString theme_mode;
     qreal zoom_factor = 0.0;
     bool sprite_mode = false;
     bool preview = false;
@@ -34,6 +35,8 @@ int main(int argc, char* argv[]) {
             zoom_factor = QString::fromLocal8Bit(argv[++i]).toDouble();
         } else if (arg == "--sub-tab" && i + 1 < argc) {
             sub_tab_name = QString::fromLocal8Bit(argv[++i]);
+        } else if (arg == "--theme" && i + 1 < argc) {
+            theme_mode = QString::fromLocal8Bit(argv[++i]);
         } else if (arg == "--sprite") {
             sprite_mode = true;
         } else if (arg == "--preview") {
@@ -65,6 +68,8 @@ int main(int argc, char* argv[]) {
             project_path = QDir::current().filePath("projects/sylvi");
         }
     }
+    if (!theme_mode.isEmpty())
+        aur::theme::ThemeManager::instance().applyTransientMode(theme_mode);
     aur::MainWindow window(project_path.toStdString());
     // The window's state comes from the data root, unless the command line
     // asked for a size or a page: then the command line wins. A run that

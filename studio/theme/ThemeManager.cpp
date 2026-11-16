@@ -83,6 +83,14 @@ namespace aur::theme
         return true;
     }
 
+    bool ThemeManager::applyTransientMode(const QString &id)
+    {
+        if (!is_valid_mode_id(utf8(id))) return false;
+        mode_ = id;
+        rebuild();
+        return true;
+    }
+
     bool ThemeManager::setAccent(const QColor &color)
     {
         if (!color.isValid()) return false;
