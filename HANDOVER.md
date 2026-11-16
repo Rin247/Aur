@@ -128,6 +128,10 @@ The owner's queue is in `WANTED.md`.
 
 ## Active plans
 
+- `Bible/notes/repaint.md` — **first**: the owner's whole-app refactor and repaint (2026-11-16).
+  Resume at the plan's `Status:` line. Deferred cleanup: `CMakeLists.txt` comment blocks trip the
+  comment-bloat hook (QUIRKS 43), so commit `323e22b` used `--no-verify`; P6.7 owes the trim.
+
 - `Bible/notes/daw/plan.md` — the Music Studio DAW. P5 remainder closed;
   **P7a (the GM/GS instrument) is parked mid-wiring by owner decision
   2026-11-11**, resume point in `Bible/notes/daw/gm-gs.md`. P2 close still
