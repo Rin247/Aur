@@ -547,3 +547,15 @@
     `Interface scale (75..200%)` slider, `Dyslexia-friendly font` toggle, and `Colour vision`
     simulation selector with live `Great` / `Unstable` / `Broken` swatch previews; pinned in
     `tests/test_theme.cpp`.
+- **Carried over Hydra schema-validated settings store (`studio/core/AurSettings.{hpp,cpp}`, `studio/core/SettingsSchema.hpp`)**:
+  - Ported `SettingsSchema.hpp` (`ScopedValues`, `resolveSetting`, `isOverridden`) and `AurSettings`
+    from `Hydra/src/SettingsSchema.h` and `Hydra/src/HydraSettings.{h,cpp}`: one centralized
+    `QSettings` (`~/.Aur/settings.ini`) store with the `settingsRead` startup guard so pre-load writes
+    cannot clobber stored preferences.
+  - Validates every setting against its schema definition (`choice` allowed-list, regex `pattern`, INI
+    string boolean parsing `"true"`/`"false"`, integer clamping, and real `double` clamping without int
+    truncation), migrates legacy keys (`theme/*`, `audio/master_volume`, integer theme ordinals), and
+    tracks `rejectedKeys`.
+  - Routed `ThemeManager`, `SharedAudio`, `MainWindow`, `RhiBackend` (`graphics/backend` in
+    `{d3d12, vulkan}`), and `AppearanceDialog` through `AurSettings::instance()`. Pinned in
+    `tests/test_settings.cpp`.

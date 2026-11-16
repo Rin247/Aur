@@ -1,5 +1,5 @@
 #include "MainWindow.hpp"
-#include "core/AurPaths.hpp"
+#include "core/AurSettings.hpp"
 #include "music/SharedAudio.hpp"
 #include "MapEditorPanel.hpp"
 #include "DatabasePanel.hpp"
@@ -300,17 +300,16 @@ void MainWindow::updateStudioTitle() {
 // restored because the studio always opens maximized.
 void MainWindow::restoreWindowState(bool restore_geometry, bool restore_tab) {
     Q_UNUSED(restore_geometry);
-    QSettings settings(aur::settingsPath(), QSettings::IniFormat);
+    AurSettings::instance().load();
     if (restore_tab) {
-        const int tab = settings.value("window/tab", -1).toInt();
+        const int tab = AurSettings::instance().windowTab();
         if (tabs && tab >= 0 && tab < tabs->count()) tabs->setCurrentIndex(tab);
     }
 }
 
 void MainWindow::closeEvent(QCloseEvent* event) {
     if (save_window_state) {
-        QSettings settings(aur::settingsPath(), QSettings::IniFormat);
-        settings.setValue("window/tab", tabs ? tabs->currentIndex() : 0);
+        AurSettings::instance().setWindowTab(tabs ? tabs->currentIndex() : 0);
     }
     QMainWindow::closeEvent(event);
 }

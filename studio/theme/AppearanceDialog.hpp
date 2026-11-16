@@ -29,6 +29,7 @@ namespace aur::theme
         QLabel *scaleLabel_ = nullptr;
         QCheckBox *dyslexiaCheck_ = nullptr;
         QComboBox *colorBlindCombo_ = nullptr;
+        QComboBox *graphicsBackendCombo_ = nullptr;
         std::array<QLabel *, 3> swatches_{};
     };
 

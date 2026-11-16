@@ -12,7 +12,7 @@
 <!-- The last thing that was actually run, with its result. Delete a line when it stops being true. -->
 
 - `C:\Dev\Qt\Tools\CMake_64\bin\ctest.exe --test-dir build\Release --timeout 300` — 7 of 7
-  suites passed (73 checks, including `test_theme_*` and `"races"` in `test_record_fields`), 2026-11-16.
+  suites passed (75 checks, including `test_theme_*`, `test_settings_*`, and `"races"` in `test_record_fields`), 2026-11-16.
 - `py -3.15 C:\Projects\tools\conformance.py --project Aur` — all 9 checks clean, 2026-11-16.
 - `py -3.15 tests\render_check.py` — 24 captures written to `build/renders/`, 2026-11-16. The pages
   are Map Editor, World, Sprite Editor, Tileset Editor, DAW, Creature Forge, Database and
@@ -77,8 +77,10 @@ twenty-two PNGs.
   `PixelSurface`, `TilesetEditorPanel`'s tile preview, `TilePaletteWidget`, `CreatureForgePanel`,
   `RecordEditor`, `BestiaryEditor`'s portrait, and the DAW's `SessionGrid`, `ArrangementCanvas`,
   `StepSequencerCanvas` and `PianoRollCanvas` all scale dynamically with their viewport.
-- **The app opens maximized** and remembers the page it was on. The data root is `~/.Aur`, with
-  the leading dot, and the settings file lives in it.
+- **The app opens maximized** and remembers the page it was on through the schema-validated
+  `AurSettings` store (`studio/core/AurSettings.*`, `studio/core/SettingsSchema.hpp`, carried over
+  from Hydra) with the `settingsRead` startup guard. The data root is `~/.Aur`, with the leading dot,
+  and `settings.ini` lives in it.
 - **The DAW scrolls.** The arrangement timeline is sized to its content and sits in a scroll
   area, so the bars and the tracks beyond the window are reachable.
 - **A tile carries its flags from the forge.** The Creature Forge's

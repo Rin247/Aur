@@ -1,5 +1,6 @@
 #include "theme/AppearanceDialog.hpp"
 
+#include "core/AurSettings.hpp"
 #include "theme/LabelRoles.hpp"
 #include "theme/ThemeManager.hpp"
 #include "theme/ThemeQt.hpp"
@@ -223,11 +224,27 @@ namespace aur::theme
         hexEdit_->setFixedWidth(100);
         hexRow->addWidget(hexLabel);
         hexRow->addWidget(hexEdit_);
+        hexRow->addWidget(new QLabel(QStringLiteral("Graphics (restart):"), this));
+        graphicsBackendCombo_ = new QComboBox(this);
+        graphicsBackendCombo_->addItem(QStringLiteral("Direct3D 12"), QStringLiteral("d3d12"));
+        graphicsBackendCombo_->addItem(QStringLiteral("Vulkan"), QStringLiteral("vulkan"));
+        hexRow->addWidget(graphicsBackendCombo_);
         hexRow->addStretch();
+        auto *resetBtn = new QPushButton(QStringLiteral("Reset Defaults"), this);
         auto *closeBtn = new QPushButton(QStringLiteral("Done"), this);
+        connect(resetBtn, &QPushButton::clicked, this, []() {
+            AurSettings::instance().resetToDefaults();
+            ThemeManager::instance().load();
+        });
         connect(closeBtn, &QPushButton::clicked, this, &QDialog::accept);
+        hexRow->addWidget(resetBtn);
         hexRow->addWidget(closeBtn);
         root->addLayout(hexRow);
+
+        connect(graphicsBackendCombo_, &QComboBox::currentIndexChanged, this, [this](int idx) {
+            if (idx >= 0)
+                AurSettings::instance().setGraphicsBackend(graphicsBackendCombo_->itemData(idx).toString());
+        });
 
         connect(scaleSlider_, &QSlider::valueChanged, this, [this](int val) {
             const int snapped = (val / 5) * 5;
@@ -275,6 +292,12 @@ namespace aur::theme
             const QSignalBlocker blocker(colorBlindCombo_);
             const int idx = colorBlindCombo_->findData(ThemeManager::instance().colorBlindMode());
             if (idx >= 0) colorBlindCombo_->setCurrentIndex(idx);
+        }
+        if (graphicsBackendCombo_)
+        {
+            const QSignalBlocker blocker(graphicsBackendCombo_);
+            const int idx = graphicsBackendCombo_->findData(AurSettings::instance().graphicsBackend());
+            if (idx >= 0) graphicsBackendCombo_->setCurrentIndex(idx);
         }
         const Palette &pal = tokens().palette;
         const std::array<Rgb, 3> cols{pal.good, pal.warning, pal.bad};

@@ -29,7 +29,8 @@ headless Null only under RHI_POLICY_HEADLESS=1. See C:\Projects\POLICY.md.
   - `studio/MusicPanel.cpp` (661 lines): `music/MidiStrip.{hpp,cpp}`, `music/GmPatchList.hpp`, `music/MusicPanelSession.cpp` (598 lines), `music/PianoRollInput.cpp` (289 lines), `music/MidiDeviceIo.{hpp,cpp}`, `music/SongHistory.{hpp,cpp}`, and `music/SharedAudio.{hpp,cpp}` live under `studio/music/`.
 - **The editors undo over `QUndoStack`** (`studio/core/UndoCommands.{hpp,cpp}`),
   and the map editor records per-cell diffs (`studio/map/MapEditUndo.{hpp,cpp}`).
-  `tests/test_undo_commands.cpp` and `tests/test_theme.cpp` pin both; ctest 7/7 (73 checks).
+  `tests/test_undo_commands.cpp`, `tests/test_theme.cpp`, and `tests/test_settings.cpp` pin undo,
+  the Hydra theme contract, and schema-validated `AurSettings`; ctest 7/7 (75 checks).
 - **The studio has one master volume and one audio device** (`studio/music/SharedAudio`,
   `studio/music/MasterVolumeStrip`).
 - **A render harness exists** (`tests/render_check.py`). Run it and OPEN the

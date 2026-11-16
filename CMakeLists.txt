@@ -66,6 +66,8 @@ add_executable(aur_game
     studio/playtest/PlaytestDebugDialog.cpp
     studio/music/SharedAudio.cpp
     studio/core/AurPaths.cpp
+    studio/core/AurSettings.cpp
+    studio/core/AurSettings.hpp
     studio/music/QtAudioOutput.cpp
     studio/music/MasterVolumeStrip.cpp
     studio/theme/CardFrame.cpp
@@ -92,6 +94,8 @@ add_executable(aur_studio
     studio/theme/FramelessWindow.cpp
     studio/theme/FramelessWindow.hpp
     studio/core/AurPaths.cpp
+    studio/core/AurSettings.cpp
+    studio/core/AurSettings.hpp
     studio/GameView.cpp
     studio/playtest/QtRenderer.cpp
     studio/playtest/PlaytestDebugDialog.cpp
@@ -289,6 +293,10 @@ add_executable(aur_tests
     tests/test_step_sequencer.cpp
     tests/test_arpeggiator.cpp
     tests/test_theme.cpp
+    tests/test_settings.cpp
+    studio/core/AurPaths.cpp
+    studio/core/AurSettings.cpp
+    studio/core/AurSettings.hpp
     studio/pixel/PixelEditSession.cpp
     studio/bestiary/BestiaryData.cpp
     studio/bestiary/RecordFields.cpp

@@ -1,4 +1,5 @@
 #include "core/RhiBackend.hpp"
+#include "core/AurSettings.hpp"
 
 #include <QByteArray>
 #include <QtCore/qglobal.h>
@@ -25,7 +26,8 @@ RhiBackend configureRhiBackendBeforeApplication() {
     QByteArray requested = qgetenv("AUR_RHI_BACKEND").toLower();
     if (requested.isEmpty()) requested = qgetenv("QT_RHI_BACKEND").toLower();
     if (requested.isEmpty() || requested == QByteArrayLiteral("auto")) {
-        requested = QByteArrayLiteral("d3d12");
+        AurSettings::instance().load();
+        requested = AurSettings::instance().graphicsBackend().toLatin1().toLower();
     }
 
     if (requested == QByteArrayLiteral("vulkan")) {

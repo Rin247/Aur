@@ -1,6 +1,6 @@
 #include "theme/ThemeManager.hpp"
 
-#include "core/AurPaths.hpp"
+#include "core/AurSettings.hpp"
 #include "theme/AurStyle.hpp"
 #include "theme/ThemeQt.hpp"
 
@@ -55,34 +55,19 @@ namespace aur::theme
     void ThemeManager::load()
     {
         system_is_dark_ = sample_system_is_dark();
-        QSettings settings(aur::settingsPath(), QSettings::IniFormat);
-        QString rawMode = settings.value(QStringLiteral("theme/mode")).toString();
-        bool isInt = false;
-        const int ordinal = rawMode.toInt(&isInt);
-        if (isInt && !rawMode.isEmpty())
-        {
-            const char *mapped = legacyModeIdFor(ordinal);
-            if (mapped) rawMode = QString::fromLatin1(mapped);
-        }
-        const Choice choice = sanitize_choice(
-            utf8(rawMode),
-            utf8(settings.value(QStringLiteral("theme/accent")).toString()));
+        AurSettings &store = AurSettings::instance();
+        store.load();
+        const Choice choice = sanitize_choice(utf8(store.themeMode()), utf8(store.accentColor()));
         mode_ = QString::fromStdString(choice.mode);
         accent_ = choice.accent;
-        ui_scale_ = std::clamp(settings.value(QStringLiteral("theme/uiScale"), 100).toInt(), 75, 200);
-        dyslexia_font_ = settings.value(QStringLiteral("theme/dyslexiaFont"), false).toBool();
-        const QString cb = settings.value(QStringLiteral("theme/colorBlindMode"),
-                                          QStringLiteral("none")).toString();
-        color_blind_mode_ = is_valid_color_blind_mode(cb) ? cb : QStringLiteral("none");
+        ui_scale_ = store.uiScale();
+        dyslexia_font_ = store.dyslexiaFont();
+        color_blind_mode_ = store.colorBlindMode();
         rejected_.clear();
-        for (const std::string &item : choice.rejected)
-        {
-            rejected_ << QString::fromStdString(item);
-            qWarning("Aur: rejected setting %s", item.c_str());
-        }
+        for (const QString &key : store.rejectedKeys())
+            rejected_ << key;
         settings_read_ = true;
         rebuild();
-        if (!rejected_.isEmpty()) save();
     }
 
     void ThemeManager::install(QApplication &app)
@@ -173,12 +158,12 @@ namespace aur::theme
     void ThemeManager::save() const
     {
         if (!settings_read_) return;
-        QSettings settings(aur::settingsPath(), QSettings::IniFormat);
-        settings.setValue(QStringLiteral("theme/mode"), mode_);
-        settings.setValue(QStringLiteral("theme/accent"), qt(accent_).name());
-        settings.setValue(QStringLiteral("theme/uiScale"), ui_scale_);
-        settings.setValue(QStringLiteral("theme/dyslexiaFont"), dyslexia_font_);
-        settings.setValue(QStringLiteral("theme/colorBlindMode"), color_blind_mode_);
+        AurSettings &store = AurSettings::instance();
+        store.setThemeMode(mode_);
+        store.setAccentColor(qt(accent_).name());
+        store.setUiScale(ui_scale_);
+        store.setDyslexiaFont(dyslexia_font_);
+        store.setColorBlindMode(color_blind_mode_);
     }
 
 }
