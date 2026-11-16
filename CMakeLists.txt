@@ -140,6 +140,10 @@ add_executable(aur_studio
     studio/MusicPanel.cpp
     studio/WorldPanel.cpp
     studio/world/HdSurface.cpp
+    studio/world/TerrainLod.cpp
+    studio/world/TerrainLod.hpp
+    studio/world/WorldTerrainPaint.cpp
+    studio/world/WorldTerrainPaint.hpp
     studio/world/WorldMapHelpers.cpp
     studio/world/MapView.cpp
     studio/world/TerrainRhiWidget.cpp
@@ -249,6 +253,7 @@ add_executable(aur_tests
     tests/test_movement.cpp
     tests/test_record_fields.cpp
     tests/test_mapforge.cpp
+    tests/test_terrain_lod.cpp
     tests/test_weather_render.cpp
     tests/test_step_sequencer.cpp
     tests/test_arpeggiator.cpp
@@ -263,6 +268,7 @@ add_executable(aur_tests
     studio/SongHistory.cpp
     studio/music/ClipLauncherStates.cpp
     studio/world/HdSurface.cpp
+    studio/world/TerrainLod.cpp
     studio/world/WorldMapHelpers.cpp
     studio/world/MapView.cpp
     studio/world/WorldCommandHistory.cpp

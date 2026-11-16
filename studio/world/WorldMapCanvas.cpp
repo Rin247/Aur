@@ -2,6 +2,8 @@
 #include "RhiBackend.hpp"
 #include "TileTexture.hpp"
 #include "world/HdSurface.hpp"
+#include "world/TerrainLod.hpp"
+#include "world/WorldTerrainPaint.hpp"
 #include "world/WorldMapHelpers.hpp"
 #include "world/MapView.hpp"
 #include "world/WorldWeatherOverlay.hpp"
@@ -102,6 +104,8 @@ void WorldMapCanvasWidget::setMap(const std::string& map_id) {
         tile_cache.clear();
         surface_cache = {};
         surface_cache_map.clear();
+        coarse_cache = {};
+        coarse_cache_map.clear();
     }
     refreshCanvas();
 }
@@ -570,12 +574,26 @@ void WorldMapCanvasWidget::paintCanvas(QPainter& painter) {
     const int map_width = map["w"].as_int();
     const int map_height = map["h"].as_int();
     const QRectF bounds = mapBounds();
-    const bool hd_surface = world::has_hd_surface(map);
+    const bool hd_map = world::has_hd_surface(map);
+    // Close in, the fine surface; far out, the same terrain at one pixel
+    // per tile. Both are cached, so crossing over is free.
+    const bool hd_surface = world::useHdSurface(map, bounds.width());
+    QImage surface;
+    if (hd_map) {
+        QImage& cache = hd_surface ? surface_cache : coarse_cache;
+        std::string& cache_map = hd_surface ? surface_cache_map : coarse_cache_map;
+        if (cache_map != current_map || cache.isNull()) {
+            cache = world::build_hd_surface(map, project, QRect(), hd_surface ? 0 : 1);
+            cache_map = current_map;
+        }
+        surface = cache;
+    }
     const bool wraps_x = aur::wraps_world_x(map);
     if (bounds.isEmpty() || !map.contains("layers") || !map["layers"].is_object() ||
-        (!hd_surface && !map["layers"].contains("ground"))) return;
+        (!hd_map && !map["layers"].contains("ground"))) return;
 
-    const JsonArray* ground = !hd_surface && map["layers"]["ground"].is_array()
+    const JsonArray* ground = map["layers"].contains("ground") &&
+        map["layers"]["ground"].is_array()
         ? &map["layers"]["ground"].as_array() : nullptr;
     const qreal cell = bounds.width() / map_width;
     const std::string tileset_id = map["tileset"].as_string();
@@ -596,7 +614,7 @@ void WorldMapCanvasWidget::paintCanvas(QPainter& painter) {
         ? map["worldgen"]["sea_level"].as_int() : 500;
     const auto is_ocean_at = [&](int x, int y) {
         if (wraps_x) x = aur::wrapX(x, map_width);
-        if (hd_surface && elevation_rows && y >= 0 &&
+        if (hd_map && elevation_rows && y >= 0 &&
             y < static_cast<int>(elevation_rows->size())) {
             const Json& row = (*elevation_rows)[static_cast<size_t>(y)];
             if (row.is_array() && x >= 0 &&
@@ -628,70 +646,13 @@ void WorldMapCanvasWidget::paintCanvas(QPainter& painter) {
                                   0, map_height);
 
     if (!gpuTerrain) painter.fillRect(bounds.adjusted(-1, -1, 1, 1), QColor("#080a0c"));
-    if (hd_surface) {
-        if (!gpuTerrain) {
-            if (surface_cache_map != current_map || surface_cache.isNull()) {
-                surface_cache = world::build_hd_surface(map, project, QRect());
-                surface_cache_map = current_map;
-            }
-            painter.save();
-            painter.setRenderHint(QPainter::SmoothPixmapTransform, true);
-            if (repeat_x) {
-                const int first_copy = static_cast<int>(
-                    std::floor((0.0 - bounds.left()) / bounds.width()));
-                const int last_copy = static_cast<int>(
-                    std::ceil((width() - bounds.left()) / bounds.width()));
-                for (int copy = first_copy; copy < last_copy; ++copy) {
-                    QRectF repeated_bounds = bounds;
-                    repeated_bounds.moveLeft(bounds.left() + copy * bounds.width());
-                    painter.drawImage(repeated_bounds, surface_cache);
-                }
-            } else {
-                painter.drawImage(bounds, surface_cache);
-            }
-            painter.restore();
-        }
-        if (map["layers"].contains("terrain_overrides") &&
-            map["layers"]["terrain_overrides"].is_array()) {
-            const auto& overrides = map["layers"]["terrain_overrides"].as_array();
-            for (int y = first_y; y < last_y && y < static_cast<int>(overrides.size()); ++y) {
-                const Json& row = overrides[static_cast<size_t>(y)];
-                if (!row.is_array()) continue;
-                for (int x = first_x; x < last_x; ++x) {
-                    const int source_x = wraps_x ? aur::wrapX(x, map_width) : x;
-                    if (source_x < 0 || source_x >= static_cast<int>(row.as_array().size())) continue;
-                    const int tile_index = row[static_cast<size_t>(source_x)].as_int();
-                    if (tile_index < 0) continue;
-                    const QRectF tile_rect(bounds.left() + x * cell, bounds.top() + y * cell,
-                                           cell, cell);
-                    const QImage tile = tileImage(tileset_id, tile_index);
-                    if (!tile.isNull()) painter.drawImage(tile_rect, tile);
-                }
-            }
-        }
-    } else {
-        if (!ground) return;
-        for (int y = first_y; y < last_y && y < static_cast<int>(ground->size()); ++y) {
-            const auto& row = (*ground)[static_cast<size_t>(y)].as_array();
-            for (int x = first_x; x < last_x; ++x) {
-                const int source_x = wraps_x ? aur::wrapX(x, map_width) : x;
-                if (source_x < 0 || source_x >= static_cast<int>(row.size())) continue;
-                int tile_index = row[static_cast<size_t>(source_x)].as_int();
-                if (tileset && groups.contains(tile_index) && groups.at(tile_index) == "ocean") {
-                    const int mask = mask_at(map, *tileset, "ground", source_x, y, "ocean", groups);
-                    const auto& ocean_tiles = (*tileset)["autotiles"]["ocean"]["tiles"].as_array();
-                    if (mask >= 0 && static_cast<size_t>(mask) < ocean_tiles.size()) {
-                        tile_index = ocean_tiles[static_cast<size_t>(mask)].as_int();
-                    }
-                }
-                const QRectF tile_rect(bounds.left() + x * cell, bounds.top() + y * cell,
-                                       cell, cell);
-                const QImage tile = tileImage(tileset_id, tile_index);
-                if (!tile.isNull()) painter.drawImage(tile_rect, tile);
-                else painter.fillRect(tile_rect, QColor("#34404a"));
-            }
-        }
-    }
+    world::TerrainPaintContext terrain{painter,        &map,      bounds, QRectF(rect()),
+                                     cell,            map_width, map_height,
+                                     first_x,         last_x,    first_y, last_y,
+                                     wraps_x,         repeat_x,  surface, ground,
+                                     &groups,         tileset,   tileset_id,
+                                     [this, tileset_id](int tile) { return tileImage(tileset_id, tile); }};
+    world::draw_terrain(terrain);
 
     const JsonArray* biome_rows = map["layers"].contains("biomes") &&
         map["layers"]["biomes"].is_array()
@@ -700,7 +661,7 @@ void WorldMapCanvasWidget::paintCanvas(QPainter& painter) {
         map["layers"]["temperature"].is_array()
         ? &map["layers"]["temperature"].as_array() : nullptr;
 
-    if (!hd_surface && biome_rows) {
+    if (!hd_map && biome_rows) {
         const auto& rows = *biome_rows;
         for (int y = first_y; y < last_y && y < static_cast<int>(rows.size()); ++y) {
             const Json& row = rows[static_cast<size_t>(y)];

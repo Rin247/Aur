@@ -16,7 +16,8 @@
 
 namespace aur::world {
 
-QImage build_hd_surface(const Json& map, const Project* project, const QRect& region) {
+QImage build_hd_surface(const Json& map, const Project* project, const QRect& region,
+                        int density) {
     if (!map.contains("layers") || !map["layers"].is_object() ||
         !map["layers"].contains("elevation") || !map["layers"]["elevation"].is_array()) {
         return {};
@@ -29,7 +30,7 @@ QImage build_hd_surface(const Json& map, const Project* project, const QRect& re
     constexpr std::uint64_t max_surface_pixels = 16 * 1024 * 1024;
     const std::uint64_t tile_count =
         static_cast<std::uint64_t>(map_width) * static_cast<std::uint64_t>(map_height);
-    int pixels_per_tile = target_pixels_per_tile;
+    int pixels_per_tile = density > 0 ? density : target_pixels_per_tile;
     while (pixels_per_tile > 1 &&
            tile_count > max_surface_pixels /
                static_cast<std::uint64_t>(pixels_per_tile * pixels_per_tile)) {
@@ -274,215 +275,217 @@ QImage build_hd_surface(const Json& map, const Project* project, const QRect& re
         }
     }
 
-    QPainter details(&image);
-    details.setRenderHint(QPainter::Antialiasing);
-    details.scale(pixels_per_tile, pixels_per_tile);
-    const QColor wave_color(176, 222, 225, 34);
-    const QColor foam_color(230, 243, 224, 96);
-    const QColor forest_shadow(32, 62, 53, 112);
-    const QColor forest_mid(49, 93, 66, 182);
-    const QColor forest_light(98, 131, 77, 145);
-    details.setPen(QPen(wave_color, 0.035, Qt::SolidLine, Qt::RoundCap));
-    for (int y = 1; y < map_height - 1; y += 3) {
-        for (int x = 0; x < map_width; x += 3) {
-            if (elevation_at(x, y) > sea_level && water_at(x, y) == 0) continue;
-            const uint32_t hash = surface_hash(seed, x, y, 0x02e5be93u);
-            const qreal left = x + 0.12 + ((hash >> 3) & 7u) * 0.045;
-            const qreal top = y + 0.18 + ((hash >> 8) & 7u) * 0.055;
-            const qreal length = 0.35 + ((hash >> 13) & 7u) * 0.045;
-            QPainterPath wave;
-            wave.moveTo(left, top);
-            wave.quadTo(left + length * 0.5, top - 0.09, left + length, top);
-            details.drawPath(wave);
-        }
-    }
-
-    std::vector<std::pair<QPointF, QPointF>> river_segments;
-    constexpr std::array<std::pair<int, int>, 8> flow_neighbors{{
-        {-1, -1}, {0, -1}, {1, -1}, {-1, 0},
-        {1, 0}, {-1, 1}, {0, 1}, {1, 1}
-    }};
-    for (int y = 1; y < map_height - 1; ++y) {
-        for (int x = 0; x < map_width; ++x) {
-            if (water_at(x, y) != 1) continue;
-            const int source_height = elevation_at(x, y);
-            int downstream_x = x;
-            int downstream_y = y;
-            int lowest_height = source_height;
-            for (const auto& [dx, dy] : flow_neighbors) {
-                const int next_y = y + dy;
-                if (next_y < 0 || next_y >= map_height) continue;
-                const int next_x = wrapped_x(x + dx);
-                const int next_height = elevation_at(next_x, next_y) <= sea_level
-                    ? sea_level : elevation_at(next_x, next_y);
-                if (next_height >= lowest_height) continue;
-                lowest_height = next_height;
-                downstream_x = next_x;
-                downstream_y = next_y;
+    if (pixels_per_tile >= 4) {
+        QPainter details(&image);
+        details.setRenderHint(QPainter::Antialiasing);
+        details.scale(pixels_per_tile, pixels_per_tile);
+        const QColor wave_color(176, 222, 225, 34);
+        const QColor foam_color(230, 243, 224, 96);
+        const QColor forest_shadow(32, 62, 53, 112);
+        const QColor forest_mid(49, 93, 66, 182);
+        const QColor forest_light(98, 131, 77, 145);
+        details.setPen(QPen(wave_color, 0.035, Qt::SolidLine, Qt::RoundCap));
+        for (int y = 1; y < map_height - 1; y += 3) {
+            for (int x = 0; x < map_width; x += 3) {
+                if (elevation_at(x, y) > sea_level && water_at(x, y) == 0) continue;
+                const uint32_t hash = surface_hash(seed, x, y, 0x02e5be93u);
+                const qreal left = x + 0.12 + ((hash >> 3) & 7u) * 0.045;
+                const qreal top = y + 0.18 + ((hash >> 8) & 7u) * 0.055;
+                const qreal length = 0.35 + ((hash >> 13) & 7u) * 0.045;
+                QPainterPath wave;
+                wave.moveTo(left, top);
+                wave.quadTo(left + length * 0.5, top - 0.09, left + length, top);
+                details.drawPath(wave);
             }
-            if (downstream_x == x && downstream_y == y) continue;
-            if (water_at(downstream_x, downstream_y) != 1 &&
-                water_at(downstream_x, downstream_y) != 2 &&
-                elevation_at(downstream_x, downstream_y) > sea_level) continue;
-
-            qreal end_x = downstream_x + 0.5;
-            if (downstream_x - x > 1) end_x -= map_width;
-            else if (x - downstream_x > 1) end_x += map_width;
-            river_segments.emplace_back(QPointF(x + 0.5, y + 0.5),
-                                        QPointF(end_x, downstream_y + 0.5));
         }
-    }
-    details.setPen(QPen(QColor(14, 48, 62, 65), 0.28,
-                        Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
-    for (const auto& [source, destination] : river_segments) {
-        details.drawLine(source, destination);
-    }
-    details.setPen(QPen(QColor("#347f91"), 0.17,
-                        Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
-    for (const auto& [source, destination] : river_segments) {
-        details.drawLine(source, destination);
-    }
-    details.setPen(QPen(QColor(123, 205, 200, 125), 0.035,
-                        Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
-    for (const auto& [source, destination] : river_segments) {
-        details.drawLine(source, destination);
-    }
 
-    details.setPen(QPen(QColor(132, 202, 205, 145), 0.08, Qt::SolidLine, Qt::RoundCap));
-    for (int y = 1; y < map_height - 1; ++y) {
-        for (int x = 0; x < map_width; ++x) {
-            if (water_at(x, y) != 2) continue;
-            const uint32_t hash = surface_hash(seed, x, y, 0x6c616b65u);
-            if ((hash & 3u) != 0u) continue;
-            const qreal left = x + 0.2 + ((hash >> 3) & 7u) * 0.045;
-            const qreal top = y + 0.25 + ((hash >> 8) & 7u) * 0.04;
-            details.drawLine(QPointF(left, top),
-                             QPointF(left + 0.22, top + 0.025));
-        }
-    }
-
-    for (int y = 1; y < map_height - 1; ++y) {
-        for (int x = 0; x < map_width; ++x) {
-            const int height = elevation_at(x, y);
-            if (height <= sea_level || water_at(x, y) > 0) {
-                if (height <= sea_level) {
-                    const bool land_north = elevation_at(x, y - 1) > sea_level &&
-                        water_at(x, y - 1) == 0;
-                    const bool land_east = elevation_at(wrapped_x(x + 1), y) > sea_level &&
-                        water_at(wrapped_x(x + 1), y) == 0;
-                    const bool land_south = elevation_at(x, y + 1) > sea_level &&
-                        water_at(x, y + 1) == 0;
-                    const bool land_west = elevation_at(wrapped_x(x - 1), y) > sea_level &&
-                        water_at(wrapped_x(x - 1), y) == 0;
-                    const uint32_t foam_hash = surface_hash(seed, x, y, 0x9d39247eu);
-                    details.setPen(QPen(foam_color, 0.055, Qt::SolidLine, Qt::RoundCap));
-                    const qreal inset = 0.08 + ((foam_hash >> 4) & 3u) * 0.025;
-                    const qreal span = 0.54 + ((foam_hash >> 9) & 3u) * 0.08;
-                    if (land_north) {
-                        details.drawLine(QPointF(x + inset, y + 0.07),
-                                         QPointF(x + inset + span, y + 0.07));
-                    }
-                    if (land_east) {
-                        details.drawLine(QPointF(x + 0.93, y + inset),
-                                         QPointF(x + 0.93, y + inset + span));
-                    }
-                    if (land_south) {
-                        details.drawLine(QPointF(x + inset, y + 0.93),
-                                         QPointF(x + inset + span, y + 0.93));
-                    }
-                    if (land_west) {
-                        details.drawLine(QPointF(x + 0.07, y + inset),
-                                         QPointF(x + 0.07, y + inset + span));
-                    }
+        std::vector<std::pair<QPointF, QPointF>> river_segments;
+        constexpr std::array<std::pair<int, int>, 8> flow_neighbors{{
+            {-1, -1}, {0, -1}, {1, -1}, {-1, 0},
+            {1, 0}, {-1, 1}, {0, 1}, {1, 1}
+        }};
+        for (int y = 1; y < map_height - 1; ++y) {
+            for (int x = 0; x < map_width; ++x) {
+                if (water_at(x, y) != 1) continue;
+                const int source_height = elevation_at(x, y);
+                int downstream_x = x;
+                int downstream_y = y;
+                int lowest_height = source_height;
+                for (const auto& [dx, dy] : flow_neighbors) {
+                    const int next_y = y + dy;
+                    if (next_y < 0 || next_y >= map_height) continue;
+                    const int next_x = wrapped_x(x + dx);
+                    const int next_height = elevation_at(next_x, next_y) <= sea_level
+                        ? sea_level : elevation_at(next_x, next_y);
+                    if (next_height >= lowest_height) continue;
+                    lowest_height = next_height;
+                    downstream_x = next_x;
+                    downstream_y = next_y;
                 }
-                continue;
-            }
+                if (downstream_x == x && downstream_y == y) continue;
+                if (water_at(downstream_x, downstream_y) != 1 &&
+                    water_at(downstream_x, downstream_y) != 2 &&
+                    elevation_at(downstream_x, downstream_y) > sea_level) continue;
 
-            const std::string biome_id = biome_at(x, y);
-            const uint32_t hash = surface_hash(seed, x, y, 0xa24baed5u);
-            const bool forest_biome = biome_id.find("forest") != std::string::npos ||
-                biome_id.find("jungle") != std::string::npos;
-            const int moisture = field_value(moisture_rows, x, y, 50);
-            if ((forest_biome || moisture > 82) && climate_latitude_at(x, y) < 0.78 &&
-                height < sea_level + 330 &&
-                hash % (forest_biome ? 13u : 17u) < (forest_biome ? 4u : 2u)) {
-                const qreal center_x = x + 0.18 + ((hash >> 4) & 7u) * 0.09;
-                const qreal center_y = y + 0.18 + ((hash >> 9) & 7u) * 0.09;
-                const qreal size = 0.55 + ((hash >> 14) & 7u) * 0.075;
+                qreal end_x = downstream_x + 0.5;
+                if (downstream_x - x > 1) end_x -= map_width;
+                else if (x - downstream_x > 1) end_x += map_width;
+                river_segments.emplace_back(QPointF(x + 0.5, y + 0.5),
+                                            QPointF(end_x, downstream_y + 0.5));
+            }
+        }
+        details.setPen(QPen(QColor(14, 48, 62, 65), 0.28,
+                            Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+        for (const auto& [source, destination] : river_segments) {
+            details.drawLine(source, destination);
+        }
+        details.setPen(QPen(QColor("#347f91"), 0.17,
+                            Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+        for (const auto& [source, destination] : river_segments) {
+            details.drawLine(source, destination);
+        }
+        details.setPen(QPen(QColor(123, 205, 200, 125), 0.035,
+                            Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+        for (const auto& [source, destination] : river_segments) {
+            details.drawLine(source, destination);
+        }
+
+        details.setPen(QPen(QColor(132, 202, 205, 145), 0.08, Qt::SolidLine, Qt::RoundCap));
+        for (int y = 1; y < map_height - 1; ++y) {
+            for (int x = 0; x < map_width; ++x) {
+                if (water_at(x, y) != 2) continue;
+                const uint32_t hash = surface_hash(seed, x, y, 0x6c616b65u);
+                if ((hash & 3u) != 0u) continue;
+                const qreal left = x + 0.2 + ((hash >> 3) & 7u) * 0.045;
+                const qreal top = y + 0.25 + ((hash >> 8) & 7u) * 0.04;
+                details.drawLine(QPointF(left, top),
+                                 QPointF(left + 0.22, top + 0.025));
+            }
+        }
+
+        for (int y = 1; y < map_height - 1; ++y) {
+            for (int x = 0; x < map_width; ++x) {
+                const int height = elevation_at(x, y);
+                if (height <= sea_level || water_at(x, y) > 0) {
+                    if (height <= sea_level) {
+                        const bool land_north = elevation_at(x, y - 1) > sea_level &&
+                            water_at(x, y - 1) == 0;
+                        const bool land_east = elevation_at(wrapped_x(x + 1), y) > sea_level &&
+                            water_at(wrapped_x(x + 1), y) == 0;
+                        const bool land_south = elevation_at(x, y + 1) > sea_level &&
+                            water_at(x, y + 1) == 0;
+                        const bool land_west = elevation_at(wrapped_x(x - 1), y) > sea_level &&
+                            water_at(wrapped_x(x - 1), y) == 0;
+                        const uint32_t foam_hash = surface_hash(seed, x, y, 0x9d39247eu);
+                        details.setPen(QPen(foam_color, 0.055, Qt::SolidLine, Qt::RoundCap));
+                        const qreal inset = 0.08 + ((foam_hash >> 4) & 3u) * 0.025;
+                        const qreal span = 0.54 + ((foam_hash >> 9) & 3u) * 0.08;
+                        if (land_north) {
+                            details.drawLine(QPointF(x + inset, y + 0.07),
+                                             QPointF(x + inset + span, y + 0.07));
+                        }
+                        if (land_east) {
+                            details.drawLine(QPointF(x + 0.93, y + inset),
+                                             QPointF(x + 0.93, y + inset + span));
+                        }
+                        if (land_south) {
+                            details.drawLine(QPointF(x + inset, y + 0.93),
+                                             QPointF(x + inset + span, y + 0.93));
+                        }
+                        if (land_west) {
+                            details.drawLine(QPointF(x + 0.07, y + inset),
+                                             QPointF(x + 0.07, y + inset + span));
+                        }
+                    }
+                    continue;
+                }
+
+                const std::string biome_id = biome_at(x, y);
+                const uint32_t hash = surface_hash(seed, x, y, 0xa24baed5u);
+                const bool forest_biome = biome_id.find("forest") != std::string::npos ||
+                    biome_id.find("jungle") != std::string::npos;
+                const int moisture = field_value(moisture_rows, x, y, 50);
+                if ((forest_biome || moisture > 82) && climate_latitude_at(x, y) < 0.78 &&
+                    height < sea_level + 330 &&
+                    hash % (forest_biome ? 13u : 17u) < (forest_biome ? 4u : 2u)) {
+                    const qreal center_x = x + 0.18 + ((hash >> 4) & 7u) * 0.09;
+                    const qreal center_y = y + 0.18 + ((hash >> 9) & 7u) * 0.09;
+                    const qreal size = 0.55 + ((hash >> 14) & 7u) * 0.075;
+                    details.setPen(Qt::NoPen);
+                    details.setBrush(forest_shadow);
+                    details.drawEllipse(QPointF(center_x + 0.04, center_y + 0.16),
+                                        size * 1.02, size * 0.48);
+                    details.setBrush(forest_mid);
+                    details.drawEllipse(QPointF(center_x - size * 0.42, center_y),
+                                        size * 0.58, size * 0.62);
+                    details.drawEllipse(QPointF(center_x + size * 0.02, center_y - size * 0.10),
+                                        size * 0.62, size * 0.72);
+                    details.drawEllipse(QPointF(center_x + size * 0.45, center_y + size * 0.01),
+                                        size * 0.55, size * 0.60);
+                    details.setBrush(forest_light);
+                    details.drawEllipse(QPointF(center_x - size * 0.20, center_y - size * 0.31),
+                                        size * 0.29, size * 0.20);
+                }
+
+                if (height < sea_level + 190 ||
+                    surface_hash(seed, x, y, 0x3c6ef372u) % 9u != 0u) continue;
+                const int west = elevation_at(wrapped_x(x - 1), y);
+                const int east = elevation_at(wrapped_x(x + 1), y);
+                const int north = elevation_at(x, y - 1);
+                const int south = elevation_at(x, y + 1);
+                if (height < west || height < east || height < north || height < south) continue;
+
+                details.save();
+                details.translate(x + 0.5, y + 0.5);
+                if (std::abs(east - west) > std::abs(south - north)) details.rotate(90.0);
+                const qreal ridge_shift = ((hash >> 10) & 7u) * 0.018;
+                const qreal main_peak = -0.57 - ((hash >> 18) & 3u) * 0.045;
+                QPolygonF mountain_range{
+                    QPointF(-0.78, 0.43), QPointF(-0.57, 0.05),
+                    QPointF(-0.42, -0.29), QPointF(-0.23, 0.04),
+                    QPointF(-0.02, main_peak), QPointF(0.17, 0.01),
+                    QPointF(0.39, -0.27), QPointF(0.54, 0.04),
+                    QPointF(0.78, 0.43)
+                };
+                for (QPointF& point : mountain_range) point.rx() += ridge_shift;
+                details.setPen(QPen(QColor("#514b45"), 0.035));
+                details.setBrush(QColor("#827665"));
+                details.drawPolygon(mountain_range);
+
                 details.setPen(Qt::NoPen);
-                details.setBrush(forest_shadow);
-                details.drawEllipse(QPointF(center_x + 0.04, center_y + 0.16),
-                                    size * 1.02, size * 0.48);
-                details.setBrush(forest_mid);
-                details.drawEllipse(QPointF(center_x - size * 0.42, center_y),
-                                    size * 0.58, size * 0.62);
-                details.drawEllipse(QPointF(center_x + size * 0.02, center_y - size * 0.10),
-                                    size * 0.62, size * 0.72);
-                details.drawEllipse(QPointF(center_x + size * 0.45, center_y + size * 0.01),
-                                    size * 0.55, size * 0.60);
-                details.setBrush(forest_light);
-                details.drawEllipse(QPointF(center_x - size * 0.20, center_y - size * 0.31),
-                                    size * 0.29, size * 0.20);
-            }
-
-            if (height < sea_level + 190 ||
-                surface_hash(seed, x, y, 0x3c6ef372u) % 9u != 0u) continue;
-            const int west = elevation_at(wrapped_x(x - 1), y);
-            const int east = elevation_at(wrapped_x(x + 1), y);
-            const int north = elevation_at(x, y - 1);
-            const int south = elevation_at(x, y + 1);
-            if (height < west || height < east || height < north || height < south) continue;
-
-            details.save();
-            details.translate(x + 0.5, y + 0.5);
-            if (std::abs(east - west) > std::abs(south - north)) details.rotate(90.0);
-            const qreal ridge_shift = ((hash >> 10) & 7u) * 0.018;
-            const qreal main_peak = -0.57 - ((hash >> 18) & 3u) * 0.045;
-            QPolygonF mountain_range{
-                QPointF(-0.78, 0.43), QPointF(-0.57, 0.05),
-                QPointF(-0.42, -0.29), QPointF(-0.23, 0.04),
-                QPointF(-0.02, main_peak), QPointF(0.17, 0.01),
-                QPointF(0.39, -0.27), QPointF(0.54, 0.04),
-                QPointF(0.78, 0.43)
-            };
-            for (QPointF& point : mountain_range) point.rx() += ridge_shift;
-            details.setPen(QPen(QColor("#514b45"), 0.035));
-            details.setBrush(QColor("#827665"));
-            details.drawPolygon(mountain_range);
-
-            details.setPen(Qt::NoPen);
-            details.setBrush(QColor("#b7a58a"));
-            details.drawPolygon(QPolygonF{
-                QPointF(-0.57 + ridge_shift, 0.05),
-                QPointF(-0.42 + ridge_shift, -0.29),
-                QPointF(-0.30 + ridge_shift, 0.17),
-                QPointF(-0.45 + ridge_shift, 0.12)
-            });
-            details.drawPolygon(QPolygonF{
-                QPointF(-0.02 + ridge_shift, main_peak),
-                QPointF(0.14 + ridge_shift, 0.13),
-                QPointF(-0.12 + ridge_shift, 0.17)
-            });
-            details.drawPolygon(QPolygonF{
-                QPointF(0.39 + ridge_shift, -0.27),
-                QPointF(0.54 + ridge_shift, 0.04),
-                QPointF(0.27 + ridge_shift, 0.16)
-            });
-            if (height > sea_level + 470) {
-                details.setBrush(QColor("#e4e6dc"));
+                details.setBrush(QColor("#b7a58a"));
                 details.drawPolygon(QPolygonF{
-                    QPointF(-0.09 + ridge_shift, main_peak + 0.15),
+                    QPointF(-0.57 + ridge_shift, 0.05),
+                    QPointF(-0.42 + ridge_shift, -0.29),
+                    QPointF(-0.30 + ridge_shift, 0.17),
+                    QPointF(-0.45 + ridge_shift, 0.12)
+                });
+                details.drawPolygon(QPolygonF{
                     QPointF(-0.02 + ridge_shift, main_peak),
-                    QPointF(0.06 + ridge_shift, main_peak + 0.17),
-                    QPointF(0.02 + ridge_shift, main_peak + 0.14)
+                    QPointF(0.14 + ridge_shift, 0.13),
+                    QPointF(-0.12 + ridge_shift, 0.17)
                 });
                 details.drawPolygon(QPolygonF{
-                    QPointF(0.34 + ridge_shift, -0.12),
                     QPointF(0.39 + ridge_shift, -0.27),
-                    QPointF(0.46 + ridge_shift, -0.09)
+                    QPointF(0.54 + ridge_shift, 0.04),
+                    QPointF(0.27 + ridge_shift, 0.16)
                 });
+                if (height > sea_level + 470) {
+                    details.setBrush(QColor("#e4e6dc"));
+                    details.drawPolygon(QPolygonF{
+                        QPointF(-0.09 + ridge_shift, main_peak + 0.15),
+                        QPointF(-0.02 + ridge_shift, main_peak),
+                        QPointF(0.06 + ridge_shift, main_peak + 0.17),
+                        QPointF(0.02 + ridge_shift, main_peak + 0.14)
+                    });
+                    details.drawPolygon(QPolygonF{
+                        QPointF(0.34 + ridge_shift, -0.12),
+                        QPointF(0.39 + ridge_shift, -0.27),
+                        QPointF(0.46 + ridge_shift, -0.09)
+                    });
+                }
+                details.restore();
             }
-            details.restore();
         }
     }
     if (region.isNull()) return image;

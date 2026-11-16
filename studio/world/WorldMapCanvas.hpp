@@ -47,7 +47,9 @@ namespace aur
         QPoint hover_tile{-1, -1};
         std::map<std::pair<std::string, int>, QImage> tile_cache;
         QImage surface_cache;
+        QImage coarse_cache;
         std::string surface_cache_map;
+        std::string coarse_cache_map;
         editor::WorldCommandHistory history;
         world::WorldStrokeState stroke;
         std::unique_ptr<editor::WorldModel> world_model;
