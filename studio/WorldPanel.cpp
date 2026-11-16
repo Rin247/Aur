@@ -154,18 +154,33 @@ WorldPanel::WorldPanel(Project* p, QWidget* parent)
         "in the map editor.");
     sidebar_layout->addWidget(expandTileButton);
 
+    auto* biomeHeader = new QHBoxLayout();
     auto* biome_title = new QLabel("BIOMES", sidebar);
     theme::sectionTitle(biome_title);
-    sidebar_layout->addWidget(biome_title);
+    newBiomeButton = new QPushButton(QStringLiteral("+ Biome\u2026"), sidebar);
+    biomeHeader->addWidget(biome_title);
+    biomeHeader->addStretch();
+    biomeHeader->addWidget(newBiomeButton);
+    sidebar_layout->addLayout(biomeHeader);
     biomeList = new QListWidget(sidebar);
     biomeList->setMaximumHeight(190);
     sidebar_layout->addWidget(biomeList);
-    newBiomeButton = new QPushButton(QStringLiteral("Create biome\u2026"), sidebar);
-    sidebar_layout->addWidget(newBiomeButton);
 
+    auto* terrainHeader = new QHBoxLayout();
     auto* terrain_title = new QLabel("TERRAIN", sidebar);
     theme::sectionTitle(terrain_title);
-    sidebar_layout->addWidget(terrain_title);
+    tileCategoryCombo = new QComboBox(sidebar);
+    tileCategoryCombo->addItem("All terrain", "all");
+    tileCategoryCombo->addItem("Surface", "surface");
+    tileCategoryCombo->addItem("Coasts", "coast");
+    tileCategoryCombo->addItem("Underwater", "underwater");
+    tileCategoryCombo->addItem("Elevation", "elevation");
+    tileCategoryCombo->addItem("Structures", "structures");
+    tileCategoryCombo->setToolTip("Filter the terrain tile palette by environment.");
+    terrainHeader->addWidget(terrain_title);
+    terrainHeader->addWidget(tileCategoryCombo, 1);
+    sidebar_layout->addLayout(terrainHeader);
+
     auto* landformRow = new QHBoxLayout();
     landformCombo = new QComboBox(sidebar);
     landformCombo->clear();
@@ -185,27 +200,12 @@ WorldPanel::WorldPanel(Project* p, QWidget* parent)
     landformRow->addWidget(landformCombo, 1);
     landformRow->addWidget(brushSizeSpin);
     sidebar_layout->addLayout(landformRow);
-    auto* tileToolsRow = new QHBoxLayout();
-    tileCategoryCombo = new QComboBox(sidebar);
-    tileCategoryCombo->addItem("All terrain", "all");
-    // WP2.S1: the "Biome starters" category is removed with the starter set.
-    tileCategoryCombo->addItem("Surface", "surface");
-    tileCategoryCombo->addItem("Coasts", "coast");
-    tileCategoryCombo->addItem("Underwater", "underwater");
-    tileCategoryCombo->addItem("Elevation", "elevation");
-    tileCategoryCombo->addItem("Structures", "structures");
-    tileCategoryCombo->setToolTip("Filter the terrain tile palette by environment.");
-    tileToolsRow->addWidget(tileCategoryCombo, 1);
-    sidebar_layout->addLayout(tileToolsRow);
+
     tilePalette = new QListWidget(sidebar);
     tilePalette->setSelectionMode(QAbstractItemView::SingleSelection);
     tilePalette->setMaximumHeight(190);
+    tilePalette->setToolTip("Select a tile, then Paint terrain and click/drag. HD maps layer tiles over relief.");
     sidebar_layout->addWidget(tilePalette);
-    auto* tileHelp = new QLabel(
-        "Select a tile, then Paint terrain and click/drag. HD maps layer tiles over relief.", sidebar);
-    tileHelp->setWordWrap(true);
-    theme::dimLabel(tileHelp);
-    sidebar_layout->addWidget(tileHelp);
 
     auto* nodes_title = new QLabel("LOCATIONS & EXITS", sidebar);
     theme::sectionTitle(nodes_title);
@@ -213,19 +213,17 @@ WorldPanel::WorldPanel(Project* p, QWidget* parent)
     nodeList = new QListWidget(sidebar);
     sidebar_layout->addWidget(nodeList, 1);
     auto* node_buttons = new QHBoxLayout();
-    addLocationButton = new QPushButton("Add Location", sidebar);
-    addExitButton = new QPushButton("Add Exit", sidebar);
-    node_buttons->addWidget(addLocationButton);
-    node_buttons->addWidget(addExitButton);
-    sidebar_layout->addLayout(node_buttons);
-    auto* node_actions = new QHBoxLayout();
+    addLocationButton = new QPushButton("+ Location", sidebar);
+    addExitButton = new QPushButton("+ Exit", sidebar);
     editNodeButton = new QPushButton("Edit", sidebar);
     deleteNodeButton = new QPushButton("Delete", sidebar);
     editNodeButton->setEnabled(false);
     deleteNodeButton->setEnabled(false);
-    node_actions->addWidget(editNodeButton);
-    node_actions->addWidget(deleteNodeButton);
-    sidebar_layout->addLayout(node_actions);
+    node_buttons->addWidget(addLocationButton);
+    node_buttons->addWidget(addExitButton);
+    node_buttons->addWidget(editNodeButton);
+    node_buttons->addWidget(deleteNodeButton);
+    sidebar_layout->addLayout(node_buttons);
     splitter->addWidget(sidebar);
 
     mapCanvas = new WorldMapCanvasWidget(splitter);

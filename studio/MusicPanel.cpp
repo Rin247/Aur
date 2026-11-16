@@ -428,13 +428,13 @@ MusicPanel::MusicPanel(Project* p, SharedAudio* sharedAudio, QWidget* parent)
     trackList->setMinimumWidth(220);
     trackLayout->addWidget(trackList, 1);
     auto* trackButtons = new QHBoxLayout();
-    auto* addTrackButton = new QPushButton("Add Track", trackPane);
-    auto* addDrumTrackButton = new QPushButton("Add Drum Track", trackPane);
+    auto* addTrackButton = new QPushButton("+ Track", trackPane);
+    auto* addDrumTrackButton = new QPushButton("+ Drum", trackPane);
     auto* removeTrackButton = new QPushButton("Remove", trackPane);
     trackButtons->addWidget(addTrackButton);
+    trackButtons->addWidget(addDrumTrackButton);
     trackButtons->addWidget(removeTrackButton);
     trackLayout->addLayout(trackButtons);
-    trackLayout->addWidget(addDrumTrackButton);
 
     auto* propertyForm = new QFormLayout();
     propertyForm->setFieldGrowthPolicy(QFormLayout::ExpandingFieldsGrow);

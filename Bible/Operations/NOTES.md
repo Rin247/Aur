@@ -525,3 +525,12 @@
     - `studio/events/`: `EventCommandOps.{hpp,cpp}` (extracted from `EventsPanel`).
     - `studio/music/`: `MusicPanelSession.cpp`, `MidiDeviceIo.{hpp,cpp}`, `SongHistory.{hpp,cpp}`,
       `SharedAudio.{hpp,cpp}`, plus all existing DAW helpers.
+- **Compacted headers and button rows in `CreatureForgePanel`, `WorldPanel`, `MapEditorPanel`, and `MusicPanel`**:
+  - `CreatureForgePanel`: paired header title with `Seed` spinbox and `Random` button, paired `nameEdit`
+    with `ageCombo`, `genderCombo` with `presentationCombo`, `Preview NPC` with `Create NPC`, and each
+    asset generator combo (`creature`, `effect`, `clothing`, `prop`, `tile`) with its action button on
+    a single row so the entire Creature Forge sidebar fits at `1280x690` without vertical scrolling.
+  - `WorldPanel`: paired `BIOMES` header with `+ Biome...`, `TERRAIN` header with `tileCategoryCombo`,
+    and placed `+ Location`, `+ Exit`, `Edit`, and `Delete` on one row.
+  - `MapEditorPanel` & `MusicPanel`: paired `Apply` and `Delete (Del)` on one row in the map inspector,
+    and placed `+ Track`, `+ Drum`, and `Remove` on one row in the DAW track pane.

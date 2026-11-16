@@ -195,10 +195,12 @@ MapEditorPanel::MapEditorPanel(Project* p, QWidget* parent)
     paramSpin->setRange(-1000000, 1000000);
     form->addRow("Param:", paramSpin);
     inspectorLayout->addLayout(form);
-    eventApplyButton = new QPushButton("Apply to Entity", inspectorDock);
-    inspectorLayout->addWidget(eventApplyButton);
-    entityDeleteButton = new QPushButton("Delete Entity (Del)", inspectorDock);
-    inspectorLayout->addWidget(entityDeleteButton);
+    auto* entityActionRow = new QHBoxLayout();
+    eventApplyButton = new QPushButton("Apply", inspectorDock);
+    entityDeleteButton = new QPushButton("Delete (Del)", inspectorDock);
+    entityActionRow->addWidget(eventApplyButton, 1);
+    entityActionRow->addWidget(entityDeleteButton, 1);
+    inspectorLayout->addLayout(entityActionRow);
     inspectorLayout->addStretch();
     splitter->addWidget(inspectorDock);
 

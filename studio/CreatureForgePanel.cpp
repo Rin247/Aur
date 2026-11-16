@@ -17,20 +17,33 @@ CreatureForgePanel::CreatureForgePanel(Project* p, QWidget* parent)
     auto* mainLayout = new QHBoxLayout(this);
     auto* controlsPanel = new QWidget(this);
     auto* controlsLayout = new QVBoxLayout(controlsPanel);
-    auto* title = new QLabel("Creature Forge", this);
-    theme::sectionTitle(title);
-    controlsLayout->addWidget(title);
-    auto* subtitle = new QLabel("One seed drives repeatable character, creature, tile, and effect generation.", this);
-    subtitle->setWordWrap(true);
-    theme::dimLabel(subtitle);
-    controlsLayout->addWidget(subtitle);
+    controlsLayout->setContentsMargins(6, 6, 8, 6);
+    controlsLayout->setSpacing(6);
 
+    auto* headerRow = new QHBoxLayout();
+    auto* title = new QLabel("Creature Forge", this);
+    title->setToolTip("One seed drives repeatable character, creature, tile, and effect generation.");
+    theme::sectionTitle(title);
+    seedSpin = new QSpinBox(this);
+    seedSpin->setRange(-1000000000, 1000000000);
+    seedSpin->setValue(1);
+    seedSpin->setPrefix("Seed: ");
+    auto* randomSeedButton = new QPushButton("Random", this);
+    randomSeedButton->setToolTip("Roll a new random seed and preview the character.");
+    headerRow->addWidget(title);
+    headerRow->addStretch();
+    headerRow->addWidget(seedSpin);
+    headerRow->addWidget(randomSeedButton);
+    controlsLayout->addLayout(headerRow);
+
+    auto* nameAgeRow = new QHBoxLayout();
     nameEdit = new QLineEdit("Wanderer", this);
-    controlsLayout->addWidget(nameEdit);
     ageCombo = new QComboBox(this);
     ageCombo->addItems({"child", "teen", "adult", "elder"});
-    controlsLayout->addWidget(ageCombo);
-    controlsLayout->addWidget(new QLabel("Race", this));
+    nameAgeRow->addWidget(nameEdit, 1);
+    nameAgeRow->addWidget(ageCombo);
+    controlsLayout->addLayout(nameAgeRow);
+
     raceCombo = new QComboBox(this);
     for (const auto& [id, label] : character_race_options()) {
         raceCombo->addItem(QString::fromStdString(label), QString::fromStdString(id));
@@ -38,74 +51,28 @@ CreatureForgePanel::CreatureForgePanel(Project* p, QWidget* parent)
     raceCombo->setCurrentIndex(raceCombo->findData("sylvani"));
     raceCombo->setToolTip("Choose a people or supernatural category defined in the World Bible.");
     controlsLayout->addWidget(raceCombo);
+
+    auto* identityRow = new QHBoxLayout();
     genderCombo = new QComboBox(this);
     genderCombo->addItems({"unspecified", "female", "male", "non-binary"});
     genderCombo->setToolTip("Character gender identity; appearance is controlled separately.");
-    controlsLayout->addWidget(genderCombo);
     presentationCombo = new QComboBox(this);
     presentationCombo->addItems({"androgynous", "feminine", "masculine"});
     presentationCombo->setToolTip("Visual style for the generated character sprite.");
-    controlsLayout->addWidget(presentationCombo);
-    seedSpin = new QSpinBox(this);
-    seedSpin->setRange(-1000000000, 1000000000);
-    seedSpin->setValue(1);
-    seedSpin->setPrefix("Seed: ");
-    controlsLayout->addWidget(seedSpin);
+    identityRow->addWidget(genderCombo, 1);
+    identityRow->addWidget(presentationCombo, 1);
+    controlsLayout->addLayout(identityRow);
 
+    auto* npcButtonsRow = new QHBoxLayout();
     auto* previewButton = new QPushButton("Preview NPC", this);
-    auto* createNpcButton = new QPushButton("Create NPC sprite + record", this);
-    auto* randomSeedButton = new QPushButton("Randomize seed", this);
-    controlsLayout->addWidget(previewButton);
-    controlsLayout->addWidget(createNpcButton);
-    controlsLayout->addWidget(randomSeedButton);
+    auto* createNpcButton = new QPushButton("Create NPC", this);
+    createNpcButton->setToolTip("Compile 8-way walk cycles and add the NPC sprite and record to the project.");
+    npcButtonsRow->addWidget(previewButton, 1);
+    npcButtonsRow->addWidget(createNpcButton, 1);
+    controlsLayout->addLayout(npcButtonsRow);
 
-    controlsLayout->addWidget(new QLabel("Creature / pet", this));
-    creatureCombo = new QComboBox(this);
-    creatureCombo->addItems({"cat", "dog", "slime", "wolf", "bat", "golem"});
-    controlsLayout->addWidget(creatureCombo);
-    auto* creatureButton = new QPushButton("Generate creature / pet", this);
-    controlsLayout->addWidget(creatureButton);
-
-    controlsLayout->addWidget(new QLabel("Animated effect", this));
-    effectCombo = new QComboBox(this);
-    effectCombo->addItems({"spark", "fire", "water", "slash", "impact", "heal", "magic", "dust", "explosion"});
-    controlsLayout->addWidget(effectCombo);
-    auto* effectButton = new QPushButton("Generate effect", this);
-    controlsLayout->addWidget(effectButton);
-
-    controlsLayout->addWidget(new QLabel("Clothing · drawn as editable pixel art", this));
-    clothingCombo = new QComboBox(this);
-    clothingCombo->addItems({"shirt", "tunic", "pants", "shorts", "skirt", "dress",
-                             "cloak", "boots", "hat"});
-    controlsLayout->addWidget(clothingCombo);
-    auto* clothingButton = new QPushButton("Draw & add clothing", this);
-    controlsLayout->addWidget(clothingButton);
-
-    controlsLayout->addWidget(new QLabel("Props · drawn as editable pixel art", this));
-    propCombo = new QComboBox(this);
-    propCombo->addItems({"sword", "staff", "shield", "bow", "lantern", "satchel", "potion"});
-    controlsLayout->addWidget(propCombo);
-    auto* propButton = new QPushButton("Draw & add prop", this);
-    controlsLayout->addWidget(propButton);
-
-    controlsLayout->addWidget(new QLabel("Terrain tile", this));
-    tilesetCombo = new QComboBox(this);
-    controlsLayout->addWidget(tilesetCombo);
-    tileKindCombo = new QComboBox(this);
-    tileKindCombo->addItems({"grass", "sand", "dirt", "stone", "brick", "planks",
-                             "water", "snow", "lava", "crystal", "foliage", "noise"});
-    controlsLayout->addWidget(tileKindCombo);
-    tileSolidCheck = new QCheckBox("Solid", this);
-    tileSolidCheck->setToolTip("The tile blocks movement: the floor of a platformer.");
-    controlsLayout->addWidget(tileSolidCheck);
-    tileOneWayCheck = new QCheckBox("One-way", this);
-    tileOneWayCheck->setToolTip("The tile holds from above and is open from below.");
-    controlsLayout->addWidget(tileOneWayCheck);
-    auto* tileButton = new QPushButton("Generate tile", this);
-    controlsLayout->addWidget(tileButton);
-
-    controlsLayout->addWidget(new QLabel("Outfit previews", this));
     auto* presetLayout = new QGridLayout();
+    presetLayout->setSpacing(4);
     int presetIdx = 0;
     for (const std::string& preset : {"Adventurer", "Mage", "Knight", "Villager"}) {
         auto* button = new QPushButton(QString::fromStdString(preset), this);
@@ -114,6 +81,50 @@ CreatureForgePanel::CreatureForgePanel(Project* p, QWidget* parent)
         connect(button, &QPushButton::clicked, this, [this, preset]() { applyPreset(preset); });
     }
     controlsLayout->addLayout(presetLayout);
+
+    auto add_generator_row = [this, controlsLayout](QComboBox*& combo, const QStringList& items,
+                                                    const QString& buttonText) {
+        auto* row = new QHBoxLayout();
+        combo = new QComboBox(this);
+        combo->addItems(items);
+        auto* btn = new QPushButton(buttonText, this);
+        row->addWidget(combo, 1);
+        row->addWidget(btn);
+        controlsLayout->addLayout(row);
+        return btn;
+    };
+
+    auto* creatureButton = add_generator_row(
+        creatureCombo, {"cat", "dog", "slime", "wolf", "bat", "golem"}, "+ Creature");
+    auto* effectButton = add_generator_row(
+        effectCombo, {"spark", "fire", "water", "slash", "impact", "heal", "magic", "dust", "explosion"},
+        "+ Effect");
+    auto* clothingButton = add_generator_row(
+        clothingCombo, {"shirt", "tunic", "pants", "shorts", "skirt", "dress", "cloak", "boots", "hat"},
+        "+ Clothing");
+    auto* propButton = add_generator_row(
+        propCombo, {"sword", "staff", "shield", "bow", "lantern", "satchel", "potion"}, "+ Prop");
+
+    auto* tileComboRow = new QHBoxLayout();
+    tilesetCombo = new QComboBox(this);
+    tileKindCombo = new QComboBox(this);
+    tileKindCombo->addItems({"grass", "sand", "dirt", "stone", "brick", "planks",
+                             "water", "snow", "lava", "crystal", "foliage", "noise"});
+    tileComboRow->addWidget(tilesetCombo, 1);
+    tileComboRow->addWidget(tileKindCombo, 1);
+    controlsLayout->addLayout(tileComboRow);
+
+    auto* tileActionRow = new QHBoxLayout();
+    tileSolidCheck = new QCheckBox("Solid", this);
+    tileSolidCheck->setToolTip("The tile blocks movement: the floor of a platformer.");
+    tileOneWayCheck = new QCheckBox("One-way", this);
+    tileOneWayCheck->setToolTip("The tile holds from above and is open from below.");
+    auto* tileButton = new QPushButton("+ Tile", this);
+    tileActionRow->addWidget(tileSolidCheck);
+    tileActionRow->addWidget(tileOneWayCheck);
+    tileActionRow->addWidget(tileButton, 1);
+    controlsLayout->addLayout(tileActionRow);
+
     controlsLayout->addStretch();
     statusLabel = new QLabel("Generated assets are project-backed; use Ctrl+S to save.", this);
     statusLabel->setWordWrap(true);
