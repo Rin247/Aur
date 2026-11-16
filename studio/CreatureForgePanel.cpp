@@ -98,8 +98,13 @@ CreatureForgePanel::CreatureForgePanel(Project* p, QWidget* parent)
     auto* mainLayout = new QHBoxLayout(this);
     auto* controlsPanel = new QWidget(this);
     auto* controlsLayout = new QVBoxLayout(controlsPanel);
-    controlsLayout->addWidget(new QLabel("Creature Forge", this));
-    controlsLayout->addWidget(new QLabel("One seed drives repeatable character, creature, tile, and effect generation.", this));
+    auto* title = new QLabel("Creature Forge", this);
+    theme::sectionTitle(title);
+    controlsLayout->addWidget(title);
+    auto* subtitle = new QLabel("One seed drives repeatable character, creature, tile, and effect generation.", this);
+    subtitle->setWordWrap(true);
+    theme::dimLabel(subtitle);
+    controlsLayout->addWidget(subtitle);
 
     nameEdit = new QLineEdit("Wanderer", this);
     controlsLayout->addWidget(nameEdit);
@@ -195,6 +200,7 @@ CreatureForgePanel::CreatureForgePanel(Project* p, QWidget* parent)
     controlsLayout->addWidget(statusLabel);
     auto* controlsScroll = new QScrollArea(this);
     controlsScroll->setWidgetResizable(true);
+    controlsScroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     controlsScroll->setFrameShape(QFrame::NoFrame);
     controlsScroll->setWidget(controlsPanel);
     mainLayout->addWidget(controlsScroll, 1);
@@ -363,11 +369,8 @@ void CreatureForgePanel::createClothing() {
     const int seed = seedSpin->value();
     try {
         Json graphic = generate_clothing_graphic(kind, seed);
-        std::string id = asset_id(kind);
-        for (int suffix = 2; project->graphics.contains(id) ||
-             project->db["items"].as_object().contains(id); ++suffix) {
-            id = asset_id(kind) + "_" + std::to_string(suffix);
-        }
+        std::string id = unique_id(project->graphics, asset_id(kind));
+        while (project->db["items"].as_object().contains(id)) id += "_2";
         graphic["name"] = kind;
         project->graphics[id] = graphic;
         project->db["items"][id] = JsonObject{
@@ -389,19 +392,16 @@ void CreatureForgePanel::createProp() {
     const int seed = seedSpin->value();
     try {
         Json graphic = generate_prop_graphic(kind, seed);
-        std::string id = asset_id(kind);
-        for (int suffix = 2; project->graphics.contains(id) ||
-             project->db["items"].as_object().contains(id); ++suffix) {
-            id = asset_id(kind) + "_" + std::to_string(suffix);
-        }
+        std::string id = unique_id(project->db["items"].as_object(), asset_id(kind));
+        while (project->graphics.contains(id)) id += "_2";
         graphic["name"] = kind;
-        project->graphics[id] = graphic;
+        project->graphics[id] = std::move(graphic);
         project->db["items"][id] = JsonObject{
             {"name", kind}, {"category", "prop"}, {"graphic", id}, {"seed", seed}
         };
         project->invalidate(id);
-        previewWidget->setGraphic(graphic);
-        statusLabel->setText(QString("Drew %1 · editable 32×32 pixel graphic · seed %2 · Ctrl+S to save")
+        previewWidget->setGraphic(project->graphics[id]);
+        statusLabel->setText(QString("Drew prop %1 · seed %2 · Ctrl+S to save")
                                  .arg(QString::fromStdString(id)).arg(seed));
     } catch (const std::exception& error) {
         QMessageBox::warning(this, "Prop drawing failed", QString::fromStdString(error.what()));

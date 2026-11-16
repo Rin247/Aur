@@ -1,6 +1,6 @@
 # Aur MCP Server
 
-Aur includes a local stdio MCP server for project-aware design tasks. Build with `.\build.bat`, then register `build\Release\aur_mcp.exe` with an MCP client and pass the project directory as its only argument:
+Aur includes a local stdio MCP server for project-aware design tasks. Build with `cmd /c "AIO.bat build windows Release"`, then register `build\Release\aur_mcp.exe` with an MCP client and pass the project directory as its only argument:
 
 ```json
 {

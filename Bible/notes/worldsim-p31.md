@@ -46,7 +46,7 @@ work (P3.2/P3.3) is touched.
   asserts; two CTest entries (`EngineTests`, `TopologyTests` focused mode).
   New test file joins that target; a `--worldsim` focused mode follows the
   `--topology` pattern so the heavy 2560×1280 generator case stays out.
-- Build: `cmd /c .\build.bat` from the repo root (loads the MSVC env); CTest
+- Build: `cmd /c "AIO.bat build windows Release"` from the repo root (loads the MSVC env); CTest
   via `ctest --test-dir build\Release --output-on-failure`.
 - Owner sizing rule: soft cap ~1,000 lines/file +25% overhead.
 

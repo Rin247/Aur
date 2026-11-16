@@ -1,3 +1,5 @@
+> **Historical archive (2026-11-06).** Superseded by root HANDOVER.md and PROJECT.md.
+
 # HANDOVER.md — Aur
 
 > Current session status and implementation state for agent handover. See the [Bible index](../README.md) for document navigation and source precedence.

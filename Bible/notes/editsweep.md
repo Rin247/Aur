@@ -1,6 +1,5 @@
-Status: D4.S1b, D4.S1b1, D4.S1b2 and D4.S1e landed; D4.S2 (the owner's two
-visual reports) landed with the render harness that proves them. Next open
-phase: D5.S1.
+Status: D1–D15 landed and closed (see `HANDOVER.md`). Next open phase: none in
+editsweep; the active owner queue is in `WANTED.md`.
 
 ## Goal
 

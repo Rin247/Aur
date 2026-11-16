@@ -4,8 +4,8 @@ Status: P3 closed-out; P4.1–P4.3 MIDI device layer + count-in landed
 (`f1420e3`, `1146cf8`, `4f07f1b`). P6.1 clips landed (`7d0b8da`). P5 started:
 P5.1 lane accessors (`532de0b`) + P5.2 lane strip (`721e043`) landed.
 P6.5–P6.7 arrangement placements, canvas, playback/export landed (`259ecb0`,
-`91eadea`, `3a7e890`); suite 39/39. P8 effects landed 2026-11-08; see
-`Bible/notes/daw/effects.md` in history. P9 (step sequencer + arpeggiator)
+`91eadea`, `3a7e890`); suite 39/39. P8 effects landed 2026-11-08 (`fxStrip` in
+`studio/music/FxChainStrip.*`). P9 (step sequencer + arpeggiator)
 landed 2026-11-11 under the `groovebox` initiative; the three oscillator
 synths (Gm/Fm/RetroPsg) were retired the same day — the preview path now runs
 through the hardware cores only. The P5 remainder closed 2026-11-11: the

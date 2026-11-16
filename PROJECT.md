@@ -12,14 +12,14 @@
 <!-- The last thing that was actually run, with its result. Delete a line when it stops being true. -->
 
 - `C:\Dev\Qt\Tools\CMake_64\bin\ctest.exe --test-dir build\Release --timeout 300` — 7 of 7
-  suites passed (67 checks), 2026-11-13.
-- `python tools\conformance.py --project Aur` — all 9 checks clean, 2026-11-13.
-- `python tests\render_check.py` — 24 captures written to `build/renders/`, 2026-11-13. The pages
+  suites passed (73 checks, including `test_theme_*` and `"races"` in `test_record_fields`), 2026-11-16.
+- `py -3.15 C:\Projects\tools\conformance.py --project Aur` — all 9 checks clean, 2026-11-16.
+- `py -3.15 tests\render_check.py` — 24 captures written to `build/renders/`, 2026-11-16. The pages
   are Map Editor, World, Sprite Editor, Tileset Editor, DAW, Creature Forge, Database and
   Playtest, at both estate sizes, plus the zoom sweep, the sprite preview, the DAW's
   arrangement, the Bestiary and the Database's actors and weapons. **A render asserts that a
   surface did not crash, not that it looks right: open the PNGs.**
-- `cmd /c "AIO.bat build windows Release"` — built and deployed, 2026-11-13.
+- `cmd /c "AIO.bat build windows Release"` — built and deployed, 2026-11-16.
 
 ## What this is
 
@@ -76,10 +76,16 @@ twenty-two PNGs.
   generator takes Solid and One-way, and the tileset editor can mark any
   tile one-way, so a platformer's floor and its platforms are tiles the
   owner makes.
+- **The studio uses the estate design system (`studio/theme/`, `C:\Projects\DESIGN.md` §1, §2, §6.3, §13).**
+  `ThemeManager` and `AurStyle` (`QProxyStyle` over Fusion) drive every surface, control, tab,
+  scrollbar, splitter and item-view selection wash (`accentDim`) from `QPalette` and token roles,
+  with zero stylesheets (`rg setStyleSheet studio` is 0). `ThemeIcons` paints vector glyphs in live
+  token colours, and `AppearanceDialog` exposes the 11 modes + `system`, the 24×24 HSV + 23-grey +
+  escape-hatch accent matrix, and a validated `#rrggbb` hex field.
 - **Every tab of the Database page edits its records.** One generic
-  editor and a table of fields per kind: a character's nested growth, a
-  weapon's fraction and range, and the rest. A field the editor does
-  not show is carried through untouched.
+  editor (`records::RecordEditor`) and a table of fields per kind (`actors`, `classes`, `races`,
+  `items`, `weapons`, `skills`), plus `Bestiary` for creatures. A field the editor does not show is
+  carried through untouched.
 - **The Database page has a Bestiary.** The creatures are edited where
   their records live: the list, the record, the artwork, and the fields
   the editor does not show carried through. The other tabs of that page
@@ -136,27 +142,18 @@ twenty-two PNGs.
 | key | what it does |
 |---|---|
 | `F5` | play the project |
-| `F11` | swap between maximized and windowed |
+| `F11` / `Alt+Enter` | swap between maximized and windowed |
 | `Ctrl+Tab` / `Ctrl+Shift+Tab` | the next page / the previous one |
 | `Ctrl+S` / `Ctrl+O` | save the project / open another one |
 | `F2` | the in-game debug menu (the playtest) |
 
 ## Open defects
 
-1. **`studio/MusicPanel.cpp` is 1,311 lines**, over the owner's hard ceiling of ~1,250 and
-   pre-existing. It needs splitting; the MIDI file transfer moved out in this pass.
-2. **The Races tab is still a bespoke editor.** It writes a dozen lore
-   fields with a text box each, where the other tabs use the generic
-   editor. It works, and it is the one tab the generic editor does not
-   hold.
-3. **Three of the seven creatures have no artwork.** `bandit`,
+1. **Three of the seven creatures have no artwork.** `bandit`,
    `bandit_archer` and `bandit_boss` name graphics the project does not
    have, so the Bestiary's portrait says so for them. The game's own
    renderer draws a default graphic instead, which is worse: the creature
    in the game is not the creature the record names.
-4. **`studio/world/WorldMapCanvas.cpp` (934) and `studio/WorldPanel.cpp` (928)** are over the
-   750-line soft limit and pre-existing. The map editor and the pixel editor were split for this
-   reason; these two are not.
 
 ## Decisions
 
@@ -185,6 +182,15 @@ twenty-two PNGs.
   different songs through one device, so a per-song fader would fight the shared mixer.
 - **The world's margin colour is written by the terrain shader**, so the shader and the CPU path
   have to agree on it; both are `#171b20`.
+- **The studio adopts `DESIGN.md` §6.3 (`QPalette` + `QProxyStyle`, no stylesheet)** (2026-11-16).
+  Default mode is `dark` and default accent is `#3b82f6`, persisted under `theme/mode` and
+  `theme/accent` in `~/.Aur` and validated on load.
+- **Every `studio/` source file sits under the 750-line soft limit** (2026-11-16): `StudioChrome`
+  and `FramelessWindow` left `MainWindow.cpp` (377 lines); `MidiStrip`, `GmPatchList`, and
+  `MusicPanelSession.cpp` (567 lines) split `MusicPanel.cpp` (628 lines); `WorldPanelActions.cpp`
+  (395 lines) split `WorldPanel.cpp` (660 lines); `WorldMapCanvasInput.cpp` (412 lines) split
+  `WorldMapCanvas.cpp` (465 lines); and `PianoRollInput.cpp` (289 lines) split `PianoRollCanvas.cpp`
+  (536 lines).
 
 ## Durable findings
 

@@ -1,6 +1,8 @@
 # Aur MVP Roadmap
 
-> Outstanding roadmap items and implementation tasks for agent execution. See the [Bible index](../README.md) and [handover](Handover.md).
+> **Historical archive (2026-11-06).** Superseded by root [`ROADMAP.md`](../../ROADMAP.md) and [`IMPLEMENTATION.md`](../../IMPLEMENTATION.md).
+>
+> Outstanding roadmap items and implementation tasks from the initial MVP pass. See the [Bible index](../README.md).
 
 > Planned game codenames: **Dawn** (turn-based), **Day** (tactical/grid), **Dusk** (real-time action). **Night** is unplanned and not part of this roadmap.
 

@@ -15,9 +15,9 @@
 - After the header cleanup, the project build exposed missing direct implementation includes (`QPainter`, widget definitions, and `QFutureWatcher`); adding those to `WorldPanel.cpp` restores a successful full build.
 - Existing `studio/world/MapView.*` / `WorldMapHelpers.*` files were already untracked at task start, so keep them out of unrelated commits while integrating them intentionally in the refactor.
 - Runtime `WeatherSystem` is not a direct replacement for the editor's deterministic `climate_weather(project, climate, roll)` preview selection; preserve the editor behavior unless a matching shared selector is added and tested.
-- The persistent plan is `Bible/Operations/WorldPanel Refactor Plan.md`; the first implementation checkpoint is header/include hygiene. The required `buildHdSurface` checksum still needs a testable Qt image-builder seam before completing step 1.
+- The persistent plan is `WorldPanel Refactor Plan.md (deleted on landing)`; the first implementation checkpoint is header/include hygiene. The required `buildHdSurface` checksum still needs a testable Qt image-builder seam before completing step 1.
 
-- Added Aur request #51 to `WANTED.md` to keep the full WorldPanel refactor visible; its durable sequence and honest completion checklist are in `Bible/Operations/WorldPanel Refactor Plan.md`. Header cleanup is committed, but the checksum/surface extraction and steps 2–7 remain open; do not close the request until acceptance is tested.
+- Added Aur request #51 to `WANTED.md` to keep the full WorldPanel refactor visible; its durable sequence and honest completion checklist are in `WorldPanel Refactor Plan.md (deleted on landing)`. Header cleanup is committed, but the checksum/surface extraction and steps 2–7 remain open; do not close the request until acceptance is tested.
 
 - WorldPanel step 1 moved the complete HD surface pixel-generation body to `studio/world/HdSurface.cpp`; the public operation accepts map, project and region, returns a cropped image only for a non-null region, and preserves the prior full-map output for a null region. A 32×16 seeded generated world yields stable RGB32 FNV-1a checksum `7986464436153998528`. Both full Release build and both CTest targets passed.
 - WorldPanel tool state and entity-placement dispatch now use `WorldTool` with the ordered `kWorldToolNames` table; pixel/map behavior was not changed. Typed-tool changes pass Release build and both CTest targets. Pending checkpoint commit before continuing.
@@ -448,7 +448,41 @@
   a stale white frame looked like a result. It now deletes the PNG before the shot and launches a
   failed shot once more. It also uses `get_flattened_data` where Pillow has it.
 - Captures are 1920x1035 because this machine runs at 150% DPI (1280x690 logical). That is correct.
-- Line baseline (growth over these is a gate failure; lower an entry when its file shrinks):
-  `studio/MusicPanel.cpp` 1,268 (over the 1,250 hard ceiling), `studio/WorldPanel.cpp` 968,
-  `studio/world/WorldMapCanvas.cpp` 825, `studio/music/PianoRollCanvas.cpp` 788.
-  `studio/MainWindow.cpp` 575 is under the soft limit but holds the chrome and the native-event code.
+## 2026-11-16 repaint and whole-app refactor
+
+- **Design-system theme (`studio/theme/`, `C:\Projects\DESIGN.md` §1, §2, §6.3, §13)**:
+  - `ThemeMath.{hpp,cpp}` and `ThemePalettes.{hpp,cpp}` (Qt-free, tested in `tests/test_theme.cpp`):
+    WCAG relative luminance, `is_dark_background(bg)` (`L < 0.18`), `on_accent(primary)` (`#ffffff` vs
+    `#0f0f1a`), contrast ratios across all 11 modes + `system`, and validated `sanitize_choice`.
+  - `ThemeQt.{hpp,cpp}` and `ThemeManager.{hpp,cpp}`: maps tokens onto `QPalette` per §6.3 (including
+    `Mid`, `Dark`, `Shadow`, `PlaceholderText`, and disabled states), samples Windows
+    `AppsUseLightTheme` once at startup, validates `theme/mode` and `theme/accent` from `~/.Aur`, and
+    supports `--theme <id>` for transient CLI/capture runs.
+  - `AurStyle.{hpp,cpp}` and `AurStylePaint.{hpp,cpp}` (`QProxyStyle` over Fusion): 28 px control
+    height and hit-target floor, 4/6/8/14 px radii, flat buttons/edits/combos/spins/tabs/scrollbars/
+    splitters/headers from palette roles, and `accentDim` wash (`PE_PanelItemViewItem` /
+    `CE_ItemViewItem`) for selected item-view rows. All 21 `setStyleSheet` calls and the `main.cpp`
+    stylesheet were removed (`rg setStyleSheet studio` is 0).
+  - `ThemeIcons.{hpp,cpp}` (`QIconEngine`): draws Hamburger, Minimize, Maximize, Restore, Close, Save,
+    Open, Reload, Play, Pause, Stop, and Appearance in live token colours; Close hovers in `bad`.
+  - `AppearanceDialog.{hpp,cpp}`: 4x3 mode grid (`system` + 11 modes), 24x24 HSV + 23-grey +
+    escape-hatch accent matrix (§4), and validated `#rrggbb` hex field. Accessible from the hamburger
+    menu and the title bar; `F11` and `Alt+Enter` toggle maximized/windowed mode.
+- **Canvases and page polish**:
+  - `PixelSurface`, `MapCanvas`, `PianoRollCanvas`, `ArrangementCanvas`, `StepSequencerCanvas`,
+    `VelocityLaneStrip`, `ClipButton`, `WorldMapCanvas`, `WorldMarkerOverlays`, `CreatureForgePanel`,
+    `GameView` (`CardFrame`), and `bestiary/CreaturePortrait` read UI furniture from `theme::tokens()`
+    while preserving data colours and the `#171b20` world terrain shader/CPU margin agreement.
+  - `FxChainStrip` hides its 88 px chain list when empty, and `MusicPanel` places `MasterVolumeStrip`
+    and `Quick Compose` on the top rows so the DAW track list and session grid fit at `1280x690`.
+- **Refactor splits and line baseline (all `studio/` files now under the 750-line soft limit)**:
+  - `MainWindow.cpp`: 575 -> 377 lines (`StudioChrome.{hpp,cpp}` and `FramelessWindow.{hpp,cpp}`).
+  - `MusicPanel.cpp`: 1,350 -> 628 lines (`music/MidiStrip.{hpp,cpp}`, `music/GmPatchList.hpp`, and
+    `MusicPanelSession.cpp` at 567 lines).
+  - `WorldPanel.cpp`: 1,018 -> 660 lines (`WorldPanelActions.cpp` at 395 lines).
+  - `world/WorldMapCanvas.cpp`: 895 -> 465 lines (`world/WorldMapCanvasInput.cpp` at 412 lines).
+  - `music/PianoRollCanvas.cpp`: 847 -> 536 lines (`music/PianoRollInput.cpp` at 289 lines).
+  - `DatabasePanel.cpp`: 256 -> 45 lines; the `Races` tab now uses the generic `records::RecordEditor`
+    with `"races"` in `RecordFields.{hpp,cpp}` (tested in `tests/test_record_fields.cpp`).
+  - `CMakeLists.txt`: removed duplicate `TransportIcon` and `BestiaryData` entries and trimmed the
+    4-line icon comment block so the `QUIRKS.md` §43 pre-commit hook passes cleanly.
