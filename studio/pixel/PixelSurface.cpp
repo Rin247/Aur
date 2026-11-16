@@ -471,6 +471,19 @@ namespace aur
         if (event->button() == Qt::LeftButton && pending_open) finishUndo();
     }
 
+    void PixelSurface::wheelEvent(QWheelEvent* event) {
+        if (!event->modifiers().testFlag(Qt::ControlModifier)) {
+            QWidget::wheelEvent(event);
+            return;
+        }
+        const int mag = event->modifiers().testFlag(Qt::ShiftModifier) ? 3 : 1;
+        const int dir = event->angleDelta().y() > 0 ? mag : (event->angleDelta().y() < 0 ? -mag : 0);
+        if (dir != 0) {
+            emit zoomStepRequested(dir);
+            event->accept();
+        }
+    }
+
     void PixelSurface::resizeEvent(QResizeEvent* event) {
         QWidget::resizeEvent(event);
     }

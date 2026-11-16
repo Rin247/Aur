@@ -96,8 +96,8 @@ namespace aur
         std::vector<bool> scaleMask;
         int nextNoteId = 1; // counter for ensure_note_id on created notes
         int currentStepWidth = baseStepWidth;
-        static constexpr int kZoomLevels[6] = {8, 12, 16, 24, 32, 48};
-        int zoomIndex = 2;
+        static constexpr int kZoomLevels[13] = {6, 8, 10, 12, 14, 16, 18, 20, 24, 28, 32, 40, 48};
+        int zoomIndex = 5;
         int pitchOffsetRows = 0; // rows scrolled down from highestPitch
         const std::atomic<std::int64_t> *playheadFrames = nullptr;
         const std::atomic<int> *playheadBpm = nullptr;

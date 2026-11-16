@@ -180,8 +180,8 @@ MainWindow::MainWindow(const std::string& project_path, QWidget* parent)
             installEditorMenu(worldCanvas,
                 [worldCanvas]() { worldCanvas->undo(); },
                 [worldCanvas]() { worldCanvas->redo(); },
-                [worldCanvas]() { worldCanvas->setZoom(worldCanvas->zoomFactor() * 1.25); },
-                [worldCanvas]() { worldCanvas->setZoom(worldCanvas->zoomFactor() / 1.25); },
+                [worldCanvas]() { worldCanvas->setZoom(worldCanvas->zoomFactor() * 1.12); },
+                [worldCanvas]() { worldCanvas->setZoom(worldCanvas->zoomFactor() / 1.12); },
                 [worldCanvas]() { worldCanvas->fitToView(); });
         }
     }

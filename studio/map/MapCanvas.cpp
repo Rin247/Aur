@@ -163,11 +163,11 @@ void MapCanvasWidget::zoomByFactor(qreal factor) {
 }
 
 void MapCanvasWidget::zoomIn() {
-    setZoomFactor(zoom_factor * 1.25);
+    setZoomFactor(zoom_factor * 1.12);
 }
 
 void MapCanvasWidget::zoomOut() {
-    setZoomFactor(zoom_factor / 1.25);
+    setZoomFactor(zoom_factor / 1.12);
 }
 
 void MapCanvasWidget::constrainCamera() {
@@ -631,7 +631,10 @@ void MapCanvasWidget::wheelEvent(QWheelEvent* event) {
     if (old_cell <= 0.0) return;
     const QPointF map_position((cursor.x() - old_bounds.left()) / old_cell,
                                (cursor.y() - old_bounds.top()) / old_cell);
-    const qreal factor = event->angleDelta().y() > 0 ? 1.15 : 1.0 / 1.15;
+    const qreal step = event->modifiers().testFlag(Qt::ControlModifier)
+                           ? 1.25
+                           : (event->modifiers().testFlag(Qt::ShiftModifier) ? 1.02 : 1.06);
+    const qreal factor = event->angleDelta().y() > 0 ? step : 1.0 / step;
     zoom_factor = std::clamp(zoom_factor * factor, 0.05, 16.0);
     user_zoom_multiplier = zoom_factor / std::max(0.01, fitZoomForCurrentSize());
     const QRectF new_bounds = mapBounds();

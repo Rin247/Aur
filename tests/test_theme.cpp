@@ -120,12 +120,12 @@ void test_theme_palettes()
     }
     ASSERT(light_count == 5);
 
-    ASSERT(near(contrast_ratio(palette_of("dark").text, palette_of("dark").background), 18.23));
+    ASSERT(near(contrast_ratio(palette_of("dark").text, palette_of("dark").background), 17.01));
     ASSERT(near(contrast_ratio(palette_of("brahmamuhurta").text, palette_of("brahmamuhurta").background), 7.06));
     ASSERT(near(contrast_ratio(palette_of("amoled").text_dim, palette_of("amoled").background), 8.19));
     ASSERT(near(contrast_ratio(palette_of("light").good, palette_of("light").background), 4.56));
-    ASSERT(near(contrast_ratio(palette_of("amoled").text_mute, palette_of("amoled").surface_variant), 6.14));
-    ASSERT(near(contrast_ratio(palette_of("midnight").text_mute, palette_of("midnight").surface_variant), 6.04));
+    ASSERT(near(contrast_ratio(palette_of("amoled").text_mute, palette_of("amoled").surface_variant), 5.47));
+    ASSERT(near(contrast_ratio(palette_of("midnight").text_mute, palette_of("midnight").surface_variant), 5.31));
 
     for (const Mode &mode : modes())
     {

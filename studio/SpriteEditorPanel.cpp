@@ -93,14 +93,8 @@ SpriteEditorPanel::SpriteEditorPanel(Project* p, QWidget* parent)
     toolbar->addWidget(new QLabel("Zoom:", this));
     zoomCombo = new QComboBox(this);
     zoomCombo->addItem("Fit", 0);
-    zoomCombo->addItem("1×", 1);
-    zoomCombo->addItem("2×", 2);
-    zoomCombo->addItem("4×", 4);
-    zoomCombo->addItem("8×", 8);
-    zoomCombo->addItem("16×", 16);
-    zoomCombo->addItem("32×", 32);
-    zoomCombo->addItem("48×", 48);
-    zoomCombo->addItem("64×", 64);
+    for (int scale : {1, 2, 3, 4, 6, 8, 10, 12, 16, 20, 24, 32, 40, 48, 64})
+        zoomCombo->addItem(QString("%1×").arg(scale), scale);
     toolbar->addWidget(zoomCombo);
     toolbar->addSpacing(12);
     frameLabel = new QLabel("Frame:", this);
@@ -217,6 +211,10 @@ SpriteEditorPanel::SpriteEditorPanel(Project* p, QWidget* parent)
     connect(zoomCombo, &QComboBox::currentIndexChanged, this, [this](int index) {
         canvas->setZoomScale(zoomCombo->itemData(index).toInt());
         canvasScroll->ensureVisible(canvas->width() / 2, canvas->height() / 2);
+    });
+    connect(canvas, &SpriteCanvasWidget::zoomStepRequested, this, [this](int step) {
+        const int target = std::clamp(zoomCombo->currentIndex() + step, 1, zoomCombo->count() - 1);
+        zoomCombo->setCurrentIndex(target);
     });
     connect(frameCombo, &QComboBox::currentIndexChanged, this, [this](int index) {
         if (index >= 0 && !playAnimationButton->isChecked())

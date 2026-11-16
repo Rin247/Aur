@@ -22,7 +22,8 @@ namespace aur
     {
         if (event->modifiers() & Qt::ControlModifier)
         {
-            zoom(event->angleDelta().y() > 0 ? 1 : -1);
+            const int magnitude = (event->modifiers() & Qt::ShiftModifier) ? 3 : 1;
+            zoom(event->angleDelta().y() > 0 ? magnitude : -magnitude);
             event->accept();
             return;
         }

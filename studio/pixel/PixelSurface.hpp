@@ -92,6 +92,7 @@ public:
 signals:
     void colorPicked(int index);
     void painted();
+    void zoomStepRequested(int step);
 
 protected:
     // Resets the stroke bookkeeping, for a change of target.
@@ -100,6 +101,7 @@ protected:
     void mousePressEvent(QMouseEvent* event) override;
     void mouseMoveEvent(QMouseEvent* event) override;
     void mouseReleaseEvent(QMouseEvent* event) override;
+    void wheelEvent(QWheelEvent* event) override;
     void resizeEvent(QResizeEvent* event) override;
     void paintStroke(const QPoint& from, const QPoint& to);
     void leaveEvent(QEvent* event) override;

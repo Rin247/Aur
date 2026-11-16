@@ -54,8 +54,10 @@ namespace aur
 
     void PianoRollCanvasWidget::zoom(int delta)
     {
-        // Swept as a control: stepped levels via Ctrl+wheel or +/-, never an axis.
-        const int newIndex = std::clamp(zoomIndex + (delta > 0 ? 1 : -1), 0, 5);
+        if (delta == 0)
+            return;
+        const int maxIndex = static_cast<int>(std::size(kZoomLevels)) - 1;
+        const int newIndex = std::clamp(zoomIndex + delta, 0, maxIndex);
         if (newIndex == zoomIndex)
             return;
         zoomIndex = newIndex;

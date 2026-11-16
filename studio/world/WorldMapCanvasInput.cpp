@@ -356,7 +356,7 @@ void WorldMapCanvasWidget::wheelEvent(QWheelEvent* event) {
                                (cursor.y() - old_bounds.top()) / old_cell);
     qreal updated_zoom = zoom_factor;
     if (event->modifiers().testFlag(Qt::ControlModifier)) {
-        constexpr std::array<qreal, 5> snapSteps{1.0, 2.0, 4.0, 8.0, 16.0};
+        constexpr std::array<qreal, 6> snapSteps{0.5, 1.0, 2.0, 4.0, 8.0, 16.0};
         int snapIndex = 0;
         for (int index = 1; index < static_cast<int>(snapSteps.size()); ++index) {
             if (std::abs(std::log(snapSteps[static_cast<std::size_t>(index)] / zoom_factor)) <
@@ -377,7 +377,8 @@ void WorldMapCanvasWidget::wheelEvent(QWheelEvent* event) {
         }
         updated_zoom = snapSteps[static_cast<std::size_t>(snapIndex)];
     } else {
-        const qreal factor = event->angleDelta().y() > 0 ? 1.15 : 1.0 / 1.15;
+        const qreal step = event->modifiers().testFlag(Qt::ShiftModifier) ? 1.02 : 1.06;
+        const qreal factor = event->angleDelta().y() > 0 ? step : 1.0 / step;
         updated_zoom = std::clamp(zoom_factor * factor, 0.05, 16.0);
     }
     if (updated_zoom == zoom_factor) return;
