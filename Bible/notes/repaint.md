@@ -1,13 +1,13 @@
 # Repaint and refactor: plan
 
-Status: P1.2 landed. Next step: P1.3, AurStyle (QProxyStyle) in studio/theme/AurStyle*.cpp, then P2.
+Status: P1 landed (not yet installed). Next step: P2.1, install ThemeManager + AurStyle in main.cpp and delete the stylesheet in one commit.
 
 ## Goal
 
 Owner, 2026-11-16: "refactor the entire app and give it a fresh coat of paint". Two outcomes:
 
-1. **Paint.** The studio draws from the estate's design system (`C:\Projects\DESIGN.md` Ãƒâ€šÃ‚Â§1, Ãƒâ€šÃ‚Â§2, Ãƒâ€šÃ‚Â§6.3,
-   Ãƒâ€šÃ‚Â§13) instead of one hard-coded navy and gold stylesheet: tokens, a `QPalette`, a `QProxyStyle`,
+1. **Paint.** The studio draws from the estate's design system (`C:\Projects\DESIGN.md` ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§1, ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§2, ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§6.3,
+   ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§13) instead of one hard-coded navy and gold stylesheet: tokens, a `QPalette`, a `QProxyStyle`,
    eleven modes, a user accent, icons drawn in theme colours.
 2. **Refactor.** Every file over the 750-line soft limit is split, the chrome leaves `MainWindow.cpp`,
    the duplicated and stale pieces go, and the docs stop contradicting each other.
@@ -21,7 +21,7 @@ owner-gated.
   flags and the Map tool indices (0 Select/Move, 1 Paint Tile, 2 Place Entity, 3 Erase Tile) do not
   change. The render harness depends on them.
 - Settings keys for the theme: `theme/mode` (a picker id), `theme/accent` (`#rrggbb`). Both are
-  validated on load; an unknown value falls back to the default (DESIGN Ãƒâ€šÃ‚Â§5.2).
+  validated on load; an unknown value falls back to the default (DESIGN ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§5.2).
 - The engine (`engine/aur/`) never includes Qt. Colour math lives in `studio/theme/ThemeMath.*`
   with no Qt types so `aur_tests` can reach it.
 - Frameless window hazards (`Bible/Operations/NOTES.md` L409-422): in `WM_NCCALCSIZE` never assign
@@ -54,7 +54,7 @@ owner-gated.
 ## Hazards found
 
 - Docs contradict each other (the audit list in Phase 7).
-- A stylesheet wins over the palette for every property it names (DESIGN Ãƒâ€šÃ‚Â§6.3), so the app
+- A stylesheet wins over the palette for every property it names (DESIGN ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§6.3), so the app
   stylesheet must be removed in the same step the palette lands, not before or after.
 - 21 call sites carry their own colours; a missed one is a control that stays navy in every mode.
 - Canvases cache nothing about colour today; they must repaint on a theme change.
@@ -69,8 +69,11 @@ owner-gated.
 ```
 studio/theme/ThemeMath.{hpp,cpp}     Qt-free: luminance, isDark, onAccent, accentDim/Bright, contrast
 studio/theme/ThemePalettes.{hpp,cpp} one table row per mode (eleven + system), token structs
-studio/theme/ThemeManager.{hpp,cpp}  current mode+accent, QPalette, signals, persistence, validation
-studio/theme/AurStyle.{hpp,cpp}      QProxyStyle: metrics, radii, hover/focus/disabled, scrollbars
+studio/theme/ThemeQt.{hpp,cpp}       QColor bridge and the QPalette mapping (Qt Gui only, unit-tested)
+studio/theme/ThemeManager.{hpp,cpp}  current mode+accent, install, signals, persistence, validation
+studio/theme/ThemeMetrics.hpp        the sizing tokens (28 control, radii 4/6/8, 16 glyph, 10 scrollbar)
+studio/theme/AurStyle.{hpp,cpp}      QProxyStyle over Fusion: metrics, sizes, dispatch
+studio/theme/AurStylePaint.{hpp,cpp} the flat painters: button, edit, combo, spin, tab, scrollbar, splitter
 studio/theme/ThemeIcons.{hpp,cpp}    glyphs drawn in token colours (hamburger, window, file, transport)
 studio/theme/AppearanceDialog.{hpp,cpp}  mode grid + accent hex + preview
 studio/StudioChrome.{hpp,cpp}        the title-row widget, out of MainWindow.cpp
@@ -94,16 +97,16 @@ panel.
 Acceptance: harness exits 0 with 24 captures; ctest 7/7; baseline recorded. Tag `repaint-p0`.
 
 ### P1 Theme core (no visual change yet)
-- [x] P1.1 `ThemeMath` and `ThemePalettes` with the DESIGN Ãƒâ€šÃ‚Â§2.2 table, `test_theme.cpp` (polarity from
-  luminance, `onAccent`, every mode has every token, contrast table reproduces Ãƒâ€šÃ‚Â§2.3's findings).
-- [x] P1.2 `ThemeManager` with palette mapping per Ãƒâ€šÃ‚Â§6.3, settings validation, a `changed` signal.
-- [ ] P1.3 `AurStyle` (`QProxyStyle`): `controlHeight` 28, radii 4/6/8, hit target floor 28, focus and
+- [x] P1.1 `ThemeMath` and `ThemePalettes` with the DESIGN ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§2.2 table, `test_theme.cpp` (polarity from
+  luminance, `onAccent`, every mode has every token, contrast table reproduces ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§2.3's findings).
+- [x] P1.2 `ThemeManager` with palette mapping per ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§6.3, settings validation, a `changed` signal.
+- [x] P1.3 `AurStyle` (`QProxyStyle`): `controlHeight` 28, radii 4/6/8, hit target floor 28, focus and
   hover from accent, scrollbars in `divider`, no stylesheet.
 Acceptance: unit tests green; app still looks as today (not yet installed). Tag `repaint-p1`.
 
 ### P2 Install it, delete the stylesheet
 - [ ] P2.1 `main.cpp` installs `ThemeManager` + `AurStyle` before the window and sets the colour scheme
-  before first paint (no white flash, DESIGN Ãƒâ€šÃ‚Â§12.2b); the `main.cpp` stylesheet is deleted in the same
+  before first paint (no white flash, DESIGN ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§12.2b); the `main.cpp` stylesheet is deleted in the same
   commit.
 - [ ] P2.2 Replace the 21 `setStyleSheet` sites with palette roles, object names handled in
   `AurStyle`, or `theme::tokens()` reads; `rg setStyleSheet studio` returns nothing.
@@ -115,7 +118,7 @@ colours; ctest 7/7. Tag `repaint-p2`.
 - [ ] P3.1 Pure move: `StudioChrome` and the native-event code leave `MainWindow.cpp`.
 - [ ] P3.2 `ThemeIcons`: hamburger, minimise, maximise/restore, close, file actions drawn in token
   colours at 16 px glyph, 28 px target; close hovers in `bad`. Delete `SP_TitleBar*` use.
-- [ ] P3.3 Title row follows Ãƒâ€šÃ‚Â§13.6 (labels drop to icon-only, tabs ellipsise, overflow opens) at the
+- [ ] P3.3 Title row follows ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§13.6 (labels drop to icon-only, tabs ellipsise, overflow opens) at the
   1280x690 floor. Hotkeys stay (F5, F11, Ctrl+Tab, Ctrl+S, Ctrl+O); add `Alt+Enter` for the window
   mode and the Appearance entry in the hamburger.
 Acceptance: pull-off from four edges and four corners still snaps (manual note in NOTES); renders at
@@ -135,7 +138,7 @@ surface except `textMute`. Tag `repaint-p4`.
 ### P5 Page polish
 - [ ] P5.1 DAW header: merge the song, MIDI and master rows so the track list is not clipped at
   1280x690 (`MidiStrip` extracted first, P6.1).
-- [ ] P5.2 Padding budget and one hint style across pages (DESIGN Ãƒâ€šÃ‚Â§1.7.1); selected rows use the accent
+- [ ] P5.2 Padding budget and one hint style across pages (DESIGN ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§1.7.1); selected rows use the accent
   wash (`accentDim`), not the brown fill.
 - [ ] P5.3 Appearance dialog: mode grid, accent hex field, live apply, persisted.
 Acceptance: the 24-capture sweep at floor sizes; a person opens every PNG. Tag `repaint-p5`.
@@ -176,7 +179,7 @@ the palette must change together, so revert it as one commit.
 ## Decisions and deviations
 
 - 2026-11-16: the request supersedes queue order for this initiative; the queue resumes after P7.
-- 2026-11-16: the studio adopts `DESIGN.md` Ãƒâ€šÃ‚Â§6.3 (palette plus `QProxyStyle`, no stylesheet). It is the
+- 2026-11-16: the studio adopts `DESIGN.md` ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â§6.3 (palette plus `QProxyStyle`, no stylesheet). It is the
   estate's own spec and "has never been run" on Widgets, so the first mismatch found is recorded here.
 - 2026-11-16: interface scale beyond the existing zoom control is out of scope (the fit band is
   contracted at 100%); revisit only on the owner's ask.
