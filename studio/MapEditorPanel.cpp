@@ -4,6 +4,7 @@
 
 #include "map/EditorDefs.hpp"
 #include "theme/ResponsiveSplitter.hpp"
+#include "theme/StatusStrip.hpp"
 
 #include <QKeySequence>
 
@@ -217,6 +218,7 @@ MapEditorPanel::MapEditorPanel(Project* p, QWidget* parent)
         refreshTilePalette();
         // Sync mode selector to the loaded map's mode.
         sync_mode_combo(modeCombo, it->second);
+        postMapContext();
     });
 
     connect(layerCombo, &QComboBox::currentIndexChanged, [this](int idx) {
@@ -371,6 +373,22 @@ MapEditorPanel::MapEditorPanel(Project* p, QWidget* parent)
     refreshEventChoices();
 
     refreshMaps();
+}
+
+void MapEditorPanel::postMapContext() {
+    if (!project || current_map.empty() || !project->maps.contains(current_map)) return;
+    const Json& map = project->maps[current_map];
+    theme::postStatus(QStringLiteral("Map %1 \u00b7 %2 \u00d7 %3 tiles \u00b7 %4")
+                          .arg(QString::fromStdString(current_map))
+                          .arg(map.contains("w") ? map["w"].as_int() : 0)
+                          .arg(map.contains("h") ? map["h"].as_int() : 0)
+                          .arg(QString::fromStdString(
+                              map.contains("mode") ? map["mode"].as_string() : "action")));
+}
+
+void MapEditorPanel::showEvent(QShowEvent* event) {
+    QWidget::showEvent(event);
+    postMapContext();
 }
 
 void MapEditorPanel::setProject(Project* p) {

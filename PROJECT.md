@@ -138,6 +138,8 @@ twenty-two PNGs.
   name on the left, the last line a panel posted, and on the right the project and whether it
   is saved, the RHI backend in use, the theme mode and the interface scale. It is read-only
   context — no buttons — and it is how a page says what it just did (`theme::postStatus`).
+  The Forge posts its preview line, the map editor the map's size and mode, and the world
+  tab its map's size; each reposts on `showEvent` so a page switch never leaves a stale line.
 - **The Character Forge draws at native size and shows a turnaround.** The renderer
   writes a real 48×64 pixel grid — no 3/2 or 4/3 coordinate squeeze — and the preview
   shows the front, right, back and left views side by side, or one chosen direction,

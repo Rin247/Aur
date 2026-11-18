@@ -1,5 +1,6 @@
 #include "WorldPanel.hpp"
 #include "theme/LabelRoles.hpp"
+#include "theme/StatusStrip.hpp"
 #include "theme/ResponsiveSplitter.hpp"
 #include "core/RhiBackend.hpp"
 #include "map/TileTexture.hpp"
@@ -572,10 +573,25 @@ void WorldPanel::selectMap(const std::string& map_id) {
     current_map = map_id;
     mapCanvas->setMap(map_id);
     refreshMapContents();
+    postMapContext();
     // First boot / first selection shows the whole world (WANTED: the editor
     // used to open zoomed to 100% on a corner of the 256×128 map).
     if (first_show)
         mapCanvas->fitToView();
+}
+
+void WorldPanel::postMapContext() {
+    if (!project || current_map.empty() || !project->maps.contains(current_map)) return;
+    const Json& map = project->maps[current_map];
+    theme::postStatus(QStringLiteral("%1 \u00b7 %2 \u00d7 %3 tiles")
+                          .arg(QString::fromStdString(current_map))
+                          .arg(map.contains("w") ? map["w"].as_int() : 0)
+                          .arg(map.contains("h") ? map["h"].as_int() : 0));
+}
+
+void WorldPanel::showEvent(QShowEvent* event) {
+    QWidget::showEvent(event);
+    postMapContext();
 }
 
 void WorldPanel::refreshMapContents() {

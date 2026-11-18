@@ -72,6 +72,13 @@ signals:
 private:
     void selectMap(const std::string& map_id);
     void refreshMapContents();
+    // The strip's line for the world map on screen.
+    void postMapContext();
+
+protected:
+    void showEvent(QShowEvent* event) override;
+
+private:
 
     void filterTerrainTiles();
     void createBiome();

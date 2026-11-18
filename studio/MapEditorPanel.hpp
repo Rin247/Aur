@@ -70,6 +70,11 @@ class MapEditorPanel : public QWidget {
     std::function<void(int)> syncInspectorFromInstance;
     std::string current_map;
 
+    // The strip's line for the map on screen.
+    void postMapContext();
+
+protected:
+    void showEvent(QShowEvent* event) override;
 
 public:
     explicit MapEditorPanel(Project* project = nullptr, QWidget* parent = nullptr);
