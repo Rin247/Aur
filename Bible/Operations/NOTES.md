@@ -1,4 +1,22 @@
 # Operations Notes
+
+## Creature Forge refactor (2026-11-18)
+
+- `engine/aur/forge.cpp` (1,240 lines) split into `forge/SpeciesCatalog.cpp`,
+  `forge/CharacterRenderer.cpp` and `forge/AssetGenerators.cpp`; layout and hazards in
+  `Bible/Forge/NOTES.md`. The renderer is native 48×64 now — the old path authored
+  32×48 and multiplied by 3/2 and 4/3, which produced the eye smudge, the forehead
+  metal pixel and the torso block.
+- The panel grew four tabs and gained variant/affinity/alignment/record-role fields;
+  a created character record now carries all four. The preview is a four-way
+  turnaround (`studio/forge/CharacterSheetWidget`), and `selectPageTab` lets the
+  render harness capture each tab (`--sub-tab`).
+- Verified 2026-11-18: ctest 7/7 (75 checks), conformance 9/9, 24 render captures in
+  `build/renders/` opened. The brief was moved from the project root to
+  `Bible/notes/forge-brief.md` because a stray MD at the root fails the gate.
+- Open from the brief and not started: W-03 (bandit artwork), and the choice between
+  W-01 + W-02 or the runtime track is the owner's.
+
 ## Project tidy audit (2026-11-06)
 
 - Moved the original Sea of Stars map-size conversation into `Bible/Archive/Reference/`; updated its topology-handover link. The Bible root now contains only its index.

@@ -5,7 +5,7 @@ Revert any active D3D11 backend use; rendering must run on Vulkan or D3D12 only.
 Route backend selection through one shim; startup assert backend in {Vulkan, D3D12};
 headless Null only under RHI_POLICY_HEADLESS=1. See C:\Projects\POLICY.md.
 
-## Where things stand (2026-11-16)
+## Where things stand (2026-11-18)
 
 - **The studio runs on the estate design system and Hydra theme stack (`studio/theme/`, `C:\Projects\DESIGN.md` §1, §2, §6.3, §13; `C:\Projects\Hydra\`).**
   `ThemeManager`, `ThemeContract`, and `AurStyle` (`QProxyStyle` over Fusion) drive every surface,
@@ -24,9 +24,27 @@ headless Null only under RHI_POLICY_HEADLESS=1. See C:\Projects\POLICY.md.
   - `studio/MapEditorPanel.cpp` (427 lines): `map/MapCanvas.{hpp,cpp}`, `map/MapEditUndo.{hpp,cpp}`, `map/TilePaletteWidget.{hpp,cpp}`, `map/TileTexture.hpp`, and `map/EditorDefs.hpp` live under `studio/map/`.
   - `studio/SpriteEditorPanel.cpp` (618 lines) and `studio/TilesetEditorPanel.cpp` (387 lines): `pixel/PixelSurface.{hpp,cpp}`, `pixel/PixelEditSession.{hpp,cpp}`, `pixel/PixelFrameOps.{hpp,cpp}`, and `pixel/SpriteCanvas.{hpp,cpp}` live under `studio/pixel/`, and `tileset/TilePngIo.{hpp,cpp}` lives under `studio/tileset/`.
   - `studio/WorldPanel.cpp` (686 lines): `world/WorldPanelActions.cpp` (395 lines), `world/WorldModel.{hpp,cpp}`, `world/WorldSettingsPanel.{hpp,cpp}`, and `world/WorldMapCanvasInput.cpp` (403 lines) live under `studio/world/`.
-  - `studio/CreatureForgePanel.cpp` (355 lines): `forge/CharacterSheetWidget.{hpp,cpp}` and `forge/ForgeAssetOps.{hpp,cpp}` live under `studio/forge/`.
+  - `studio/CreatureForgePanel.cpp` (310 lines): `forge/ForgePanelTabs.cpp` (221 lines, the four tab builders), `forge/ForgeColorSwatches.cpp` (64 lines), `forge/CharacterSheetWidget.{hpp,cpp}` and `forge/ForgeAssetOps.{hpp,cpp}` live under `studio/forge/`. The engine side is `engine/aur/forge/{SpeciesCatalog,CharacterRenderer,AssetGenerators}.cpp`, all three under 650 lines.
   - `studio/DatabasePanel.cpp` (47 lines) and `studio/EventsPanel.cpp` (78 lines): `bestiary/*` and `events/EventCommandOps.{hpp,cpp}` live under `studio/bestiary/` and `studio/events/`.
   - `studio/MusicPanel.cpp` (661 lines): `music/MidiStrip.{hpp,cpp}`, `music/GmPatchList.hpp`, `music/MusicPanelSession.cpp` (598 lines), `music/PianoRollInput.cpp` (289 lines), `music/MidiDeviceIo.{hpp,cpp}`, `music/SongHistory.{hpp,cpp}`, and `music/SharedAudio.{hpp,cpp}` live under `studio/music/`.
+- **The world map has two levels of detail** (`studio/world/TerrainLod.{hpp,cpp}`,
+  `studio/world/WorldTerrainPaint.{hpp,cpp}`; plan `Bible/notes/globe-view.md` P1).
+  The crossover is a screen measurement -- the drawn width over the map's width --
+  and `kHdSurfacePixelsPerTile = 3.0` picks the generated HD surface at or above it
+  and, below it, the same terrain at one pixel per tile (`build_hd_surface(..., 1)`).
+  Both are cached, so crossing over on a zoom change is a lookup. Proved by
+  `build/renders/world_1280x690_z1.0.png` (HD) and `..._z0.5.png` (coarse).
+  Open: the HD surface is capped at 32 px/tile (22 for a 256x128 map), so at the
+  3200% ceiling it is upsampled; a denser picture for the visible region is the
+  third level.
+- **The Creature Forge was refactored to the owner's brief** (`Bible/notes/forge-brief.md`,
+  moved into `Bible/notes/` from the project root, 2026-11-18): the 1,240-line `forge.cpp`
+  became `engine/aur/forge/{SpeciesCatalog,CharacterRenderer,AssetGenerators}.cpp`, the
+  renderer is native 48×64 with species/hair/role/accessory layers, the preview is a
+  four-way turnaround, and the panel has Character / Creatures / Gear & FX / Tiles tabs with
+  variant, affinity, alignment and record-role fields plus `setIcon` colour swatches.
+  ctest 7/7 (75 checks), conformance 9/9, 24 render captures opened. **Next: the brief's
+  next-track choice (W-01 + W-02, or Track B) is the owner's call.**
 - **The editors undo over `QUndoStack`** (`studio/core/UndoCommands.{hpp,cpp}`),
   and the map editor records per-cell diffs (`studio/map/MapEditUndo.{hpp,cpp}`).
   `tests/test_undo_commands.cpp`, `tests/test_theme.cpp`, and `tests/test_settings.cpp` pin undo,
@@ -42,6 +60,7 @@ cd C:\Projects\Aur; py -3.15 tests\render_check.py
 
 ## Active plans
 
+- `Bible/notes/globe-view.md` — the globe's levels of detail and the sphere. **P1 landed** (the two levels, `TerrainLod` + `WorldTerrainPaint`); **P2 is next** (the grid on a UV sphere, the poles capped), and the third LOD level — a denser surface for the 3200% ceiling — is recorded as open.
 - `Bible/notes/globe-expand.md` — **W-01**: expand a world map tile into a map preserving coast direction.
 - `Bible/notes/map-generator.md` — **W-02**: procedural seed generator for field, cave, and platformer maps.
 - `Bible/notes/platformer.md` — **P-01**: P1–P3 landed and tested; P4 waits on a solid floor tile chosen by the owner.
@@ -52,7 +71,9 @@ cd C:\Projects\Aur; py -3.15 tests\render_check.py
 ## Know before you go
 
 - **The state, the decisions and the open defects are in `PROJECT.md`.** This file is the
-  pointer. The older history is `Bible/Operations/NOTES.md`.
+  pointer. The older history is `Bible/Operations/NOTES.md`. The order of work is
+  `ROADMAP.md` (the stages) and `IMPLEMENTATION.md` (every open item by area, with its gate);
+  `WANTED.md` is the short owner queue pointing at both.
 - The build entry point is `AIO.bat`:
 
 ```powershell

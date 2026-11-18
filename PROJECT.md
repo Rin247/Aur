@@ -12,14 +12,12 @@
 <!-- The last thing that was actually run, with its result. Delete a line when it stops being true. -->
 
 - `C:\Dev\Qt\Tools\CMake_64\bin\ctest.exe --test-dir build\Release --timeout 300` — 7 of 7
-  suites passed (75 checks, including `test_theme_*`, `test_settings_*`, and `"races"` in `test_record_fields`), 2026-11-16.
-- `py -3.15 C:\Projects\tools\conformance.py --project Aur` — all 9 checks clean, 2026-11-16.
-- `py -3.15 tests\render_check.py` — 24 captures written to `build/renders/`, 2026-11-16. The pages
-  are Map Editor, World, Sprite Editor, Tileset Editor, DAW, Creature Forge, Database and
-  Playtest, at both estate sizes, plus the zoom sweep, the sprite preview, the DAW's
-  arrangement, the Bestiary and the Database's actors and weapons. **A render asserts that a
-  surface did not crash, not that it looks right: open the PNGs.**
-- `cmd /c "AIO.bat build windows Release"` — built and deployed, 2026-11-16.
+  suites passed (75 checks), 2026-11-18.
+- `py -3.15 C:\Projects\tools\conformance.py --project Aur` — all 9 checks clean, 2026-11-18.
+- `py -3.15 tests\render_check.py` — 24 captures to `build\renders\`, 2026-11-18; the Forge PNGs
+  were opened and show four labelled views with no smudge on the eye and no forehead or torso
+  blocks. **A render asserts that a surface did not crash, not that it looks right: open the PNGs.**
+- `cmake --build build\Release --target aur_studio aur_tests` — linked and green, 2026-11-18.
 
 ## What this is
 
@@ -128,9 +126,18 @@ twenty-two PNGs.
   markers -- western_harbor, eastern_capital and southern_ruins -- that
   pointed at places on an old seed. A new world seed has no entities at
   all, so they meant nothing; the spawn stays.
-- **The Character Forge's preview fits its pane**, like the map, the world
-  and the pixel surface. It scaled its sprite to at most 8x, so a 48x64
-  character sat in the middle of a large box.
+- **The Character Forge draws at native size and shows a turnaround.** The renderer
+  writes a real 48×64 pixel grid — no 3/2 or 4/3 coordinate squeeze — and the preview
+  shows the front, right, back and left views side by side, or one chosen direction,
+  fitted to the pane up to 16×.
+- **The forge is three engine files and three studio files.** `engine/aur/forge/` holds
+  `SpeciesCatalog` (race catalog, variants, option lists, seeded spec), `CharacterRenderer`
+  (the 48×64 canvas and its layers) and `AssetGenerators` (creatures, effects, clothing,
+  props, tiles); `studio/forge/` holds the preview, the tab builders and the colour
+  swatches. `engine/aur/forge.hpp` is still the one public header.
+- **The Forge has four tabs** (Character, Creatures, Gear & FX, Tiles), the race combo is
+  grouped Mortal / Supernatural, and a created character record carries its `variant`,
+  `affinity`, `alignment` and `entity_role` — not only its name, age and race.
 - **The DAW's transport is play/pause and stop, as icons.** The play button
   holds the playback still and picks it up where it was; the stop rewinds it.
   The glyphs are drawn in the app's own colour, because the style's media
@@ -201,6 +208,14 @@ twenty-two PNGs.
   (395 lines) split `WorldPanel.cpp` (660 lines); `WorldMapCanvasInput.cpp` (412 lines) split
   `WorldMapCanvas.cpp` (465 lines); and `PianoRollInput.cpp` (289 lines) split `PianoRollCanvas.cpp`
   (536 lines).
+- **The character renderer is native 48×64** (owner brief `Bible/notes/forge-brief.md`, 2026-11-18).
+  The old `character_frame` was authored in 32×48 and silently multiplied by 3/2 and 4/3, which
+  strewed artefacts over every sprite (a dark ellipse across one eye, a metal pixel on the
+  forehead, a gold block on the torso). The canvas and the rig are now real pixels and each layer
+  paints a named palette index; `tests/test_forge.cpp` pins the contract.
+- **The race catalog is data, not an if-chain** (`RaceInfo` + `character_race_catalog()`): the
+  six Mortal and nine Supernatural peoples, their labels, and whether an affinity is forced. The
+  combo, the validator and the seeded spec all read the same table.
 
 ## Durable findings
 

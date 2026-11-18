@@ -30,9 +30,9 @@
   NOTE: WP4 in the Work Packages brief covers the P3.2 weather slice and is
   owner-approved for that slice only.
 - `Bible/notes/sc-cleanroom.md` — SC (Sound Canvas-style) clean-room instrument, planning only; sequenced behind DAW P7a/P7b.
+- `Bible/notes/globe-view.md` — the globe's levels of detail and the sphere: **P1 landed** (the HD surface and the same terrain at one pixel per tile, switched by pixels per tile), **P2 is next** (the grid on a UV sphere, the poles capped), and a third level for the 3200% ceiling is open.
 
-- **`ROADMAP.md`** — the stages of this project's work and the standard a stage meets before the next starts (root `AGENTS.md` §"Project shape").
-- **`IMPLEMENTATION.md`** — every open item, by area, with its evidence and its gate: W-01, W-02, W-03, P-01, D-01, Q-01.
+- **`ROADMAP.md`** — the stages of this project's work and the standard a stage meets before the next starts (root `AGENTS.md` §"Project shape").- **`IMPLEMENTATION.md`** — every open item, by area, with its evidence and its gate: W-01, W-02, W-03, P-01, D-01, Q-01.
 
 ## Open
 
@@ -50,13 +50,13 @@
   jump, a body, a one-way platform and a sideways camera, and leaves the
   shipped field byte for byte as it is.
 
-## Recently closed (verified 2026-11-16)
+## Recently closed (verified 2026-11-18)
 
-- **Whole-app repaint and refactor** (`Bible/Operations/NOTES.md`, 2026-11-16):
-  adopted the estate design system (`studio/theme/`, `DESIGN.md` §1, §2, §6.3, §13:
-  `ThemeManager`, `AurStyle` `QProxyStyle`, `ThemeIcons`, `AppearanceDialog`,
-  11 modes + `system`, `#3b82f6` default accent, zero `setStyleSheet` calls);
-  extracted `StudioChrome`, `FramelessWindow`, `MidiStrip`, `MusicPanelSession`,
-  `WorldPanelActions`, `WorldMapCanvasInput`, and `PianoRollInput` so every
-  file in `studio/` sits below the 750-line soft limit; moved the `Races` tab
-  onto the generic `records::RecordEditor` (`E-01`, `E-02`, `L-01` closed).
+- **Creature Forge refactor** (owner brief `Bible/notes/forge-brief.md`, 2026-11-18):
+  `engine/aur/forge.cpp` (1,240 lines) split into `forge/SpeciesCatalog`,
+  `forge/CharacterRenderer` and `forge/AssetGenerators`; the character renderer
+  rewritten at native 48×64 with species, hair, role and accessory layers (the
+  eye smudge, forehead pixel and torso block are gone); the preview is a four-way
+  turnaround; the panel has Character / Creatures / Gear & FX / Tiles tabs and
+  persists `variant`, `affinity`, `alignment` and `entity_role`. Verified: ctest
+  7/7 (75 checks), conformance 9/9, 24 render captures opened, 2026-11-18.
