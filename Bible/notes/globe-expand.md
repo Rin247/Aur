@@ -1,7 +1,7 @@
 # The globe's tile becomes a map: plan
 
-Status: P0 done (the audit); the engine's pick and the expansion that
-keeps the side landed. Next: P1's tool and the send, then P3's beach.
+Status: P0-P2 done; P1 landed with the World tab's "Expand tile" button.
+Only P3 is open, and it waits on the owner's beach tile.
 
 ## Goal
 
