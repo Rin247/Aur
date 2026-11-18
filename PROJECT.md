@@ -115,8 +115,16 @@ twenty-two PNGs.
 - **The engine can read a world map's tile and grow it into a map.**
   `pick_terrain` names the cell's terrain and the side its land is on, and
   the map generator keeps that side: the beach on the west stays on the
-  west. The tool that picks the tile, and the beach the field's tileset
-  still lacks, are the open parts.
+  west. The World tab's "Expand this tile" sends the pick to the map editor;
+  the field's own beach tile is still open (the owner chooses it).
+- **A map is seeded too.** `engine/aur/mapforge.*` makes a town, a cave or a
+  platformer room from a seed and brings the tiles it needs with their flags,
+  so a room's floor is solid without making the field's grass solid. The World
+  tab asks for one and the MCP's `map_generate` writes one into the project;
+  `seeded_platformer` is the shipped example.
+- **A scene can start on a named map.** `Game::startAt` begins on that map's own
+  spawn instead of the project's start map — how the playtest plays a generated
+  room (`Aur --map <id>`), and how the sweep captures it.
 - **The world map answers the game's weather.** The pick belongs to the
   engine (`weather_for_slot`): the runtime rolls it and so does the editor,
   so the day, the hour and the map's climate in the World header answer

@@ -41,6 +41,10 @@ headless Null only under RHI_POLICY_HEADLESS=1. See C:\Projects\POLICY.md.
   page name, the last line posted by a panel, project + saved/unsaved, RHI backend, theme mode
   and interface scale. `theme::postStatus` is the one channel; the Forge posts its preview and
   creation lines through it, and a page change clears the line so nothing stale survives a switch.
+- **A map is seeded and playable.** `engine/aur/mapforge.*` makes a town, a cave or a
+  platformer room with its own tiles; the MCP has `map_generate`, the World tab has
+  "Generate map…", and `Aur --map seeded_platformer` plays the shipped room. W-02 is
+  closed; W-01's pick and expand landed and only the field's beach tile is open.
 - **The Creature Forge was refactored to the owner's brief** (`Bible/notes/forge-brief.md`,
   moved into `Bible/notes/` from the project root, 2026-11-18): the 1,240-line `forge.cpp`
   became `engine/aur/forge/{SpeciesCatalog,CharacterRenderer,AssetGenerators}.cpp`, the
@@ -66,7 +70,6 @@ cd C:\Projects\Aur; py -3.15 tests\render_check.py
 
 - `Bible/notes/globe-view.md` — the globe's levels of detail and the sphere. **P1 landed** (the two levels, `TerrainLod` + `WorldTerrainPaint`); **P2 is next** (the grid on a UV sphere, the poles capped), and the third LOD level — a denser surface for the 3200% ceiling — is recorded as open.
 - `Bible/notes/globe-expand.md` — **W-01**: expand a world map tile into a map preserving coast direction.
-- `Bible/notes/map-generator.md` — **W-02**: procedural seed generator for field, cave, and platformer maps.
 - `Bible/notes/platformer.md` — **P-01**: P1–P3 landed and tested; P4 waits on a solid floor tile chosen by the owner.
 - `Bible/notes/Aur World Map Agent Work Packages.md` — WP0–WP3 landed. Next: WP4 (WorldSim hookup: temperature seeding, sim persistence) and WP6 cleanup. WP5 (globe view) needs WP4.
 - `Bible/notes/daw/plan.md` — the Music Studio DAW. P5 remainder closed; **P7a (the GM/GS instrument) is parked mid-wiring by owner decision 2026-11-11**, resume point in `Bible/notes/daw/gm-gs.md`. P2 close still needs the owner's GUI soak.

@@ -40,9 +40,6 @@
   tile on the world map, send it to the map editor, and grow it into a map
   that keeps the direction -- a beach on the west side stays on the west
   side. Plan at `Bible/notes/globe-expand.md`.
-- **A map seed generator** - the estate can seed a character, a creature,
-  an effect, clothing, a prop and a tile, but not a map: every field map
-  was made by hand. Plan at `Bible/notes/map-generator.md`.
 - **Qt desktop foundation** — Audit AIO/Vulkan behavior, legacy source/header layout, professional toolbars/settings/keybindings, and canonical `Aur` artifact identity; do not suffix its app name with Qt/desktop roles. Preserve the higher-priority active Aur queue.
 - **Implement SNES-style platformer games and metroidvanias** (plan
   `Bible/notes/platformer.md`; P1–P3 landed; P4 awaits owner floor tile selection):
@@ -52,6 +49,10 @@
 
 ## Recently closed (verified 2026-11-18)
 
+- **Map seed generator** (W-02, closed 2026-11-18): `engine/aur/mapforge.*` makes a town,
+  a cave or a platformer room from a seed and appends its tiles with flags; the World tab
+  asks for one and the MCP's `map_generate` writes one; `seeded_platformer` ships and the
+  playtest capture shows the hero on its floor (`Aur --map <id>`).
 - **Bottom context strip** (owner, 2026-11-18): a read-only strip under the pages shows the
   page, the last posted line, project + saved state, the RHI backend, theme mode and
   interface scale; panels post through `theme::postStatus`. Verified: build, ctest 7/7,
