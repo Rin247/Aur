@@ -1,6 +1,7 @@
 # The globe's levels of detail: plan
 
-Status: P0 done (the audit). Next: P1, the zoom's two levels.
+Status: P0 and P1 done. Next: P2, the sphere. The open LOD step is the
+third level -- a denser surface for the 3200% ceiling.
 
 ## Goal
 
@@ -44,8 +45,15 @@ than a flat sheet).
 ## Hazards found
 
 - **The HD surface is generated once, not per zoom.** A level of detail has to
-  choose between the generated surface and the coarse tiles; it cannot
-  regenerate the surface at every zoom.
+  choose between two cached pictures; it cannot regenerate at every zoom.
+- **Corrected in P1: an HD map has no `ground` layer.** The audit assumed the
+  coarse picture was the ground tiles; an HD world map has only `biomes`,
+  `elevation`, `moisture`, `temperature` and `terrain_overrides`. So the coarse
+  picture is the *same* terrain function at one pixel per tile
+  (`build_hd_surface(..., 1)`), not tiles.
+- **The detail pass is sub-tile geometry.** At one pixel per tile the waves,
+  rivers, foam and forest would be noise, so `build_hd_surface` draws them
+  only at a density of 4 or more.
 - **The crossover is where it goes wrong.** Too high and the coarse picture
   looks broken; too low and the far view costs what the close one does.
 - **A sphere pinches at the poles.** The longitude's tiles shrink to nothing
@@ -59,8 +67,9 @@ than a flat sheet).
 
 ```
 studio/world/TerrainLod.{hpp,cpp}    the crossover: which picture, at this zoom
+studio/world/WorldTerrainPaint.{hpp,cpp}  one level of terrain, drawn
 studio/world/GlobeView.{hpp,cpp}     the sphere: the projection, the poles
-studio/world/WorldMapCanvas.*        the zoom's two levels, and the globe view
+studio/world/WorldMapCanvas.*        the zoom's levels, and the globe view
 tests/test_terrain_lod.cpp           the crossover, without a widget
 ```
 
@@ -76,15 +85,19 @@ committed on its own.
 
 ### P1 The zoom's two levels
 
-- [ ] P1.1 The crossover: a screen measurement (pixels per tile) that picks
-  the HD surface above it and the coarse tiles below it.
-- [ ] P1.2 The renderer takes the zoom into account; the far view is the
-  coarse one.
-- [ ] P1.3 The test: the same map at two zooms renders through two levels,
-  and the crossover is where the test says it is.
+- [x] P1.1 The crossover: a screen measurement (pixels per tile) that picks
+  the HD surface above it and the coarse picture below it. The measurement is
+  the drawn width over the map's width, `kHdSurfacePixelsPerTile = 3.0`.
+- [x] P1.2 The renderer takes the zoom into account; the far view is the
+  coarse one. `WorldMapCanvas` builds and caches both pictures and
+  `WorldTerrainPaint` draws whichever was chosen.
+- [x] P1.3 The test: `tests/test_terrain_lod.cpp` pins the measurement, the
+  crossover on both sides, the "a map with no HD surface never draws one"
+  rule, and the two pictures' sizes.
 
-Acceptance: ctest green; zooming out of a map with an HD surface renders the
-coarse picture, and zooming in renders the HD one.
+Acceptance: ctest green (70 checks); zooming out of a map with an HD surface
+renders the coarse picture, and zooming in renders the HD one. Proved by
+`build/renders/world_1280x690_z1.0.png` (HD) and `..._z0.5.png` (coarse).
 
 ### P2 The sphere
 
@@ -116,7 +129,20 @@ Phase commits; revert to the tag `globe-lod-p1` for the level of detail and
   flat grid; the sphere is how the person looks at it. A sphere you could
   paint on would need the painting re-projected, and the map editor is not
   the place to do that.
-- **The HD surface stays generated once.** The level of detail chooses
-  between it and the coarse tiles; it does not regenerate it.
+- **Both pictures are generated once and cached.** The level of detail
+  chooses between them; it does not regenerate on a zoom change. Crossing
+  over is a cache lookup.
+- **The coarse picture is the same terrain at one pixel per tile**, not the
+  ground tiles: an HD world map has no ground layer, and the owner's picture is
+  the same place at 8-bit depth rather than a different rendering.
+- **The crossover is in logical screen pixels per tile, not physical.** The
+  camera and the fit are logical, so the rule is the same on every machine;
+  3.0 puts the fit (3.9 at the estate floor) on the HD side and the zoomed-out
+  view on the coarse side.
+- **Open: the third level.** The HD surface's own density is capped at 32 per
+  tile (22 for a 256x128 map, under the 16 Mpixel budget), so at the 3200%
+  ceiling a tile covers ~125 logical pixels and the surface is upsampled. A
+  denser picture for the visible region -- `build_hd_surface` already takes a
+  region -- is the next step, and it needs its own cache key.
 - **The 3200% ceiling is the owner's** (2026-11-12): 1600% is still tiny on
   a 16" 2560x1600 laptop.

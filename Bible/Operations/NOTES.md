@@ -559,3 +559,29 @@
   - Routed `ThemeManager`, `SharedAudio`, `MainWindow`, `RhiBackend` (`graphics/backend` in
     `{d3d12, vulkan}`), and `AppearanceDialog` through `AurSettings::instance()`. Pinned in
     `tests/test_settings.cpp`.
+
+## The globe's two levels of detail (2026-11-18, plan `Bible/notes/globe-view.md` P1)
+
+- **The crossover is a screen measurement, not a preference.** The drawn
+  width over the map's width is the screen pixels a tile covers;
+  `kHdSurfacePixelsPerTile = 3.0` picks the HD surface at or above it and the
+  coarse picture below. At the estate floor the fit is 3.9, so the default
+  view stays HD and the zoomed-out view goes coarse.
+- **An HD world map has no `ground` layer**, which the plan's audit missed.
+  Its layers are `biomes`, `elevation`, `moisture`, `temperature` and
+  `terrain_overrides`. The coarse picture is therefore the *same* terrain
+  function at one pixel per tile -- `build_hd_surface(map, project, QRect(), 1)`
+  -- not a tile layer. That is the owner's "8-bit picture of the same place".
+- **`build_hd_surface` takes a density now** (0 = its own, 32 or less under
+  the 16 Mpixel budget). The wave/river/foam/forest pass draws sub-tile
+  geometry, so it runs only at a density of 4 or more; below that it is noise.
+- **Both pictures are cached** (`surface_cache` and `coarse_cache`), so
+  crossing the crossover on a zoom change is a lookup, not a rebuild.
+- **The terrain painting moved out of the canvas**
+  (`studio/world/WorldTerrainPaint.{hpp,cpp}`), which took
+  `WorldMapCanvas.cpp` from 934 to 825 lines. `draw_terrain` takes a context
+  like the climate and weather overlays do.
+- **Open: the third level.** The HD surface is capped at 32 px/tile (22 for a
+  256x128 map), so at the 3200% ceiling a tile covers ~125 logical pixels and
+  the surface is upsampled. A denser picture for the visible region --
+  `build_hd_surface` already takes a region -- is the next step.
