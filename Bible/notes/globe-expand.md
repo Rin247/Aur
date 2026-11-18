@@ -98,11 +98,11 @@ committed on its own.
 
 ### P1 The pick and the send
 
-- [ ] P1.1 The world map's tool picks a tile and reports it: the
+- [x] P1.1 The world map's tool picks a tile and reports it: the
   terrain, the autotile it is a variant of, and the side the land is on.
-- [ ] P1.2 "Expand this tile" in the World tab sends the pick to the
+- [x] P1.2 "Expand this tile" in the World tab sends the pick to the
   map editor, which opens the map the expansion makes.
-- [ ] P1.3 The test: the pick of a coastal tile names the side, and the
+- [x] P1.3 The test: the pick of a coastal tile names the side, and the
   same tile always names the same side. **The engine's half landed**:
   `pick_terrain` reads the cell's autotile group and the side its land is
   on, and the test pins both.
