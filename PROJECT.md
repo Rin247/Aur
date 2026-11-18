@@ -126,6 +126,10 @@ twenty-two PNGs.
   markers -- western_harbor, eastern_capital and southern_ruins -- that
   pointed at places on an old seed. A new world seed has no entities at
   all, so they meant nothing; the spawn stays.
+- **The window has a bottom context strip** (`studio/theme/StatusStrip.{hpp,cpp}`): the page
+  name on the left, the last line a panel posted, and on the right the project and whether it
+  is saved, the RHI backend in use, the theme mode and the interface scale. It is read-only
+  context — no buttons — and it is how a page says what it just did (`theme::postStatus`).
 - **The Character Forge draws at native size and shows a turnaround.** The renderer
   writes a real 48×64 pixel grid — no 3/2 or 4/3 coordinate squeeze — and the preview
   shows the front, right, back and left views side by side, or one chosen direction,
@@ -216,6 +220,10 @@ twenty-two PNGs.
 - **The race catalog is data, not an if-chain** (`RaceInfo` + `character_race_catalog()`): the
   six Mortal and nine Supernatural peoples, their labels, and whether an affinity is forced. The
   combo, the validator and the seeded spec all read the same table.
+- **The bottom strip is context, not a second control cluster** (2026-11-18). It shows the page,
+  the last posted line, the project's saved state, the backend, the theme mode and the scale;
+  anything interactive would break `DESIGN.md` §13's one-cluster rule. A page change clears the
+  line so a stale message never describes the wrong page; a panel reposts on `showEvent`.
 
 ## Durable findings
 

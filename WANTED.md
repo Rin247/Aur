@@ -52,6 +52,10 @@
 
 ## Recently closed (verified 2026-11-18)
 
+- **Bottom context strip** (owner, 2026-11-18): a read-only strip under the pages shows the
+  page, the last posted line, project + saved state, the RHI backend, theme mode and
+  interface scale; panels post through `theme::postStatus`. Verified: build, ctest 7/7,
+  conformance 9/9, 24 render captures opened.
 - **Creature Forge refactor** (owner brief `Bible/notes/forge-brief.md`, 2026-11-18):
   `engine/aur/forge.cpp` (1,240 lines) split into `forge/SpeciesCatalog`,
   `forge/CharacterRenderer` and `forge/AssetGenerators`; the character renderer

@@ -24,7 +24,6 @@ class CreatureForgePanel : public QWidget {
     CharacterSheetWidget* previewWidget = nullptr;
 
     QSpinBox* seedSpin = nullptr;
-    QLabel* statusLabel = nullptr;
     QTabWidget* modeTabs = nullptr;
 
     QLineEdit* nameEdit = nullptr;
@@ -71,6 +70,7 @@ private:
     QWidget* buildTileTab();
     void buildColorSwatches(QWidget* body, QVBoxLayout* layout);
     void refreshColorSwatches();
+    void setStatus(const QString& text);
     void populateRaceCombo();
     void refreshVariantCombo();
     void recompilePreview();
@@ -81,6 +81,10 @@ private:
     void createProp();
     void createTile();
     void refreshTilesets();
+    QString previewStatusText() const;
+
+protected:
+    void showEvent(QShowEvent* event) override;
 };
 
 } // namespace aur

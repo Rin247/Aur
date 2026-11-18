@@ -212,6 +212,7 @@ add_executable(aur_studio
     studio/theme/AurStyle.cpp
     studio/theme/AurStylePaint.cpp
     studio/theme/ThemeIcons.cpp
+    studio/theme/StatusStrip.cpp
     studio/theme/AppearanceDialog.cpp
     studio/theme/AppearanceDialog.hpp
     studio/theme/ResponsiveSplitter.cpp

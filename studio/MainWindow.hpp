@@ -18,6 +18,10 @@ namespace aur {
 class SpriteEditorPanel;
 class SharedAudio;
 
+namespace theme {
+class StatusStrip;
+}
+
 class MainWindow : public QMainWindow {
     Q_OBJECT
     Project project;
@@ -28,6 +32,7 @@ class MainWindow : public QMainWindow {
     GameView* gameView = nullptr;
     SharedAudio* sharedAudio = nullptr;
     QLabel* chromeTitle = nullptr;
+    theme::StatusStrip* statusStrip = nullptr;
     QAction* saveAction = nullptr;
     QAction* reloadAction = nullptr;
     QAction* playAction = nullptr;
@@ -38,6 +43,8 @@ class MainWindow : public QMainWindow {
     void refreshProjectPanels();
     std::string projectSignature() const;
     void updateStudioTitle();
+    // Page, project path and saved state, for the bottom strip.
+    void updateStatusContext();
     // Adds a page to the stack and a tab for it.
     void addTab(QWidget* page, const QString& title);
 
@@ -46,9 +53,8 @@ public:
     // Restores the window's geometry and page from the data root. A caller
     // that asks for a size or a page passes false for it.
     void restoreWindowState(bool restore_geometry = true, bool restore_tab = true);
-    // Whether the window's state is written when it closes. The render
-    // sweep turns it off, so a capture run does not overwrite the state the
-    // person left behind.
+    // Whether the window's state is written when it closes; the render sweep
+    // turns it off so a capture cannot overwrite the person's state.
     void setSaveWindowState(bool enabled) { save_window_state = enabled; }
     // Selects a tab by title or index. Returns false when there is no such
     // tab, so a script can say so instead of capturing the wrong page.

@@ -15,6 +15,7 @@
 #include "theme/AppearanceDialog.hpp"
 #include "theme/ThemeIcons.hpp"
 #include "theme/ThemeManager.hpp"
+#include "theme/StatusStrip.hpp"
 #include <QLabel>
 #include <QApplication>
 #include <QSettings>
@@ -26,6 +27,7 @@
 #include <QFileDialog>
 #include <QStyle>
 #include <QStatusBar>
+#include <QVBoxLayout>
 #include <functional>
 
 namespace aur {
@@ -188,6 +190,29 @@ MainWindow::MainWindow(const std::string& project_path, QWidget* parent)
 
     setCentralWidget(tabStack);
 
+    statusStrip = new theme::StatusStrip(this);
+    auto* workspace = new QWidget(this);
+    auto* workspaceLayout = new QVBoxLayout(workspace);
+    workspaceLayout->setContentsMargins(0, 0, 0, 0);
+    workspaceLayout->setSpacing(0);
+    workspaceLayout->addWidget(tabStack, 1);
+    workspaceLayout->addWidget(statusStrip);
+    setCentralWidget(workspace);
+
+    connect(tabs, &QTabBar::currentChanged, this, [this](int index) {
+        if (statusStrip) {
+            statusStrip->setPage(tabs->tabText(index));
+            statusStrip->setMessage(QString());
+        }
+        updateStatusContext();
+    });
+    connect(statusStrip, &theme::StatusStrip::messagePosted, this,
+            [this]() { updateStatusContext(); });
+    connect(&theme::ThemeManager::instance(), &theme::ThemeManager::changed,
+            statusStrip, &theme::StatusStrip::refreshEnvironment);
+    statusStrip->setPage(tabs->count() > 0 ? tabs->tabText(tabs->currentIndex()) : QString());
+    updateStatusContext();
+
     // Keyboard Shortcuts (F5 Play; Ctrl+S is the File-menu action)
     QShortcut* f5Shortcut = new QShortcut(QKeySequence(Qt::Key_F5), this);
     connect(f5Shortcut, &QShortcut::activated, this, &MainWindow::playProject);
@@ -219,13 +244,19 @@ MainWindow::MainWindow(const std::string& project_path, QWidget* parent)
         if (tabs && tabs->count() > 0)
             tabs->setCurrentIndex((tabs->currentIndex() - 1 + tabs->count()) % tabs->count());
     });
+
+    // Pages normalise the project while they build, so the state on disk is
+    // the baseline: the strip starts "saved" and only an edit marks it unsaved.
+    saved_signature = projectSignature();
+    updateStatusContext();
 }
 
 void MainWindow::saveProject() {
     try {
         project.save(project_path);
         saved_signature = projectSignature();
-        statusBar()->showMessage("Project saved", 3000);
+        if (statusStrip) statusStrip->setMessage("Project saved");
+        updateStatusContext();
     } catch (const std::exception& e) {
         QMessageBox::critical(this, "Save Error", QString("Failed to save project: ") + e.what());
     }
@@ -261,7 +292,8 @@ void MainWindow::openProject() {
         saved_signature = projectSignature();
         refreshProjectPanels();
         updateStudioTitle();
-        statusBar()->showMessage("Opened " + selected_path, 5000);
+        if (statusStrip) statusStrip->setMessage("Opened " + selected_path);
+        updateStatusContext();
     } catch (const std::exception& error) {
         QMessageBox::critical(this, "Open Project Error",
                               QString("Could not open project: ") + error.what());
@@ -294,6 +326,12 @@ void MainWindow::updateStudioTitle() {
     const QString title = "Aur";
     setWindowTitle(title);
     if (chromeTitle) chromeTitle->setText(title);
+}
+
+void MainWindow::updateStatusContext() {
+    if (!statusStrip) return;
+    statusStrip->setProject(QString::fromStdString(project_path),
+                            projectSignature() != saved_signature);
 }
 
 // Window state (the last open tab) lives in ~/.Aur; window geometry is not

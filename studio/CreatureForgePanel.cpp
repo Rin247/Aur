@@ -1,6 +1,7 @@
 #include "CreatureForgePanel.hpp"
 #include "forge/ForgeAssetOps.hpp"
 #include "theme/LabelRoles.hpp"
+#include "theme/StatusStrip.hpp"
 #include "theme/ResponsiveSplitter.hpp"
 #include "aur/gfx.hpp"
 
@@ -46,11 +47,6 @@ CreatureForgePanel::CreatureForgePanel(Project* p, QWidget* parent)
     tabs->addTab(buildTileTab(), "Tiles");
     modeTabs = tabs;
     leftLayout->addWidget(tabs, 1);
-
-    statusLabel = new QLabel("Generated assets are project-backed; use Ctrl+S to save.", this);
-    statusLabel->setWordWrap(true);
-    theme::dimLabel(statusLabel);
-    leftLayout->addWidget(statusLabel);
 
     auto* rightPane = new QWidget(this);
     auto* rightLayout = new QVBoxLayout(rightPane);
@@ -112,6 +108,10 @@ void CreatureForgePanel::selectPageTab(const QString& name) {
     }
 }
 
+void CreatureForgePanel::setStatus(const QString& text) {
+    theme::postStatus(text);
+}
+
 void CreatureForgePanel::generateRandomNPC() {
     if (!raceCombo) return;
     const std::string race = raceCombo->currentData().toString().toStdString();
@@ -130,7 +130,7 @@ void CreatureForgePanel::generateRandomNPC() {
             entityRoleCombo->currentData().toString().toStdString(),
             variantCombo->currentData().toString().toStdString());
     } catch (const std::exception& error) {
-        statusLabel->setText(QString("Generation failed: %1").arg(error.what()));
+        setStatus(QString("Generation failed: %1").arg(error.what()));
         return;
     }
     previewSpec["parts"]["race"] = race;
@@ -150,17 +150,26 @@ void CreatureForgePanel::recompilePreview() {
     previewGraphic = compile_character(previewSpec, project ? Json(project->parts) : Json{});
     if (previewWidget) previewWidget->setGraphic(previewGraphic);
     refreshColorSwatches();
-    statusLabel->setText(QString("Preview ready \u00b7 seed %1 \u00b7 %2 \u00b7 %3")
-                             .arg(seedSpin->value())
-                             .arg(raceCombo->currentText())
-                             .arg(ageCombo->currentText()));
+    setStatus(previewStatusText());
+}
+
+QString CreatureForgePanel::previewStatusText() const {
+    return QString("Preview ready \u00b7 seed %1 \u00b7 %2 \u00b7 %3")
+        .arg(seedSpin->value())
+        .arg(raceCombo->currentText())
+        .arg(ageCombo->currentText());
+}
+
+void CreatureForgePanel::showEvent(QShowEvent* event) {
+    QWidget::showEvent(event);
+    if (!previewSpec.is_null()) setStatus(previewStatusText());
 }
 
 void CreatureForgePanel::applyPreset(const std::string& preset_name) {
     generateRandomNPC();
     forge::apply_role_preset(previewSpec, preset_name);
     recompilePreview();
-    statusLabel->setText(QString("%1 preview \u00b7 seed %2")
+    setStatus(QString("%1 preview \u00b7 seed %2")
                              .arg(QString::fromStdString(preset_name))
                              .arg(seedSpin->value()));
 }
@@ -189,7 +198,7 @@ void CreatureForgePanel::createNpc() {
     });
     project->graphics[id] = compile_character(previewSpec, project->parts);
     project->invalidate(id);
-    statusLabel->setText(QString("Created %1 (%2) \u00b7 seed %3 \u00b7 Ctrl+S to save")
+    setStatus(QString("Created %1 (%2) \u00b7 seed %3 \u00b7 Ctrl+S to save")
                              .arg(QString::fromStdString(id))
                              .arg(entityRoleCombo->currentText())
                              .arg(seedSpin->value()));
@@ -224,7 +233,7 @@ void CreatureForgePanel::createCreature() {
         });
         project->invalidate(id);
         previewWidget->setGraphic(graphic);
-        statusLabel->setText(QString("Created %1 \u00b7 seed %2 \u00b7 Ctrl+S to save")
+        setStatus(QString("Created %1 \u00b7 seed %2 \u00b7 Ctrl+S to save")
                                  .arg(QString::fromStdString(label)).arg(seedSpin->value()));
     } catch (const std::exception& error) {
         QMessageBox::warning(this, "Creature generation failed", QString::fromStdString(error.what()));
@@ -242,7 +251,7 @@ void CreatureForgePanel::createEffect() {
         project->graphics[id] = graphic;
         project->invalidate(id);
         previewWidget->setGraphic(graphic);
-        statusLabel->setText(QString("Created animated %1 \u00b7 seed %2 \u00b7 Ctrl+S to save")
+        setStatus(QString("Created animated %1 \u00b7 seed %2 \u00b7 Ctrl+S to save")
                                  .arg(QString::fromStdString(kind)).arg(seedSpin->value()));
     } catch (const std::exception& error) {
         QMessageBox::warning(this, "Effect generation failed", QString::fromStdString(error.what()));
@@ -265,7 +274,7 @@ void CreatureForgePanel::createClothing() {
         };
         project->invalidate(id);
         previewWidget->setGraphic(graphic);
-        statusLabel->setText(QString("Drew %1 \u00b7 editable 32\u00d732 pixel graphic \u00b7 seed %2 \u00b7 Ctrl+S to save")
+        setStatus(QString("Drew %1 \u00b7 editable 32\u00d732 pixel graphic \u00b7 seed %2 \u00b7 Ctrl+S to save")
                                  .arg(QString::fromStdString(id)).arg(seed));
     } catch (const std::exception& error) {
         QMessageBox::warning(this, "Clothing drawing failed", QString::fromStdString(error.what()));
@@ -287,7 +296,7 @@ void CreatureForgePanel::createProp() {
         };
         project->invalidate(id);
         previewWidget->setGraphic(project->graphics[id]);
-        statusLabel->setText(QString("Drew prop %1 \u00b7 seed %2 \u00b7 Ctrl+S to save")
+        setStatus(QString("Drew prop %1 \u00b7 seed %2 \u00b7 Ctrl+S to save")
                                  .arg(QString::fromStdString(id)).arg(seed));
     } catch (const std::exception& error) {
         QMessageBox::warning(this, "Prop drawing failed", QString::fromStdString(error.what()));
@@ -324,7 +333,7 @@ void CreatureForgePanel::createTile() {
         Json graphic = new_graphic(tile_size, tile_size, palette, {0, 0});
         graphic["frames"]["0"] = tile["rows"];
         previewWidget->setGraphic(graphic);
-        statusLabel->setText(QString("Added %1 tile #%2 \u00b7 seed %3 \u00b7 Ctrl+S to save")
+        setStatus(QString("Added %1 tile #%2 \u00b7 seed %3 \u00b7 Ctrl+S to save")
                                  .arg(QString::fromStdString(kind)).arg(index).arg(seed));
     } catch (const std::exception& error) {
         QMessageBox::warning(this, "Tile generation failed", QString::fromStdString(error.what()));

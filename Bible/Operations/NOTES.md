@@ -1,5 +1,17 @@
 # Operations Notes
 
+## Bottom context strip (2026-11-18)
+
+- New `studio/theme/StatusStrip.{hpp,cpp}` sits under the page stack: page name, posted line,
+  project + saved state, backend, theme mode, interface scale. Read-only by design — `DESIGN.md`
+  §13 keeps one control cluster, and the strip is context.
+- `theme::postStatus` is the shared channel; the Forge's own status label was removed in favour
+  of it. A page change clears the line and the Forge reposts on `showEvent`, so a message never
+  describes the page you left.
+- The saved/unsaved flag is `projectSignature()` against a baseline taken at the end of the
+  window's constructor: the pages normalise the project while they build, so the on-disk state is
+  the baseline and the studio no longer reports "unsaved" the second it opens.
+
 ## Creature Forge refactor (2026-11-18)
 
 - `engine/aur/forge.cpp` (1,240 lines) split into `forge/SpeciesCatalog.cpp`,

@@ -37,6 +37,10 @@ headless Null only under RHI_POLICY_HEADLESS=1. See C:\Projects\POLICY.md.
   Open: the HD surface is capped at 32 px/tile (22 for a 256x128 map), so at the
   3200% ceiling it is upsampled; a denser picture for the visible region is the
   third level.
+- **The window has a bottom context strip** (`studio/theme/StatusStrip.{hpp,cpp}`, 2026-11-18):
+  page name, the last line posted by a panel, project + saved/unsaved, RHI backend, theme mode
+  and interface scale. `theme::postStatus` is the one channel; the Forge posts its preview and
+  creation lines through it, and a page change clears the line so nothing stale survives a switch.
 - **The Creature Forge was refactored to the owner's brief** (`Bible/notes/forge-brief.md`,
   moved into `Bible/notes/` from the project root, 2026-11-18): the 1,240-line `forge.cpp`
   became `engine/aur/forge/{SpeciesCatalog,CharacterRenderer,AssetGenerators}.cpp`, the
