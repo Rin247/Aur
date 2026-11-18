@@ -2,7 +2,9 @@
 #include "aur/forge.hpp"
 #include "aur/project.hpp"
 
+#include <algorithm>
 #include <array>
+#include <string>
 #include <utility>
 
 void test_forge_generators() {
@@ -141,6 +143,76 @@ void test_forge_generators() {
     ASSERT(top_pixel(elf_teen["frames"]["down_0"]) >
            top_pixel(elf["frames"]["down_0"]));
     ASSERT(elf_child["w"].as_int() == elf_teen["w"].as_int());
+
+    const auto catalog = aur::character_race_catalog();
+    ASSERT(catalog.size() == 15);
+    int mortal_races = 0;
+    int supernatural_races = 0;
+    int affinity_races = 0;
+    for (const aur::RaceInfo& info : catalog) {
+        ASSERT(!info.id.empty());
+        ASSERT(!info.label.empty());
+        if (info.group == aur::RaceGroup::Mortal) ++mortal_races;
+        else ++supernatural_races;
+        if (info.uses_affinity) ++affinity_races;
+    }
+    ASSERT(mortal_races == 6);
+    ASSERT(supernatural_races == 9);
+    ASSERT(affinity_races == 7);
+    ASSERT(aur::alignment_options().size() == 7);
+    ASSERT(aur::affinity_options().size() == 8);
+    ASSERT(aur::entity_role_options().size() == 3);
+    ASSERT(aur::hair_style_options().size() == 3);
+    ASSERT(aur::accessory_options().size() == 4);
+
+    for (const std::string& direction : {"down", "down_right", "right", "up_right",
+                                         "up", "up_left", "left", "down_left"}) {
+        const std::string name = direction + "_0";
+        ASSERT(character["frames"].contains(name));
+        ASSERT(character["frames"][name].as_array().size() == 64);
+        ASSERT(character["frames"][name][0].as_string().size() == 48);
+    }
+    const auto mirrored_rows = [](const aur::Json& frame) {
+        aur::JsonArray rows;
+        for (const aur::Json& row : frame.as_array()) {
+            std::string line = row.as_string();
+            std::reverse(line.begin(), line.end());
+            rows.emplace_back(line);
+        }
+        return aur::Json(rows);
+    };
+    ASSERT(aur::dump_json(mirrored_rows(character["frames"]["right_0"])) ==
+           aur::dump_json(character["frames"]["left_0"]));
+    ASSERT(aur::dump_json(mirrored_rows(character["frames"]["down_right_0"])) ==
+           aur::dump_json(character["frames"]["down_left_0"]));
+
+    const auto frame_of = [](const aur::Json& spec) {
+        return aur::dump_json(aur::compile_character(spec)["frames"]["down_0"]);
+    };
+    aur::Json wolf_spec = aur::random_character_spec(
+        777, "Wolf", "adult", "unspecified", "androgynous", "beastkin",
+        "none", "unaligned", "npc", "wolf");
+    aur::Json cat_spec = wolf_spec;
+    cat_spec["parts"]["variant"] = "cat";
+    ASSERT(frame_of(wolf_spec) != frame_of(cat_spec));
+    aur::Json villager_spec = elf_spec;
+    villager_spec["parts"]["role"] = "villager";
+    aur::Json mage_spec = elf_spec;
+    mage_spec["parts"]["role"] = "mage";
+    aur::Json guard_spec = elf_spec;
+    guard_spec["parts"]["role"] = "guard";
+    ASSERT(frame_of(mage_spec) != frame_of(guard_spec));
+    ASSERT(frame_of(mage_spec) != frame_of(villager_spec));
+    ASSERT(frame_of(guard_spec) != frame_of(villager_spec));
+    aur::Json long_hair_spec = elf_spec;
+    long_hair_spec["parts"]["hair_style"] = "long";
+    ASSERT(frame_of(long_hair_spec) != frame_of(elf_spec));
+    aur::Json scarf_spec = elf_spec;
+    scarf_spec["parts"]["accessory"] = aur::JsonArray{"scarf"};
+    ASSERT(frame_of(scarf_spec) != frame_of(elf_spec));
+    aur::Json circlet_spec = elf_spec;
+    circlet_spec["parts"]["accessory"] = aur::JsonArray{"circlet"};
+    ASSERT(frame_of(circlet_spec) != frame_of(scarf_spec));
 
     const aur::Json cat = aur::generate_creature_graphic("cat", 27);
     ASSERT(cat["w"].as_int() == 24);
