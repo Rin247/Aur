@@ -1,6 +1,7 @@
 #include "mcp.hpp"
 #include "world_topology.hpp"
 #include "forge.hpp"
+#include "mapforge.hpp"
 
 #include <cctype>
 #include <cmath>
@@ -69,6 +70,15 @@ Json tools_list() {
     add("maps_list", "List project maps with dimensions, kind, and tileset.", {}, {});
     add("map_get", "Read a complete map, including layers and location/exit entities.",
         {{"map_id", string_property("Stable map identifier.")}}, required({"map_id"}));
+    add("map_generate", "Generate a seeded map (town, cave or platformer room) and append the tiles it needs.",
+        {{"map_id", string_property("Stable map identifier.")},
+         {"name", string_property("Display name (defaults to the kind and the seed).")},
+         {"kind", string_property("town, cave, or platformer.")},
+         {"seed", integer_property("Deterministic generation seed.", -2147483647)},
+         {"width", integer_property("Width in tiles, 8-128 (default 40).", 8, 128)},
+         {"height", integer_property("Height in tiles, 8-96 (default 24).", 8, 96)},
+         {"tileset_id", string_property("Tileset to append the map's tiles to (default terra).")}},
+        required({"map_id", "kind", "seed"}));
 
     add("biomes_list", "List project biome definitions with climate, tileset, base tile, and editor color.", {}, {});
     add("biome_put", "Create or replace a biome definition. The tileset and base tile must exist in the project.",
@@ -547,6 +557,52 @@ Json execute_tool(Project& project, const std::string& name, const Json& args, b
         Json result = make_object();
         result["map_id"] = map_id;
         result["changed_cells"] = static_cast<int>(edits.size());
+        return result;
+    }
+    if (name == "map_generate") {
+        const std::string id = require_string(args, "map_id");
+        if (!valid_id(id)) throw std::runtime_error("Map identifier must be letters, numbers, _ or -.");
+        if (project.maps.contains(id)) throw std::runtime_error("Map already exists: " + id);
+        const std::string kind_name = require_string(args, "kind");
+        MapKind kind = MapKind::Town;
+        if (!mapKindFromName(kind_name, kind)) {
+            throw std::runtime_error("Unknown map kind: " + kind_name);
+        }
+        const int seed = require_integer(args, "seed");
+        const int width = args.contains("width") ? require_integer(args, "width") : 40;
+        const int height = args.contains("height") ? require_integer(args, "height") : 24;
+        const std::string tileset_id = args.contains("tileset_id")
+            ? require_string(args, "tileset_id") : "terra";
+        auto tileset_it = project.tilesets.find(tileset_id);
+        if (tileset_it == project.tilesets.end()) {
+            throw std::runtime_error("Tileset not found: " + tileset_id);
+        }
+        Json& tileset = tileset_it->second;
+        if (!tileset["tiles"].is_array() || !tileset["palettes"].is_array() ||
+            tileset["palettes"].as_array().empty()) {
+            throw std::runtime_error("Tileset must have tiles and at least one palette bank.");
+        }
+        const std::string display_name = args.contains("name")
+            ? require_string(args, "name")
+            : mapKindName(kind) + " " + std::to_string(seed);
+        auto& tiles = tileset["tiles"].as_array();
+        const int first_tile = static_cast<int>(tiles.size());
+        const int tile_size = tileset_tile_size(tileset);
+        const GeneratedMap generated = generate_map_asset(kind, seed, width, height, tile_size,
+                                                          first_tile, id, display_name);
+        for (const Json& tile : generated.tiles) {
+            validate_tile(tile, tile_size, tileset["palettes"].as_array().size());
+            tiles.push_back(tile);
+        }
+        project.maps[id] = generated.map;
+        changed = true;
+        Json result = make_object();
+        result["map_id"] = id;
+        result["name"] = display_name;
+        result["kind"] = mapKindName(kind);
+        result["mode"] = generated.map["mode"];
+        result["first_tile_index"] = first_tile;
+        result["tiles_added"] = static_cast<int>(generated.tiles.size());
         return result;
     }
     if (name == "world_generate") {

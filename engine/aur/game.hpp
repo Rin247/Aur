@@ -117,6 +117,8 @@ public:
 
     void update(double dt, InputState& inp);
     void draw(Renderer& r);
+    // Starts on a named map instead of the project's start map.
+    void startAt(const std::string& map_id);
     void travel(const std::string& map_id, const std::string& spawn, const std::vector<int>& pos, const std::string& dir, const std::string& effect = "fade");
     void refreshProjectSettings();
 

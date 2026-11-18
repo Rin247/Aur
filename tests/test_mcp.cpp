@@ -87,6 +87,8 @@ void test_mcp_server() {
     input << R"({"jsonrpc":"2.0","id":21,"method":"tools/call","params":{"name":"biome_apply","arguments":{"map_id":"new_world","edits":[{"x":-1,"y":2,"biome_id":"coastal_mist"}]}}})" << '\n';
     input << R"({"jsonrpc":"2.0","id":22,"method":"tools/call","params":{"name":"biome_apply","arguments":{"map_id":"new_world","edits":[{"x":24,"y":2,"biome_id":"coastal_mist"}]}}})" << '\n';
     input << R"({"jsonrpc":"2.0","id":23,"method":"tools/call","params":{"name":"biome_apply","arguments":{"map_id":"new_world","edits":[{"x":0,"y":-1,"biome_id":"coastal_mist"}]}}})" << '\n';
+    input << R"({"jsonrpc":"2.0","id":24,"method":"tools/call","params":{"name":"map_generate","arguments":{"map_id":"seeded_room","kind":"platformer","seed":4242,"width":32,"height":18,"tileset_id":"world"}}})" << '\n';
+
 
     std::stringstream output;
     aur::run_mcp_server(project, input, output);
@@ -94,7 +96,7 @@ void test_mcp_server() {
     std::vector<aur::Json> responses;
     std::string line;
     while (std::getline(output, line)) responses.push_back(aur::parse_json(line));
-    ASSERT(responses.size() == 23);
+    ASSERT(responses.size() == 24);
     ASSERT(responses[0]["result"]["protocolVersion"].as_string() == "2024-11-05");
     ASSERT(responses[1]["result"]["tools"].as_array().size() >= 10);
     ASSERT(!responses[2]["result"]["isError"].as_bool());
@@ -118,6 +120,7 @@ void test_mcp_server() {
     ASSERT(!responses[20]["result"]["isError"].as_bool());
     ASSERT(!responses[21]["result"]["isError"].as_bool());
     ASSERT(responses[22]["result"]["isError"].as_bool());
+    ASSERT(!responses[23]["result"]["isError"].as_bool());
     bool world_generation_schema_has_dimension_limits = false;
     for (const aur::Json& tool : responses[1]["result"]["tools"].as_array()) {
         if (tool["name"].as_string() != "world_generate") continue;
@@ -159,6 +162,14 @@ void test_mcp_server() {
     ASSERT(saved.graphics.at("child_guide")["frames"].contains("down_left_0"));
     ASSERT(saved.db.at("enemies")["house_cat"]["pet"].as_bool());
     ASSERT(saved.graphics.at("healing_spark")["anims"].contains("play"));
-    ASSERT(saved.tilesets.at("world")["tiles"].as_array().size() == 9);
+    ASSERT(saved.tilesets.at("world")["tiles"].as_array().size() == 13);
     ASSERT(saved.tilesets.at("world")["tiles"][8]["name"].as_string() == "grass_17");
+    ASSERT(saved.maps.contains("seeded_room"));
+    ASSERT(saved.maps.at("seeded_room")["mode"].as_string() == "platformer");
+    ASSERT(saved.maps.at("seeded_room")["w"].as_int() == 32);
+    ASSERT(saved.maps.at("seeded_room")["h"].as_int() == 18);
+    const aur::Json& map_tiles = saved.tilesets.at("world")["tiles"];
+    ASSERT(map_tiles.as_array().size() == 13);
+    ASSERT((map_tiles[11]["flags"].as_int() & 1) == 1);
+    ASSERT(map_tiles[12]["name"].as_string().find("_platform") != std::string::npos);
 }

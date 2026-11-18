@@ -109,6 +109,24 @@ void Game::refreshProjectSettings() {
     }
 }
 
+void Game::startAt(const std::string& map_id) {
+    if (!project || !project->maps.contains(map_id)) return;
+    started = true;
+    // Start on the map's own spawn, so a generated room begins on its floor.
+    std::string spawn;
+    const Json& entities = project->maps[map_id]["entities"];
+    if (entities.is_array()) {
+        for (const Json& entity : entities.as_array()) {
+            if (entity.is_object() && entity.contains("type") &&
+                entity["type"].as_string() == "spawn" && entity.contains("id")) {
+                spawn = entity["id"].as_string();
+                break;
+            }
+        }
+    }
+    travel(map_id, spawn, {}, std::string());
+}
+
 void Game::travel(const std::string& map_id, const std::string& spawn, const std::vector<int>& pos, const std::string& dir, const std::string& effect) {
     if (!project || !project->maps.contains(map_id)) return;
     this->map_id = map_id;

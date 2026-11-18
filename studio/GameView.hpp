@@ -39,6 +39,8 @@ public:
     void loadProject(const std::string& project_path);
     void setProject(const Project& source);
     void syncProject(const Project& source);
+    // Plays a named map, for the render sweep and the world tab's hand-off.
+    void setMap(const std::string& map_id);
     void openDebugMenu();
     // Plays the map's song, for the chrome's play button.
     void setSound(bool on);

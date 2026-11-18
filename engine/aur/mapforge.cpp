@@ -124,6 +124,7 @@ namespace aur
         const int platform_tile = first_tile_index + 3;
 
         Json ground = flatTile(name + "_ground", 2, tile_size);
+        ground["flags"] = 0;
         Json wall = flatTile(name + "_wall", 3, tile_size);
         wall["flags"] = SOLID;
         Json floor = flatTile(name + "_floor", 3, tile_size);
@@ -157,9 +158,7 @@ namespace aur
 
         if (pick && !pick->group.empty())
         {
-            // The picked tile's land is on these sides, and the expansion
-            // keeps them: the beach stays on the west if it was on the
-            // west.
+            // The land keeps the sides the pick named: a west beach stays west.
             const int land = pick->land_mask;
             for (int y = 0; y < height; ++y)
             {

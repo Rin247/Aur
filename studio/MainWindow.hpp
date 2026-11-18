@@ -68,6 +68,8 @@ public:
     void startPreview();
     // Shows one of the current page's own tabs, for the render sweep.
     void setSubTab(const QString &name);
+    // Opens a map in the playtest, for the render sweep.
+    void setPlaytestMap(const QString &map_id);
 
 public slots:
     void playProject();

@@ -20,6 +20,7 @@ int main(int argc, char* argv[]) {
     QString project_path;
     QString tab_name;
     QString sub_tab_name;
+    QString map_id;
     QString theme_mode;
     qreal zoom_factor = 0.0;
     bool sprite_mode = false;
@@ -35,6 +36,8 @@ int main(int argc, char* argv[]) {
             zoom_factor = QString::fromLocal8Bit(argv[++i]).toDouble();
         } else if (arg == "--sub-tab" && i + 1 < argc) {
             sub_tab_name = QString::fromLocal8Bit(argv[++i]);
+        } else if (arg == "--map" && i + 1 < argc) {
+            map_id = QString::fromLocal8Bit(argv[++i]);
         } else if (arg == "--theme" && i + 1 < argc) {
             theme_mode = QString::fromLocal8Bit(argv[++i]);
         } else if (arg == "--sprite") {
@@ -82,6 +85,7 @@ int main(int argc, char* argv[]) {
     if (!tab_name.isEmpty() && !window.selectTab(tab_name))
         qWarning("Aur: no tab named '%s'", qPrintable(tab_name));
     if (!sub_tab_name.isEmpty()) window.setSubTab(sub_tab_name);
+    if (!map_id.isEmpty()) window.setPlaytestMap(map_id);
     if (sprite_mode) window.setSpriteMode(true);
     if (window_width > 0 && window_height > 0) {
         window.resize(window_width, window_height);

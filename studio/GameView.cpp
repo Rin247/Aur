@@ -35,6 +35,12 @@ GameView::GameView(const std::string& project_path, QWidget* parent, SharedAudio
     timer.start(16);
 }
 
+void GameView::setMap(const std::string& map_id) {
+    if (!project.maps.contains(map_id)) return;
+    game.startAt(map_id);
+    update();
+}
+
 void GameView::buildAudioOverlay() {
     audioOverlay = new theme::CardFrame(this);
     audioOverlay->setObjectName("playtestAudio");

@@ -328,6 +328,10 @@ void MainWindow::updateStudioTitle() {
     if (chromeTitle) chromeTitle->setText(title);
 }
 
+void MainWindow::setPlaytestMap(const QString& map_id) {
+    if (gameView) gameView->setMap(map_id.toStdString());
+}
+
 void MainWindow::updateStatusContext() {
     if (!statusStrip) return;
     statusStrip->setProject(QString::fromStdString(project_path),
