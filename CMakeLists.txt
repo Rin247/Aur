@@ -23,7 +23,9 @@ add_library(aur_engine STATIC
     engine/aur/camera.cpp
     engine/aur/camera.hpp
     engine/aur/clock.cpp
-    engine/aur/forge.cpp
+    engine/aur/forge/AssetGenerators.cpp
+    engine/aur/forge/CharacterRenderer.cpp
+    engine/aur/forge/SpeciesCatalog.cpp
     engine/aur/mapforge.cpp
     engine/aur/mapforge.hpp
     engine/aur/worldgen.cpp
@@ -338,3 +340,20 @@ add_test(NAME SynthFxTests COMMAND synth_fx_tests)
 add_executable(fx_effect_tests tests/test_fx_effects.cpp)
 target_link_libraries(fx_effect_tests PRIVATE aur_engine)
 add_test(NAME FxEffectTests COMMAND fx_effect_tests)
+
+if(WIN32)
+    add_custom_command(TARGET aur_studio PRE_LINK
+        COMMAND ${CMAKE_COMMAND}
+            -D EXE_NAME=$<TARGET_FILE_NAME:aur_studio>
+            -P ${CMAKE_SOURCE_DIR}/cmake/KillRunningExeForBuild.cmake
+        COMMENT "Stopping running aur_studio if open, so the link can replace it"
+        VERBATIM
+    )
+    add_custom_command(TARGET aur_game PRE_LINK
+        COMMAND ${CMAKE_COMMAND}
+            -D EXE_NAME=$<TARGET_FILE_NAME:aur_game>
+            -P ${CMAKE_SOURCE_DIR}/cmake/KillRunningExeForBuild.cmake
+        COMMENT "Stopping running aur_game if open, so the link can replace it"
+        VERBATIM
+    )
+endif()

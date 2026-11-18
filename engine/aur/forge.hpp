@@ -9,10 +9,27 @@
 
 namespace aur {
 
+enum class RaceGroup { Mortal, Supernatural };
+
+struct RaceInfo {
+    std::string id;
+    std::string label;
+    RaceGroup group;
+    bool uses_affinity;
+};
+
 Json build_palette(const Json& colors);
 Json compile_character(const Json& spec, const Json& parts = Json{});
+
+std::vector<RaceInfo> character_race_catalog();
 std::vector<std::pair<std::string, std::string>> character_race_options();
 std::vector<std::pair<std::string, std::string>> character_variant_options(const std::string& race);
+std::vector<std::pair<std::string, std::string>> alignment_options();
+std::vector<std::pair<std::string, std::string>> affinity_options();
+std::vector<std::pair<std::string, std::string>> entity_role_options();
+std::vector<std::pair<std::string, std::string>> hair_style_options();
+std::vector<std::pair<std::string, std::string>> accessory_options();
+
 bool is_supported_character_race(const std::string& race);
 bool is_valid_alignment(const std::string& alignment);
 bool is_valid_affinity(const std::string& affinity);
