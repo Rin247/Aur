@@ -4,166 +4,93 @@
 #include "theme/ResponsiveSplitter.hpp"
 #include "aur/gfx.hpp"
 
-#include <QGridLayout>
-#include <QRandomGenerator>
 #include <QMessageBox>
+#include <QRandomGenerator>
 #include <QScrollArea>
 #include <QSplitter>
+#include <QTabWidget>
+#include <QHBoxLayout>
+#include <QVBoxLayout>
+#include <algorithm>
 
 namespace aur {
 
 CreatureForgePanel::CreatureForgePanel(Project* p, QWidget* parent)
     : QWidget(parent), project(p) {
     auto* mainLayout = new QHBoxLayout(this);
-    auto* controlsPanel = new QWidget(this);
-    auto* controlsLayout = new QVBoxLayout(controlsPanel);
-    controlsLayout->setContentsMargins(6, 6, 8, 6);
-    controlsLayout->setSpacing(6);
+    auto* leftPane = new QWidget(this);
+    auto* leftLayout = new QVBoxLayout(leftPane);
+    leftLayout->setContentsMargins(6, 6, 8, 6);
+    leftLayout->setSpacing(6);
 
     auto* headerRow = new QHBoxLayout();
-    auto* title = new QLabel("Creature Forge", this);
-    title->setToolTip("One seed drives repeatable character, creature, tile, and effect generation.");
+    auto* title = new QLabel("Character & Creature Forge", this);
+    title->setToolTip("One seed drives repeatable characters, creatures, gear and tiles.");
     theme::sectionTitle(title);
     seedSpin = new QSpinBox(this);
     seedSpin->setRange(-1000000000, 1000000000);
     seedSpin->setValue(1);
     seedSpin->setPrefix("Seed: ");
     auto* randomSeedButton = new QPushButton("Random", this);
-    randomSeedButton->setToolTip("Roll a new random seed and preview the character.");
+    randomSeedButton->setToolTip("Roll a new seed and preview the character.");
     headerRow->addWidget(title);
     headerRow->addStretch();
     headerRow->addWidget(seedSpin);
     headerRow->addWidget(randomSeedButton);
-    controlsLayout->addLayout(headerRow);
+    leftLayout->addLayout(headerRow);
 
-    auto* nameAgeRow = new QHBoxLayout();
-    nameEdit = new QLineEdit("Wanderer", this);
-    ageCombo = new QComboBox(this);
-    ageCombo->addItems({"child", "teen", "adult", "elder"});
-    nameAgeRow->addWidget(nameEdit, 1);
-    nameAgeRow->addWidget(ageCombo);
-    controlsLayout->addLayout(nameAgeRow);
+    auto* tabs = new QTabWidget(this);
+    tabs->addTab(buildCharacterTab(), "Character");
+    tabs->addTab(buildCreatureTab(), "Creatures");
+    tabs->addTab(buildGearFxTab(), "Gear && FX");
+    tabs->addTab(buildTileTab(), "Tiles");
+    modeTabs = tabs;
+    leftLayout->addWidget(tabs, 1);
 
-    raceCombo = new QComboBox(this);
-    for (const auto& [id, label] : character_race_options()) {
-        raceCombo->addItem(QString::fromStdString(label), QString::fromStdString(id));
-    }
-    raceCombo->setCurrentIndex(raceCombo->findData("sylvani"));
-    raceCombo->setToolTip("Choose a people or supernatural category defined in the World Bible.");
-    controlsLayout->addWidget(raceCombo);
-
-    auto* identityRow = new QHBoxLayout();
-    genderCombo = new QComboBox(this);
-    genderCombo->addItems({"unspecified", "female", "male", "non-binary"});
-    genderCombo->setToolTip("Character gender identity; appearance is controlled separately.");
-    presentationCombo = new QComboBox(this);
-    presentationCombo->addItems({"androgynous", "feminine", "masculine"});
-    presentationCombo->setToolTip("Visual style for the generated character sprite.");
-    identityRow->addWidget(genderCombo, 1);
-    identityRow->addWidget(presentationCombo, 1);
-    controlsLayout->addLayout(identityRow);
-
-    auto* npcButtonsRow = new QHBoxLayout();
-    auto* previewButton = new QPushButton("Preview NPC", this);
-    auto* createNpcButton = new QPushButton("Create NPC", this);
-    createNpcButton->setToolTip("Compile 8-way walk cycles and add the NPC sprite and record to the project.");
-    npcButtonsRow->addWidget(previewButton, 1);
-    npcButtonsRow->addWidget(createNpcButton, 1);
-    controlsLayout->addLayout(npcButtonsRow);
-
-    auto* presetLayout = new QGridLayout();
-    presetLayout->setSpacing(4);
-    int presetIdx = 0;
-    for (const std::string& preset : {"Adventurer", "Mage", "Knight", "Villager"}) {
-        auto* button = new QPushButton(QString::fromStdString(preset), this);
-        presetLayout->addWidget(button, presetIdx / 2, presetIdx % 2);
-        ++presetIdx;
-        connect(button, &QPushButton::clicked, this, [this, preset]() { applyPreset(preset); });
-    }
-    controlsLayout->addLayout(presetLayout);
-
-    auto add_generator_row = [this, controlsLayout](QComboBox*& combo, const QStringList& items,
-                                                    const QString& buttonText) {
-        auto* row = new QHBoxLayout();
-        combo = new QComboBox(this);
-        combo->addItems(items);
-        auto* btn = new QPushButton(buttonText, this);
-        row->addWidget(combo, 1);
-        row->addWidget(btn);
-        controlsLayout->addLayout(row);
-        return btn;
-    };
-
-    auto* creatureButton = add_generator_row(
-        creatureCombo, {"cat", "dog", "slime", "wolf", "bat", "golem"}, "+ Creature");
-    auto* effectButton = add_generator_row(
-        effectCombo, {"spark", "fire", "water", "slash", "impact", "heal", "magic", "dust", "explosion"},
-        "+ Effect");
-    auto* clothingButton = add_generator_row(
-        clothingCombo, {"shirt", "tunic", "pants", "shorts", "skirt", "dress", "cloak", "boots", "hat"},
-        "+ Clothing");
-    auto* propButton = add_generator_row(
-        propCombo, {"sword", "staff", "shield", "bow", "lantern", "satchel", "potion"}, "+ Prop");
-
-    auto* tileComboRow = new QHBoxLayout();
-    tilesetCombo = new QComboBox(this);
-    tileKindCombo = new QComboBox(this);
-    tileKindCombo->addItems({"grass", "sand", "dirt", "stone", "brick", "planks",
-                             "water", "snow", "lava", "crystal", "foliage", "noise"});
-    tileComboRow->addWidget(tilesetCombo, 1);
-    tileComboRow->addWidget(tileKindCombo, 1);
-    controlsLayout->addLayout(tileComboRow);
-
-    auto* tileActionRow = new QHBoxLayout();
-    tileSolidCheck = new QCheckBox("Solid", this);
-    tileSolidCheck->setToolTip("The tile blocks movement: the floor of a platformer.");
-    tileOneWayCheck = new QCheckBox("One-way", this);
-    tileOneWayCheck->setToolTip("The tile holds from above and is open from below.");
-    auto* tileButton = new QPushButton("+ Tile", this);
-    tileActionRow->addWidget(tileSolidCheck);
-    tileActionRow->addWidget(tileOneWayCheck);
-    tileActionRow->addWidget(tileButton, 1);
-    controlsLayout->addLayout(tileActionRow);
-
-    controlsLayout->addStretch();
     statusLabel = new QLabel("Generated assets are project-backed; use Ctrl+S to save.", this);
     statusLabel->setWordWrap(true);
     theme::dimLabel(statusLabel);
-    controlsLayout->addWidget(statusLabel);
-    auto* splitter = new QSplitter(Qt::Horizontal, this);
-    auto* controlsScroll = new QScrollArea(splitter);
-    controlsScroll->setWidgetResizable(true);
-    controlsScroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
-    controlsScroll->setFrameShape(QFrame::NoFrame);
-    controlsScroll->setWidget(controlsPanel);
-    splitter->addWidget(controlsScroll);
+    leftLayout->addWidget(statusLabel);
 
-    previewWidget = new CharacterSheetWidget(splitter);
-    splitter->addWidget(previewWidget);
-    theme::bindResponsiveSplitter(splitter, {28, 72});
+    auto* rightPane = new QWidget(this);
+    auto* rightLayout = new QVBoxLayout(rightPane);
+    rightLayout->setContentsMargins(0, 4, 0, 0);
+    auto* previewBar = new QHBoxLayout();
+    turnaroundCheck = new QCheckBox("4-Way Turnaround", this);
+    turnaroundCheck->setChecked(true);
+    turnaroundCheck->setToolTip("Show the front, right, back and left views together.");
+    directionCombo = new QComboBox(this);
+    for (const char* direction : {"down_0", "down_right_0", "right_0", "up_right_0",
+                                  "up_0", "up_left_0", "left_0", "down_left_0"}) {
+        const QString name = QString::fromLatin1(direction);
+        directionCombo->addItem(name, name);
+    }
+    directionCombo->setEnabled(false);
+    previewBar->addStretch();
+    previewBar->addWidget(turnaroundCheck);
+    previewBar->addWidget(directionCombo);
+    rightLayout->addLayout(previewBar);
+
+    previewWidget = new CharacterSheetWidget(this);
+    rightLayout->addWidget(previewWidget, 1);
+
+    auto* splitter = new QSplitter(Qt::Horizontal, this);
+    splitter->addWidget(leftPane);
+    splitter->addWidget(rightPane);
+    theme::bindResponsiveSplitter(splitter, {34, 66});
     mainLayout->addWidget(splitter, 1);
 
-    connect(previewButton, &QPushButton::clicked, this, [this]() { generateRandomNPC(); });
-    connect(createNpcButton, &QPushButton::clicked, this, [this]() { createNpc(); });
     connect(randomSeedButton, &QPushButton::clicked, this, [this]() {
         seedSpin->setValue(static_cast<int>(QRandomGenerator::global()->bounded(2000000000u)) - 1000000000);
-        generateRandomNPC();
     });
-    connect(ageCombo, &QComboBox::currentIndexChanged, this,
-            [this](int) { generateRandomNPC(); });
-    connect(raceCombo, &QComboBox::currentIndexChanged, this,
-            [this](int) { generateRandomNPC(); });
-    connect(genderCombo, &QComboBox::currentIndexChanged, this,
-            [this](int) { generateRandomNPC(); });
-    connect(presentationCombo, &QComboBox::currentIndexChanged, this,
-            [this](int) { generateRandomNPC(); });
     connect(seedSpin, &QSpinBox::valueChanged, this, [this](int) { generateRandomNPC(); });
-    connect(nameEdit, &QLineEdit::editingFinished, this, [this]() { generateRandomNPC(); });
-    connect(creatureButton, &QPushButton::clicked, this, [this]() { createCreature(); });
-    connect(effectButton, &QPushButton::clicked, this, [this]() { createEffect(); });
-    connect(clothingButton, &QPushButton::clicked, this, [this]() { createClothing(); });
-    connect(propButton, &QPushButton::clicked, this, [this]() { createProp(); });
-    connect(tileButton, &QPushButton::clicked, this, [this]() { createTile(); });
+    connect(turnaroundCheck, &QCheckBox::toggled, this, [this](bool on) {
+        directionCombo->setEnabled(!on);
+        previewWidget->setTurnaroundMode(on);
+    });
+    connect(directionCombo, &QComboBox::currentIndexChanged, this, [this](int) {
+        previewWidget->setActiveFrame(directionCombo->currentData().toString().toStdString());
+    });
 
     refreshTilesets();
     generateRandomNPC();
@@ -172,6 +99,100 @@ CreatureForgePanel::CreatureForgePanel(Project* p, QWidget* parent)
 void CreatureForgePanel::setProject(Project* p) {
     project = p;
     refreshTilesets();
+}
+
+void CreatureForgePanel::selectPageTab(const QString& name) {
+    if (!modeTabs) return;
+    const auto plain = [](QString text) { return text.remove('&'); };
+    for (int i = 0; i < modeTabs->count(); ++i) {
+        if (plain(modeTabs->tabText(i)) == plain(name)) {
+            modeTabs->setCurrentIndex(i);
+            return;
+        }
+    }
+}
+
+void CreatureForgePanel::generateRandomNPC() {
+    if (!raceCombo) return;
+    const std::string race = raceCombo->currentData().toString().toStdString();
+    if (race.empty()) return;
+    const std::string name = nameEdit->text().trimmed().isEmpty()
+        ? "Wanderer" : nameEdit->text().trimmed().toStdString();
+    try {
+        previewSpec = random_character_spec(
+            seedSpin->value(), name,
+            ageCombo->currentText().toStdString(),
+            genderCombo->currentText().toStdString(),
+            presentationCombo->currentText().toStdString(),
+            race,
+            affinityCombo->currentData().toString().toStdString(),
+            alignmentCombo->currentData().toString().toStdString(),
+            entityRoleCombo->currentData().toString().toStdString(),
+            variantCombo->currentData().toString().toStdString());
+    } catch (const std::exception& error) {
+        statusLabel->setText(QString("Generation failed: %1").arg(error.what()));
+        return;
+    }
+    previewSpec["parts"]["race"] = race;
+    const std::string hair = hairStyleCombo->currentData().toString().toStdString();
+    if (hair != "seed") previewSpec["parts"]["hair_style"] = hair;
+    const std::string bottom = bottomCombo->currentData().toString().toStdString();
+    if (bottom != "seed") previewSpec["parts"]["bottom"] = bottom;
+    const std::string accessory = accessoryCombo->currentData().toString().toStdString();
+    if (!accessory.empty() && accessory != "none") {
+        previewSpec["parts"]["accessory"] = JsonArray{accessory};
+    }
+    for (const auto& [key, hex] : colorOverrides) previewSpec["colors"][key] = hex;
+    recompilePreview();
+}
+
+void CreatureForgePanel::recompilePreview() {
+    previewGraphic = compile_character(previewSpec, project ? Json(project->parts) : Json{});
+    if (previewWidget) previewWidget->setGraphic(previewGraphic);
+    refreshColorSwatches();
+    statusLabel->setText(QString("Preview ready \u00b7 seed %1 \u00b7 %2 \u00b7 %3")
+                             .arg(seedSpin->value())
+                             .arg(raceCombo->currentText())
+                             .arg(ageCombo->currentText()));
+}
+
+void CreatureForgePanel::applyPreset(const std::string& preset_name) {
+    generateRandomNPC();
+    forge::apply_role_preset(previewSpec, preset_name);
+    recompilePreview();
+    statusLabel->setText(QString("%1 preview \u00b7 seed %2")
+                             .arg(QString::fromStdString(preset_name))
+                             .arg(seedSpin->value()));
+}
+
+void CreatureForgePanel::createNpc() {
+    if (!project) return;
+    if (previewSpec.is_null()) generateRandomNPC();
+    const std::string base = forge::asset_id(nameEdit->text().trimmed().toStdString());
+    if (base.empty()) {
+        QMessageBox::warning(this, "Create Character", "Enter a name containing letters or numbers.");
+        return;
+    }
+    const std::string id = forge::unique_id(project->characters, base);
+    const Json& parts = previewSpec["parts"];
+    project->characters[id] = Json(JsonObject{
+        {"name", previewSpec["name"]},
+        {"age_group", previewSpec["age_group"]},
+        {"race", previewSpec["race"]},
+        {"variant", parts.contains("variant") ? parts["variant"] : Json("standard")},
+        {"affinity", previewSpec["affinity"]},
+        {"alignment", previewSpec["alignment"]},
+        {"entity_role", previewSpec["entity_role"]},
+        {"gender", previewSpec["gender"]},
+        {"graphic", id},
+        {"spec", previewSpec}
+    });
+    project->graphics[id] = compile_character(previewSpec, project->parts);
+    project->invalidate(id);
+    statusLabel->setText(QString("Created %1 (%2) \u00b7 seed %3 \u00b7 Ctrl+S to save")
+                             .arg(QString::fromStdString(id))
+                             .arg(entityRoleCombo->currentText())
+                             .arg(seedSpin->value()));
 }
 
 void CreatureForgePanel::refreshTilesets() {
@@ -186,59 +207,6 @@ void CreatureForgePanel::refreshTilesets() {
     }
     const int index = tilesetCombo->findData(selected);
     if (index >= 0) tilesetCombo->setCurrentIndex(index);
-}
-
-void CreatureForgePanel::generateRandomNPC() {
-    const std::string name = nameEdit->text().trimmed().isEmpty()
-        ? "Wanderer" : nameEdit->text().trimmed().toStdString();
-    previewSpec = random_character_spec(seedSpin->value(), name, ageCombo->currentText().toStdString(),
-                                        genderCombo->currentText().toStdString(),
-                                        presentationCombo->currentText().toStdString(),
-                                        raceCombo->currentData().toString().toStdString());
-    previewGraphic = compile_character(previewSpec, project ? Json(project->parts) : Json{});
-    if (previewWidget) previewWidget->setGraphic(previewGraphic);
-    statusLabel->setText(QString("Preview ready · seed %1 · %2")
-                             .arg(seedSpin->value()).arg(ageCombo->currentText()));
-}
-
-void CreatureForgePanel::applyPreset(const std::string& preset_name) {
-    Json spec = random_character_spec(seedSpin->value(), nameEdit->text().toStdString(),
-                                      ageCombo->currentText().toStdString(),
-                                      genderCombo->currentText().toStdString(),
-                                      presentationCombo->currentText().toStdString(),
-                                      raceCombo->currentData().toString().toStdString());
-    forge::apply_role_preset(spec, preset_name);
-    previewSpec = spec;
-    previewGraphic = compile_character(previewSpec, project ? Json(project->parts) : Json{});
-    if (previewWidget) previewWidget->setGraphic(previewGraphic);
-    statusLabel->setText(QString("%1 preview · seed %2").arg(QString::fromStdString(preset_name))
-                             .arg(seedSpin->value()));
-}
-
-void CreatureForgePanel::createNpc() {
-    if (!project) return;
-    if (previewSpec.is_null()) generateRandomNPC();
-    const std::string base = forge::asset_id(nameEdit->text().trimmed().toStdString());
-    if (base.empty()) {
-        QMessageBox::warning(this, "Create NPC", "Enter a name containing letters or numbers.");
-        return;
-    }
-    const std::string id = forge::unique_id(project->characters, base);
-    previewSpec["name"] = nameEdit->text().trimmed().toStdString();
-    previewSpec["age_group"] = ageCombo->currentText().toStdString();
-    previewSpec["race"] = raceCombo->currentData().toString().toStdString();
-    previewSpec["parts"]["age_group"] = ageCombo->currentText().toStdString();
-    previewSpec["parts"]["race"] = raceCombo->currentData().toString().toStdString();
-    previewSpec["gender"] = genderCombo->currentText().toStdString();
-    previewSpec["parts"]["presentation"] = presentationCombo->currentText().toStdString();
-    project->characters[id] = Json(JsonObject{
-        {"name", previewSpec["name"]}, {"age_group", previewSpec["age_group"]},
-        {"race", previewSpec["race"]}, {"graphic", id}, {"spec", previewSpec}
-    });
-    project->graphics[id] = compile_character(previewSpec, project->parts);
-    project->invalidate(id);
-    statusLabel->setText(QString("Created %1 · seed %2 · 8-way walk cycles · Ctrl+S to save")
-                             .arg(QString::fromStdString(id)).arg(seedSpin->value()));
 }
 
 void CreatureForgePanel::createCreature() {
@@ -256,7 +224,7 @@ void CreatureForgePanel::createCreature() {
         });
         project->invalidate(id);
         previewWidget->setGraphic(graphic);
-        statusLabel->setText(QString("Created %1 · seed %2 · Ctrl+S to save")
+        statusLabel->setText(QString("Created %1 \u00b7 seed %2 \u00b7 Ctrl+S to save")
                                  .arg(QString::fromStdString(label)).arg(seedSpin->value()));
     } catch (const std::exception& error) {
         QMessageBox::warning(this, "Creature generation failed", QString::fromStdString(error.what()));
@@ -274,7 +242,7 @@ void CreatureForgePanel::createEffect() {
         project->graphics[id] = graphic;
         project->invalidate(id);
         previewWidget->setGraphic(graphic);
-        statusLabel->setText(QString("Created animated %1 · seed %2 · Ctrl+S to save")
+        statusLabel->setText(QString("Created animated %1 \u00b7 seed %2 \u00b7 Ctrl+S to save")
                                  .arg(QString::fromStdString(kind)).arg(seedSpin->value()));
     } catch (const std::exception& error) {
         QMessageBox::warning(this, "Effect generation failed", QString::fromStdString(error.what()));
@@ -297,7 +265,7 @@ void CreatureForgePanel::createClothing() {
         };
         project->invalidate(id);
         previewWidget->setGraphic(graphic);
-        statusLabel->setText(QString("Drew %1 · editable 32×32 pixel graphic · seed %2 · Ctrl+S to save")
+        statusLabel->setText(QString("Drew %1 \u00b7 editable 32\u00d732 pixel graphic \u00b7 seed %2 \u00b7 Ctrl+S to save")
                                  .arg(QString::fromStdString(id)).arg(seed));
     } catch (const std::exception& error) {
         QMessageBox::warning(this, "Clothing drawing failed", QString::fromStdString(error.what()));
@@ -319,7 +287,7 @@ void CreatureForgePanel::createProp() {
         };
         project->invalidate(id);
         previewWidget->setGraphic(project->graphics[id]);
-        statusLabel->setText(QString("Drew prop %1 · seed %2 · Ctrl+S to save")
+        statusLabel->setText(QString("Drew prop %1 \u00b7 seed %2 \u00b7 Ctrl+S to save")
                                  .arg(QString::fromStdString(id)).arg(seed));
     } catch (const std::exception& error) {
         QMessageBox::warning(this, "Prop drawing failed", QString::fromStdString(error.what()));
@@ -342,7 +310,6 @@ void CreatureForgePanel::createTile() {
     const int seed = seedSpin->value();
     try {
         Json tile = generate_tile_asset(kind, seed, tile_size, tile_size);
-        // The flags are what make the tile a floor or a platform.
         int flags = 0;
         if (tileSolidCheck && tileSolidCheck->isChecked()) flags |= SOLID;
         if (tileOneWayCheck && tileOneWayCheck->isChecked()) flags |= ONE_WAY;
@@ -357,7 +324,7 @@ void CreatureForgePanel::createTile() {
         Json graphic = new_graphic(tile_size, tile_size, palette, {0, 0});
         graphic["frames"]["0"] = tile["rows"];
         previewWidget->setGraphic(graphic);
-        statusLabel->setText(QString("Added %1 tile #%2 · seed %3 · Ctrl+S to save")
+        statusLabel->setText(QString("Added %1 tile #%2 \u00b7 seed %3 \u00b7 Ctrl+S to save")
                                  .arg(QString::fromStdString(kind)).arg(index).arg(seed));
     } catch (const std::exception& error) {
         QMessageBox::warning(this, "Tile generation failed", QString::fromStdString(error.what()));

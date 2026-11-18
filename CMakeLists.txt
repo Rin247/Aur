@@ -157,6 +157,8 @@ add_executable(aur_studio
     studio/forge/CharacterSheetWidget.cpp
     studio/forge/CharacterSheetWidget.hpp
     studio/forge/ForgeAssetOps.cpp
+    studio/forge/ForgePanelTabs.cpp
+    studio/forge/ForgeColorSwatches.cpp
     studio/MusicPanel.cpp
     studio/music/MusicPanelSession.cpp
     studio/WorldPanel.cpp

@@ -382,7 +382,6 @@ void draw_head_and_face(Canvas& c, const Rig& r) {
     }
 
     c.ellipse(r.cx, r.head_cy, r.head_rx, r.head_ry, P_SKIN);
-    c.rect(r.cx - 4, r.head_cy - 4, 3, 2, P_SKIN_HI);
     c.rect(r.cx - 4, r.head_cy + r.head_ry - 2, 8, 1, P_SKIN_SHADE);
     c.rect(r.cx + r.head_rx - 2, r.head_cy, 2, 4, P_SKIN_SHADE);
 
@@ -451,27 +450,32 @@ const BeastEarStyle& beast_ear_style(const std::string& variant) {
 void draw_hair_and_crown(Canvas& c, const Rig& r, const Json& parts) {
     const int crown_y = r.head_cy - r.head_ry;
 
-    c.ellipse(r.cx, crown_y + 2, r.head_rx + 1, 5, P_OUTLINE);
-    c.ellipse(r.cx, crown_y + 2, r.head_rx, 4, P_HAIR);
-    c.rect(r.cx - 5, crown_y, 10, 2, P_HAIR_HI);
-    c.rect(r.cx - 7, crown_y + 4, 14, 2, P_HAIR_SHADE);
-
-    const int lock_h = (r.hair_style == "long") ? 18 : (r.hair_style == "curly" ? 13 : 9);
+    c.ellipse(r.cx, r.head_cy - r.head_ry + 3, r.head_rx - 1, 4, P_HAIR);
+    c.rect(r.cx - 5, crown_y + 2, 10, 1, P_HAIR_HI);
+    c.rect(r.cx - 6, crown_y + 5, 12, 1, P_HAIR_SHADE);
     if (!r.back) {
-        c.outlined_rect(r.cx - r.head_rx - 1, crown_y + 4, 4, lock_h, P_HAIR);
-        c.outlined_rect(r.cx + r.head_rx - 3, crown_y + 4, 4, lock_h, P_HAIR_SHADE);
+        c.rect(r.cx - 6, crown_y + 5, 3, 2, P_HAIR);
+        c.rect(r.cx + 4, crown_y + 5, 3, 2, P_HAIR);
+    }
+
+    const int lock_h = (r.hair_style == "long") ? 17 : (r.hair_style == "curly" ? 11 : 6);
+    if (!r.back) {
+        c.rect(r.cx - r.head_rx - 1, crown_y + 3, 3, lock_h, P_HAIR);
+        c.rect(r.cx + r.head_rx - 1, crown_y + 3, 3, lock_h, P_HAIR_SHADE);
         if (r.hair_style == "curly") {
-            c.ellipse(r.cx - r.head_rx, crown_y + 7, 2, 3, P_HAIR);
-            c.ellipse(r.cx + r.head_rx, crown_y + 7, 2, 3, P_HAIR_SHADE);
+            c.ellipse(r.cx - r.head_rx + 1, crown_y + 4, 2, 3, P_HAIR);
+            c.ellipse(r.cx + r.head_rx - 1, crown_y + 4, 2, 3, P_HAIR_SHADE);
         }
     } else {
-        const int back_h = (r.hair_style == "long") ? 20 : 12;
-        c.outlined_rect(r.cx - r.head_rx + 1, r.head_cy + 2, (r.head_rx - 1) * 2, back_h, P_HAIR);
-        c.rect(r.cx - 4, r.head_cy + 5, 8, back_h - 6, P_HAIR_SHADE);
+        c.ellipse(r.cx, r.head_cy - 1, r.head_rx, r.head_ry - 1, P_HAIR);
+        const int back_h = (r.hair_style == "long") ? 20 : 10;
+        c.rect(r.cx - r.head_rx + 2, r.head_cy + 2, (r.head_rx - 2) * 2, back_h, P_HAIR);
+        c.rect(r.cx - 4, r.head_cy + 6, 8, std::max(2, back_h - 6), P_HAIR_SHADE);
+        c.ellipse(r.cx, r.head_cy - 4, r.head_rx - 3, 2, P_HAIR_HI);
     }
     if (r.hair_style == "long" && !r.back) {
-        c.outlined_rect(r.cx - 6, r.torso_top - 1, 3, 12, P_HAIR);
-        c.outlined_rect(r.cx + 4, r.torso_top - 1, 3, 12, P_HAIR_SHADE);
+        c.outlined_rect(r.cx - r.head_rx - 1, r.head_cy + 2, 3, 12, P_HAIR);
+        c.outlined_rect(r.cx + r.head_rx - 1, r.head_cy + 2, 3, 12, P_HAIR_SHADE);
     }
 
     if (r.beast) {
