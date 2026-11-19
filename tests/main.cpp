@@ -45,6 +45,7 @@ void test_record_fields();
 void test_mapforge();
 void test_globe_pick();
 void test_terrain_lod();
+void test_globe_projection();
 void test_master_volume();
 void test_offline_render_job();
 void test_song_v1_contract();
@@ -156,6 +157,7 @@ int main(int argc, char** argv) {
     RUN_TEST(test_mapforge);
     RUN_TEST(test_globe_pick);
     RUN_TEST(test_terrain_lod);
+    RUN_TEST(test_globe_projection);
     RUN_TEST(test_master_volume);
     RUN_TEST(test_offline_render_job);
     RUN_TEST(test_song_v1_contract);

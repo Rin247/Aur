@@ -1,7 +1,7 @@
 # The globe's levels of detail: plan
 
-Status: P0 and P1 done. Next: P2, the sphere. The open LOD step is the
-third level -- a denser surface for the 3200% ceiling.
+Status: P0, P1 and P2 done; the world is a globe with capped poles. The open
+LOD step is the third level -- a denser surface for the 3200% ceiling.
 
 ## Goal
 
@@ -101,14 +101,16 @@ renders the coarse picture, and zooming in renders the HD one. Proved by
 
 ### P2 The sphere
 
-- [ ] P2.1 The projection: the grid onto a UV sphere, the longitude wrapping
+- [x] P2.1 The projection: the grid onto a UV sphere, the longitude wrapping
   and the latitude clamped.
-- [ ] P2.2 The poles: a cap or a cube map, so the pinch is not a hole.
-- [ ] P2.3 The globe view: the world as a sphere, with the zoom and the
+- [x] P2.2 The poles: a cap or a cube map, so the pinch is not a hole.
+- [x] P2.3 The globe view: the world as a sphere, with the zoom and the
   level of detail working on it.
-- [ ] P2.4 The capture: the globe, its pole, and the capture opened.
+- [x] P2.4 The capture: the globe, its pole, and the capture opened.
 
-Acceptance: the capture shows the world as a sphere; the gate is clean.
+Acceptance: the capture shows the world as a sphere; the gate is clean. Proved by
+`build/renders/world_globe_1280x690_z1.0.png`, and `tests/test_globe_projection.cpp`
+pins the projection, the wrap, the poles and the shading.
 
 ## Acceptance
 

@@ -10,6 +10,7 @@
 #include "world/WorldClimateOverlays.hpp"
 #include "world/WorldMarkerOverlays.hpp"
 #include "world/WorldCamera.hpp"
+#include "world/GlobeProjection.hpp"
 #include "theme/ThemeManager.hpp"
 #include "theme/ThemeQt.hpp"
 #include "aur/autotile.hpp"
@@ -128,7 +129,8 @@ void WorldMapCanvasWidget::ensureWorldModel() {
 
 void WorldMapCanvasWidget::refreshCanvas() {
     ensureWorldModel();
-    const bool gpuTerrain = world_model && terrain_renderer && !editor::isHeadlessRhi();
+    const bool gpuTerrain = world_model && terrain_renderer && !editor::isHeadlessRhi() &&
+                            !globe_view;
     if (terrain_renderer) {
         terrain_renderer->setVisible(gpuTerrain);
         if (gpuTerrain) terrain_renderer->update();
@@ -336,6 +338,48 @@ void WorldMapCanvasWidget::paintEvent(QPaintEvent*) {
     painter.fillRect(rect(), QColor("#171b20"));
 }
 
+void WorldMapCanvasWidget::setGlobeView(bool enabled) {
+    if (globe_view == enabled) return;
+    globe_view = enabled;
+    globe_cache = QImage();
+    refreshCanvas();
+}
+
+void WorldMapCanvasWidget::paintGlobe(QPainter& painter, const QImage& surface) {
+    const QSize target_size = size();
+    if (target_size.isEmpty()) return;
+    if (globe_cache.isNull() || globe_cache_size != target_size ||
+        std::abs(globe_cache_yaw - globe_yaw) > 0.0001 ||
+        std::abs(globe_cache_pitch - globe_pitch) > 0.0001) {
+        const QImage source = surface.convertToFormat(QImage::Format_RGB32);
+        globe_cache = QImage(target_size, QImage::Format_RGB32);
+        globe_cache.fill(QColor("#0b0f14"));
+        const double radius = std::min(target_size.width(), target_size.height()) * 0.46;
+        const double cx = target_size.width() * 0.5;
+        const double cy = target_size.height() * 0.5;
+        for (int y = 0; y < target_size.height(); ++y) {
+            auto* line = reinterpret_cast<QRgb*>(globe_cache.scanLine(y));
+            const double ny = (cy - y) / radius;
+            for (int x = 0; x < target_size.width(); ++x) {
+                const double nx = (x - cx) / radius;
+                const world::GlobePoint point = world::projectToGlobe(nx, ny, globe_yaw, globe_pitch);
+                if (!point.visible) continue;
+                const int sx = std::clamp(static_cast<int>(point.u * source.width()), 0, source.width() - 1);
+                const int sy = std::clamp(static_cast<int>(point.v * source.height()), 0, source.height() - 1);
+                const QRgb colour = reinterpret_cast<const QRgb*>(source.constScanLine(sy))[sx];
+                const double shade = world::globeShade(nx, ny);
+                line[x] = qRgb(static_cast<int>(qRed(colour) * shade),
+                               static_cast<int>(qGreen(colour) * shade),
+                               static_cast<int>(qBlue(colour) * shade));
+            }
+        }
+        globe_cache_size = target_size;
+        globe_cache_yaw = globe_yaw;
+        globe_cache_pitch = globe_pitch;
+    }
+    painter.drawImage(0, 0, globe_cache);
+}
+
 void WorldMapCanvasWidget::resizeEvent(QResizeEvent* event) {
     QWidget::resizeEvent(event);
     if (terrain_renderer) terrain_renderer->setGeometry(rect());
@@ -387,6 +431,10 @@ void WorldMapCanvasWidget::paintCanvas(QPainter& painter) {
     const bool wraps_x = aur::wraps_world_x(map);
     if (bounds.isEmpty() || !map.contains("layers") || !map["layers"].is_object() ||
         (!hd_map && !map["layers"].contains("ground"))) return;
+    if (globe_view && !surface.isNull()) {
+        paintGlobe(painter, surface);
+        return;
+    }
 
     const JsonArray* ground = map["layers"].contains("ground") &&
         map["layers"]["ground"].is_array()

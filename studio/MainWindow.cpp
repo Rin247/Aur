@@ -332,6 +332,16 @@ void MainWindow::setPlaytestMap(const QString& map_id) {
     if (gameView) gameView->setMap(map_id.toStdString());
 }
 
+void MainWindow::setGlobeView(bool enabled) {
+    if (!tabs || !tabStack) return;
+    for (int index = 0; index < tabs->count(); ++index) {
+        if (tabs->tabText(index) != "World") continue;
+        if (QWidget* page = tabStack->widget(index))
+            QMetaObject::invokeMethod(page, "setGlobeView", Q_ARG(bool, enabled));
+        return;
+    }
+}
+
 void MainWindow::updateStatusContext() {
     if (!statusStrip) return;
     statusStrip->setProject(QString::fromStdString(project_path),

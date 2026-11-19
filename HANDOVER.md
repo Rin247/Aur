@@ -27,6 +27,11 @@ headless Null only under RHI_POLICY_HEADLESS=1. See C:\Projects\POLICY.md.
   - `studio/CreatureForgePanel.cpp` (310 lines): `forge/ForgePanelTabs.cpp` (221 lines, the four tab builders), `forge/ForgeColorSwatches.cpp` (64 lines), `forge/CharacterSheetWidget.{hpp,cpp}` and `forge/ForgeAssetOps.{hpp,cpp}` live under `studio/forge/`. The engine side is `engine/aur/forge/{SpeciesCatalog,CharacterRenderer,AssetGenerators}.cpp`, all three under 650 lines.
   - `studio/DatabasePanel.cpp` (47 lines) and `studio/EventsPanel.cpp` (78 lines): `bestiary/*` and `events/EventCommandOps.{hpp,cpp}` live under `studio/bestiary/` and `studio/events/`.
   - `studio/MusicPanel.cpp` (661 lines): `music/MidiStrip.{hpp,cpp}`, `music/GmPatchList.hpp`, `music/MusicPanelSession.cpp` (598 lines), `music/PianoRollInput.cpp` (289 lines), `music/MidiDeviceIo.{hpp,cpp}`, `music/SongHistory.{hpp,cpp}`, and `music/SharedAudio.{hpp,cpp}` live under `studio/music/`.
+- **The world is a globe as well as a sheet.** `studio/world/GlobeProjection` is an
+  orthographic projection with capped poles; the World tab's Globe checkbox (or
+  `Aur --globe`) shows it and dragging spins it. `build/renders/world_globe_1280x690_z1.0.png`
+  is the proof, and `tests/test_globe_projection.cpp` pins the wrap, the poles and the
+  shading. **Next: W-04's third LOD level** (a denser picture for the visible region).
 - **The world map has two levels of detail** (`studio/world/TerrainLod.{hpp,cpp}`,
   `studio/world/WorldTerrainPaint.{hpp,cpp}`; plan `Bible/notes/globe-view.md` P1).
   The crossover is a screen measurement -- the drawn width over the map's width --

@@ -72,6 +72,17 @@ namespace aur
         bool weather_overlay = false;
         bool daynight_overlay = true;
         bool contours_enabled = true;
+        bool globe_view = false;
+        bool globe_drag = false;
+        double globe_yaw = -0.6;
+        double globe_pitch = -0.3;
+        double globe_yaw_start = 0.0;
+        double globe_pitch_start = 0.0;
+        QPointF globe_drag_start;
+        QImage globe_cache;
+        QSize globe_cache_size;
+        double globe_cache_yaw = 0.0;
+        double globe_cache_pitch = 0.0;
         int simulation_phase = 0;
         double preview_hour = 8.0;
         std::string preview_weather = "climate";
@@ -91,6 +102,8 @@ namespace aur
 
     public:
         void paintCanvas(QPainter &painter);
+        // The globe: the same surface, projected onto a sphere.
+        void paintGlobe(QPainter &painter, const QImage &surface);
         // WP1: masks the left/right margins so the GPU terrain's Repeat-U
         // sampler shows only one world copy (called from the overlay widget).
         void paintRepeatMask(QPainter &painter);
@@ -115,6 +128,8 @@ namespace aur
         void setWeatherType(const std::string &weather);
         void setSimulationRunning(bool enabled);
         void setContoursEnabled(bool enabled);
+        void setGlobeView(bool enabled);
+        bool globeView() const noexcept { return globe_view; }
         void setTimeOfDay(int hour, int minute);
         void setZoom(qreal zoom);
         qreal zoomFactor() const noexcept { return zoom_factor; }

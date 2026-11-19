@@ -250,6 +250,16 @@ void WorldMapCanvasWidget::redo() {
 }
 
 void WorldMapCanvasWidget::mousePressEvent(QMouseEvent* event) {
+    if (globe_view &&
+        (event->button() == Qt::LeftButton || event->button() == Qt::MiddleButton)) {
+        globe_drag = true;
+        globe_drag_start = event->position();
+        globe_yaw_start = globe_yaw;
+        globe_pitch_start = globe_pitch;
+        setCursor(Qt::ClosedHandCursor);
+        event->accept();
+        return;
+    }
     if (event->button() == Qt::MiddleButton) {
         panning = true;
         pan_start_position = event->position();
@@ -308,6 +318,16 @@ void WorldMapCanvasWidget::mousePressEvent(QMouseEvent* event) {
 }
 
 void WorldMapCanvasWidget::mouseMoveEvent(QMouseEvent* event) {
+    if (globe_drag &&
+        (event->buttons().testFlag(Qt::LeftButton) ||
+         event->buttons().testFlag(Qt::MiddleButton))) {
+        globe_yaw = globe_yaw_start + (event->position().x() - globe_drag_start.x()) * 0.006;
+        globe_pitch = std::clamp(globe_pitch_start +
+                                     (event->position().y() - globe_drag_start.y()) * 0.006,
+                                 -1.45, 1.45);
+        refreshCanvas();
+        return;
+    }
     if (panning && event->buttons().testFlag(Qt::MiddleButton)) {
         pan_offset = pan_start_offset + event->position() - pan_start_position;
         constrainWorldCamera();
@@ -333,6 +353,12 @@ void WorldMapCanvasWidget::mouseMoveEvent(QMouseEvent* event) {
 }
 
 void WorldMapCanvasWidget::mouseReleaseEvent(QMouseEvent* event) {
+    if (globe_drag) {
+        globe_drag = false;
+        setCursor(Qt::ArrowCursor);
+        event->accept();
+        return;
+    }
     if (event->button() == Qt::LeftButton) {
         if (!stroke.model_rects.empty()) {
             history.record_rects(std::move(stroke.model_rects));

@@ -16,6 +16,7 @@ class TimeWeatherBar;
 }
 
 class QComboBox;
+class QCheckBox;
 class QLabel;
 class QListWidget;
 class QPushButton;
@@ -46,6 +47,7 @@ class WorldPanel : public QWidget {
     QPushButton* generateWorldButton = nullptr;
     QPushButton* generateMapButton = nullptr;
     QPushButton* expandTileButton = nullptr;
+    QCheckBox* globeCheck = nullptr;
     world::TimeWeatherBar* timeWeather = nullptr;
     world::WorldGenerationJob* generation_job = nullptr;
     QPushButton* addLocationButton = nullptr;
@@ -64,6 +66,8 @@ public:
     void expandHoveredTile();
     // The zoom control, as a factor of the fit.
     void setEditorZoom(qreal factor);
+    // The world as a sphere, for the render sweep and the globe button.
+    Q_INVOKABLE void setGlobeView(bool enabled);
 
 signals:
     // A map the expansion made, for the map editor to open.

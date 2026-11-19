@@ -122,6 +122,11 @@ twenty-two PNGs.
   writes it and points the record's `gfx` at it. The Bestiary's portrait shows
   the frame; it could not before, because the editor's constructor never gave
   the portrait widget the project.
+- **The world can be a globe.** `studio/world/GlobeProjection` maps the view disc onto
+  an orthographic sphere and samples the equirectangular surface, so a pole is a point
+  rather than a hole and the shading dims toward the limb. The World tab's Globe checkbox
+  (or `Aur --globe`) shows it, dragging spins it, and it samples whichever LOD picture the
+  zoom chose.
 - **A map is seeded too.** `engine/aur/mapforge.*` makes a town, a cave or a
   platformer room from a seed and brings the tiles it needs with their flags,
   so a room's floor is solid without making the field's grass solid. The World

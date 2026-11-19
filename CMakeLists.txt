@@ -165,6 +165,7 @@ add_executable(aur_studio
     studio/world/WorldPanelActions.cpp
     studio/world/HdSurface.cpp
     studio/world/TerrainLod.cpp
+    studio/world/GlobeProjection.cpp
     studio/world/TerrainLod.hpp
     studio/world/WorldTerrainPaint.cpp
     studio/world/WorldTerrainPaint.hpp
@@ -261,6 +262,7 @@ add_executable(aur_tests
     tests/test_autotile.cpp
     tests/test_mcp.cpp
     tests/test_forge.cpp
+    tests/test_globe_projection.cpp
     studio/bestiary/BestiaryData.cpp
     tests/test_clock.cpp
     tests/test_game.cpp
@@ -315,6 +317,7 @@ add_executable(aur_tests
     studio/music/ClipLauncherStates.cpp
     studio/world/HdSurface.cpp
     studio/world/TerrainLod.cpp
+    studio/world/GlobeProjection.cpp
     studio/world/WorldMapHelpers.cpp
     studio/world/MapView.cpp
     studio/world/WorldCommandHistory.cpp

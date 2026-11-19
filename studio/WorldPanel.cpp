@@ -23,6 +23,7 @@
 #include "aur/world_topology.hpp"
 
 #include <QColorDialog>
+#include <QCheckBox>
 #include <QComboBox>
 #include <QDialog>
 #include <QDialogButtonBox>
@@ -101,6 +102,9 @@ WorldPanel::WorldPanel(Project* p, QWidget* parent)
     header->addWidget(zoomSpin);
     auto* fitButton = new QPushButton("Fit", this);
     header->addWidget(fitButton);
+    globeCheck = new QCheckBox("Globe", this);
+    globeCheck->setToolTip("Show the world as a sphere; drag it to spin.");
+    header->addWidget(globeCheck);
     auto* overlayButton = new QToolButton(this);
     overlayButton->setText("Layers");
     overlayButton->setToolTip(
@@ -338,6 +342,7 @@ WorldPanel::WorldPanel(Project* p, QWidget* parent)
         mapCanvas->setZoom(value / 100.0);
     });
     connect(fitButton, &QPushButton::clicked, mapCanvas, &WorldMapCanvasWidget::fitToView);
+    connect(globeCheck, &QCheckBox::toggled, mapCanvas, &WorldMapCanvasWidget::setGlobeView);
     connect(temperatureAction, &QAction::toggled, mapCanvas,
             [this](bool enabled) { mapCanvas->setOverlay(WorldOverlay::Temperature, enabled); });
     connect(windAction, &QAction::toggled, mapCanvas,
@@ -578,6 +583,11 @@ void WorldPanel::selectMap(const std::string& map_id) {
     // used to open zoomed to 100% on a corner of the 256×128 map).
     if (first_show)
         mapCanvas->fitToView();
+}
+
+void WorldPanel::setGlobeView(bool enabled) {
+    if (globeCheck) globeCheck->setChecked(enabled);
+    if (mapCanvas) mapCanvas->setGlobeView(enabled);
 }
 
 void WorldPanel::postMapContext() {
