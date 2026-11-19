@@ -1,6 +1,7 @@
 #include "mini_test.hpp"
 #include "aur/forge.hpp"
 #include "aur/project.hpp"
+#include "bestiary/BestiaryData.hpp"
 
 #include <algorithm>
 #include <array>
@@ -218,6 +219,35 @@ void test_forge_generators() {
     ASSERT(cat["w"].as_int() == 24);
     ASSERT(cat["frames"].as_object().size() == 4);
     ASSERT(aur::dump_json(cat) == aur::dump_json(aur::generate_creature_graphic("cat", 27)));
+
+    for (const std::string& kind : {"bandit", "bandit_archer", "bandit_boss"}) {
+        const aur::Json enemy = aur::generate_enemy_graphic(kind, 21);
+        ASSERT(enemy["w"].as_int() == 24);
+        ASSERT(enemy["h"].as_int() == 24);
+        ASSERT(enemy["palette"].as_array().size() == 16);
+        ASSERT(enemy["frames"].as_object().size() == 4);
+        ASSERT(enemy["anims"].contains("idle"));
+        ASSERT(aur::dump_json(enemy) == aur::dump_json(aur::generate_enemy_graphic(kind, 21)));
+        const auto [frame_w, frame_h, frame_data] = aur::frame_rgba(enemy, "idle_0");
+        ASSERT(frame_w == 24 && frame_h == 24);
+        ASSERT(frame_data.size() == static_cast<size_t>(frame_w * frame_h * 4));
+        ASSERT(frame_data[static_cast<size_t>(3)] == 0);
+    }
+    ASSERT(aur::dump_json(aur::generate_enemy_graphic("bandit", 21)) !=
+           aur::dump_json(aur::generate_enemy_graphic("bandit_boss", 21)));
+    bool enemy_threw = false;
+    try { aur::generate_enemy_graphic("dragon", 1); } catch (const std::exception&) { enemy_threw = true; }
+    ASSERT(enemy_threw);
+
+    // The Bestiary's portrait path reads the first frame of the record's artwork.
+    aur::Project portrait_project;
+    portrait_project.graphics["bandit"] = aur::generate_enemy_graphic("bandit", 21);
+    int art_width = 0;
+    int art_height = 0;
+    std::vector<unsigned char> art_pixels;
+    ASSERT(aur::bestiary::artwork(portrait_project, "bandit", art_width, art_height, art_pixels));
+    ASSERT(art_width == 24 && art_height == 24);
+    ASSERT(art_pixels.size() == static_cast<size_t>(art_width * art_height * 4));
 
     const aur::Json effect = aur::generate_effect_graphic("heal", 87);
     ASSERT(effect["w"].as_int() == 32);

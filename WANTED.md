@@ -49,6 +49,9 @@
 
 ## Recently closed (verified 2026-11-18)
 
+- **Bandit artwork** (W-03, closed 2026-11-18): `generate_enemy_graphic` draws the three
+  bandits at 24×24, `enemy_generate` writes each sprite and sets the record's `gfx`;
+  the Bestiary portrait now receives the project in the editor's constructor and shows it.
 - **Map seed generator** (W-02, closed 2026-11-18): `engine/aur/mapforge.*` makes a town,
   a cave or a platformer room from a seed and appends its tiles with flags; the World tab
   asks for one and the MCP's `map_generate` writes one; `seeded_platformer` ships and the

@@ -182,6 +182,11 @@ Json tools_list() {
          {"species", string_property("cat, dog, slime, wolf, bat, or golem.")},
          {"seed", integer_property("Deterministic generation seed.", -2147483647)}},
         required({"creature_id", "name", "species", "seed"}));
+    add("enemy_generate", "Draw a humanoid enemy sprite (bandit, bandit_archer or bandit_boss) and point its record at it.",
+        {{"enemy_id", string_property("Enemy record identifier; the graphic takes the same id.")},
+         {"kind", string_property("bandit, bandit_archer, or bandit_boss.")},
+         {"seed", integer_property("Deterministic generation seed.", -2147483647)}},
+        required({"enemy_id", "kind"}));
     add("effect_generate", "Generate an animated indexed effect graphic (spark, fire, water, slash, impact, heal, magic, dust, or explosion).",
         {{"graphic_id", string_property("Stable graphic identifier.")},
          {"kind", string_property("Effect kind.")},
@@ -862,6 +867,23 @@ Json execute_tool(Project& project, const std::string& name, const Json& args, b
         Json result = make_object();
         result["creature_id"] = id;
         result["graphic_id"] = id;
+        return result;
+    }
+    if (name == "enemy_generate") {
+        const std::string id = require_string(args, "enemy_id");
+        const std::string kind = require_string(args, "kind");
+        const int seed = args.contains("seed") ? require_integer(args, "seed") : 1;
+        if (!valid_id(id)) throw std::runtime_error("Enemy identifier may only contain letters, numbers, _ and -.");
+        project.graphics[id] = generate_enemy_graphic(kind, seed);
+        if (project.db["enemies"].is_object() && project.db["enemies"].contains(id)) {
+            project.db["enemies"][id]["gfx"] = id;
+        }
+        project.invalidate(id);
+        changed = true;
+        Json result = make_object();
+        result["enemy_id"] = id;
+        result["graphic_id"] = id;
+        result["kind"] = kind;
         return result;
     }
     if (name == "effect_generate") {

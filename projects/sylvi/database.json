@@ -226,6 +226,19 @@
    "naming": "Guttural, pack- and clan-influenced phonetics.",
    "notes": "The bible distinguishes Beastkin from were-creatures, which it describes as the result of later experiments."
   },
+  "elementals": {
+   "adaptations": "Sustained by leyline flow; their expression reflects elemental affinity.",
+   "appearance": "Form and dominant coloration reflect elemental affinity.",
+   "category": "Supernatural · elemental mana beings",
+   "combat_role": "",
+   "culture": "",
+   "habitat": "Leyline-rich regions and places associated with their elemental affinity.",
+   "lifespan": "",
+   "maturation": "",
+   "name": "Elementals",
+   "naming": "",
+   "notes": "Dominant coloration follows elemental affinity."
+  },
   "fairies_nymphs": {
    "adaptations": "",
    "appearance": "",
@@ -303,19 +316,6 @@
    "name": "Solani",
    "naming": "Latin-influenced names with regional phonetic shifts.",
    "notes": "The Solani share elven ancestry with the Sylvani but have distinct regional adaptations and social traditions."
-  },
-  "elementals": {
-   "adaptations": "Sustained by leyline flow; their expression reflects elemental affinity.",
-   "appearance": "Form and dominant coloration reflect elemental affinity.",
-   "category": "Supernatural · elemental mana beings",
-   "combat_role": "",
-   "culture": "",
-   "habitat": "Leyline-rich regions and places associated with their elemental affinity.",
-   "lifespan": "",
-   "maturation": "",
-   "name": "Elementals",
-   "naming": "",
-   "notes": "Dominant coloration follows elemental affinity."
   },
   "spirits": {
    "adaptations": "Sustained by leyline flow; their expression reflects elemental affinity.",

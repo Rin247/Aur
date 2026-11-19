@@ -117,6 +117,11 @@ twenty-two PNGs.
   the map generator keeps that side: the beach on the west stays on the
   west. The World tab's "Expand this tile" sends the pick to the map editor;
   the field's own beach tile is still open (the owner chooses it).
+- **Enemies have artwork.** `generate_enemy_graphic` draws a humanoid bandit,
+  archer or chief at 24×24 in four idle frames, and the MCP's `enemy_generate`
+  writes it and points the record's `gfx` at it. The Bestiary's portrait shows
+  the frame; it could not before, because the editor's constructor never gave
+  the portrait widget the project.
 - **A map is seeded too.** `engine/aur/mapforge.*` makes a town, a cave or a
   platformer room from a seed and brings the tiles it needs with their flags,
   so a room's floor is solid without making the field's grass solid. The World
@@ -180,11 +185,8 @@ twenty-two PNGs.
 
 ## Open defects
 
-1. **Three of the seven creatures have no artwork.** `bandit`,
-   `bandit_archer` and `bandit_boss` name graphics the project does not
-   have, so the Bestiary's portrait says so for them. The game's own
-   renderer draws a default graphic instead, which is worse: the creature
-   in the game is not the creature the record names.
+None. The seven creatures all have artwork now: `generate_enemy_graphic` draws the three
+bandits, `enemy_generate` writes them and points the record's `gfx` at the sprite.
 
 ## Decisions
 

@@ -81,6 +81,32 @@ void line(std::vector<std::vector<int>>& grid, int x0, int y0, int x1, int y1, i
     }
 }
 
+// A trapezoid with both edges interpolated, for clothing and props.
+void tapered_rect(std::vector<std::vector<int>>& grid, int top, int bottom,
+                  int top_left, int top_right, int bottom_left, int bottom_right, int color) {
+    const int rows = std::max(1, bottom - top);
+    for (int y = top; y < bottom; ++y) {
+        const double t = static_cast<double>(y - top) / rows;
+        const int left = static_cast<int>(top_left + (bottom_left - top_left) * t);
+        const int right = static_cast<int>(top_right + (bottom_right - top_right) * t);
+        rect(grid, left, y, right - left + 1, 1, color);
+    }
+}
+
+// The idle/attack pair a creature or humanoid enemy shares.
+JsonObject creature_anims() {
+    return JsonObject{
+        {"idle", JsonObject{{"frames", JsonArray{"idle_0", "idle_1", "idle_2", "idle_3"}}, {"fps", 4}}},
+        {"attack", JsonObject{{"frames", JsonArray{"idle_1", "idle_2", "idle_3"}}, {"fps", 10}}}
+    };
+}
+
+Json finish_creature_graphic(Json graphic, JsonObject& frames) {
+    graphic["frames"] = frames;
+    graphic["anims"] = creature_anims();
+    return graphic;
+}
+
 } // namespace
 
 Json generate_creature_graphic(const std::string& species, int seed) {
@@ -157,12 +183,119 @@ Json generate_creature_graphic(const std::string& species, int seed) {
         }
         frames["idle_" + std::to_string(frame)] = rows_json(grid);
     }
-    graphic["frames"] = frames;
-    graphic["anims"] = JsonObject{
-        {"idle", JsonObject{{"frames", JsonArray{"idle_0", "idle_1", "idle_2", "idle_3"}}, {"fps", 4}}},
-        {"attack", JsonObject{{"frames", JsonArray{"idle_1", "idle_2", "idle_3"}}, {"fps", 10}}}
+    return finish_creature_graphic(std::move(graphic), frames);
+}
+
+Json generate_enemy_graphic(const std::string& kind, int seed) {
+    struct EnemyLook {
+        const char* id;
+        bool boss;
+        bool bow;
+        std::vector<std::string> palette;
     };
-    return graphic;
+    // 0 clear, 1 outline, 2 dark cloth, 3 cloth, 4 cloth light, 5 skin, 6 skin shade,
+    // 7 eye, 8 metal, 9 leather, 10 blade, 11 hilt, 12 mask, 13 accent, 14 highlight.
+    static const std::vector<EnemyLook> looks = {
+        {"bandit", false, false,
+         {"#000000", "#141018", "#2c2730", "#4a4150", "#6b5f70", "#d9a06a", "#a87244",
+          "#e8c14a", "#b9c2c9", "#6d4a2f", "#e6edf2", "#8a6a3f", "#1b1620", "#a33c3c",
+          "#efe6d2", "#7d3b3b"}},
+        {"bandit_archer", false, true,
+         {"#000000", "#101a12", "#26352a", "#3f6b3a", "#5e8f52", "#d9a06a", "#a87244",
+          "#d8e86a", "#b9c2c9", "#6d4a2f", "#e6edf2", "#8a6a3f", "#16211a", "#c8a04a",
+          "#efe6d2", "#4d7a3f"}},
+        {"bandit_boss", true, false,
+         {"#000000", "#160e13", "#3a1e26", "#8a2b33", "#b5484a", "#d9a06a", "#a87244",
+          "#f2c14e", "#8f98a3", "#5a3a26", "#eef4f8", "#8a6a3f", "#1a1016", "#e0c07a",
+          "#f4ecd8", "#6b1f2a"}}
+    };
+    const EnemyLook* look = nullptr;
+    for (const EnemyLook& candidate : looks) {
+        if (kind == candidate.id) {
+            look = &candidate;
+            break;
+        }
+    }
+    if (!look) {
+        throw std::runtime_error("Enemy kind must be bandit, bandit_archer, or bandit_boss.");
+    }
+    std::mt19937 rng(static_cast<uint32_t>(seed));
+    Json graphic = new_graphic(24, 24, look->palette, {12, 23});
+    JsonObject frames;
+    for (int frame = 0; frame < 4; ++frame) {
+        std::vector<std::vector<int>> grid(24, std::vector<int>(24, 0));
+        const int bob = (frame == 1 || frame == 3) ? -1 : 0;
+        const int stride = (frame == 1) ? 1 : (frame == 3 ? -1 : 0);
+        const int shoulder = look->boss ? 5 : 6;
+        const int torso_right = look->boss ? 19 : 18;
+        const int head_top = (look->boss ? 2 : 3) + bob;
+
+        if (look->boss) {
+            rect(grid, 5, 9 + bob, 14, 11, 13);
+            rect(grid, 6, 10 + bob, 12, 9, 3);
+            rect(grid, 6, 18 + bob, 12, 2, 15);
+        }
+        rect(grid, 7, 18 + bob, 3, 5, 2);
+        rect(grid, 14, 18 + bob, 3, 5, 2);
+        rect(grid, 7, 22 + bob, 3, 1, 1);
+        rect(grid, 14, 22 + bob, 3, 1, 1);
+        rect(grid, 7, 15 + bob, 3, 3, 9);
+        rect(grid, 14, 15 + bob, 3, 3, 9);
+        pixel(grid, 8, 22 + bob - stride, 4);
+        pixel(grid, 15, 22 + bob + stride, 4);
+
+        rect(grid, shoulder, 10 + bob, torso_right - shoulder + 1, 8, 1);
+        rect(grid, shoulder + 1, 11 + bob, torso_right - shoulder - 1, 6, 3);
+        rect(grid, shoulder + 1, 11 + bob, torso_right - shoulder - 1, 1, 4);
+        rect(grid, shoulder + 1, 15 + bob, torso_right - shoulder - 1, 1, 12);
+        pixel(grid, 11, 15 + bob, 8);
+        pixel(grid, 12, 15 + bob, 8);
+        rect(grid, shoulder - 1, 11 + bob, 2, 6, 2);
+        rect(grid, torso_right + 1, 11 + bob, 2, 6, 2);
+        rect(grid, shoulder - 1, 16 + bob, 2, 2, 5);
+        rect(grid, torso_right + 1, 16 + bob, 2, 2, 5);
+
+        rect(grid, 8, head_top, 8, look->boss ? 8 : 7, 1);
+        pixel(grid, 11, head_top - 1, 2);
+        pixel(grid, 12, head_top - 1, 2);
+        rect(grid, 9, head_top + 1, 6, 5, 5);
+        rect(grid, 9, head_top + 4, 6, 2, 12);
+        rect(grid, 8, head_top, 8, 2, look->boss ? 8 : 2);
+        if (look->boss) {
+            pixel(grid, 7, head_top + 1, 8);
+            pixel(grid, 16, head_top + 1, 8);
+            pixel(grid, 6, head_top, 13);
+            pixel(grid, 6, head_top + 1, 13);
+            pixel(grid, 17, head_top, 13);
+            pixel(grid, 17, head_top + 1, 13);
+        } else {
+            rect(grid, 7, head_top + 1, 1, 3, 2);
+            rect(grid, 16, head_top + 1, 1, 3, 2);
+        }
+        pixel(grid, 10, head_top + 3, 7);
+        pixel(grid, 13, head_top + 3, 7);
+        pixel(grid, 11, head_top + 3, 6);
+
+        line(grid, shoulder + 1, 11 + bob, torso_right - 2, 14 + bob, 9);
+
+        if (look->bow) {
+            for (int y = 3; y < 14; ++y) pixel(grid, 3, y + bob, 11);
+            pixel(grid, 2, 6 + bob, 11);
+            pixel(grid, 2, 7 + bob, 11);
+            pixel(grid, 2, 10 + bob, 11);
+            pixel(grid, 2, 11 + bob, 11);
+            line(grid, 4, 3 + bob, 4, 13 + bob, 12);
+        } else {
+            rect(grid, 19, 8 + bob, 1, 9, 10);
+            rect(grid, 18, 16 + bob, 3, 1, 11);
+            rect(grid, 19, 17 + bob, 1, 2, 9);
+        }
+        if ((rng() % 3) == 0) {
+            pixel(grid, 9 + static_cast<int>(rng() % 6), 12 + bob + static_cast<int>(rng() % 4), 13);
+        }
+        frames["idle_" + std::to_string(frame)] = rows_json(grid);
+    }
+    return finish_creature_graphic(std::move(graphic), frames);
 }
 
 Json generate_effect_graphic(const std::string& effect_kind, int seed) {
@@ -260,15 +393,8 @@ Json generate_clothing_graphic(const std::string& kind, int seed) {
     }, {16, 28});
     std::vector<std::vector<int>> grid(32, std::vector<int>(32, 0));
 
-    const auto tapered = [&grid](int top, int bottom, int top_left, int top_right,
-                                 int bottom_left, int bottom_right, int color) {
-        const int rows = std::max(1, bottom - top);
-        for (int y = top; y < bottom; ++y) {
-            const double t = static_cast<double>(y - top) / rows;
-            const int left = static_cast<int>(top_left + (bottom_left - top_left) * t);
-            const int right = static_cast<int>(top_right + (bottom_right - top_right) * t);
-            rect(grid, left, y, right - left + 1, 1, color);
-        }
+    const auto tapered = [&grid](int top, int bottom, int tl, int tr, int bl, int br, int color) {
+        tapered_rect(grid, top, bottom, tl, tr, bl, br, color);
     };
 
     if (kind == "shirt" || kind == "tunic" || kind == "cloak") {
@@ -390,15 +516,8 @@ Json generate_prop_graphic(const std::string& kind, int seed) {
         "#db6a54", "#74b9bd", "#f3eee0", "#475b84"
     }, {16, 28});
     std::vector<std::vector<int>> grid(32, std::vector<int>(32, 0));
-    const auto tapered = [&grid](int top, int bottom, int top_left, int top_right,
-                                 int bottom_left, int bottom_right, int color) {
-        const int rows = std::max(1, bottom - top);
-        for (int y = top; y < bottom; ++y) {
-            const double t = static_cast<double>(y - top) / rows;
-            const int left = static_cast<int>(top_left + (bottom_left - top_left) * t);
-            const int right = static_cast<int>(top_right + (bottom_right - top_right) * t);
-            rect(grid, left, y, right - left + 1, 1, color);
-        }
+    const auto tapered = [&grid](int top, int bottom, int tl, int tr, int bl, int br, int color) {
+        tapered_rect(grid, top, bottom, tl, tr, bl, br, color);
     };
 
     if (kind == "sword") {

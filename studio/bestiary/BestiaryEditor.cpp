@@ -47,6 +47,7 @@ namespace aur
                 "the project.",
                 rightPane));
             portrait = new CreaturePortrait(rightPane);
+            portrait->setProject(project);
             portrait->setMinimumHeight(140);
             rightLayout->addWidget(portrait, 2);
 

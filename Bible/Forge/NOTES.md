@@ -26,6 +26,17 @@ child > teen > adult, an eye on `down_0` and `down_right_0`, feminine ≠ mascul
 `left_0` the mirror of `right_0`, and variant/role/hair/accessory each changing the
 output.
 
+**Enemy sprites.** `generate_enemy_graphic` (`forge/AssetGenerators.cpp`) draws the
+humanoid enemies at 24×24 — the same size the creature generator uses — from a
+three-row look table (bandit, bandit_archer, bandit_boss) with a 16-colour palette
+per row, four idle frames and the same `idle`/`attack` anims as a creature. The
+MCP's `enemy_generate` writes the sprite and sets the record's `gfx`.
+
+**The Bestiary had never shown artwork.** `CreaturePortrait` was never given the
+project in `BestiaryEditor`'s constructor, so `artwork()` saw a null project and
+every creature said "The project has no artwork". The constructor now calls
+`portrait->setProject(project)`; a fresh open shows the sprite.
+
 **Two traps found the hard way.** The beast variant has to change the pixel art, not
 only the palette — the palette is separate from the frames, so a variant that only
 recolours is invisible to a frames comparison. And a `QGroupBox`/tab title containing a

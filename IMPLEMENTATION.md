@@ -18,7 +18,6 @@ and git holds the history. An item with no gate is an intention.
 | ID | item | evidence | gate |
 |---|---|---|---|
 | **W-01** | **Expand a world map tile into a map.** Pick a tile on the world map, send it to the map editor, grow it into a map that keeps the direction (a beach on the west stays on the west). `pick_terrain` names the cell's terrain and the side its land is on, and the map generator keeps that side; "Expand this tile" sends the pick to the map editor, and the field's own beach tile is open (the owner picks it). | `WANTED.md` Open ("Expand a world map tile into a map"); `PROJECT.md` §"What works"; plan `Bible/notes/globe-expand.md` | expansion works with direction preserved; build and suite green |
-| **W-03** | **Three creatures have no artwork.** `bandit`, `bandit_archer` and `bandit_boss` name graphics the project does not have, so the Bestiary's portrait says so for them; the game's renderer draws a default graphic instead — the creature in the game is not the creature the record names. | `PROJECT.md` open defect 1 | artwork present, or the records name the missing graphic honestly |
 | **W-04** | **The globe's sphere, and its third level of detail.** The world map has two levels now: the generated HD surface, and the same terrain at one pixel per tile, switched by the screen pixels a tile covers (`studio/world/TerrainLod.{hpp,cpp}`). P2 of `Bible/notes/globe-view.md` is the sphere — the grid on a UV sphere, the poles capped. Open also: the HD surface is capped at 32 px/tile (22 for a 256x128 map), so at the 3200% ceiling it is upsampled; a denser picture for the visible region is the third level. | plan `Bible/notes/globe-view.md` | the capture shows the world as a sphere; the gate is clean |
 
 ## Area P — Platformer
@@ -41,6 +40,6 @@ and git holds the history. An item with no gate is an intention.
 
 ## Order of work
 
-1. **W-01** (tile→map expansion) — the owner's queue, in that order.
+1. **W-01** (tile→map expansion, only the beach tile left) — the owner's queue, in that order.
 2. **W-03** and **P-01** — the remaining `PROJECT.md` and platformer items, as the queue allows.
 3. **D-01** and **Q-01** — owner-gated; nothing lands until the owner unparks or the queue allows.

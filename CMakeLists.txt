@@ -261,6 +261,7 @@ add_executable(aur_tests
     tests/test_autotile.cpp
     tests/test_mcp.cpp
     tests/test_forge.cpp
+    studio/bestiary/BestiaryData.cpp
     tests/test_clock.cpp
     tests/test_game.cpp
     tests/test_topology_boundaries.cpp

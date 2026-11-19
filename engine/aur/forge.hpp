@@ -42,6 +42,7 @@ Json random_character_spec(int seed, const std::string& name, const std::string&
                            const std::string& role = "npc",
                            const std::string& variant = "random");
 Json generate_creature_graphic(const std::string& species, int seed);
+Json generate_enemy_graphic(const std::string& kind, int seed);
 Json generate_effect_graphic(const std::string& effect_kind, int seed);
 Json generate_clothing_graphic(const std::string& kind, int seed);
 Json generate_prop_graphic(const std::string& kind, int seed);
