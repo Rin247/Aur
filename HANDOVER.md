@@ -5,7 +5,7 @@ Revert any active D3D11 backend use; rendering must run on Vulkan or D3D12 only.
 Route backend selection through one shim; startup assert backend in {Vulkan, D3D12};
 headless Null only under RHI_POLICY_HEADLESS=1. See C:\Projects\POLICY.md.
 
-## Where things stand (2026-11-18)
+## Where things stand (2026-11-19)
 
 - **The studio runs on the estate design system and Hydra theme stack (`studio/theme/`, `C:\Projects\DESIGN.md` §1, §2, §6.3, §13; `C:\Projects\Hydra\`).**
   `ThemeManager`, `ThemeContract`, and `AurStyle` (`QProxyStyle` over Fusion) drive every surface,
@@ -29,9 +29,15 @@ headless Null only under RHI_POLICY_HEADLESS=1. See C:\Projects\POLICY.md.
   - `studio/MusicPanel.cpp` (661 lines): `music/MidiStrip.{hpp,cpp}`, `music/GmPatchList.hpp`, `music/MusicPanelSession.cpp` (598 lines), `music/PianoRollInput.cpp` (289 lines), `music/MidiDeviceIo.{hpp,cpp}`, `music/SongHistory.{hpp,cpp}`, and `music/SharedAudio.{hpp,cpp}` live under `studio/music/`.
 - **The world is a globe as well as a sheet.** `studio/world/GlobeProjection` is an
   orthographic projection with capped poles; the World tab's Globe checkbox (or
-  `Aur --globe`) shows it and dragging spins it. `build/renders/world_globe_1280x690_z1.0.png`
-  is the proof, and `tests/test_globe_projection.cpp` pins the wrap, the poles and the
-  shading. **Next: W-04's third LOD level** (a denser picture for the visible region).
+  `Aur --globe`) shows it and dragging spins it. The sphere is drawn on the GPU
+  (`studio/shaders/globe.frag` through `TerrainRhiWidget`), so a drag costs a
+  uniform update, not a CPU rebuild; the surface is uploaded once as a `BGRA8`
+  texture because `build_hd_surface` returns `Format_RGB32` (uploading it as
+  `RGBA8` swapped the channels and the ocean read ochre). In globe mode the
+  overlay widget draws nothing, so the sphere is not doubled by the flat grid.
+  `build/renders/world_globe_1280x690_z1.0.png` is the proof, and
+  `tests/test_globe_projection.cpp` pins the wrap, the poles and the shading.
+  **Next: W-04's third LOD level** (a denser picture for the visible region).
 - **The world map has two levels of detail** (`studio/world/TerrainLod.{hpp,cpp}`,
   `studio/world/WorldTerrainPaint.{hpp,cpp}`; plan `Bible/notes/globe-view.md` P1).
   The crossover is a screen measurement -- the drawn width over the map's width --
@@ -77,7 +83,7 @@ cd C:\Projects\Aur; py -3.15 tests\render_check.py
 
 ## Active plans
 
-- `Bible/notes/globe-view.md` — the globe's levels of detail and the sphere. **P1 landed** (the two levels, `TerrainLod` + `WorldTerrainPaint`); **P2 is next** (the grid on a UV sphere, the poles capped), and the third LOD level — a denser surface for the 3200% ceiling — is recorded as open.
+- `Bible/notes/globe-view.md` — the globe's levels of detail and the sphere. **P1 landed** (the two levels, `TerrainLod` + `WorldTerrainPaint`); **P2 landed** (the grid on a UV sphere, the poles capped); **P2.5 landed** (the sphere on the GPU, the overlay no longer doubles it, the BGRA channel swap fixed, the harness forwards its flags). The third LOD level — a denser surface for the 3200% ceiling — is recorded as open.
 - `Bible/notes/globe-expand.md` — **W-01**: expand a world map tile into a map preserving coast direction.
 - `Bible/notes/platformer.md` — **P-01**: P1–P3 landed and tested; P4 waits on a solid floor tile chosen by the owner.
 - `Bible/notes/Aur World Map Agent Work Packages.md` — WP0–WP3 landed. Next: WP4 (WorldSim hookup: temperature seeding, sim persistence) and WP6 cleanup. WP5 (globe view) needs WP4.

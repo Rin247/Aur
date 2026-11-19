@@ -1,7 +1,8 @@
 # The globe's levels of detail: plan
 
-Status: P0, P1 and P2 done; the world is a globe with capped poles. The open
-LOD step is the third level -- a denser surface for the 3200% ceiling.
+Status: P0, P1, P2 and P2.5 done; the world is a globe with capped poles,
+rendered on the GPU. The open LOD step is the third level -- a denser
+surface for the 3200% ceiling.
 
 ## Goal
 
@@ -111,6 +112,29 @@ renders the coarse picture, and zooming in renders the HD one. Proved by
 Acceptance: the capture shows the world as a sphere; the gate is clean. Proved by
 `build/renders/world_globe_1280x690_z1.0.png`, and `tests/test_globe_projection.cpp`
 pins the projection, the wrap, the poles and the shading.
+
+### P2.5 The sphere on the GPU
+
+- [x] P2.5.1 The projection moved into the fragment shader
+  (`studio/shaders/globe.frag`): the same orthographic inverse, the disc
+  test, the wrap and the limb shading, with only yaw, pitch and viewport
+  as uniforms. The surface stays a GPU texture; a drag no longer rebuilds
+  it pixel by pixel on the CPU.
+- [x] P2.5.2 The overlay stops double-drawing: in globe mode the flat grid,
+  markers and margin mask are skipped (`WorldMapOverlayWidget::paintEvent`
+  returns when `globeOnGpu()`), so the sphere is the whole view.
+- [x] P2.5.3 The channel swap: `build_hd_surface` returns `Format_RGB32`
+  (BGRA in memory), so the globe texture is created as `QRhiTexture::BGRA8`
+  and the upload is zero-copy. Uploading it into `RGBA8` put blue where
+  red belonged -- the ocean read ochre and the beaches cyan.
+- [x] P2.5.4 The harness forwards its flags: `render_check.py` dropped the
+  `map_id` and `globe` slots when calling `shoot`, so the "world_globe"
+  capture was actually the flat map. Both are now passed.
+
+Acceptance: the globe spins smoothly (the owner's 5 fps complaint is gone),
+the water is blue, and there is one sphere, not two. Proved by
+`build/renders/world_globe_1280x690_z1.0.png` opened 2026-11-19; ctest 7/7,
+conformance 9/9.
 
 ## Acceptance
 

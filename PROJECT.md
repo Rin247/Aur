@@ -126,7 +126,11 @@ twenty-two PNGs.
   an orthographic sphere and samples the equirectangular surface, so a pole is a point
   rather than a hole and the shading dims toward the limb. The World tab's Globe checkbox
   (or `Aur --globe`) shows it, dragging spins it, and it samples whichever LOD picture the
-  zoom chose.
+  zoom chose. The sphere itself is drawn on the GPU (`studio/shaders/globe.frag` through
+  `TerrainRhiWidget`): the surface is uploaded once as a `BGRA8` texture — `build_hd_surface`
+  returns `Format_RGB32`, and an `RGBA8` upload swapped the channels so the ocean read
+  ochre — and in globe mode the overlay widget draws nothing, so the flat grid does not
+  double the sphere.
 - **A map is seeded too.** `engine/aur/mapforge.*` makes a town, a cave or a
   platformer room from a seed and brings the tiles it needs with their flags,
   so a room's floor is solid without making the field's grass solid. The World

@@ -50,6 +50,8 @@ public:
 
 protected:
     void paintEvent(QPaintEvent*) override {
+        // The globe is the whole view; flat grid, markers and margin mask would double it.
+        if (owner_->globeOnGpu()) return;
         QPainter painter(this);
         owner_->paintRepeatMask(painter);  // WP1 margin mask, no-op when repeat
         owner_->paintCanvas(painter);
@@ -129,8 +131,7 @@ void WorldMapCanvasWidget::ensureWorldModel() {
 
 void WorldMapCanvasWidget::refreshCanvas() {
     ensureWorldModel();
-    const bool gpuTerrain = world_model && terrain_renderer && !editor::isHeadlessRhi() &&
-                            !globe_view;
+    const bool gpuTerrain = world_model && terrain_renderer && !editor::isHeadlessRhi();
     if (terrain_renderer) {
         terrain_renderer->setVisible(gpuTerrain);
         if (gpuTerrain) terrain_renderer->update();
@@ -318,7 +319,7 @@ QImage WorldMapCanvasWidget::tileImage(const std::string& tileset_id, int tile_i
 TerrainView WorldMapCanvasWidget::terrainView() const {
     return {world_model.get(), world_model_map, world_model_generation, project,
             mapBounds(), size(), zoom_factor, preview_hour, daynight_overlay,
-            contours_enabled};
+            contours_enabled, globe_view, globe_yaw, globe_pitch};
 }
 
 void WorldMapCanvasWidget::paintRepeatMask(QPainter& painter) {
@@ -338,6 +339,10 @@ void WorldMapCanvasWidget::paintEvent(QPaintEvent*) {
     painter.fillRect(rect(), QColor("#171b20"));
 }
 
+bool WorldMapCanvasWidget::globeOnGpu() const {
+    return globe_view && world_model && terrain_renderer && terrain_renderer->isVisible();
+}
+
 void WorldMapCanvasWidget::setGlobeView(bool enabled) {
     if (globe_view == enabled) return;
     globe_view = enabled;
@@ -348,24 +353,42 @@ void WorldMapCanvasWidget::setGlobeView(bool enabled) {
 void WorldMapCanvasWidget::paintGlobe(QPainter& painter, const QImage& surface) {
     const QSize target_size = size();
     if (target_size.isEmpty()) return;
-    if (globe_cache.isNull() || globe_cache_size != target_size ||
+    // The sphere is rebuilt pixel by pixel, so it is rendered once at a capped
+    // size and the blit scales it; a drag coalesces through the 16 ms timer.
+    constexpr int kMaxRenderDimension = 640;
+    const int longest = std::max(target_size.width(), target_size.height());
+    const double ratio = longest > kMaxRenderDimension
+        ? static_cast<double>(kMaxRenderDimension) / longest : 1.0;
+    const QSize render_size(std::max(64, static_cast<int>(target_size.width() * ratio)),
+                            std::max(64, static_cast<int>(target_size.height() * ratio)));
+    if (globe_source_map != current_map || globe_source.isNull()) {
+        globe_source = surface.convertToFormat(QImage::Format_RGB32);
+        globe_source_map = current_map;
+    }
+    if (globe_cache.isNull() || globe_cache_size != render_size ||
         std::abs(globe_cache_yaw - globe_yaw) > 0.0001 ||
         std::abs(globe_cache_pitch - globe_pitch) > 0.0001) {
-        const QImage source = surface.convertToFormat(QImage::Format_RGB32);
-        globe_cache = QImage(target_size, QImage::Format_RGB32);
+        const QImage& source = globe_source;
+        globe_cache = QImage(render_size, QImage::Format_RGB32);
         globe_cache.fill(QColor("#0b0f14"));
-        const double radius = std::min(target_size.width(), target_size.height()) * 0.46;
-        const double cx = target_size.width() * 0.5;
-        const double cy = target_size.height() * 0.5;
-        for (int y = 0; y < target_size.height(); ++y) {
+        const double radius = std::min(render_size.width(), render_size.height()) * 0.46;
+        const double cx = render_size.width() * 0.5;
+        const double cy = render_size.height() * 0.5;
+        const int source_width = source.width();
+        const int source_height = source.height();
+        for (int y = 0; y < render_size.height(); ++y) {
             auto* line = reinterpret_cast<QRgb*>(globe_cache.scanLine(y));
             const double ny = (cy - y) / radius;
-            for (int x = 0; x < target_size.width(); ++x) {
+            for (int x = 0; x < render_size.width(); ++x) {
                 const double nx = (x - cx) / radius;
                 const world::GlobePoint point = world::projectToGlobe(nx, ny, globe_yaw, globe_pitch);
                 if (!point.visible) continue;
-                const int sx = std::clamp(static_cast<int>(point.u * source.width()), 0, source.width() - 1);
-                const int sy = std::clamp(static_cast<int>(point.v * source.height()), 0, source.height() - 1);
+                int sx = static_cast<int>(point.u * source_width);
+                int sy = static_cast<int>(point.v * source_height);
+                if (sx < 0) sx = 0;
+                if (sx >= source_width) sx = source_width - 1;
+                if (sy < 0) sy = 0;
+                if (sy >= source_height) sy = source_height - 1;
                 const QRgb colour = reinterpret_cast<const QRgb*>(source.constScanLine(sy))[sx];
                 const double shade = world::globeShade(nx, ny);
                 line[x] = qRgb(static_cast<int>(qRed(colour) * shade),
@@ -373,11 +396,12 @@ void WorldMapCanvasWidget::paintGlobe(QPainter& painter, const QImage& surface) 
                                static_cast<int>(qBlue(colour) * shade));
             }
         }
-        globe_cache_size = target_size;
+        globe_cache_size = render_size;
         globe_cache_yaw = globe_yaw;
         globe_cache_pitch = globe_pitch;
     }
-    painter.drawImage(0, 0, globe_cache);
+    painter.setRenderHint(QPainter::SmoothPixmapTransform, false);
+    painter.drawImage(QRect(QPoint(0, 0), target_size), globe_cache);
 }
 
 void WorldMapCanvasWidget::resizeEvent(QResizeEvent* event) {
@@ -431,7 +455,7 @@ void WorldMapCanvasWidget::paintCanvas(QPainter& painter) {
     const bool wraps_x = aur::wraps_world_x(map);
     if (bounds.isEmpty() || !map.contains("layers") || !map["layers"].is_object() ||
         (!hd_map && !map["layers"].contains("ground"))) return;
-    if (globe_view && !surface.isNull()) {
+    if (globe_view && !gpuTerrain && !surface.isNull()) {
         paintGlobe(painter, surface);
         return;
     }

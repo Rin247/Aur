@@ -1,5 +1,6 @@
 #include "TerrainRhiWidget.hpp"
 #include "core/RhiBackend.hpp"
+#include "world/HdSurface.hpp"
 #include "aur/clock.hpp"
 #include "aur/game.hpp"
 #include <QColor>
@@ -38,6 +39,11 @@ void TerrainRhiWidget::initialize(QRhiCommandBuffer*) {
 void TerrainRhiWidget::render(QRhiCommandBuffer* commandBuffer) {
     editor::assertConfiguredRhiBackend(rhi());
     if (editor::isHeadlessRhi()) return;
+    const TerrainView current = view();
+    if (current.globe) {
+        renderGlobe(commandBuffer);
+        return;
+    }
     if (!view().world_model || !view().world_model->width() ||
         !view().world_model->height()) {
         commandBuffer->beginPass(renderTarget(), QColor("#171b20"),
@@ -67,6 +73,12 @@ void TerrainRhiWidget::render(QRhiCommandBuffer* commandBuffer) {
 void TerrainRhiWidget::releaseResources() {
     resourcesReady_ = false;
     pipeline_.reset();
+    globePipeline_.reset();
+    globeBindings_.reset();
+    globeUniform_.reset();
+    globeTexture_.reset();
+    globeMap_.clear();
+    globeGeneration_ = 0;
     bindings_.reset();
     uniformBuffer_.reset();
     linearSampler_.reset();
@@ -170,6 +182,89 @@ void TerrainRhiWidget::createBiomeLut() {
         }
     }
     biomeLutPendingUpload_ = true;
+}
+
+void TerrainRhiWidget::createGlobePipeline() {
+    globeUniform_.reset(rhi()->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::UniformBuffer,
+                                        sizeof(GlobeUniforms)));
+    if (!globeUniform_->create()) qFatal("Failed to create the globe uniform buffer");
+    globeBindings_.reset(rhi()->newShaderResourceBindings());
+    globeBindings_->setBindings({
+        QRhiShaderResourceBinding::uniformBuffer(
+            0, QRhiShaderResourceBinding::FragmentStage, globeUniform_.get()),
+        QRhiShaderResourceBinding::sampledTexture(
+            1, QRhiShaderResourceBinding::FragmentStage,
+            globeTexture_.get(), linearSampler_.get())
+    });
+    if (!globeBindings_->create()) qFatal("Failed to bind the globe resources");
+
+    globePipeline_.reset(rhi()->newGraphicsPipeline());
+    globePipeline_->setTopology(QRhiGraphicsPipeline::Triangles);
+    globePipeline_->setShaderStages({
+        {QRhiShaderStage::Vertex, loadShader(":/aur/shaders/world_sculpt.vert.qsb")},
+        {QRhiShaderStage::Fragment, loadShader(":/aur/shaders/globe.frag.qsb")}
+    });
+    globePipeline_->setShaderResourceBindings(globeBindings_.get());
+    globePipeline_->setRenderPassDescriptor(renderTarget()->renderPassDescriptor());
+    if (!globePipeline_->create()) qFatal("Failed to create the globe pipeline");
+}
+
+void TerrainRhiWidget::renderGlobe(QRhiCommandBuffer* commandBuffer) {
+    const TerrainView current = view();
+    if (!current.project || !current.project->maps.contains(current.map_id)) {
+        commandBuffer->beginPass(renderTarget(), QColor("#171b20"), QRhiDepthStencilClearValue{});
+        commandBuffer->endPass();
+        return;
+    }
+    ensureResources();
+    if (!linearSampler_) return;
+
+    const Json& map = current.project->maps.at(current.map_id);
+    const int map_width = map["w"].as_int();
+    const int map_height = map["h"].as_int();
+    if (map_width <= 0 || map_height <= 0) return;
+    const int density = std::clamp(2048 / std::max(map_width, map_height), 1, 16);
+    const QSize wanted(map_width * density, map_height * density);
+
+    bool fresh_texture = false;
+    if (!globeTexture_ || globeTexture_->pixelSize() != wanted ||
+        globeMap_ != current.map_id || globeGeneration_ != current.generation) {
+        const QImage surface = world::build_hd_surface(map, current.project, QRect(), density);
+        if (surface.isNull()) return;
+        if (!globeTexture_ || globeTexture_->pixelSize() != surface.size()) {
+            globeTexture_.reset(rhi()->newTexture(QRhiTexture::BGRA8, surface.size()));
+            if (!globeTexture_->create()) qFatal("Failed to create the globe texture");
+            globePipeline_.reset();
+            globeBindings_.reset();
+        }
+        globePendingImage_ = surface;
+        globeMap_ = current.map_id;
+        globeGeneration_ = current.generation;
+        fresh_texture = true;
+    }
+    if (!globePipeline_ || !globeBindings_) createGlobePipeline();
+
+    QRhiResourceUpdateBatch* updates = rhi()->nextResourceUpdateBatch();
+    if (!globePendingImage_.isNull()) {
+        updates->uploadTexture(globeTexture_.get(), globePendingImage_);
+        globePendingImage_ = QImage();
+    }
+    GlobeUniforms uniforms{};
+    uniforms.globe[0] = static_cast<float>(current.globe_yaw);
+    uniforms.globe[1] = static_cast<float>(current.globe_pitch);
+    const QSize pixel_size = renderTarget()->pixelSize();
+    uniforms.viewport[0] = static_cast<float>(pixel_size.width());
+    uniforms.viewport[1] = static_cast<float>(pixel_size.height());
+    updates->updateDynamicBuffer(globeUniform_.get(), 0, sizeof(uniforms), &uniforms);
+
+    commandBuffer->beginPass(renderTarget(), QColor("#171b20"),
+                             QRhiDepthStencilClearValue{}, updates);
+    commandBuffer->setGraphicsPipeline(globePipeline_.get());
+    commandBuffer->setViewport(QRhiViewport(
+        0, 0, static_cast<float>(pixel_size.width()), static_cast<float>(pixel_size.height())));
+    commandBuffer->setShaderResources(globeBindings_.get());
+    commandBuffer->draw(3);
+    commandBuffer->endPass();
 }
 
 void TerrainRhiWidget::createBindingsAndPipeline() {

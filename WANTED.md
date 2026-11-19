@@ -30,7 +30,7 @@
   NOTE: WP4 in the Work Packages brief covers the P3.2 weather slice and is
   owner-approved for that slice only.
 - `Bible/notes/sc-cleanroom.md` — SC (Sound Canvas-style) clean-room instrument, planning only; sequenced behind DAW P7a/P7b.
-- `Bible/notes/globe-view.md` — the globe's levels of detail and the sphere: **P1 landed** (the HD surface and the same terrain at one pixel per tile, switched by pixels per tile), **P2 is next** (the grid on a UV sphere, the poles capped), and a third level for the 3200% ceiling is open.
+- `Bible/notes/globe-view.md` — the globe's levels of detail and the sphere: **P1 landed** (the HD surface and the same terrain at one pixel per tile, switched by pixels per tile), **P2 landed** (the grid on a UV sphere, the poles capped), **P2.5 landed** (the sphere on the GPU in `studio/shaders/globe.frag`, the overlay no longer doubles it, the BGRA channel swap fixed, the harness forwards its flags), and a third level for the 3200% ceiling is open.
 
 - **`ROADMAP.md`** — the stages of this project's work and the standard a stage meets before the next starts (root `AGENTS.md` §"Project shape").- **`IMPLEMENTATION.md`** — every open item, by area, with its evidence and its gate: W-01, W-02, W-03, P-01, D-01, Q-01.
 
@@ -47,8 +47,17 @@
   jump, a body, a one-way platform and a sideways camera, and leaves the
   shipped field byte for byte as it is.
 
-## Recently closed (verified 2026-11-18)
+## Recently closed (verified 2026-11-19)
 
+- **The globe on the GPU** (W-04 P2.5, closed 2026-11-19): the sphere's
+  projection moved into `studio/shaders/globe.frag` (yaw, pitch and viewport
+  uniforms, the surface a GPU texture), so a drag costs a uniform update
+  instead of a CPU pixel rebuild; the overlay draws nothing in globe mode so
+  the sphere is not doubled; the globe texture is `BGRA8` because
+  `build_hd_surface` returns `Format_RGB32` (the `RGBA8` upload swapped the
+  channels and the ocean read ochre); `render_check.py` now forwards the
+  `map_id` and `globe` slots it was dropping. Verified: build, ctest 7/7,
+  conformance 9/9, 26 render captures opened.
 - **Bandit artwork** (W-03, closed 2026-11-18): `generate_enemy_graphic` draws the three
   bandits at 24×24, `enemy_generate` writes each sprite and sets the record's `gfx`;
   the Bestiary portrait now receives the project in the editor's constructor and shows it.

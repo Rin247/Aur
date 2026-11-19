@@ -248,6 +248,7 @@ qt_add_shaders(aur_studio aur_studio_sculpt_shaders
     FILES
         studio/shaders/world_sculpt.vert
         studio/shaders/world_sculpt.frag
+        studio/shaders/globe.frag
 )
 if(WIN32)
     target_link_libraries(aur_studio PRIVATE winmm)

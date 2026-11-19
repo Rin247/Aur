@@ -318,10 +318,12 @@ def main():
     for shot in shots:
         page, tab, size, zoom, sprite, preview = shot[:6]
         sub_tab = shot[6] if len(shot) > 6 else None
-        result = shoot(page, tab, size, zoom, sprite, preview, sub_tab)
+        map_id = shot[7] if len(shot) > 7 else None
+        globe = shot[8] if len(shot) > 8 else False
+        result = shoot(page, tab, size, zoom, sprite, preview, sub_tab, map_id, globe)
         if result is None:
             print("render_check: %s failed once, launching again" % page)
-            result = shoot(page, tab, size, zoom, sprite, preview, sub_tab)
+            result = shoot(page, tab, size, zoom, sprite, preview, sub_tab, map_id, globe)
         if result is None:
             failed += 1
     print()

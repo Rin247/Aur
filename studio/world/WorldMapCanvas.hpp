@@ -83,6 +83,9 @@ namespace aur
         QSize globe_cache_size;
         double globe_cache_yaw = 0.0;
         double globe_cache_pitch = 0.0;
+        QImage globe_source;
+        std::string globe_source_map;
+        bool globe_rebuild_scheduled = false;
         int simulation_phase = 0;
         double preview_hour = 8.0;
         std::string preview_weather = "climate";
@@ -130,6 +133,7 @@ namespace aur
         void setContoursEnabled(bool enabled);
         void setGlobeView(bool enabled);
         bool globeView() const noexcept { return globe_view; }
+        bool globeOnGpu() const;
         void setTimeOfDay(int hour, int minute);
         void setZoom(qreal zoom);
         qreal zoomFactor() const noexcept { return zoom_factor; }

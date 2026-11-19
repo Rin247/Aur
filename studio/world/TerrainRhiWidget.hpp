@@ -26,6 +26,9 @@ struct TerrainView {
     double hour = 8.0;
     bool daynight = true;
     bool contours = true;
+    bool globe = false;
+    double globe_yaw = 0.0;
+    double globe_pitch = 0.0;
 };
 
 class TerrainRhiWidget final : public QRhiWidget {
@@ -47,6 +50,11 @@ private:
         float ambient[4];
     };
 
+    struct alignas(16) GlobeUniforms {
+        float globe[4];
+        float viewport[4];
+    };
+
     std::function<TerrainView()> view_provider_;
     std::unique_ptr<QRhiTexture> heightTexture_;
     std::unique_ptr<QRhiTexture> biomeTexture_;
@@ -59,6 +67,13 @@ private:
     std::unique_ptr<QRhiBuffer> uniformBuffer_;
     std::unique_ptr<QRhiShaderResourceBindings> bindings_;
     std::unique_ptr<QRhiGraphicsPipeline> pipeline_;
+    std::unique_ptr<QRhiTexture> globeTexture_;
+    std::unique_ptr<QRhiBuffer> globeUniform_;
+    std::unique_ptr<QRhiShaderResourceBindings> globeBindings_;
+    std::unique_ptr<QRhiGraphicsPipeline> globePipeline_;
+    std::string globeMap_;
+    std::uint64_t globeGeneration_ = 0;
+    QImage globePendingImage_;
     int textureWidth_ = 0;
     int textureHeight_ = 0;
     std::string textureMap_;
@@ -72,6 +87,9 @@ private:
     void ensureResources();
     void createBiomeLut();
     void createBindingsAndPipeline();
+    void createGlobePipeline();
+    void uploadGlobeSurface(QRhiResourceUpdateBatch* updates, const TerrainView& view);
+    void renderGlobe(QRhiCommandBuffer* commandBuffer);
     void uploadDirtyRects(QRhiResourceUpdateBatch* updates);
     WorldModelUniforms makeUniforms() const;
 
