@@ -1,8 +1,6 @@
 # The globe's levels of detail: plan
 
-Status: P0, P1, P2 and P2.5 done; the world is a globe with capped poles,
-rendered on the GPU. The open LOD step is the third level -- a denser
-surface for the 3200% ceiling.
+Status: P0, P1, P2 and P2.5 done; P3 (W-04: third visible-region LOD and Globe RHI stabilization) is active at position #1 in `WANTED.md` (P-01 parked on the side per owner direction 2026-11-21). Next step: P3.1.
 
 ## Goal
 
@@ -45,8 +43,7 @@ than a flat sheet).
 
 ## Hazards found
 
-- **The HD surface is generated once, not per zoom.** A level of detail has to
-  choose between two cached pictures; it cannot regenerate at every zoom.
+- **Full-map HD surfaces are cached, not generated on each zoom change.** A close-up region needs a distinct bounded cache and must not trigger a full-map render for every camera movement.
 - **Corrected in P1: an HD map has no `ground` layer.** The audit assumed the
   coarse picture was the ground tiles; an HD world map has only `biomes`,
   `elevation`, `moisture`, `temperature` and `terrain_overrides`. So the coarse
@@ -54,7 +51,9 @@ than a flat sheet).
   (`build_hd_surface(..., 1)`), not tiles.
 - **The detail pass is sub-tile geometry.** At one pixel per tile the waves,
   rivers, foam and forest would be noise, so `build_hd_surface` draws them
-  only at a density of 4 or more.
+  only at a density of 4 or more. Its optional region currently crops after
+  generating the full image; it is not yet suitable for a dense close-region
+  cache.
 - **The crossover is where it goes wrong.** Too high and the coarse picture
   looks broken; too low and the far view costs what the close one does.
 - **A sphere pinches at the poles.** The longitude's tiles shrink to nothing
@@ -136,6 +135,37 @@ the water is blue, and there is one sphere, not two. Proved by
 `build/renders/world_globe_1280x690_z1.0.png` opened 2026-11-19; ctest 7/7,
 conformance 9/9.
 
+### P3 The close-up visible region and RHI parity (W-04)
+
+- [ ] P3.1 Region-scoped `build_hd_surface` and 3-tier LOD model (`studio/world/HdSurface.cpp`,
+  `studio/world/TerrainLod.{hpp,cpp}`, `tests/test_terrain_lod.cpp`): split `build_hd_surface`
+  into helpers under the 100-line function soft limit, allocate/render only the requested
+  `tile_bounds` (with a 2-tile detail border and X-wrapping) and compute the 16 Mpixel budget
+  against `tile_bounds` so close regions render at 64–128 px/tile and full globes use up to
+  22 px/tile; extend `TerrainLod` with `kCloseRegionPixelsPerTile = 32.0`, `LodTier`
+  (`Coarse`, `Hd`, `CloseRegion`), `selectLodTier`, `closeRegionDensity`,
+  `closeRegionTileBounds`, `globeCloseRegionTileBounds`, and `CloseRegionKey`, pinned in
+  `tests/test_terrain_lod.cpp`.
+- [ ] P3.2 RHI parity, live sculpt revision tracking, and 3-tier LOD rendering
+  (`studio/shaders/world_sculpt.frag`, `studio/shaders/globe.frag`,
+  `studio/world/TerrainRhiWidget.{hpp,cpp}`, `studio/world/WorldTerrainPaint.{hpp,cpp}`,
+  `studio/world/WorldMapCanvas.{hpp,cpp}`, `studio/world/WorldMapCanvasInput.cpp`): pass
+  `rhi()->isYUpInNDC()` for Vulkan/D3D12 vertical parity, align outside-disc margin to
+  `#171b20`, handle `Height`/`Biome`/`Water` dirty rects explicitly, track `globeRevision_`
+  against `WorldModel::revision()`, blend globe curvature smoothly to flat at high zoom, and
+  composite the cached close-region surface in both `TerrainRhiWidget` (`globeDetailTexture_`)
+  and `WorldTerrainPaint`.
+- [ ] P3.3 Visual verification and closeout: run `aur_tests`, CTest 7/7, and
+  `tests/render_check.py` (opening `build/renders/world_1280x690_z1.0.png` and
+  `build/renders/world_globe_1280x690_z1.0.png`), run conformance, and close W-04 in
+  `Bible/notes/globe-view.md`, `WANTED.md`, and `HANDOVER.md`.
+
+Acceptance: region-scoped `build_hd_surface` matches cropped full-map output without allocating
+the whole planet; 3-tier LOD and `CloseRegionKey` tests pass in `test_terrain_lod.cpp`; D3D12
+and Vulkan share right-side-up orientation and `#171b20` margins; live sculpt edits update the
+globe immediately; `aur_tests` and CTest 7/7 pass; world and globe captures are opened and
+verified. End tag: `globe-lod-p3`.
+
 ## Acceptance
 
 - Zooming in renders the HD picture, zooming out the coarse one, and the
@@ -165,10 +195,6 @@ Phase commits; revert to the tag `globe-lod-p1` for the level of detail and
   camera and the fit are logical, so the rule is the same on every machine;
   3.0 puts the fit (3.9 at the estate floor) on the HD side and the zoomed-out
   view on the coarse side.
-- **Open: the third level.** The HD surface's own density is capped at 32 per
-  tile (22 for a 256x128 map, under the 16 Mpixel budget), so at the 3200%
-  ceiling a tile covers ~125 logical pixels and the surface is upsampled. A
-  denser picture for the visible region -- `build_hd_surface` already takes a
-  region -- is the next step, and it needs its own cache key.
+- **Open: the third level (W-04).** The HD surface's own density is capped at 32 per tile (22 for a 256x128 map under the 16 Mpixel budget), so at the 3200% ceiling a tile covers about 125 logical pixels and the surface is upsampled. Although `build_hd_surface` accepts a region, it currently renders the full image and crops afterward; P3 must make generation genuinely region-scoped and use a cache key covering map identity/revision, tile region, density, and relevant rendering inputs. This plan is not the next queue item until the earlier owner choices are resolved or reprioritized.
 - **The 3200% ceiling is the owner's** (2026-11-12): 1600% is still tiny on
   a 16" 2560x1600 laptop.

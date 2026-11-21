@@ -5,22 +5,22 @@
 ## Owner queue (priority order)
 This queue may contain asks that are ready to execute and asks blocked on owner-only decisions. A blocked entry stays in its position; agents do not silently skip it or choose its asset. `HANDOVER.md` records the exact current action. Documentation cleanup is separate from this feature queue; it is tracked in the documentation/estate subsection of Active plans.
 
-1. P-01 — choose the platformer solid-floor asset in `Bible/notes/platformer.md` P4.
-2. W-04 — implement the third visible-region LOD in `Bible/notes/globe-view.md`.
-3. Qt desktop foundation — staged behind Aur's own requests; estate audit plan remains read-only/audit-first.
+1. W-04 — implement the third visible-region LOD and Globe RHI stabilization in `Bible/notes/globe-view.md` P3.
+2. Qt desktop foundation — staged behind Aur's own requests; estate audit plan remains read-only/audit-first.
+3. P-01 — parked on the side per owner direction (2026-11-21) until the other core tracks reach MVP readiness; `Bible/notes/platformer.md` P4 floor-asset choice remains owner-gated when resumed.
 
-The first entry (`P-01`) requires an owner asset choice and is a gate, not implementation work an agent may guess. W-04 is the next implementation item only after that choice is resolved or the owner reorders the queue.
+`W-04` is the active implementation item at the top of the queue. `P-01` is parked on the side per owner instruction (2026-11-21) until the other tracks are MVP-ready.
 
 ## Active plans
 ### Documentation and estate plans
 - `aur_master_expansion_hd_upgrade_plan.md` — latest owner-added broad direction, active as a planning/source document. Its stages and tracker remain draft, not verified execution status or authorization; S-01.5b classified the RPG/HD overlap and owner-source boundaries. Root location currently triggers conformance's stray-file finding.
-- `Bible/notes/doc-reconciliation.md` — S-01/P2 proposal reconciliation complete; retained for the separate root-proposal placement issue if owner requests it and the estate-policy handoff. Accessible Aur docs now use living-doc 2,000-line soft / 4,000-line hard caps; estate conflicts, precedence question, and limited rollout scope are in `HANDOVER.md`. Owner priority remains P-01, then W-04; do not bypass its owner gates.
+- `Bible/notes/doc-reconciliation.md` — S-01/P2 proposal reconciliation complete; retained for the separate root-proposal placement issue if owner requests it and the estate-policy handoff. Accessible Aur docs now use living-doc 2,000-line soft / 4,000-line hard caps; estate conflicts, precedence question, and limited rollout scope are in `HANDOVER.md`. Owner priority is now W-04 (P-01 parked on the side per owner direction 2026-11-21).
 - `C:\Projects\Bible\notes\project-handoff-prep.md` and `qt-desktop-foundation.md` — estate-wide read-only/staged plans, outside Aur feature priority.
 
 ### Aur feature plans
+- `Bible/notes/globe-view.md` — W-04 detail; P1/P2/P2.5 landed; P3 (third visible-region LOD and Globe RHI stabilization) is active at the top of the queue.
 - `Bible/notes/globe-expand.md` — W-01 landed and visually verified; no unchecked work remains.
-- `Bible/notes/platformer.md` — P-01 detailed scope; P4 waits on owner floor-asset choice.
-- `Bible/notes/globe-view.md` — W-04 detail; P1/P2/P2.5 landed; P3 queued behind W-01 and P-01.
+- `Bible/notes/platformer.md` — P-01 detailed scope; parked on the side per owner direction (2026-11-21) until the other core tracks are MVP-ready.
 - `Bible/notes/Aur World Map Agent Work Packages.md` — WP4/WP6 reference; WP4 weather slice approved, temperature/persistence choices open; WP5 globe dependency superseded.
 - `Bible/notes/worldsim-p31.md` — P3.1 complete; P3.2 editor integration owner-gated.
 - `Bible/notes/daw/plan.md` — DAW master plan; P7a parked in `Bible/notes/daw/gm-gs.md`; P2 close awaits owner GUI soak; P9 is tracked in `groovebox-sequencer.md`.
