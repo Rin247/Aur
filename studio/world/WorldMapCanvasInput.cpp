@@ -190,6 +190,8 @@ void WorldMapCanvasWidget::paintTile(const QPoint& tile) {
     }
     surface_cache = {};
     surface_cache_map.clear();
+    close_region_cache = {};
+    close_region_key = {};
     refreshCanvas();
 }
 
@@ -218,6 +220,8 @@ void WorldMapCanvasWidget::undo() {
     history.push_redo(std::move(redo));
     surface_cache = {};
     surface_cache_map.clear();
+    close_region_cache = {};
+    close_region_key = {};
     refreshCanvas();
 }
 
@@ -246,6 +250,8 @@ void WorldMapCanvasWidget::redo() {
     history.push_undo(std::move(undo));
     surface_cache = {};
     surface_cache_map.clear();
+    close_region_cache = {};
+    close_region_key = {};
     refreshCanvas();
 }
 
@@ -382,7 +388,7 @@ void WorldMapCanvasWidget::wheelEvent(QWheelEvent* event) {
                                (cursor.y() - old_bounds.top()) / old_cell);
     qreal updated_zoom = zoom_factor;
     if (event->modifiers().testFlag(Qt::ControlModifier)) {
-        constexpr std::array<qreal, 6> snapSteps{0.5, 1.0, 2.0, 4.0, 8.0, 16.0};
+        constexpr std::array<qreal, 7> snapSteps{0.5, 1.0, 2.0, 4.0, 8.0, 16.0, 32.0};
         int snapIndex = 0;
         for (int index = 1; index < static_cast<int>(snapSteps.size()); ++index) {
             if (std::abs(std::log(snapSteps[static_cast<std::size_t>(index)] / zoom_factor)) <
@@ -405,7 +411,7 @@ void WorldMapCanvasWidget::wheelEvent(QWheelEvent* event) {
     } else {
         const qreal step = event->modifiers().testFlag(Qt::ShiftModifier) ? 1.02 : 1.06;
         const qreal factor = event->angleDelta().y() > 0 ? step : 1.0 / step;
-        updated_zoom = std::clamp(zoom_factor * factor, 0.05, 16.0);
+        updated_zoom = studio::WorldCamera::clampZoom(zoom_factor * factor);
     }
     if (updated_zoom == zoom_factor) return;
     zoom_factor = updated_zoom;

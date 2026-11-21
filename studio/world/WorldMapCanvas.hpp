@@ -48,8 +48,10 @@ namespace aur
         std::map<std::pair<std::string, int>, QImage> tile_cache;
         QImage surface_cache;
         QImage coarse_cache;
+        QImage close_region_cache;
         std::string surface_cache_map;
         std::string coarse_cache_map;
+        world::CloseRegionKey close_region_key;
         editor::WorldCommandHistory history;
         world::WorldStrokeState stroke;
         std::unique_ptr<editor::WorldModel> world_model;

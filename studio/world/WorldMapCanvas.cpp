@@ -94,6 +94,10 @@ void WorldMapCanvasWidget::setProject(Project* p) {
     world_model_map.clear();
     surface_cache = {};
     surface_cache_map.clear();
+    coarse_cache = {};
+    coarse_cache_map.clear();
+    close_region_cache = {};
+    close_region_key = {};
     refreshCanvas();
 }
 
@@ -111,6 +115,8 @@ void WorldMapCanvasWidget::setMap(const std::string& map_id) {
         surface_cache_map.clear();
         coarse_cache = {};
         coarse_cache_map.clear();
+        close_region_cache = {};
+        close_region_key = {};
     }
     refreshCanvas();
 }
@@ -318,8 +324,8 @@ QImage WorldMapCanvasWidget::tileImage(const std::string& tileset_id, int tile_i
 
 TerrainView WorldMapCanvasWidget::terrainView() const {
     return {world_model.get(), world_model_map, world_model_generation, project,
-            mapBounds(), size(), zoom_factor, preview_hour, daynight_overlay,
-            contours_enabled, globe_view, globe_yaw, globe_pitch};
+            mapBounds(), size(), zoom_factor, user_zoom_multiplier, preview_hour,
+            daynight_overlay, contours_enabled, globe_view, globe_yaw, globe_pitch};
 }
 
 void WorldMapCanvasWidget::paintRepeatMask(QPainter& painter) {
@@ -370,7 +376,7 @@ void WorldMapCanvasWidget::paintGlobe(QPainter& painter, const QImage& surface) 
         std::abs(globe_cache_pitch - globe_pitch) > 0.0001) {
         const QImage& source = globe_source;
         globe_cache = QImage(render_size, QImage::Format_RGB32);
-        globe_cache.fill(QColor("#0b0f14"));
+        globe_cache.fill(QColor("#171b20"));
         const double radius = std::min(render_size.width(), render_size.height()) * 0.46;
         const double cx = render_size.width() * 0.5;
         const double cy = render_size.height() * 0.5;
@@ -439,10 +445,12 @@ void WorldMapCanvasWidget::paintCanvas(QPainter& painter) {
     const int map_height = map["h"].as_int();
     const QRectF bounds = mapBounds();
     const bool hd_map = world::has_hd_surface(map);
-    // Close in, the fine surface; far out, the same terrain at one pixel
-    // per tile. Both are cached, so crossing over is free.
-    const bool hd_surface = world::useHdSurface(map, bounds.width());
+    const bool wraps_x = aur::wraps_world_x(map);
+    const world::LodTier lod_tier = world::selectLodTier(map, bounds.width());
+    const bool hd_surface = lod_tier != world::LodTier::Coarse;
     QImage surface;
+    QImage close_region_surface;
+    QRect close_region_tiles;
     if (hd_map) {
         QImage& cache = hd_surface ? surface_cache : coarse_cache;
         std::string& cache_map = hd_surface ? surface_cache_map : coarse_cache_map;
@@ -451,8 +459,23 @@ void WorldMapCanvasWidget::paintCanvas(QPainter& painter) {
             cache_map = current_map;
         }
         surface = cache;
+        if (!gpuTerrain && lod_tier == world::LodTier::CloseRegion) {
+            const double ppt = world::pixelsPerTile(bounds.width(), map_width);
+            const int density = world::closeRegionDensity(ppt);
+            const std::uint64_t rev = world_model ? world_model->revision() : 0;
+            const QRect visible_tiles =
+                world::closeRegionTileBounds(bounds, size(), map_width, map_height, wraps_x, 0);
+            if (close_region_cache.isNull() ||
+                !close_region_key.contains(current_map, rev, visible_tiles, density)) {
+                const QRect padded_tiles =
+                    world::closeRegionTileBounds(bounds, size(), map_width, map_height, wraps_x, 4);
+                close_region_cache = world::build_hd_surface(map, project, padded_tiles, density);
+                close_region_key = {current_map, rev, padded_tiles, density};
+            }
+            close_region_surface = close_region_cache;
+            close_region_tiles = close_region_key.tile_bounds;
+        }
     }
-    const bool wraps_x = aur::wraps_world_x(map);
     if (bounds.isEmpty() || !map.contains("layers") || !map["layers"].is_object() ||
         (!hd_map && !map["layers"].contains("ground"))) return;
     if (globe_view && !gpuTerrain && !surface.isNull()) {
@@ -515,7 +538,8 @@ void WorldMapCanvasWidget::paintCanvas(QPainter& painter) {
     world::TerrainPaintContext terrain{painter,        &map,      bounds, QRectF(rect()),
                                      cell,            map_width, map_height,
                                      first_x,         last_x,    first_y, last_y,
-                                     wraps_x,         repeat_x,  surface, ground,
+                                     wraps_x,         repeat_x,  surface,
+                                     close_region_surface, close_region_tiles, ground,
                                      &groups,         tileset,   tileset_id,
                                      [this, tileset_id](int tile) { return tileImage(tileset_id, tile); }};
     world::draw_terrain(terrain);

@@ -32,6 +32,27 @@ namespace aur
                 } else {
                     painter.drawImage(bounds, context.surface);
                 }
+                if (!context.close_region_surface.isNull() && !context.close_region_tiles.isEmpty()) {
+                    painter.setRenderHint(QPainter::SmoothPixmapTransform, context.cell < 64.0);
+                    const QRectF region_rect(
+                        bounds.left() + context.close_region_tiles.left() * context.cell,
+                        bounds.top() + context.close_region_tiles.top() * context.cell,
+                        context.close_region_tiles.width() * context.cell,
+                        context.close_region_tiles.height() * context.cell);
+                    if (context.repeat_x) {
+                        const int first_copy = static_cast<int>(
+                            std::floor((0.0 - bounds.left()) / bounds.width()));
+                        const int last_copy = static_cast<int>(
+                            std::ceil((context.visible.width() - bounds.left()) / bounds.width()));
+                        for (int copy = first_copy; copy < last_copy; ++copy) {
+                            QRectF repeated_rect = region_rect;
+                            repeated_rect.moveLeft(region_rect.left() + copy * bounds.width());
+                            painter.drawImage(repeated_rect, context.close_region_surface);
+                        }
+                    } else {
+                        painter.drawImage(region_rect, context.close_region_surface);
+                    }
+                }
                 painter.restore();
             }
 

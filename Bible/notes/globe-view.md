@@ -1,6 +1,6 @@
 # The globe's levels of detail: plan
 
-Status: P0, P1, P2 and P2.5 done; P3 (W-04: third visible-region LOD and Globe RHI stabilization) is active at position #1 in `WANTED.md` (P-01 parked on the side per owner direction 2026-11-21). P3.1 done; next step: P3.2.
+Status: P0, P1, P2 and P2.5 done; P3 (W-04: third visible-region LOD and Globe RHI stabilization) is active at position #1 in `WANTED.md` (P-01 parked on the side per owner direction 2026-11-21). P3.1 and P3.2 done; next step: P3.3.
 
 ## Goal
 
@@ -146,7 +146,7 @@ conformance 9/9.
   (`Coarse`, `Hd`, `CloseRegion`), `selectLodTier`, `closeRegionDensity`,
   `closeRegionTileBounds`, `globeCloseRegionTileBounds`, and `CloseRegionKey`, pinned in
   `tests/test_terrain_lod.cpp`.
-- [ ] P3.2 RHI parity, live sculpt revision tracking, and 3-tier LOD rendering
+- [x] P3.2 RHI parity, live sculpt revision tracking, and 3-tier LOD rendering
   (`studio/shaders/world_sculpt.frag`, `studio/shaders/globe.frag`,
   `studio/world/TerrainRhiWidget.{hpp,cpp}`, `studio/world/WorldTerrainPaint.{hpp,cpp}`,
   `studio/world/WorldMapCanvas.{hpp,cpp}`, `studio/world/WorldMapCanvasInput.cpp`): pass

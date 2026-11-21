@@ -1,4 +1,5 @@
 #pragma once
+#include "world/TerrainLod.hpp"
 #include "world/WorldModel.hpp"
 #include "aur/project.hpp"
 
@@ -23,6 +24,7 @@ struct TerrainView {
     QRectF bounds;
     QSize viewport_size;
     qreal zoom = 1.0;
+    qreal zoom_multiplier = 1.0;
     double hour = 8.0;
     bool daynight = true;
     bool contours = true;
@@ -53,6 +55,7 @@ private:
     struct alignas(16) GlobeUniforms {
         float globe[4];
         float viewport[4];
+        float detailRect[4];
     };
 
     std::function<TerrainView()> view_provider_;
@@ -68,12 +71,18 @@ private:
     std::unique_ptr<QRhiShaderResourceBindings> bindings_;
     std::unique_ptr<QRhiGraphicsPipeline> pipeline_;
     std::unique_ptr<QRhiTexture> globeTexture_;
+    std::unique_ptr<QRhiTexture> globeDetailTexture_;
+    std::unique_ptr<QRhiSampler> globeDetailSampler_;
     std::unique_ptr<QRhiBuffer> globeUniform_;
     std::unique_ptr<QRhiShaderResourceBindings> globeBindings_;
     std::unique_ptr<QRhiGraphicsPipeline> globePipeline_;
     std::string globeMap_;
     std::uint64_t globeGeneration_ = 0;
+    std::uint64_t globeRevision_ = 0;
+    int globeBaseDensity_ = -1;
     QImage globePendingImage_;
+    world::CloseRegionKey globeDetailKey_;
+    QImage globeDetailPendingImage_;
     int textureWidth_ = 0;
     int textureHeight_ = 0;
     std::string textureMap_;
@@ -84,14 +93,13 @@ private:
 
     TerrainView view() const;
     static QShader loadShader(const QString& path);
-    void ensureResources();
-    void createBiomeLut();
+    void ensureResources(const TerrainView& current);
+    void createBiomeLut(const TerrainView& current);
     void createBindingsAndPipeline();
     void createGlobePipeline();
-    void uploadGlobeSurface(QRhiResourceUpdateBatch* updates, const TerrainView& view);
-    void renderGlobe(QRhiCommandBuffer* commandBuffer);
-    void uploadDirtyRects(QRhiResourceUpdateBatch* updates);
-    WorldModelUniforms makeUniforms() const;
+    void renderGlobe(QRhiCommandBuffer* commandBuffer, const TerrainView& current);
+    void uploadDirtyRects(QRhiResourceUpdateBatch* updates, const TerrainView& current);
+    WorldModelUniforms makeUniforms(const TerrainView& current) const;
 
     template<typename T>
     static void uploadRect(QRhiResourceUpdateBatch* updates, QRhiTexture* texture,

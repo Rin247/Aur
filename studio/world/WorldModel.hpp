@@ -14,7 +14,8 @@ class WorldModel {
 public:
     enum class Layer {
         Height,
-        Biome
+        Biome,
+        Water
     };
 
     struct Rect {

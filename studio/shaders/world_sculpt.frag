@@ -60,7 +60,8 @@ float forestHash(ivec2 cell, uint salt)
 
 void main()
 {
-    vec2 screen = vec2(uv.x, 1.0 - uv.y) * params.viewportLight.xy;
+    float topDownY = mix(uv.y, 1.0 - uv.y, params.environment.z);
+    vec2 screen = vec2(uv.x, topDownY) * params.viewportLight.xy;
     vec2 worldPosition = (screen - params.mapRect.xy) / params.mapRect.zw;
     bool wrapsX = params.effects.w > 0.5;
     if (worldPosition.y < 0.0 || worldPosition.y >= 1.0 ||

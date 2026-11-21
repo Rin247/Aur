@@ -37,6 +37,8 @@ namespace aur
             bool wraps_x = false;
             bool repeat_x = false;
             QImage surface;
+            QImage close_region_surface;
+            QRect close_region_tiles;
             const JsonArray *ground = nullptr;
             const std::map<int, std::string> *groups = nullptr;
             const Json *tileset = nullptr;

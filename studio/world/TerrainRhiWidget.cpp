@@ -3,6 +3,7 @@
 #include "world/HdSurface.hpp"
 #include "aur/clock.hpp"
 #include "aur/game.hpp"
+#include "aur/world_topology.hpp"
 #include <QColor>
 #include <QFile>
 #include <rhi/qshader.h>
@@ -33,7 +34,7 @@ void TerrainRhiWidget::initialize(QRhiCommandBuffer*) {
     const QRhiDriverInfo driver = rhi()->driverInfo();
     qInfo().noquote() << "Aur world sculpt backend:" << rhi()->backendName()
                       << "device:" << driver.deviceName;
-    ensureResources();
+    ensureResources(view());
 }
 
 void TerrainRhiWidget::render(QRhiCommandBuffer* commandBuffer) {
@@ -41,22 +42,22 @@ void TerrainRhiWidget::render(QRhiCommandBuffer* commandBuffer) {
     if (editor::isHeadlessRhi()) return;
     const TerrainView current = view();
     if (current.globe) {
-        renderGlobe(commandBuffer);
+        renderGlobe(commandBuffer, current);
         return;
     }
-    if (!view().world_model || !view().world_model->width() ||
-        !view().world_model->height()) {
+    if (!current.world_model || !current.world_model->width() ||
+        !current.world_model->height()) {
         commandBuffer->beginPass(renderTarget(), QColor("#171b20"),
                                  QRhiDepthStencilClearValue{});
         commandBuffer->endPass();
         return;
     }
-    ensureResources();
+    ensureResources(current);
     if (!resourcesReady_) return;
 
     QRhiResourceUpdateBatch* updates = rhi()->nextResourceUpdateBatch();
-    uploadDirtyRects(updates);
-    const WorldModelUniforms uniforms = makeUniforms();
+    uploadDirtyRects(updates, current);
+    const WorldModelUniforms uniforms = makeUniforms(current);
     updates->updateDynamicBuffer(uniformBuffer_.get(), 0, sizeof(uniforms), &uniforms);
     commandBuffer->beginPass(renderTarget(), QColor("#171b20"),
                              QRhiDepthStencilClearValue{}, updates);
@@ -77,8 +78,15 @@ void TerrainRhiWidget::releaseResources() {
     globeBindings_.reset();
     globeUniform_.reset();
     globeTexture_.reset();
+    globeDetailTexture_.reset();
+    globeDetailSampler_.reset();
     globeMap_.clear();
     globeGeneration_ = 0;
+    globeRevision_ = 0;
+    globeBaseDensity_ = -1;
+    globePendingImage_ = QImage();
+    globeDetailKey_ = {};
+    globeDetailPendingImage_ = QImage();
     bindings_.reset();
     uniformBuffer_.reset();
     linearSampler_.reset();
@@ -108,15 +116,15 @@ QShader TerrainRhiWidget::loadShader(const QString& path) {
     return shader;
 }
 
-void TerrainRhiWidget::ensureResources() {
+void TerrainRhiWidget::ensureResources(const TerrainView& current) {
     if (!rhi() || !renderTarget()) return;
-    if (!view().world_model) return;
-    const int width = view().world_model->width();
-    const int height = view().world_model->height();
+    if (!current.world_model) return;
+    const int width = current.world_model->width();
+    const int height = current.world_model->height();
     if (width <= 0 || height <= 0) return;
     if (textureWidth_ == width && textureHeight_ == height &&
-        textureMap_ == view().map_id &&
-        textureGeneration_ == view().generation && resourcesReady_) return;
+        textureMap_ == current.map_id &&
+        textureGeneration_ == current.generation && resourcesReady_) return;
 
     releaseResources();
     if (!rhi()->isTextureFormatSupported(QRhiTexture::R16) ||
@@ -127,7 +135,7 @@ void TerrainRhiWidget::ensureResources() {
     biomeTexture_.reset(rhi()->newTexture(QRhiTexture::R8, QSize(width, height)));
     waterTexture_.reset(rhi()->newTexture(QRhiTexture::R8, QSize(width, height)));
     biomeLutTexture_.reset(rhi()->newTexture(QRhiTexture::RGBA8, QSize(32, 8)));
-    const QRhiSampler::AddressMode addressU = view().world_model->wrapsX()
+    const QRhiSampler::AddressMode addressU = current.world_model->wrapsX()
         ? QRhiSampler::Repeat : QRhiSampler::ClampToEdge;
     linearSampler_.reset(rhi()->newSampler(
         QRhiSampler::Linear, QRhiSampler::Linear, QRhiSampler::None,
@@ -145,28 +153,28 @@ void TerrainRhiWidget::ensureResources() {
         !nearestSampler_->create() || !lutSampler_->create() || !uniformBuffer_->create()) {
         qFatal("Failed to create world sculpt textures, samplers, or uniforms");
     }
-    createBiomeLut();
+    createBiomeLut(current);
     createBindingsAndPipeline();
     textureWidth_ = width;
     textureHeight_ = height;
     resourcesReady_ = true;
     uploadedRevision_ = 0;
-    textureMap_ = view().map_id;
-    textureGeneration_ = view().generation;
+    textureMap_ = current.map_id;
+    textureGeneration_ = current.generation;
     update();
 }
 
-void TerrainRhiWidget::createBiomeLut() {
+void TerrainRhiWidget::createBiomeLut(const TerrainView& current) {
     biome_lut_ = QImage(32, 8, QImage::Format_RGBA8888);
     biome_lut_.fill(QColor(116, 134, 106, 0));
-    for (std::size_t id = 0; id < view().world_model->biomeNames().size() && id < 32; ++id) {
-        const std::string& biomeId = view().world_model->biomeNames()[id];
+    for (std::size_t id = 0; id < current.world_model->biomeNames().size() && id < 32; ++id) {
+        const std::string& biomeId = current.world_model->biomeNames()[id];
         const bool forestBiome = biomeId.find("forest") != std::string::npos ||
             biomeId.find("jungle") != std::string::npos;
         QColor base("#74866a");
-        if (view().project) {
-            const auto biome = view().project->biomes.find(biomeId);
-            if (biome != view().project->biomes.end() &&
+        if (current.project) {
+            const auto biome = current.project->biomes.find(biomeId);
+            if (biome != current.project->biomes.end() &&
                 biome->second.contains("color") && biome->second["color"].is_string()) {
                 const QColor candidate(
                     QString::fromStdString(biome->second["color"].as_string()));
@@ -185,16 +193,28 @@ void TerrainRhiWidget::createBiomeLut() {
 }
 
 void TerrainRhiWidget::createGlobePipeline() {
-    globeUniform_.reset(rhi()->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::UniformBuffer,
-                                        sizeof(GlobeUniforms)));
-    if (!globeUniform_->create()) qFatal("Failed to create the globe uniform buffer");
+    if (!globeUniform_) {
+        globeUniform_.reset(rhi()->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::UniformBuffer,
+                                             sizeof(GlobeUniforms)));
+        if (!globeUniform_->create()) qFatal("Failed to create the globe uniform buffer");
+    }
+    if (!globeDetailSampler_) {
+        globeDetailSampler_.reset(rhi()->newSampler(
+            QRhiSampler::Nearest, QRhiSampler::Nearest, QRhiSampler::None,
+            QRhiSampler::ClampToEdge, QRhiSampler::ClampToEdge, QRhiSampler::ClampToEdge));
+        if (!globeDetailSampler_->create()) qFatal("Failed to create the globe detail sampler");
+    }
+    QRhiTexture* detailTex = globeDetailTexture_ ? globeDetailTexture_.get() : globeTexture_.get();
     globeBindings_.reset(rhi()->newShaderResourceBindings());
     globeBindings_->setBindings({
         QRhiShaderResourceBinding::uniformBuffer(
             0, QRhiShaderResourceBinding::FragmentStage, globeUniform_.get()),
         QRhiShaderResourceBinding::sampledTexture(
             1, QRhiShaderResourceBinding::FragmentStage,
-            globeTexture_.get(), linearSampler_.get())
+            globeTexture_.get(), linearSampler_.get()),
+        QRhiShaderResourceBinding::sampledTexture(
+            2, QRhiShaderResourceBinding::FragmentStage,
+            detailTex, globeDetailSampler_.get())
     });
     if (!globeBindings_->create()) qFatal("Failed to bind the globe resources");
 
@@ -209,27 +229,28 @@ void TerrainRhiWidget::createGlobePipeline() {
     if (!globePipeline_->create()) qFatal("Failed to create the globe pipeline");
 }
 
-void TerrainRhiWidget::renderGlobe(QRhiCommandBuffer* commandBuffer) {
-    const TerrainView current = view();
+void TerrainRhiWidget::renderGlobe(QRhiCommandBuffer* commandBuffer, const TerrainView& current) {
     if (!current.project || !current.project->maps.contains(current.map_id)) {
         commandBuffer->beginPass(renderTarget(), QColor("#171b20"), QRhiDepthStencilClearValue{});
         commandBuffer->endPass();
         return;
     }
-    ensureResources();
+    ensureResources(current);
     if (!linearSampler_) return;
 
     const Json& map = current.project->maps.at(current.map_id);
     const int map_width = map["w"].as_int();
     const int map_height = map["h"].as_int();
     if (map_width <= 0 || map_height <= 0) return;
-    const int density = std::clamp(2048 / std::max(map_width, map_height), 1, 16);
-    const QSize wanted(map_width * density, map_height * density);
 
-    bool fresh_texture = false;
-    if (!globeTexture_ || globeTexture_->pixelSize() != wanted ||
-        globeMap_ != current.map_id || globeGeneration_ != current.generation) {
-        const QImage surface = world::build_hd_surface(map, current.project, QRect(), density);
+    const std::uint64_t revision = current.world_model ? current.world_model->revision() : 0;
+    const world::LodTier tier = world::selectLodTier(map, current.bounds.width());
+    const int base_density = (tier == world::LodTier::Coarse) ? 1 : 0;
+
+    if (!globeTexture_ || globeMap_ != current.map_id ||
+        globeGeneration_ != current.generation || globeRevision_ != revision ||
+        globeBaseDensity_ != base_density) {
+        const QImage surface = world::build_hd_surface(map, current.project, QRect(), base_density);
         if (surface.isNull()) return;
         if (!globeTexture_ || globeTexture_->pixelSize() != surface.size()) {
             globeTexture_.reset(rhi()->newTexture(QRhiTexture::BGRA8, surface.size()));
@@ -240,8 +261,35 @@ void TerrainRhiWidget::renderGlobe(QRhiCommandBuffer* commandBuffer) {
         globePendingImage_ = surface;
         globeMap_ = current.map_id;
         globeGeneration_ = current.generation;
-        fresh_texture = true;
+        globeRevision_ = revision;
+        globeBaseDensity_ = base_density;
     }
+
+    if (tier == world::LodTier::CloseRegion) {
+        const double ppt = world::pixelsPerTile(current.bounds.width(), map_width);
+        const int detail_density = world::closeRegionDensity(ppt);
+        const QRect vis_tiles = world::globeCloseRegionTileBounds(
+            current.globe_yaw, current.globe_pitch, ppt, current.viewport_size,
+            map_width, map_height, 0);
+        if (!globeDetailTexture_ ||
+            !globeDetailKey_.contains(current.map_id, revision, vis_tiles, detail_density)) {
+            const QRect pad_tiles = world::globeCloseRegionTileBounds(
+                current.globe_yaw, current.globe_pitch, ppt, current.viewport_size,
+                map_width, map_height, 4);
+            const QImage detail = world::build_hd_surface(map, current.project, pad_tiles, detail_density);
+            if (!detail.isNull()) {
+                if (!globeDetailTexture_ || globeDetailTexture_->pixelSize() != detail.size()) {
+                    globeDetailTexture_.reset(rhi()->newTexture(QRhiTexture::BGRA8, detail.size()));
+                    if (!globeDetailTexture_->create()) qFatal("Failed to create the globe detail texture");
+                    globePipeline_.reset();
+                    globeBindings_.reset();
+                }
+                globeDetailPendingImage_ = detail;
+                globeDetailKey_ = {current.map_id, revision, pad_tiles, detail_density};
+            }
+        }
+    }
+
     if (!globePipeline_ || !globeBindings_) createGlobePipeline();
 
     QRhiResourceUpdateBatch* updates = rhi()->nextResourceUpdateBatch();
@@ -249,12 +297,36 @@ void TerrainRhiWidget::renderGlobe(QRhiCommandBuffer* commandBuffer) {
         updates->uploadTexture(globeTexture_.get(), globePendingImage_);
         globePendingImage_ = QImage();
     }
+    if (!globeDetailPendingImage_.isNull() && globeDetailTexture_) {
+        updates->uploadTexture(globeDetailTexture_.get(), globeDetailPendingImage_);
+        globeDetailPendingImage_ = QImage();
+    }
+    const float globe_zoom = static_cast<float>(std::max<qreal>(0.05, current.zoom_multiplier));
+    const float blend_t = std::clamp((globe_zoom - 3.0f) / 3.0f, 0.0f, 1.0f);
+    const float curvature = 1.0f - blend_t * blend_t * (3.0f - 2.0f * blend_t);
+    const QSize pixel_size = renderTarget()->pixelSize();
+    const bool has_detail = (tier == world::LodTier::CloseRegion) && globeDetailTexture_ &&
+        !globeDetailKey_.tile_bounds.isEmpty();
+
     GlobeUniforms uniforms{};
     uniforms.globe[0] = static_cast<float>(current.globe_yaw);
     uniforms.globe[1] = static_cast<float>(current.globe_pitch);
-    const QSize pixel_size = renderTarget()->pixelSize();
+    uniforms.globe[2] = globe_zoom;
+    uniforms.globe[3] = curvature;
     uniforms.viewport[0] = static_cast<float>(pixel_size.width());
     uniforms.viewport[1] = static_cast<float>(pixel_size.height());
+    uniforms.viewport[2] = rhi()->isYUpInNDC() ? 1.0f : 0.0f;
+    uniforms.viewport[3] = has_detail ? 1.0f : 0.0f;
+    if (has_detail) {
+        const int wrapped_left = aur::wrapX(globeDetailKey_.tile_bounds.left(), map_width);
+        uniforms.detailRect[0] = static_cast<float>(wrapped_left) / static_cast<float>(map_width);
+        uniforms.detailRect[1] =
+            static_cast<float>(globeDetailKey_.tile_bounds.top()) / static_cast<float>(map_height);
+        uniforms.detailRect[2] =
+            static_cast<float>(globeDetailKey_.tile_bounds.width()) / static_cast<float>(map_width);
+        uniforms.detailRect[3] =
+            static_cast<float>(globeDetailKey_.tile_bounds.height()) / static_cast<float>(map_height);
+    }
     updates->updateDynamicBuffer(globeUniform_.get(), 0, sizeof(uniforms), &uniforms);
 
     commandBuffer->beginPass(renderTarget(), QColor("#171b20"),
@@ -320,8 +392,8 @@ void TerrainRhiWidget::uploadRect(QRhiResourceUpdateBatch* updates, QRhiTexture*
         texture, QRhiTextureUploadDescription(QRhiTextureUploadEntry(0, 0, subresource)));
 }
 
-void TerrainRhiWidget::uploadDirtyRects(QRhiResourceUpdateBatch* updates) {
-    editor::WorldModel& model = *view().world_model;
+void TerrainRhiWidget::uploadDirtyRects(QRhiResourceUpdateBatch* updates, const TerrainView& current) {
+    editor::WorldModel& model = *current.world_model;
     if (uploadedRevision_ == 0) {
         uploadRect(updates, heightTexture_.get(), model.heights(), model.width(),
                    {0, 0, model.width(), model.height()});
@@ -340,8 +412,10 @@ void TerrainRhiWidget::uploadDirtyRects(QRhiResourceUpdateBatch* updates) {
     for (const editor::WorldModel::DirtyRect& dirty : model.takeDirtyRects()) {
         if (dirty.layer == editor::WorldModel::Layer::Height) {
             uploadRect(updates, heightTexture_.get(), model.heights(), model.width(), dirty.rect);
-        } else {
+        } else if (dirty.layer == editor::WorldModel::Layer::Biome) {
             uploadRect(updates, biomeTexture_.get(), model.biomes(), model.width(), dirty.rect);
+        } else if (dirty.layer == editor::WorldModel::Layer::Water) {
+            uploadRect(updates, waterTexture_.get(), model.waterTypes(), model.width(), dirty.rect);
         }
     }
     if (biomeLutPendingUpload_) {
@@ -351,9 +425,9 @@ void TerrainRhiWidget::uploadDirtyRects(QRhiResourceUpdateBatch* updates) {
     uploadedRevision_ = model.revision() + 1;
 }
 
-TerrainRhiWidget::WorldModelUniforms TerrainRhiWidget::makeUniforms() const {
-    const QRectF bounds = view().bounds;
-    const editor::WorldModel& model = *view().world_model;
+TerrainRhiWidget::WorldModelUniforms TerrainRhiWidget::makeUniforms(const TerrainView& current) const {
+    const QRectF bounds = current.bounds;
+    const editor::WorldModel& model = *current.world_model;
     WorldModelUniforms uniforms{};
     uniforms.mapRect[0] = static_cast<float>(bounds.left());
     uniforms.mapRect[1] = static_cast<float>(bounds.top());
@@ -363,25 +437,26 @@ TerrainRhiWidget::WorldModelUniforms TerrainRhiWidget::makeUniforms() const {
     uniforms.world[1] = static_cast<float>(model.height());
     uniforms.world[2] = static_cast<float>(model.seaLevel()) / 65535.0f;
     uniforms.world[3] = 0.05f;
-    uniforms.viewportLight[0] = static_cast<float>(view().viewport_size.width());
-    uniforms.viewportLight[1] = static_cast<float>(view().viewport_size.height());
+    uniforms.viewportLight[0] = static_cast<float>(current.viewport_size.width());
+    uniforms.viewportLight[1] = static_cast<float>(current.viewport_size.height());
     uniforms.viewportLight[2] = 1.0f;
-    uniforms.viewportLight[3] = static_cast<float>(view().zoom);
-    uniforms.effects[0] = view().contours ? 1.0f : 0.0f;
+    uniforms.viewportLight[3] = static_cast<float>(current.zoom);
+    uniforms.effects[0] = current.contours ? 1.0f : 0.0f;
     uniforms.effects[1] = 1.0f;
-    const qreal nearestIntegerZoom = std::round(view().zoom);
-    uniforms.effects[2] = view().zoom >= 1.0 &&
-        std::abs(view().zoom - nearestIntegerZoom) < 0.001 ? 1.0f : 0.0f;
+    const qreal nearestIntegerZoom = std::round(current.zoom);
+    uniforms.effects[2] = current.zoom >= 1.0 &&
+        std::abs(current.zoom - nearestIntegerZoom) < 0.001 ? 1.0f : 0.0f;
     uniforms.effects[3] = model.wrapsX() ? 1.0f : 0.0f;
-    GameClock lighting = project_clock(view().project);
-    lighting.set_time(view().hour);
+    GameClock lighting = project_clock(current.project);
+    lighting.set_time(current.hour);
     const auto [rgb, darkness] = lighting.ambient();
-    uniforms.environment[0] = static_cast<float>(view().hour);
-    uniforms.environment[1] = view().daynight ? 1.0f : 0.0f;
+    uniforms.environment[0] = static_cast<float>(current.hour);
+    uniforms.environment[1] = current.daynight ? 1.0f : 0.0f;
+    uniforms.environment[2] = rhi()->isYUpInNDC() ? 1.0f : 0.0f;
     uniforms.ambient[0] = std::get<0>(rgb) / 255.0f;
     uniforms.ambient[1] = std::get<1>(rgb) / 255.0f;
     uniforms.ambient[2] = std::get<2>(rgb) / 255.0f;
-    uniforms.ambient[3] = view().daynight
+    uniforms.ambient[3] = current.daynight
         ? static_cast<float>(darkness) : 0.0f;
     return uniforms;
 }
