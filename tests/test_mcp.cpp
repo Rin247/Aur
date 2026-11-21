@@ -1,8 +1,10 @@
 #include "mini_test.hpp"
 #include "aur/mcp.hpp"
+#include "aur/autotile.hpp"
 
 #include <chrono>
 #include <filesystem>
+#include <fstream>
 #include <sstream>
 
 namespace fs = std::filesystem;
@@ -22,20 +24,89 @@ void test_mcp_server() {
     aur::Project project(root.string());
     project.meta["title"] = "MCP Test";
 
+    aur::JsonArray field_palette;
+    for (int index = 0; index < 16; ++index) field_palette.emplace_back("#000");
+    aur::JsonArray extra_palette;
+    for (int index = 0; index < 16; ++index) extra_palette.emplace_back("#000");
+    aur::Json terra_tileset;
+    terra_tileset["name"] = "Terra";
+    terra_tileset["tile"] = 32;
+    terra_tileset["palettes"] = aur::JsonArray{aur::Json(field_palette),
+                                                aur::Json(extra_palette)};
+    aur::JsonArray field_tiles;
+    aur::Json field_water;
+    field_water["name"] = "water_0";
+    field_water["rows"] = aur::JsonArray(32, aur::Json(std::string(32, '1')));
+    field_water["flags"] = aur::WATER;
+    field_water["pal"] = 0;
+    for (int index = 0; index < 114; ++index) field_tiles.emplace_back(field_water);
+    terra_tileset["tiles"] = field_tiles;
+    aur::Json path_group;
+    path_group["joins"] = aur::JsonArray{aur::Json("path")};
+    aur::JsonArray path_variants;
+    for (int index = 4; index < 20; ++index) path_variants.emplace_back(index);
+    path_group["tiles"] = path_variants;
+    aur::Json water_group;
+    water_group["edge_joined"] = true;
+    water_group["joins"] = aur::JsonArray{aur::Json("water")};
+    aur::JsonArray water_variants;
+    for (int index = 0; index < 16; ++index) water_variants.emplace_back(24 + index * 3);
+    water_group["tiles"] = water_variants;
+    terra_tileset["autotiles"] = aur::JsonObject{{"path", path_group}, {"water", water_group}};
+    project.tilesets["terra"] = terra_tileset;
+
+    std::ofstream(root / "project.json") << aur::dump_json(aur::JsonObject{{"title", "MCP Test"}});
+    std::ofstream(root / "tilesets.json") << aur::dump_json(project.tilesets);
+    const aur::Project field_roundtrip = aur::Project::load(root.string());
+    ASSERT(field_roundtrip.tilesets.contains("terra"));
+    const aur::Json& loaded_terra = field_roundtrip.tilesets.at("terra");
+    ASSERT(loaded_terra["tiles"].as_array().size() == 131);
+    ASSERT(loaded_terra["tiles"][114]["name"].as_string() == "starter_field_sand");
+    ASSERT(loaded_terra["autotiles"]["field_beach"]["tiles"].as_array().size() == 16);
+    ASSERT(loaded_terra["autotiles"]["field_beach"]["edge_joined"].as_bool() == true);
+    ASSERT(loaded_terra["autotiles"]["field_beach"]["joins"].as_array().size() == 1);
+    ASSERT(loaded_terra["autotiles"]["field_beach"]["joins"][0].as_string() == "field_beach");
+    aur::Json coast;
+    coast["w"] = 2;
+    coast["h"] = 2;
+    // Tile 24 is water, not field_beach. Cell (0,0) joins N (edge), W (edge),
+    // and S (115), but NOT E (24 water), so mask = N|S|W = 13 -> tiles[13].
+    coast["layers"]["ground"] = aur::JsonArray{aur::JsonArray{aur::Json(115), aur::Json(24)},
+                                aur::JsonArray{aur::Json(115), aur::Json(24)}};
+    aur::retile(coast, loaded_terra, "ground", 0, 0);
+    ASSERT(coast["layers"]["ground"][0][0].as_int() ==
+           loaded_terra["autotiles"]["field_beach"]["tiles"][13].as_int());
+
+    aur::Json inland_row;
+    inland_row["w"] = 2;
+    inland_row["h"] = 1;
+    aur::JsonArray row_cells;
+    row_cells.push_back(aur::JsonArray{aur::Json(115), aur::Json(116)});
+    inland_row["layers"]["ground"] = std::move(row_cells);
+    ASSERT(aur::mask_at(inland_row, loaded_terra, "ground", 0, 0, "field_beach") == 15);
+
+    aur::Json surrounded;
+    surrounded["w"] = 3;
+    surrounded["h"] = 3;
+    aur::JsonArray grass_row{aur::Json(0), aur::Json(0), aur::Json(0)};
+    aur::JsonArray center_row{aur::Json(0), aur::Json(115), aur::Json(0)};
+    surrounded["layers"]["ground"] = aur::JsonArray{grass_row, center_row, grass_row};
+    ASSERT(aur::mask_at(surrounded, loaded_terra, "ground", 1, 1, "field_beach") == 0);
+
     aur::Json tile;
     tile["name"] = "grass";
     tile["rows"] = aur::JsonArray(16, aur::Json(std::string(16, '1')));
     tile["flags"] = 0;
     tile["pal"] = 0;
 
-    aur::Json tileset;
-    tileset["name"] = "World";
-    tileset["tile"] = 16;
-    tileset["tiles"] = aur::JsonArray(8, tile);
+    aur::Json world_tileset;
+    world_tileset["name"] = "World";
+    world_tileset["tile"] = 16;
+    world_tileset["tiles"] = aur::JsonArray(8, tile);
     aur::JsonArray palette;
     for (int index = 0; index < 16; ++index) palette.emplace_back("#000000");
-    tileset["palettes"] = aur::JsonArray{aur::Json(palette)};
-    project.tilesets["world"] = tileset;
+    world_tileset["palettes"] = aur::JsonArray{aur::Json(palette)};
+    project.tilesets["world"] = world_tileset;
 
     aur::Json map;
     map["id"] = "overworld";

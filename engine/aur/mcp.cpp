@@ -570,35 +570,27 @@ Json execute_tool(Project& project, const std::string& name, const Json& args, b
         if (project.maps.contains(id)) throw std::runtime_error("Map already exists: " + id);
         const std::string kind_name = require_string(args, "kind");
         MapKind kind = MapKind::Town;
-        if (!mapKindFromName(kind_name, kind)) {
-            throw std::runtime_error("Unknown map kind: " + kind_name);
-        }
+        if (!mapKindFromName(kind_name, kind)) throw std::runtime_error("Unknown map kind: " + kind_name);
         const int seed = require_integer(args, "seed");
         const int width = args.contains("width") ? require_integer(args, "width") : 40;
         const int height = args.contains("height") ? require_integer(args, "height") : 24;
-        const std::string tileset_id = args.contains("tileset_id")
-            ? require_string(args, "tileset_id") : "terra";
+        const std::string tileset_id = args.contains("tileset_id") ? require_string(args, "tileset_id") : "terra";
         auto tileset_it = project.tilesets.find(tileset_id);
-        if (tileset_it == project.tilesets.end()) {
-            throw std::runtime_error("Tileset not found: " + tileset_id);
-        }
+        if (tileset_it == project.tilesets.end()) throw std::runtime_error("Tileset not found: " + tileset_id);
         Json& tileset = tileset_it->second;
         if (!tileset["tiles"].is_array() || !tileset["palettes"].is_array() ||
-            tileset["palettes"].as_array().empty()) {
+            tileset["palettes"].as_array().empty())
             throw std::runtime_error("Tileset must have tiles and at least one palette bank.");
-        }
-        const std::string display_name = args.contains("name")
-            ? require_string(args, "name")
-            : mapKindName(kind) + " " + std::to_string(seed);
+        const std::string display_name = args.contains("name") ? require_string(args, "name") : mapKindName(kind) + " " + std::to_string(seed);
         auto& tiles = tileset["tiles"].as_array();
         const int first_tile = static_cast<int>(tiles.size());
         const int tile_size = tileset_tile_size(tileset);
-        const GeneratedMap generated = generate_map_asset(kind, seed, width, height, tile_size,
-                                                          first_tile, id, display_name);
-        for (const Json& tile : generated.tiles) {
-            validate_tile(tile, tile_size, tileset["palettes"].as_array().size());
-            tiles.push_back(tile);
-        }
+        const TerrainPick pick = (args.contains("coast_side") && args["coast_side"].is_string())
+            ? pick_for_coast_side(args["coast_side"].as_string()) : TerrainPick{};
+        GeneratedMap generated = generate_map_asset(kind, seed, width, height, tile_size, first_tile,
+                                                    id, display_name, pick.group.empty() ? nullptr : &pick);
+        for (const Json& tile : generated.tiles) { validate_tile(tile, tile_size, tileset["palettes"].as_array().size()); tiles.push_back(tile); }
+        if (!pick.group.empty()) apply_coastal_beach(generated.map, tileset, pick, seed);
         project.maps[id] = generated.map;
         changed = true;
         Json result = make_object();

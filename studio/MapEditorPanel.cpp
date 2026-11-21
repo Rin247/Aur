@@ -404,6 +404,9 @@ void MapEditorPanel::setEditorZoom(qreal factor) {
 void MapEditorPanel::openMap(const QString& id) {
     if (!mapCombo) return;
     refreshMaps();
+    // The combo is still blocked from refreshMaps, so select by data directly;
+    // setCurrentIndex would otherwise be ignored while blocked.
+    mapCombo->blockSignals(false);
     for (int index = 0; index < mapCombo->count(); ++index) {
         if (mapCombo->itemData(index).toString() == id) {
             mapCombo->setCurrentIndex(index);
@@ -420,7 +423,10 @@ void MapEditorPanel::refreshMaps() {
         for (const auto& [mid, m] : project->maps) {
             std::string label = mid;
             if (m.contains("name")) label += " - " + m["name"].as_string();
-            mapCombo->addItem(QString::fromStdString(label));
+            // The id rides in itemData so openMap can select by it; the label
+            // alone is "id - name", which openMap must not have to re-parse.
+            mapCombo->addItem(QString::fromStdString(label),
+                              QString::fromStdString(mid));
         }
         if (!project->maps.empty()) {
             canvas->setMap(project->maps.begin()->first);

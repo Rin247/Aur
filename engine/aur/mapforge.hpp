@@ -69,4 +69,10 @@ namespace aur
                                     const std::string &map_id, const std::string &name,
                                     const TerrainPick *pick = nullptr);
 
+    // Parse a coast side string ("west", "east", "north", "south") into a TerrainPick.
+    TerrainPick pick_for_coast_side(const std::string &side);
+
+    // Paint water, autotiled field_beach, and grass over a generated map from a coastal pick.
+    void apply_coastal_beach(Json &map, const Json &tileset, const TerrainPick &pick, int seed);
+
 } // namespace aur

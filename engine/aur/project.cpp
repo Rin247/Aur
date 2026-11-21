@@ -1,6 +1,8 @@
 #include "project.hpp"
 #include "world_topology.hpp"
 #include "gfx.hpp"
+#include "forge.hpp"
+#include <algorithm>
 #include <fstream>
 #include <sstream>
 #include <filesystem>
@@ -66,6 +68,35 @@ Project Project::load(const std::string& root_dir) {
         p.meta["calendar"]["real_day_minutes"] = hours / loaded_meta["clock_scale"].as_number();
     }
     p.tilesets = read_json_file(j_path("tilesets.json"), JsonObject{}).as_object();
+    if (!p.tilesets.contains("terra") && p.tilesets.contains("world") &&
+        p.tilesets["world"].is_object()) {
+        p.tilesets["terra"] = p.tilesets["world"];
+    }
+    if (p.tilesets.contains("terra") && p.tilesets["terra"].is_object()) {
+        Json& field_tileset = p.tilesets["terra"];
+        if (field_tileset["tiles"].is_array() && field_tileset["palettes"].is_array() &&
+            !field_tileset["palettes"].as_array().empty() &&
+            field_tileset["autotiles"].is_object() &&
+            field_tileset["autotiles"].contains("water")) {
+            const Json& water_group = field_tileset["autotiles"]["water"];
+            const Json& water_variants = water_group["tiles"];
+            const bool has_beach = field_tileset["autotiles"].contains("field_beach");
+            if (!has_beach && water_group.is_object() && water_group.contains("tiles") &&
+                water_variants.is_array() && water_variants.as_array().size() == 16) {
+                JsonArray beach_tiles = generate_field_beach_tiles(0);
+                JsonArray& tiles = field_tileset["tiles"].as_array();
+                tiles.reserve(tiles.size() + beach_tiles.size());
+                const int first = static_cast<int>(tiles.size());
+                tiles.insert(tiles.end(), beach_tiles.begin(), beach_tiles.end());
+                JsonArray variants;
+                for (int mask = 0; mask < 16; ++mask) variants.emplace_back(first + 1 + mask);
+                field_tileset["autotiles"]["field_beach"] = JsonObject{
+                    {"edge_joined", true}, {"joins", JsonArray{Json("field_beach")}},
+                    {"name", "field_beach"}, {"tiles", variants}
+                };
+            }
+        }
+    }
     p.graphics = read_json_file(j_path("graphics.json"), JsonObject{}).as_object();
     p.characters = read_json_file(j_path("characters.json"), JsonObject{}).as_object();
     p.db = read_json_file(j_path("database.json"), p.db).as_object();

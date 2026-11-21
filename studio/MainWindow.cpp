@@ -332,6 +332,10 @@ void MainWindow::setPlaytestMap(const QString& map_id) {
     if (gameView) gameView->setMap(map_id.toStdString());
 }
 
+void MainWindow::setEditorMap(const QString& map_id) {
+    if (auto* editor = findChild<MapEditorPanel*>()) editor->openMap(map_id);
+}
+
 void MainWindow::setGlobeView(bool enabled) {
     if (!tabs || !tabStack) return;
     for (int index = 0; index < tabs->count(); ++index) {

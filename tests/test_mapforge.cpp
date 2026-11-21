@@ -157,4 +157,62 @@ void test_globe_pick()
     ASSERT(ground.as_array()[4].as_array()[0].as_int() == 101);
     ASSERT(ground.as_array()[4].as_array()[11].as_int() == 100);
     ASSERT(ground.as_array()[0].as_array()[11].as_int() == 100);
+
+    // Coastal beach painting keeps water, beach, and grass aligned to the picked edge.
+    Json terra(JsonObject{});
+    JsonArray terra_tiles;
+    auto push_named = [&](const std::string &tname) {
+        Json rec(JsonObject{});
+        rec["name"] = tname;
+        rec["flags"] = 0;
+        terra_tiles.push_back(std::move(rec));
+    };
+    push_named("grass");
+    push_named("grass2");
+    for (int i = 2; i < 40; ++i)
+        push_named(i >= 4 && i < 20 ? "water_" + std::to_string(i - 4)
+                 : i >= 20 && i < 36 ? "field_beach_" + std::to_string(i - 20)
+                 : "misc");
+    terra["tiles"] = terra_tiles;
+    JsonArray water_vars, beach_vars;
+    for (int i = 0; i < 16; ++i) {
+        water_vars.push_back(Json(4 + i));
+        beach_vars.push_back(Json(20 + i));
+    }
+    Json water_grp(JsonObject{});
+    water_grp["edge_joined"] = true;
+    water_grp["joins"] = JsonArray{Json("water")};
+    water_grp["tiles"] = water_vars;
+    Json beach_grp(JsonObject{});
+    beach_grp["edge_joined"] = true;
+    beach_grp["joins"] = JsonArray{Json("field_beach")};
+    beach_grp["tiles"] = beach_vars;
+    Json terra_auto(JsonObject{});
+    terra_auto["water"] = water_grp;
+    terra_auto["field_beach"] = beach_grp;
+    terra["autotiles"] = terra_auto;
+
+    TerrainPick west_pick = pick;
+    GeneratedMap west_gen = generate_map_asset(MapKind::Town, 7, 12, 8, 32, 40,
+                                               "west_beach", "West Beach", &west_pick);
+    apply_coastal_beach(west_gen.map, terra, west_pick, 7);
+    const JsonArray &wg = west_gen.map["layers"]["ground"][4].as_array();
+    ASSERT(wg[0].as_int() >= 4 && wg[0].as_int() < 20);
+    ASSERT(wg[1].as_int() >= 4 && wg[1].as_int() < 20);
+    ASSERT(wg[2].as_int() == 20 + (N | E | S));
+    ASSERT(wg[3].as_int() == 20 + (N | S | W));
+    ASSERT(wg[4].as_int() == 0 || wg[4].as_int() == 1);
+
+    TerrainPick east_pick;
+    east_pick.group = "ocean";
+    east_pick.land_mask = N | S | W;
+    GeneratedMap east_gen = generate_map_asset(MapKind::Town, 7, 12, 8, 32, 40,
+                                               "east_beach", "East Beach", &east_pick);
+    apply_coastal_beach(east_gen.map, terra, east_pick, 7);
+    const JsonArray &eg = east_gen.map["layers"]["ground"][4].as_array();
+    ASSERT(eg[11].as_int() >= 4 && eg[11].as_int() < 20);
+    ASSERT(eg[10].as_int() >= 4 && eg[10].as_int() < 20);
+    ASSERT(eg[9].as_int() == 20 + (N | S | W));
+    ASSERT(eg[8].as_int() == 20 + (N | E | S));
+    ASSERT(eg[7].as_int() == 0 || eg[7].as_int() == 1);
 }

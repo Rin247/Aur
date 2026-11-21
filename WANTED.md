@@ -2,53 +2,41 @@
 
 > This file holds **Aur's own asks**. For estate-wide decisions, see `C:\Projects\WANTED.md`.
 
+## Owner queue (priority order)
+This queue may contain asks that are ready to execute and asks blocked on owner-only decisions. A blocked entry stays in its position; agents do not silently skip it or choose its asset. `HANDOVER.md` records the exact current action. Documentation cleanup is separate from this feature queue; it is tracked in the documentation/estate subsection of Active plans.
+
+1. P-01 — choose the platformer solid-floor asset in `Bible/notes/platformer.md` P4.
+2. W-04 — implement the third visible-region LOD in `Bible/notes/globe-view.md`.
+3. Qt desktop foundation — staged behind Aur's own requests; estate audit plan remains read-only/audit-first.
+
+The first entry (`P-01`) requires an owner asset choice and is a gate, not implementation work an agent may guess. W-04 is the next implementation item only after that choice is resolved or the owner reorders the queue.
+
 ## Active plans
-- `C:\Projects\Bible\notes\project-handoff-prep.md` — audit-only reconciliation. This plan is not an Aur implementation priority; keep the open owner queue below first.
-- `C:\Projects\Bible\notes\qt-desktop-foundation.md` — P0 audit only; AIO/Vulkan, source/header map, naming, and toolbar/settings/keybindings. Preserve Aur's higher-priority map/DAW/editor requests.
+### Documentation and estate plans
+- `aur_master_expansion_hd_upgrade_plan.md` — latest owner-added broad direction, active as a planning/source document. Its stages and tracker remain draft, not verified execution status or authorization; S-01.5b classified the RPG/HD overlap and owner-source boundaries. Root location currently triggers conformance's stray-file finding.
+- `Bible/notes/doc-reconciliation.md` — S-01/P2 proposal reconciliation complete; retained for the separate root-proposal placement issue if owner requests it and the estate-policy handoff. Accessible Aur docs now use living-doc 2,000-line soft / 4,000-line hard caps; estate conflicts, precedence question, and limited rollout scope are in `HANDOVER.md`. Owner priority remains P-01, then W-04; do not bypass its owner gates.
+- `C:\Projects\Bible\notes\project-handoff-prep.md` and `qt-desktop-foundation.md` — estate-wide read-only/staged plans, outside Aur feature priority.
 
-- `Bible/notes/daw/` — Music Studio DAW initiative (P1, P3, P4.1–P4.3 MIDI
-  device layer + count-in, P5 piano roll through P5.14 ids — P5 remainder
-  closed 2026-11-11 — P6 through P6.7 (clips, launcher, scene
-  record, arrangement placements/canvas/playback + arrangement MIDI export)
-  all landed; P2 close awaits owner GUI soak; P8 effects framework landed;
-  P9 step sequencer + arpeggiator landed 2026-11-11 via the groovebox
-  initiative. Next: P7a GM/GS instrument — plan at `Bible/notes/daw/gm-gs.md`
-  (P0 landed `daw-p7a.1`; **P1 deferred by owner 2026-11-11** — parked
-  mid-wiring, exact resume point recorded in the plan).
-- `Bible/notes/platformer.md` — the platformer engine: P1–P3 (movement modes,
-  tile physics, one-way platform, cameras) landed and tested; P4 waits on a
-  solid floor tile chosen by the owner.
-- `Bible/notes/Aur World Map Agent Work Packages.md` — World Map editor
-  work packages WP0–WP6; **WP0 landed** `1d9094a`, **WP1 single-copy view
-  landed** `1be483e`, **WP2.S1 starter-UI removal landed** `a9d2726`,
-  **WP3 weather renderer v2 landed** `6ea8eb0` (ctest 7/7; D3D12 visual
-  captures and timing budget still owner-verified).
-  Next: WP4 WorldSim hookup (owner decisions: temperature seeding, sim
-  persistence), WP6 cleanup. WP5 globe view needs WP4.
-- `Bible/notes/worldsim-p31.md` — P3.1 WorldSim core complete (P0–P2
-  committed 2026-11-06); P3.2 editor simulation tools is next, owner-gated.
-  NOTE: WP4 in the Work Packages brief covers the P3.2 weather slice and is
-  owner-approved for that slice only.
-- `Bible/notes/sc-cleanroom.md` — SC (Sound Canvas-style) clean-room instrument, planning only; sequenced behind DAW P7a/P7b.
-- `Bible/notes/globe-view.md` — the globe's levels of detail and the sphere: **P1 landed** (the HD surface and the same terrain at one pixel per tile, switched by pixels per tile), **P2 landed** (the grid on a UV sphere, the poles capped), **P2.5 landed** (the sphere on the GPU in `studio/shaders/globe.frag`, the overlay no longer doubles it, the BGRA channel swap fixed, the harness forwards its flags), and a third level for the 3200% ceiling is open.
+### Aur feature plans
+- `Bible/notes/globe-expand.md` — W-01 landed and visually verified; no unchecked work remains.
+- `Bible/notes/platformer.md` — P-01 detailed scope; P4 waits on owner floor-asset choice.
+- `Bible/notes/globe-view.md` — W-04 detail; P1/P2/P2.5 landed; P3 queued behind W-01 and P-01.
+- `Bible/notes/Aur World Map Agent Work Packages.md` — WP4/WP6 reference; WP4 weather slice approved, temperature/persistence choices open; WP5 globe dependency superseded.
+- `Bible/notes/worldsim-p31.md` — P3.1 complete; P3.2 editor integration owner-gated.
+- `Bible/notes/daw/plan.md` — DAW master plan; P7a parked in `Bible/notes/daw/gm-gs.md`; P2 close awaits owner GUI soak; P9 is tracked in `groovebox-sequencer.md`.
+- `Bible/notes/sc-cleanroom.md` — planning only; sequenced behind DAW work.
+- `Bible/notes/groovebox-sequencer.md` — landed; retained for history and DAW P9 detail; no unchecked work remains there.
 
-- **`ROADMAP.md`** — the stages of this project's work and the standard a stage meets before the next starts (root `AGENTS.md` §"Project shape").- **`IMPLEMENTATION.md`** — every open item, by area, with its evidence and its gate: W-01, W-02, W-03, P-01, D-01, Q-01.
+## Closed (verified; latest first)
 
-## Open
-
-- **Expand a world map tile into a map** (owner, 2026-11-12): pick a
-  tile on the world map, send it to the map editor, and grow it into a map
-  that keeps the direction -- a beach on the west side stays on the west
-  side. Plan at `Bible/notes/globe-expand.md`.
-- **Qt desktop foundation** — Audit AIO/Vulkan behavior, legacy source/header layout, professional toolbars/settings/keybindings, and canonical `Aur` artifact identity; do not suffix its app name with Qt/desktop roles. Preserve the higher-priority active Aur queue.
-- **Implement SNES-style platformer games and metroidvanias** (plan
-  `Bible/notes/platformer.md`; P1–P3 landed; P4 awaits owner floor tile selection):
-  the engine splits movement into modes, gives the platformer gravity, a
-  jump, a body, a one-way platform and a sideways camera, and leaves the
-  shipped field byte for byte as it is.
-
-## Recently closed (verified 2026-11-19)
-
+- **Field beach & coastal map expansion** (W-01, closed 2026-11-21): `generate_field_beach_tiles(0)`
+  in `engine/aur/forge/AssetGenerators.cpp` uses `terra` `pal[0]` warm golden sand with a 4 px
+  non-joined shoreline berm; `Project::load` bootstraps `field_beach` (`edge_joined: true`,
+  `joins: ["field_beach"]`); `aur::apply_coastal_beach` in `engine/aur/mapforge.cpp` lays out
+  directional water, autotiled `field_beach`, and textured grass for `WorldPanel::expandHoveredTile`
+  and MCP `map_generate` (`coast_side`); `MapEditorPanel::openMap` selects maps by `itemData`; and
+  `render_check.py` captures visible windows DPI-aware. Verified: `aur_tests` 76/76, CTest 7/7,
+  and opened `build/renders/beach_expansion_1280x690_z1.0.png`.
 - **The globe on the GPU** (W-04 P2.5, closed 2026-11-19): the sphere's
   projection moved into `studio/shaders/globe.frag` (yaw, pitch and viewport
   uniforms, the surface a GPU texture), so a drag costs a uniform update
@@ -69,11 +57,3 @@
   page, the last posted line, project + saved state, the RHI backend, theme mode and
   interface scale; panels post through `theme::postStatus`. Verified: build, ctest 7/7,
   conformance 9/9, 24 render captures opened.
-- **Creature Forge refactor** (owner brief `Bible/notes/forge-brief.md`, 2026-11-18):
-  `engine/aur/forge.cpp` (1,240 lines) split into `forge/SpeciesCatalog`,
-  `forge/CharacterRenderer` and `forge/AssetGenerators`; the character renderer
-  rewritten at native 48×64 with species, hair, role and accessory layers (the
-  eye smudge, forehead pixel and torso block are gone); the preview is a four-way
-  turnaround; the panel has Character / Creatures / Gear & FX / Tiles tabs and
-  persists `variant`, `affinity`, `alignment` and `entity_role`. Verified: ctest
-  7/7 (75 checks), conformance 9/9, 24 render captures opened, 2026-11-18.

@@ -786,5 +786,43 @@ JsonArray generate_starter_world_terrain_tiles(int palette_count) {
     return tiles;
 }
 
+JsonArray generate_field_beach_tiles(int palette_index) {
+    constexpr int kTileSize = 32;
+    JsonArray beach_tiles;
+    beach_tiles.reserve(17);
+    Json sand = generate_tile_asset("sand", 73102, kTileSize, kTileSize, 7, 6, 8, 11);
+    sand["name"] = "starter_field_sand";
+    sand["pal"] = palette_index;
+    sand["flags"] = 0;
+    beach_tiles.push_back(std::move(sand));
+
+    // Copy base sand before referencing its rows; non-joined edges get a 4px shoreline berm.
+    const Json sand_base = beach_tiles.front();
+    const Json& sand_rows = sand_base["rows"];
+    for (int mask = 0; mask < 16; ++mask) {
+        Json tile = sand_base;
+        tile["name"] = "field_beach_" + std::to_string(mask);
+        tile["flags"] = 0;
+        JsonArray rows;
+        rows.reserve(kTileSize);
+        for (int y = 0; y < kTileSize; ++y) {
+            std::string row = sand_rows[static_cast<size_t>(y)].as_string();
+            for (int x = 0; x < kTileSize; ++x) {
+                int d = kTileSize;
+                if ((mask & 0x1) == 0) d = std::min(d, y);
+                if ((mask & 0x2) == 0) d = std::min(d, kTileSize - 1 - x);
+                if ((mask & 0x4) == 0) d = std::min(d, kTileSize - 1 - y);
+                if ((mask & 0x8) == 0) d = std::min(d, x);
+                if (d < 2) row[static_cast<size_t>(x)] = '6';
+                else if (d < 4) row[static_cast<size_t>(x)] = '8';
+            }
+            rows.emplace_back(std::move(row));
+        }
+        tile["rows"] = std::move(rows);
+        beach_tiles.push_back(std::move(tile));
+    }
+    return beach_tiles;
+}
+
 } // namespace aur
 

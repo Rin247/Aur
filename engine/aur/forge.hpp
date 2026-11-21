@@ -49,6 +49,7 @@ Json generate_prop_graphic(const std::string& kind, int seed);
 Json generate_tile_asset(const std::string& kind, int seed, int width = 16, int height = 16,
                          int base = 2, int dark = 3, int light = 4, int accent = 5);
 JsonArray generate_starter_world_terrain_tiles(int palette_count);
+JsonArray generate_field_beach_tiles(int palette_index = 0);
 void register_parts(const Json& parts);
 
 } // namespace aur

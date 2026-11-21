@@ -7,6 +7,8 @@ headless Null only under RHI_POLICY_HEADLESS=1. See C:\Projects\POLICY.md.
 
 ## Where things stand (2026-11-19)
 
+Read in this order: `AGENTS.md` (rules), this file (current handoff), `WANTED.md` (ordered asks and active plans), `PROJECT.md` (verified product state and decisions), then the active plans linked in `WANTED.md`. `ROADMAP.md` is strategic sequencing; `IMPLEMENTATION.md` is only the open gate ledger. `Bible/Operations/NOTES.md` is history, and the similarly named Operations snapshots are archival. `Bible/README.md` indexes design sources and document roles.
+
 - **The studio runs on the estate design system and Hydra theme stack (`studio/theme/`, `C:\Projects\DESIGN.md` §1, §2, §6.3, §13; `C:\Projects\Hydra\`).**
   `ThemeManager`, `ThemeContract`, and `AurStyle` (`QProxyStyle` over Fusion) drive every surface,
   control, tab, scrollbar, splitter and selected-row wash (`accentDim`) from `QPalette` and token
@@ -37,7 +39,7 @@ headless Null only under RHI_POLICY_HEADLESS=1. See C:\Projects\POLICY.md.
   overlay widget draws nothing, so the sphere is not doubled by the flat grid.
   `build/renders/world_globe_1280x690_z1.0.png` is the proof, and
   `tests/test_globe_projection.cpp` pins the wrap, the poles and the shading.
-  **Next: W-04's third LOD level** (a denser picture for the visible region).
+  The third LOD remains W-04, ordered after the owner-gated asset choices in `WANTED.md`; proposal alignment is tracked by S-01.
 - **The world map has two levels of detail** (`studio/world/TerrainLod.{hpp,cpp}`,
   `studio/world/WorldTerrainPaint.{hpp,cpp}`; plan `Bible/notes/globe-view.md` P1).
   The crossover is a screen measurement -- the drawn width over the map's width --
@@ -58,8 +60,9 @@ headless Null only under RHI_POLICY_HEADLESS=1. See C:\Projects\POLICY.md.
   showed on a fresh open. W-03 is closed.
 - **A map is seeded and playable.** `engine/aur/mapforge.*` makes a town, a cave or a
   platformer room with its own tiles; the MCP has `map_generate`, the World tab has
-  "Generate map…", and `Aur --map seeded_platformer` plays the shipped room. W-02 is
-  closed; W-01's pick and expand landed and only the field's beach tile is open.
+  "Generate map…", and `Aur --map seeded_platformer` plays the shipped room. W-02 and
+  W-01 are closed (`apply_coastal_beach` and `generate_field_beach_tiles(0)` render
+  directional west water, golden sand, and field grass).
 - **The Creature Forge was refactored to the owner's brief** (`Bible/notes/forge-brief.md`,
   moved into `Bible/notes/` from the project root, 2026-11-18): the 1,240-line `forge.cpp`
   became `engine/aur/forge/{SpeciesCatalog,CharacterRenderer,AssetGenerators}.cpp`, the
@@ -81,21 +84,41 @@ headless Null only under RHI_POLICY_HEADLESS=1. See C:\Projects\POLICY.md.
 cd C:\Projects\Aur; py -3.15 tests\render_check.py
 ```
 
-## Active plans
 
-- `Bible/notes/globe-view.md` — the globe's levels of detail and the sphere. **P1 landed** (the two levels, `TerrainLod` + `WorldTerrainPaint`); **P2 landed** (the grid on a UV sphere, the poles capped); **P2.5 landed** (the sphere on the GPU, the overlay no longer doubles it, the BGRA channel swap fixed, the harness forwards its flags). The third LOD level — a denser surface for the 3200% ceiling — is recorded as open.
-- `Bible/notes/globe-expand.md` — **W-01**: expand a world map tile into a map preserving coast direction.
-- `Bible/notes/platformer.md` — **P-01**: P1–P3 landed and tested; P4 waits on a solid floor tile chosen by the owner.
-- `Bible/notes/Aur World Map Agent Work Packages.md` — WP0–WP3 landed. Next: WP4 (WorldSim hookup: temperature seeding, sim persistence) and WP6 cleanup. WP5 (globe view) needs WP4.
-- `Bible/notes/daw/plan.md` — the Music Studio DAW. P5 remainder closed; **P7a (the GM/GS instrument) is parked mid-wiring by owner decision 2026-11-11**, resume point in `Bible/notes/daw/gm-gs.md`. P2 close still needs the owner's GUI soak.
-- `Bible/notes/worldsim-p31.md` — P3.1 landed, P3.2 owner-gated.
 
-## Know before you go
+## Active plans and next action (see WANTED for order)
+`WANTED.md` is the only ordered execution queue. W-01 closed 2026-11-21:
+`generate_field_beach_tiles(0)` uses `terra` `pal[0]`, `field_beach` joins with
+`edge_joined: true`, `aur::apply_coastal_beach` paints directional water/beach/grass
+in `WorldPanel::expandHoveredTile` and `map_generate` (`coast_side`), `aur_tests`
+76/76 + CTest 7/7 passed, and `build/renders/beach_expansion_1280x690_z1.0.png`
+was opened and visually verified. Next in queue order is **P-01** (`Bible/notes/platformer.md`
+P4), which is owner-gated on choosing the platformer solid-floor asset; **W-04**
+(third visible-region LOD) is queued behind it.
 
-- **The state, the decisions and the open defects are in `PROJECT.md`.** This file is the
-  pointer. The older history is `Bible/Operations/NOTES.md`. The order of work is
-  `ROADMAP.md` (the stages) and `IMPLEMENTATION.md` (every open item by area, with its gate);
-  `WANTED.md` is the short owner queue pointing at both.
+The root `aur_master_expansion_hd_upgrade_plan.md` is the latest owner-added broad proposal, not an obsolete file. Its tracker and detailed stages are draft proposal material; `WANTED.md` remains execution order and focused plans hold verified acceptance. The older divergent `Bible/notes/` copy is retained as provenance. Conformance reports the root file as stray; its long-term home is a separate owner decision, and both copies remain preserved.
+
+- `Bible/notes/globe-expand.md` — W-01 complete and verified (2026-11-21); no open steps remain.
+- `Bible/notes/platformer.md` — P1–P3 landed; P4 floor awaits owner selection.
+- `Bible/notes/globe-view.md` — P1/P2/P2.5 landed; third LOD open as W-04.
+- `Bible/notes/Aur World Map Agent Work Packages.md` — WP0–WP3 landed; WP4 temperature seeding/persistence are gated, WP6 later. Its WP5 globe dependency is historical; the focused globe plan owns W-04.
+- `Bible/notes/worldsim-p31.md` — core landed; P3.2 editor integration owner-gated.
+- `Bible/notes/daw/plan.md` — DAW plan; P7a parked by owner, resume in `Bible/notes/daw/gm-gs.md`; P2 close awaits the owner GUI soak.
+- Estate audit plans `C:\Projects\Bible\notes\project-handoff-prep.md` and `qt-desktop-foundation.md` are read-only/staged, behind Aur's owner queue.
+- `Bible/notes/doc-reconciliation.md` — S-01.5b–S-01.7 and P2 proposal validation are complete; older RPG/HD scope maps to root Stages 3–6, and source-backed design is distinguished from proposal-only elaboration. Aur docs policy updated to 2,000-line soft / 4,000-line hard. Remaining: estate-policy handoff and separate root-proposal placement/conformance; preserve WANTED order, owner gates, both proposal copies, and unrelated worktree paths.
+
+- Maintained notes/docs are living documents: 2,000-line soft cap and 4,000-line hard cap; split earlier for navigation or topic cohesion, and at hard cap split into focused docs with a short index before further growth. Vendored/reference material and immutable source archives are exempt. Aur's canonical AGENTS.md, PROJECT.md, Bible index, and this handover state the policy. `Bible/notes/forge-brief.md` was last measured at 1,900 lines; review its shape when next maintained.
+
+## Handoff for the next session
+- **Next owner-gated item: P-01 (`Bible/notes/platformer.md` P4)** — choose the dedicated solid floor and one-way platform tile art for the shipped platformer room before wiring P4.1–P4.3 (`W-04` third visible-region LOD follows unless reordered).
+- **W-01 closed & pushed (`[globe-expand-p3]`):** field beach palette (`pal[0]`), 4 px non-joined berm, `edge_joined: true`, `aur::apply_coastal_beach`, DPI-aware `render_check.py`, suite 76/76, CTest 7/7, and opened `build/renders/beach_expansion_1280x690_z1.0.png`.
+- Preserve unrelated worktree modifications (`AIO-Win.bat`, `cmake/`, doc-reconciliation edits, and both untracked `aur_master_expansion_hd_upgrade_plan.md` copies).
+- Estate handoff: `C:\Projects\AGENTS.md` / `ESTATE-LENGTH.md` / `DESIGN.md` §14 live above this workspace and remain for the estate agent to reconcile to the 2,000-soft / 4,000-hard standard.
+- Startup reading order: `AGENTS.md`, `HANDOVER.md`, `WANTED.md`, `PROJECT.md`, then every active plan listed in `WANTED.md`.
+
+## Verification and build references
+
+- `PROJECT.md` is the verified product state and decisions; `WANTED.md` is the ordered owner queue; `ROADMAP.md` is strategic stages; `IMPLEMENTATION.md` is the open gate ledger. `Bible/Operations/NOTES.md` is historical record, not live status.
 - The build entry point is `AIO.bat`:
 
 ```powershell

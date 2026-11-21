@@ -311,6 +311,24 @@ void test_forge_generators() {
     ASSERT(aur::dump_json(starter_terrain) ==
            aur::dump_json(aur::generate_starter_world_terrain_tiles(4)));
 
+    const aur::JsonArray beach_tiles = aur::generate_field_beach_tiles(0);
+    ASSERT(beach_tiles.size() == 17);
+    ASSERT(beach_tiles[0]["name"].as_string() == "starter_field_sand");
+    ASSERT(beach_tiles[0]["pal"].as_int() == 0);
+    ASSERT(beach_tiles[0]["flags"].as_int() == 0);
+    ASSERT(beach_tiles[1]["name"].as_string() == "field_beach_0");
+    ASSERT(beach_tiles[16]["name"].as_string() == "field_beach_15");
+    for (const aur::Json& tile : beach_tiles) {
+        ASSERT(tile["rows"].as_array().size() == 32);
+        ASSERT(tile["rows"][0].as_string().size() == 32);
+        ASSERT(tile["flags"].as_int() == 0);
+    }
+    ASSERT(beach_tiles[1]["rows"][0].as_string().substr(0, 2) == "66");
+    ASSERT(beach_tiles[1]["rows"][2].as_string().substr(4, 2) == "88");
+    ASSERT(aur::dump_json(beach_tiles[16]["rows"]) == aur::dump_json(beach_tiles[0]["rows"]));
+    ASSERT(aur::dump_json(beach_tiles) == aur::dump_json(aur::generate_field_beach_tiles(0)));
+    ASSERT(aur::dump_json(beach_tiles) != aur::dump_json(aur::generate_field_beach_tiles(1)));
+
     const aur::Json low_water = aur::generate_world_map(
         "low_water", "Low Water", 64, 32, 2718, "continents", 20, 60, 10);
     const aur::Json high_water = aur::generate_world_map(

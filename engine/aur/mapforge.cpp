@@ -245,4 +245,109 @@ namespace aur
         return generated;
     }
 
+    TerrainPick pick_for_coast_side(const std::string &side)
+    {
+        TerrainPick pick;
+        int ocean = 0;
+        if (side.find("west") != std::string::npos) ocean |= W;
+        if (side.find("east") != std::string::npos) ocean |= E;
+        if (side.find("north") != std::string::npos) ocean |= N;
+        if (side.find("south") != std::string::npos) ocean |= S;
+        if (ocean != 0) {
+            pick.group = "ocean";
+            pick.land_mask = (~ocean) & (N | E | S | W);
+        }
+        return pick;
+    }
+
+    void apply_coastal_beach(Json &map, const Json &tileset, const TerrainPick &pick, int seed)
+    {
+        const int ocean_mask = (~pick.land_mask) & (N | E | S | W);
+        if (ocean_mask == 0 || !tileset.contains("autotiles") || !tileset["autotiles"].is_object())
+            return;
+        const Json &autotiles = tileset["autotiles"];
+        if (!autotiles.contains("water") || !autotiles.contains("field_beach"))
+            return;
+        const Json &water_tiles = autotiles["water"]["tiles"];
+        const Json &beach_tiles = autotiles["field_beach"]["tiles"];
+        if (!water_tiles.is_array() || water_tiles.as_array().size() != 16 ||
+            !beach_tiles.is_array() || beach_tiles.as_array().size() != 16)
+            return;
+        if (!map.contains("layers") || !map["layers"].is_object() ||
+            !map["layers"].contains("ground") || !map["layers"]["ground"].is_array())
+            return;
+
+        const int w = map["w"].as_int();
+        const int h = map["h"].as_int();
+        JsonArray &ground_rows = map["layers"]["ground"].as_array();
+        if (w <= 0 || h <= 0 || static_cast<int>(ground_rows.size()) < h)
+            return;
+
+        std::vector<int> grass_tiles;
+        if (tileset.contains("tiles") && tileset["tiles"].is_array()) {
+            const JsonArray &tiles = tileset["tiles"].as_array();
+            for (size_t i = 0; i < tiles.size() && grass_tiles.size() < 3; ++i) {
+                if (tiles[i].contains("name") && tiles[i]["name"].is_string() &&
+                    tiles[i]["name"].as_string().rfind("grass", 0) == 0)
+                    grass_tiles.push_back(static_cast<int>(i));
+            }
+        }
+
+        auto ocean_dist = [&](int x, int y) {
+            int d = 9999;
+            if (ocean_mask & W) d = std::min(d, x);
+            if (ocean_mask & E) d = std::min(d, w - 1 - x);
+            if (ocean_mask & N) d = std::min(d, y);
+            if (ocean_mask & S) d = std::min(d, h - 1 - y);
+            return d;
+        };
+
+        std::mt19937 rng(static_cast<uint32_t>(seed));
+        const int water_seed_tile = water_tiles[0].as_int();
+        const int beach_seed_tile = beach_tiles[0].as_int();
+        JsonArray *obj_rows = (map["layers"].contains("objects") && map["layers"]["objects"].is_array())
+            ? &map["layers"]["objects"].as_array() : nullptr;
+
+        for (int y = 0; y < h; ++y) {
+            if (!ground_rows[static_cast<size_t>(y)].is_array()) continue;
+            JsonArray &grow = ground_rows[static_cast<size_t>(y)].as_array();
+            JsonArray *orow = (obj_rows && y < static_cast<int>(obj_rows->size()) &&
+                               (*obj_rows)[static_cast<size_t>(y)].is_array())
+                ? &(*obj_rows)[static_cast<size_t>(y)].as_array() : nullptr;
+            for (int x = 0; x < w && x < static_cast<int>(grow.size()); ++x) {
+                const int d = ocean_dist(x, y);
+                if (d < 2) {
+                    grow[static_cast<size_t>(x)] = Json(water_seed_tile);
+                    if (orow && x < static_cast<int>(orow->size())) (*orow)[static_cast<size_t>(x)] = Json(-1);
+                } else if (d < 4) {
+                    grow[static_cast<size_t>(x)] = Json(beach_seed_tile);
+                    if (orow && x < static_cast<int>(orow->size())) (*orow)[static_cast<size_t>(x)] = Json(-1);
+                } else if (!grass_tiles.empty()) {
+                    grow[static_cast<size_t>(x)] = Json(grass_tiles[rng() % grass_tiles.size()]);
+                }
+            }
+        }
+
+        const std::map<int, std::string> groups = tile_groups(tileset);
+        for (int y = 0; y < h; ++y) {
+            for (int x = 0; x < w; ++x) retile(map, tileset, "ground", x, y, groups);
+        }
+
+        if (map.contains("entities") && map["entities"].is_array()) {
+            const int min_x = (ocean_mask & W) ? std::min(w - 1, 4) : 1;
+            const int max_x = (ocean_mask & E) ? std::max(min_x, w - 5) : std::max(min_x, w - 2);
+            const int min_y = (ocean_mask & N) ? std::min(h - 1, 4) : 1;
+            const int max_y = (ocean_mask & S) ? std::max(min_y, h - 5) : std::max(min_y, h - 2);
+            for (Json &ent : map["entities"].as_array()) {
+                if (!ent.contains("type") || ent["type"].as_string() != "spawn") continue;
+                const int sx = ent.contains("x") ? ent["x"].as_int() : w / 2;
+                const int sy = ent.contains("y") ? ent["y"].as_int() : h / 2;
+                if (ocean_dist(sx, sy) < 4) {
+                    ent["x"] = Json(std::clamp(w / 2, min_x, max_x));
+                    ent["y"] = Json(std::clamp(h / 2, min_y, max_y));
+                }
+            }
+        }
+    }
+
 } // namespace aur

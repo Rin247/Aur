@@ -145,10 +145,11 @@ void WorldPanel::expandHoveredTile() {
         auto& tiles = target["tiles"].as_array();
         const int first_tile = static_cast<int>(tiles.size());
         const int tile_size = target.contains("tile") ? target["tile"].as_int() : 16;
-        const GeneratedMap generated = generate_map_asset(MapKind::Town, seed, 40, 24,
-                                                         tile_size, first_tile, id, name, &pick);
+        GeneratedMap generated = generate_map_asset(MapKind::Town, seed, 40, 24,
+                                                    tile_size, first_tile, id, name, &pick);
         for (const Json& tile : generated.tiles)
             tiles.push_back(tile);
+        apply_coastal_beach(generated.map, target, pick, seed);
         project->maps[id] = generated.map;
         project->invalidate();
     } catch (const std::exception& error) {

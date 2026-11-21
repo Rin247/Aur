@@ -70,6 +70,8 @@ public:
     void setSubTab(const QString &name);
     // Opens a map in the playtest, for the render sweep.
     void setPlaytestMap(const QString &map_id);
+    // Opens a map in the map editor, for the render sweep.
+    void setEditorMap(const QString &map_id);
     // Shows the world as a sphere, for the render sweep.
     void setGlobeView(bool enabled);
 
