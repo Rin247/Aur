@@ -1,6 +1,6 @@
 # The globe's levels of detail: plan
 
-Status: P0, P1, P2 and P2.5 done; P3 (W-04: third visible-region LOD and Globe RHI stabilization) is active at position #1 in `WANTED.md` (P-01 parked on the side per owner direction 2026-11-21). P3.1 and P3.2 done; next step: P3.3.
+Status: complete and verified (2026-11-21); P0, P1, P2, P2.5 and P3 (W-04) landed and visually verified on D3D12 and Vulkan (`aur_tests` 76/76, CTest 7/7, `world_1280x690_z1.0.png`, `world_globe_1280x690_z1.0.png`, `world_globe_close_1280x690_z10.0.png`, `world_vulkan_1280x690_z1.0.png`, `world_globe_vulkan_1280x690_z1.0.png`). No unchecked work remains.
 
 ## Goal
 
@@ -155,7 +155,7 @@ conformance 9/9.
   against `WorldModel::revision()`, blend globe curvature smoothly to flat at high zoom, and
   composite the cached close-region surface in both `TerrainRhiWidget` (`globeDetailTexture_`)
   and `WorldTerrainPaint`.
-- [ ] P3.3 Visual verification and closeout: run `aur_tests`, CTest 7/7, and
+- [x] P3.3 Visual verification and closeout: run `aur_tests`, CTest 7/7, and
   `tests/render_check.py` (opening `build/renders/world_1280x690_z1.0.png` and
   `build/renders/world_globe_1280x690_z1.0.png`), run conformance, and close W-04 in
   `Bible/notes/globe-view.md`, `WANTED.md`, and `HANDOVER.md`.

@@ -29,27 +29,17 @@ Read in this order: `AGENTS.md` (rules), this file (current handoff), `WANTED.md
   - `studio/CreatureForgePanel.cpp` (310 lines): `forge/ForgePanelTabs.cpp` (221 lines, the four tab builders), `forge/ForgeColorSwatches.cpp` (64 lines), `forge/CharacterSheetWidget.{hpp,cpp}` and `forge/ForgeAssetOps.{hpp,cpp}` live under `studio/forge/`. The engine side is `engine/aur/forge/{SpeciesCatalog,CharacterRenderer,AssetGenerators}.cpp`, all three under 650 lines.
   - `studio/DatabasePanel.cpp` (47 lines) and `studio/EventsPanel.cpp` (78 lines): `bestiary/*` and `events/EventCommandOps.{hpp,cpp}` live under `studio/bestiary/` and `studio/events/`.
   - `studio/MusicPanel.cpp` (661 lines): `music/MidiStrip.{hpp,cpp}`, `music/GmPatchList.hpp`, `music/MusicPanelSession.cpp` (598 lines), `music/PianoRollInput.cpp` (289 lines), `music/MidiDeviceIo.{hpp,cpp}`, `music/SongHistory.{hpp,cpp}`, and `music/SharedAudio.{hpp,cpp}` live under `studio/music/`.
-- **The world is a globe as well as a sheet.** `studio/world/GlobeProjection` is an
-  orthographic projection with capped poles; the World tab's Globe checkbox (or
-  `Aur --globe`) shows it and dragging spins it. The sphere is drawn on the GPU
-  (`studio/shaders/globe.frag` through `TerrainRhiWidget`), so a drag costs a
-  uniform update, not a CPU rebuild; the surface is uploaded once as a `BGRA8`
-  texture because `build_hd_surface` returns `Format_RGB32` (uploading it as
-  `RGBA8` swapped the channels and the ocean read ochre). In globe mode the
-  overlay widget draws nothing, so the sphere is not doubled by the flat grid.
-  `build/renders/world_globe_1280x690_z1.0.png` is the proof, and
-  `tests/test_globe_projection.cpp` pins the wrap, the poles and the shading.
-  The third LOD remains W-04, ordered after the owner-gated asset choices in `WANTED.md`; proposal alignment is tracked by S-01.
-- **The world map has two levels of detail** (`studio/world/TerrainLod.{hpp,cpp}`,
-  `studio/world/WorldTerrainPaint.{hpp,cpp}`; plan `Bible/notes/globe-view.md` P1).
-  The crossover is a screen measurement -- the drawn width over the map's width --
-  and `kHdSurfacePixelsPerTile = 3.0` picks the generated HD surface at or above it
-  and, below it, the same terrain at one pixel per tile (`build_hd_surface(..., 1)`).
-  Both are cached, so crossing over on a zoom change is a lookup. Proved by
-  `build/renders/world_1280x690_z1.0.png` (HD) and `..._z0.5.png` (coarse).
-  Open: the HD surface is capped at 32 px/tile (22 for a 256x128 map), so at the
-  3200% ceiling it is upsampled; a denser picture for the visible region is the
-  third level.
+- **The world is a GPU globe with 3-tier LOD and D3D12/Vulkan parity** (`studio/shaders/globe.frag`,
+  `studio/world/TerrainRhiWidget.{hpp,cpp}`, `studio/world/TerrainLod.{hpp,cpp}`,
+  `studio/world/HdSurface.cpp`; plan `Bible/notes/globe-view.md` P1–P3, W-04 closed 2026-11-21).
+  Both `world_sculpt.frag` and `globe.frag` use `rhi()->isYUpInNDC()` for right-side-up Vulkan and
+  D3D12 parity and share the `#171b20` canvas margin; `globeRevision_` tracks `WorldModel::revision()`
+  so live sculpts update the globe immediately; `build_hd_surface` is genuinely region-scoped with a
+  2-tile detail border and X-wrapping; `LodTier` switches between `Coarse` (`1 px/tile`), `Hd`
+  (`<= 32 px/tile`), and `CloseRegion` (`64`/`128 px/tile` cached via `CloseRegionKey` and composited
+  via `globeDetailTexture_`) as globe curvature smoothly flattens at high zoom up to 3200%. Proved
+  by `aur_tests` 76/76, CTest 7/7, and opened D3D12 + Vulkan flat, orbit globe, and 3200% close globe
+  renders (`world_1280x690_z1.0.png`, `world_globe_1280x690_z1.0.png`, `world_globe_close_1280x690_z10.0.png`).
 - **The window has a bottom context strip** (`studio/theme/StatusStrip.{hpp,cpp}`, 2026-11-18):
   page name, the last line posted by a panel, project + saved/unsaved, RHI backend, theme mode
   and interface scale. `theme::postStatus` is the one channel; the Forge posts its preview and
@@ -87,15 +77,16 @@ cd C:\Projects\Aur; py -3.15 tests\render_check.py
 
 
 ## Active plans and next action (see WANTED for order)
-`WANTED.md` is the only ordered execution queue. W-01 closed 2026-11-21 (`f2c102b`),
-and on 2026-11-21 the owner parked **P-01** (`Bible/notes/platformer.md` P4) on the side
-until the other core tracks reach MVP readiness, promoting **W-04**
-(`Bible/notes/globe-view.md` P3: third visible-region LOD and Globe RHI stabilization)
-to position #1 in `WANTED.md`.
+`WANTED.md` is the only ordered execution queue. All four W-01..W-04 items are now closed
+(`W-01` in `f2c102b`; `W-04` P3 in `a894fbc`/`96097fa` + P3.3 closeout on 2026-11-21),
+and **P-01** (`Bible/notes/platformer.md` P4) is parked on the side per owner direction
+until the other core tracks reach MVP readiness. Next action awaits the owner's next-track
+choice (WorldSim WP4/P3.2, DAW P2 soak, or Stage 3 RPG engine skeleton from
+`aur_master_expansion_hd_upgrade_plan.md`).
 
 The root `aur_master_expansion_hd_upgrade_plan.md` is the latest owner-added broad proposal, not an obsolete file. Its tracker and detailed stages are draft proposal material; `WANTED.md` remains execution order and focused plans hold verified acceptance. The older divergent `Bible/notes/` copy is retained as provenance. Conformance reports the root file as stray; its long-term home is a separate owner decision, and both copies remain preserved.
 
-- `Bible/notes/globe-view.md` — P1/P2/P2.5 landed; P3 (W-04: third visible-region LOD and Globe RHI stabilization) is active at the top of the queue.
+- `Bible/notes/globe-view.md` — W-04 complete and visually verified on D3D12 + Vulkan (2026-11-21); no open steps remain.
 - `Bible/notes/globe-expand.md` — W-01 complete and verified (2026-11-21, `f2c102b`); no open steps remain.
 - `Bible/notes/platformer.md` — P1–P3 landed; parked on the side per owner direction (2026-11-21) until the other core tracks are MVP-ready.
 - `Bible/notes/Aur World Map Agent Work Packages.md` — WP0–WP3 landed; WP4 temperature seeding/persistence are gated, WP6 later. Its WP5 globe dependency is historical; the focused globe plan owns W-04.
@@ -107,9 +98,9 @@ The root `aur_master_expansion_hd_upgrade_plan.md` is the latest owner-added bro
 - Maintained notes/docs are living documents: 2,000-line soft cap and 4,000-line hard cap; split earlier for navigation or topic cohesion, and at hard cap split into focused docs with a short index before further growth. Vendored/reference material and immutable source archives are exempt. Aur's canonical AGENTS.md, PROJECT.md, Bible index, and this handover state the policy. `Bible/notes/forge-brief.md` was last measured at 1,900 lines; review its shape when next maintained.
 
 ## Handoff for the next session
-- **Active item: W-04 (`Bible/notes/globe-view.md` P3)** — implement region-scoped `build_hd_surface`, 3-tier LOD (`Coarse` / `Hd` / `CloseRegion`) with `CloseRegionKey` caching, and Globe RHI parity (`isYUpInNDC()`, `#171b20` margin, `globeRevision_`, curvature blend, and `globeDetailTexture_`).
+- **Next owner choice:** All W-01..W-04 world/studio items are closed. Confirm the next active track: WorldSim WP4/P3.2 (`Bible/notes/worldsim-p31.md`), DAW P2 soak (`Bible/notes/daw/plan.md`), or Stage 3 RPG engine skeleton (`aur_master_expansion_hd_upgrade_plan.md`).
+- **W-04 closed & verified (2026-11-21):** region-scoped `build_hd_surface`, 3-tier `TerrainLod` (`CloseRegionKey`), Vulkan/D3D12 `isYUpInNDC()` parity, `#171b20` margins, `globeRevision_` live sculpts, smooth curvature-to-flat zoom, `globeDetailTexture_` at 64/128 px/tile, `aur_tests` 76/76, CTest 7/7, and opened D3D12 + Vulkan captures.
 - **P-01 (`Bible/notes/platformer.md` P4) parked on the side (2026-11-21):** owner directed keeping the platformer part on the side until the other core tracks feel MVP-ready.
-- **W-01 closed & pushed (`f2c102b`):** field beach palette (`pal[0]`), 4 px non-joined berm, `edge_joined: true`, `aur::apply_coastal_beach`, DPI-aware `render_check.py`, suite 76/76, CTest 7/7, and opened `build/renders/beach_expansion_1280x690_z1.0.png`.
 - Preserve unrelated worktree modifications (`AIO-Win.bat`, `cmake/`, doc-reconciliation edits, and both untracked `aur_master_expansion_hd_upgrade_plan.md` copies).
 - Estate handoff: `C:\Projects\AGENTS.md` / `ESTATE-LENGTH.md` / `DESIGN.md` §14 live above this workspace and remain for the estate agent to reconcile to the 2,000-soft / 4,000-hard standard.
 - Startup reading order: `AGENTS.md`, `HANDOVER.md`, `WANTED.md`, `PROJECT.md`, then every active plan listed in `WANTED.md`.
