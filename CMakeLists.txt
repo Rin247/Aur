@@ -76,6 +76,10 @@ add_executable(aur_game
 )
 target_include_directories(aur_game PRIVATE . studio)
 target_link_libraries(aur_game PRIVATE aur_engine Qt6::Widgets Qt6::Multimedia)
+set_target_properties(aur_game PROPERTIES WIN32_EXECUTABLE TRUE)
+if(MSVC)
+    target_link_options(aur_game PRIVATE "/ENTRY:mainCRTStartup")
+endif()
 
 # Local stdio MCP server for project-aware design tools.
 add_executable(aur_mcp tools/mcp_main.cpp)
@@ -253,7 +257,13 @@ qt_add_shaders(aur_studio aur_studio_sculpt_shaders
 if(WIN32)
     target_link_libraries(aur_studio PRIVATE winmm)
 endif()
-set_target_properties(aur_studio PROPERTIES OUTPUT_NAME "Aur")
+set_target_properties(aur_studio PROPERTIES
+    WIN32_EXECUTABLE TRUE
+    OUTPUT_NAME "Aur"
+)
+if(MSVC)
+    target_link_options(aur_studio PRIVATE "/ENTRY:mainCRTStartup")
+endif()
 
 # Tests
 enable_testing()
