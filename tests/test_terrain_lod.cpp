@@ -36,4 +36,42 @@ void test_terrain_lod()
     const QImage coarse = world::build_hd_surface(map, &project, QRect(), 1);
     ASSERT(fine.size() == QSize(1024, 512));
     ASSERT(coarse.size() == QSize(32, 16));
+
+    // P3 (W-04): three LOD tiers and power-of-two close-region density.
+    ASSERT(world::selectLodTier(map, crossover - 1.0) == world::LodTier::Coarse);
+    ASSERT(world::selectLodTier(map, crossover) == world::LodTier::Hd);
+    ASSERT(world::selectLodTier(map, 32.0 * 32.0) == world::LodTier::Hd);
+    ASSERT(world::selectLodTier(map, 32.0 * 32.0 + 1.0) == world::LodTier::CloseRegion);
+    ASSERT(world::selectLodTier(plain, 1000000.0) == world::LodTier::Coarse);
+    ASSERT(world::closeRegionDensity(16.0) == 32);
+    ASSERT(world::closeRegionDensity(48.0) == 64);
+    ASSERT(world::closeRegionDensity(96.0) == 128);
+
+    // Region-scoped build_hd_surface renders only the requested tile bounds
+    // and supports 64/128 px/tile close-up densities plus wrapped X regions.
+    const QRect sub_region(6, 3, 12, 8);
+    const QImage sub_coarse = world::build_hd_surface(map, &project, sub_region, 1);
+    ASSERT(sub_coarse == coarse.copy(sub_region));
+    const QImage sub_dense = world::build_hd_surface(map, &project, QRect(6, 3, 8, 6), 64);
+    ASSERT(sub_dense.size() == QSize(512, 384));
+    const QImage wrapped_sub = world::build_hd_surface(map, &project, QRect(-2, 3, 4, 4), 1);
+    ASSERT(wrapped_sub.size() == QSize(4, 4));
+    ASSERT(wrapped_sub.pixel(0, 0) == coarse.pixel(30, 3));
+    ASSERT(wrapped_sub.pixel(2, 0) == coarse.pixel(0, 3));
+
+    // CloseRegionKey hits while the visible window stays inside the padded bounds.
+    const QRectF zoomed_bounds(-320.0, -128.0, 2048.0, 1024.0);
+    const QSize viewport(384, 256);
+    const QRect visible = world::closeRegionTileBounds(zoomed_bounds, viewport, 32, 16, true, 0);
+    const QRect padded = world::closeRegionTileBounds(zoomed_bounds, viewport, 32, 16, true, 4);
+    const world::CloseRegionKey key{"lod_world", 7, padded, 64};
+    ASSERT(key.contains("lod_world", 7, visible, 64));
+    ASSERT(!key.contains("lod_world", 8, visible, 64));
+    ASSERT(!key.contains("lod_world", 7, visible, 128));
+    ASSERT(!key.contains("lod_world", 7, visible.translated(6, 0), 64));
+
+    const QRect globe_vis = world::globeCloseRegionTileBounds(-0.6, -0.3, 64.0, viewport, 256, 128, 0);
+    const QRect globe_pad = world::globeCloseRegionTileBounds(-0.6, -0.3, 64.0, viewport, 256, 128, 4);
+    const world::CloseRegionKey globe_key{"world_globe", 3, globe_pad, 64};
+    ASSERT(globe_key.contains("world_globe", 3, globe_vis, 64));
 }

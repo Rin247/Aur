@@ -1,6 +1,6 @@
 # The globe's levels of detail: plan
 
-Status: P0, P1, P2 and P2.5 done; P3 (W-04: third visible-region LOD and Globe RHI stabilization) is active at position #1 in `WANTED.md` (P-01 parked on the side per owner direction 2026-11-21). Next step: P3.1.
+Status: P0, P1, P2 and P2.5 done; P3 (W-04: third visible-region LOD and Globe RHI stabilization) is active at position #1 in `WANTED.md` (P-01 parked on the side per owner direction 2026-11-21). P3.1 done; next step: P3.2.
 
 ## Goal
 
@@ -137,7 +137,7 @@ conformance 9/9.
 
 ### P3 The close-up visible region and RHI parity (W-04)
 
-- [ ] P3.1 Region-scoped `build_hd_surface` and 3-tier LOD model (`studio/world/HdSurface.cpp`,
+- [x] P3.1 Region-scoped `build_hd_surface` and 3-tier LOD model (`studio/world/HdSurface.cpp`,
   `studio/world/TerrainLod.{hpp,cpp}`, `tests/test_terrain_lod.cpp`): split `build_hd_surface`
   into helpers under the 100-line function soft limit, allocate/render only the requested
   `tile_bounds` (with a 2-tile detail border and X-wrapping) and compute the 16 Mpixel budget

@@ -1,30 +1,50 @@
 #pragma once
 
-// TerrainLod.hpp - which picture of a place to draw.
-//
-// The world map has two pictures of the same terrain: the generated HD
-// surface, and that same terrain at one pixel per tile. The zoom decides
-// which is worth drawing: close in, a tile covers enough screen that the
-// fine picture earns its keep; far out, the coarse one is enough.
-
 #include "aur/json.hpp"
+
+#include <QRect>
+#include <QRectF>
+#include <QSize>
+#include <cstdint>
+#include <string>
 
 namespace aur
 {
     namespace world
     {
 
-        // How many screen pixels a tile must cover before the HD surface is
-        // drawn instead of the coarse picture.
         constexpr double kHdSurfacePixelsPerTile = 3.0;
+        constexpr double kCloseRegionPixelsPerTile = 32.0;
 
-        // The screen pixels a tile covers when the map is drawn `map_pixels`
-        // wide on a map `map_width` tiles across.
+        enum class LodTier
+        {
+            Coarse,
+            Hd,
+            CloseRegion
+        };
+
+        struct CloseRegionKey
+        {
+            std::string map_id;
+            std::uint64_t revision = 0;
+            QRect tile_bounds;
+            int density = 0;
+
+            bool operator==(const CloseRegionKey &) const = default;
+            bool contains(const std::string &map, std::uint64_t rev,
+                          const QRect &visible_tiles, int target_density) const;
+        };
+
         double pixelsPerTile(double map_pixels, int map_width);
-
-        // The choice: the HD surface only when the map has one and its tiles
-        // cover enough screen.
         bool useHdSurface(const Json &map, double map_pixels);
+        LodTier selectLodTier(const Json &map, double map_pixels);
+        int closeRegionDensity(double pixels_per_tile);
+        QRect closeRegionTileBounds(const QRectF &map_bounds, const QSize &viewport_size,
+                                    int map_width, int map_height, bool wraps_x,
+                                    int margin_tiles = 4);
+        QRect globeCloseRegionTileBounds(double yaw, double pitch, double pixels_per_tile,
+                                         const QSize &viewport_size, int map_width,
+                                         int map_height, int margin_tiles = 4);
 
     } // namespace world
 } // namespace aur
